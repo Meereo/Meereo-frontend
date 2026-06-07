@@ -1,0 +1,240 @@
+/* ══════════════════════════════════════════════════════════════
+   MEEREO SIDEBAR — Apple-premium cockpit navigation
+══════════════════════════════════════════════════════════════ */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Logo */
+.sidebar-logo-wrap {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.sidebar-logo-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--gr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.sidebar-brand {
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  color: var(--tx);
+}
+.sidebar-tagline {
+  font-size: 8px;
+  color: var(--t3);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Project card */
+.sidebar-project-card {
+  margin: 0 12px 12px;
+  padding: 14px 16px;
+  background: var(--surface-1);
+  border-radius: var(--r3);
+  box-shadow: var(--shadow-xs);
+}
+.sidebar-project-label {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--t4);
+  margin-bottom: 4px;
+}
+.sidebar-project-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx);
+  margin-bottom: 2px;
+}
+.sidebar-project-meta {
+  font-size: 10px;
+  color: var(--t3);
+  margin-bottom: 8px;
+}
+.sidebar-project-bar {
+  height: 3px;
+  background: var(--s3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sidebar-project-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  border-radius: 2px;
+  transition: width .4s var(--ease);
+}
+
+/* Navigation */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+}
+.sidebar-nav::-webkit-scrollbar { display: none; }
+.sidebar-group { margin-bottom: 12px; }
+.sidebar-group-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--t5);
+  padding: 8px 10px 5px;
+}
+
+/* Nav items */
+.ni {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--sidebar-text-inactive);
+  cursor: pointer;
+  transition: all .15s cubic-bezier(.22,1,.36,1);
+  user-select: none;
+  width: 100%;
+  border: none;
+  background: none;
+  font-family: var(--f);
+  text-align: left;
+}
+.ni:hover { background: var(--sidebar-hover); transform: translateX(2px); }
+.ni.active {
+  background: var(--s3);
+  color: var(--sidebar-text-active);
+  font-weight: 600;
+  transform: translateX(0);
+}
+/* Icon wrapper — subtle semantic color */
+.ni .ni-ico {
+  width: 22px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .15s;
+  opacity: .65;
+}
+.ni:hover .ni-ico, .ni.active .ni-ico { opacity: 1; }
+.ni svg { flex-shrink: 0; }
+.ni.active svg { opacity: .75; }
+
+.ni-badge {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--s2);
+  color: var(--t3);
+}
+.ni-badge.nb-red { background: var(--err-s); color: var(--err); }
+.ni-badge.nb-orange { background: var(--wrn-s); color: var(--wrn); }
+.ni-badge.nb-green { background: var(--ok-s); color: var(--ok); }
+
+/* Footer */
+.sidebar-footer {
+  padding: 14px 16px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gr);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.sidebar-user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx);
+}
+.sidebar-user-role {
+  font-size: 10px;
+  color: var(--t3);
+}
+
+/* ── Close button (inside sidebar header — mobile only) ── */
+.sidebar-close {
+  display: none;
+  width: 28px; height: 28px;
+  border-radius: 7px; border: none;
+  background: transparent; cursor: pointer;
+  align-items: center; justify-content: center;
+  color: var(--t3);
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: background .15s;
+  font-family: var(--f);
+}
+.sidebar-close:hover { background: var(--s2); }
+
+/* ── Overlay backdrop (mobile only) ── */
+.sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.42);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: overlayFadeIn .22s ease;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤768px) & Tablet (769px–1024px)
+══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Sidebar becomes a fixed overlay panel */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.22,1,.36,1);
+    box-shadow: 6px 0 32px rgba(0,0,0,.15);
+  }
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  /* Show close button inside the sidebar */
+  .sidebar-close {
+    display: flex;
+  }
+}

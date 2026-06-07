@@ -1,0 +1,85 @@
+/* ═══════════════════════════════════════
+   MODAL — MEEREO Design System
+   Premium, sobre, noir/blanc/gris
+═══════════════════════════════════════ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 99995;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalOverlayIn .18s ease;
+}
+@keyframes modalOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: var(--surface-1, #fff);
+  border: 1px solid var(--border-subtle, rgba(0,0,0,.06));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,.18);
+  animation: modalIn .2s cubic-bezier(.22,1,.36,1);
+  overflow: hidden;
+}
+.modal-box.modal-wide { max-width: 640px; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.modal-header {
+  padding: 20px 24px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle, #f0f0f0);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx, #1d1d1f);
+  letter-spacing: -.2px;
+}
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, #e5e5e5);
+  background: var(--surface-1, #fff);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--t3, #777);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.modal-close:hover {
+  background: var(--s2, #f3f4f5);
+  color: var(--tx, #1d1d1f);
+}
+
+.modal-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-subtle, #f0f0f0);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}

@@ -1,0 +1,35 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  background: #ffffff;
+}
+.page-wrap {
+  flex: 1;
+  overflow: hidden;
+}
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 28px 36px 80px;
+}
+
+@media (max-width: 768px) {
+  .scroll {
+    padding: 16px 16px 60px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .scroll {
+    padding: 20px 24px 60px;
+  }
+}

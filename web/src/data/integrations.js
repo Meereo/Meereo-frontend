@@ -1,0 +1,16 @@
+export const INTEGRATIONS_DATA = [
+  { id: 'int1', nom: 'Autodesk Revit', desc: 'Synchronisation BIM & maquette numerique', actif: true, cat: 'BIM', logo: 'https://img.icons8.com/color/96/autodesk-revit.png' },
+  { id: 'int7', nom: 'ArchiCAD', desc: 'Export plans DWG & IFC', actif: false, cat: 'BIM', logo: 'https://img.icons8.com/color/96/archicad.png' },
+  { id: 'int2', nom: 'Google Drive', desc: 'Stockage & partage documents', actif: true, cat: 'Stockage', logo: 'https://img.icons8.com/color/96/google-drive.png' },
+  { id: 'int10', nom: 'Dropbox', desc: 'Sauvegarde automatique', actif: false, cat: 'Stockage', logo: 'https://img.icons8.com/color/96/dropbox.png' },
+  { id: 'int3', nom: 'Slack', desc: 'Notifications equipe en temps reel', actif: true, cat: 'Communication', logo: 'https://img.icons8.com/color/96/slack-new.png' },
+  { id: 'int8', nom: 'WhatsApp Business', desc: 'Communication client & prestataires', actif: false, cat: 'Communication', logo: 'https://img.icons8.com/color/96/whatsapp.png' },
+  { id: 'int11', nom: 'Microsoft Teams', desc: 'Visioconference & collaboration', actif: false, cat: 'Communication', logo: 'https://img.icons8.com/color/96/microsoft-teams.png' },
+  { id: 'int4', nom: 'MS Project', desc: 'Planning Gantt & suivi', actif: false, cat: 'Planning', logo: 'https://img.icons8.com/color/96/ms-project.png' },
+  { id: 'int5', nom: 'Wave', desc: 'Paiements mobile money', actif: true, cat: 'Paiements', logo: 'https://img.icons8.com/color/96/wave.png' },
+  { id: 'int6', nom: 'Orange Money', desc: 'Mobile money CI', actif: true, cat: 'Paiements', logo: 'https://img.icons8.com/color/96/orange.png' },
+  { id: 'int12', nom: 'MTN MoMo', desc: 'Mobile money', actif: false, cat: 'Paiements', logo: 'https://img.icons8.com/color/96/mtn.png' },
+  { id: 'int9', nom: 'Sage Comptabilite', desc: 'Export comptable automatique', actif: false, cat: 'Finance', logo: 'https://img.icons8.com/color/96/sage.png' },
+  { id: 'int13', nom: 'QuickBooks', desc: 'Facturation & comptabilite', actif: false, cat: 'Finance', logo: 'https://img.icons8.com/color/96/quickbooks.png' },
+  { id: 'int14', nom: 'Google Calendar', desc: 'Synchronisation agenda', actif: true, cat: 'Planning', logo: 'https://img.icons8.com/color/96/google-calendar.png' },
+]
