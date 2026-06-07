@@ -69,7 +69,7 @@ const computeSmartProgress = (project) => {
   return 0
 }
 
-// getMemberPhoto and PROS_DIRECTORY moved inside component to use merged data (see useMemo below)
+// getMemberPhoto defined inside component to use merged data
 
 const ProAvatar = ({ nom, size }) => {
   const av = getEntrepriseAvatar(nom)
@@ -231,26 +231,21 @@ export default function ClientApp() {
     const match = mergedIntervenants.find(i => i.nom?.toLowerCase().includes(lastName) && i.photo)
     return match?.photo || null
   }
-  const PROS_DIRECTORY = useMemo(() => {
-    const fromStore = mergedIntervenants.map(i => ({ id: i.id, nom: i.nom, metier: i.role || '', ville: i.ville || '', note: i.note || 0, verified: true, specialite: i.specialite || '' }))
-    // Demo professionals for annuaire (visible to all clients)
-    const demo = [
-      { id: 'pro_1', nom: 'Koné Architecture', metier: 'Architecte', ville: 'Abidjan, Cocody', note: 4.8, verified: true, specialite: 'Résidentiel haut standing', projets: 34, color: '#2563EB' },
-      { id: 'pro_2', nom: 'BTP Ivoire Construction', metier: 'Gros-oeuvre', ville: 'Abidjan, Marcory', note: 4.5, verified: true, specialite: 'Gros œuvre & structure béton', projets: 67, color: '#DC2626' },
-      { id: 'pro_3', nom: 'Diallo & Partners BET', metier: 'BET Structure', ville: 'Abidjan, Plateau', note: 4.7, verified: true, specialite: 'Études techniques & calcul', projets: 28, color: '#7C3AED' },
-      { id: 'pro_4', nom: 'ElectriPro CI', metier: 'Electricite', ville: 'Abidjan, Yopougon', note: 4.3, verified: true, specialite: 'CFO/CFA & courants faibles', projets: 41, color: '#F59E0B' },
-      { id: 'pro_5', nom: 'Hydrotech Plomberie', metier: 'Plomberie', ville: 'Abidjan, Riviera', note: 4.6, verified: true, specialite: 'Plomberie sanitaire & AEP', projets: 23, color: '#0891B2' },
-      { id: 'pro_6', nom: 'ACI Design Intérieur', metier: 'Designer interieur', ville: 'Abidjan, Zone 4', note: 4.9, verified: true, specialite: 'Aménagement luxe & hôtellerie', projets: 19, color: '#BE185D' },
-      { id: 'pro_7', nom: 'Traoré Menuiseries', metier: 'Menuiseries', ville: 'Abidjan, Abobo', note: 4.2, verified: false, specialite: 'Menuiseries alu & bois', projets: 55, color: '#92400E' },
-      { id: 'pro_8', nom: 'CVC Afrique', metier: 'CVC', ville: 'Abidjan, Cocody', note: 4.4, verified: true, specialite: 'Climatisation & ventilation', projets: 31, color: '#6366F1' },
-      { id: 'pro_9', nom: 'Géomètres Associés', metier: 'Geometre', ville: 'Abidjan, Plateau', note: 4.1, verified: true, specialite: 'Topographie & bornage', projets: 48, color: '#4338CA' },
-      { id: 'pro_10', nom: 'VRD Solutions', metier: 'VRD', ville: 'Abidjan, Bingerville', note: 4.3, verified: true, specialite: 'Voirie & réseaux divers', projets: 36, color: '#16A34A' },
-      { id: 'pro_11', nom: 'OPC Coordination', metier: 'OPC', ville: 'Abidjan, Cocody', note: 4.7, verified: true, specialite: 'Pilotage & coordination chantier', projets: 22, color: '#0F766E' },
-      { id: 'pro_12', nom: 'Façades Premium CI', metier: 'Facades', ville: 'Abidjan, Marcory', note: 4.0, verified: false, specialite: 'Ravalement & murs-rideaux', projets: 15, color: '#64748B' },
-    ]
-    const storeIds = new Set(fromStore.map(p => p.id))
-    return [...fromStore, ...demo.filter(d => !storeIds.has(d.id))]
-  }, [mergedIntervenants])
+  // Real professionals from the API (type=pro with metier + ville completed)
+  const [apiPros, setApiPros] = useState([])
+  useEffect(() => {
+    api.professionals.getAll()
+      .then(data => setApiPros((data || []).map(u => ({
+        id: u.id,
+        nom: u.company || u.name || '',
+        metier: u.metier || '',
+        ville: u.ville || '',
+        note: 0,
+        verified: u.verified || false,
+        avatar: u.avatar || null,
+      }))))
+      .catch(() => {})
+  }, [])
   // AO client
   const [showProDirectory, setShowProDirectory] = useState(false)
   const [dirSearch, setDirSearch] = useState('')
@@ -325,7 +320,7 @@ export default function ClientApp() {
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }
   const labelStyle = { fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }
 
-  const filteredPros = PROS_DIRECTORY.filter(p => {
+  const filteredPros = apiPros.filter(p => {
     const metierOk = proMetier === 'all' || p.metier === proMetier
     const q = proSearch.toLowerCase()
     return metierOk && (!q || (p.nom + p.metier + p.ville).toLowerCase().includes(q))
@@ -1335,7 +1330,7 @@ export default function ClientApp() {
       })()}
 
       {/* ═══ ANNUAIRE PROFESSIONNELS — composant partagé ═══ */}
-      <ProDirectory open={showProDirectory} onClose={() => setShowProDirectory(false)} initialSearch={dirSearch} extraPros={PROS_DIRECTORY} />
+      <ProDirectory open={showProDirectory} onClose={() => setShowProDirectory(false)} initialSearch={dirSearch} />
 
       {/* Search dropdown — rendered as portal to escape topbar stacking context */}
       {topSearchOpen && topSearch.trim().length >= 2 && createPortal(
@@ -1344,7 +1339,7 @@ export default function ClientApp() {
           {(() => {
             const rect = searchBarRef.current?.getBoundingClientRect()
             if (!rect) return null
-            const results = PROS_DIRECTORY.filter(p => {
+            const results = apiPros.filter(p => {
               const metierOk = proMetier === 'all' || p.metier === proMetier
               return metierOk && (p.nom + p.metier + p.ville).toLowerCase().includes(topSearch.toLowerCase())
             }).slice(0, 6)

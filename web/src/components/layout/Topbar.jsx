@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Star, Check } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
-import { useMergedData } from '../../hooks/useMergedData'
 import ProDirectory from '../shared/ProDirectory'
 import NotifBell from '../shared/NotifBell'
 import UserMenu from '../shared/UserMenu'
@@ -35,25 +34,8 @@ const PAGE_NAMES = {
 
 const METIERS = ['Architecte', 'BET Structure', 'BET Fluides', 'Gros-oeuvre', 'Electricite', 'Plomberie', 'CVC', 'Menuiseries', 'Facades', 'Second-oeuvre', 'VRD', 'Economiste', 'OPC', 'Geometre', 'Designer interieur']
 
-// Demo professionals — fallback when API returns no results
-const DEMO_PROS = [
-  { id: 'pro_1', nom: 'Koné Architecture', metier: 'Architecte', ville: 'Abidjan, Cocody', note: 4.8, verified: true, specialite: 'Résidentiel haut standing', projets: 34 },
-  { id: 'pro_2', nom: 'BTP Ivoire Construction', metier: 'Gros-oeuvre', ville: 'Abidjan, Marcory', note: 4.5, verified: true, specialite: 'Gros œuvre & structure béton', projets: 67 },
-  { id: 'pro_3', nom: 'Diallo & Partners BET', metier: 'BET Structure', ville: 'Abidjan, Plateau', note: 4.7, verified: true, specialite: 'Études techniques & calcul', projets: 28 },
-  { id: 'pro_4', nom: 'ElectriPro CI', metier: 'Electricite', ville: 'Abidjan, Yopougon', note: 4.3, verified: true, specialite: 'CFO/CFA & courants faibles', projets: 41 },
-  { id: 'pro_5', nom: 'Hydrotech Plomberie', metier: 'Plomberie', ville: 'Abidjan, Riviera', note: 4.6, verified: true, specialite: 'Plomberie sanitaire & AEP', projets: 23 },
-  { id: 'pro_6', nom: 'ACI Design Intérieur', metier: 'Designer interieur', ville: 'Abidjan, Zone 4', note: 4.9, verified: true, specialite: 'Aménagement luxe & hôtellerie', projets: 19 },
-  { id: 'pro_7', nom: 'Traoré Menuiseries', metier: 'Menuiseries', ville: 'Abidjan, Abobo', note: 4.2, verified: false, specialite: 'Menuiseries alu & bois', projets: 55 },
-  { id: 'pro_8', nom: 'CVC Afrique', metier: 'CVC', ville: 'Abidjan, Cocody', note: 4.4, verified: true, specialite: 'Climatisation & ventilation', projets: 31 },
-  { id: 'pro_9', nom: 'Géomètres Associés', metier: 'Geometre', ville: 'Abidjan, Plateau', note: 4.1, verified: true, specialite: 'Topographie & bornage', projets: 48 },
-  { id: 'pro_10', nom: 'VRD Solutions', metier: 'VRD', ville: 'Abidjan, Bingerville', note: 4.3, verified: true, specialite: 'Voirie & réseaux divers', projets: 36 },
-  { id: 'pro_11', nom: 'OPC Coordination', metier: 'OPC', ville: 'Abidjan, Cocody', note: 4.7, verified: true, specialite: 'Pilotage & coordination chantier', projets: 22 },
-  { id: 'pro_12', nom: 'Façades Premium CI', metier: 'Facades', ville: 'Abidjan, Marcory', note: 4.0, verified: false, specialite: 'Ravalement & murs-rideaux', projets: 15 },
-]
-
 export default function Topbar({ activePage, onOpenSidebar }) {
   const { store } = useMeereo()
-  const { intervenants: mergedInter } = useMergedData()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchType, setSearchType] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -63,14 +45,6 @@ export default function Topbar({ activePage, onOpenSidebar }) {
   const searchRef = useRef(null)
   const debounceRef = useRef(null)
 
-  // Build directory from store + demo — used as extraPros for ProDirectory overlay
-  const prosDirectory = (() => {
-    const fromStore = (mergedInter || []).map(i => ({ id: i.id, nom: i.nom, metier: i.role || '', ville: i.ville || '', note: i.note || 0, verified: true }))
-    const fromIntervenants = (store.intervenants || []).map(i => ({ id: i.id, nom: i.nom, metier: i.role || i.mission || '', ville: '', note: 0, verified: false }))
-    const seen = new Set([...fromStore.map(p => p.id), ...fromIntervenants.map(p => p.id)])
-    return [...fromStore, ...fromIntervenants.filter(i => !new Set(fromStore.map(p => p.id)).has(i.id)), ...DEMO_PROS.filter(d => !seen.has(d.id))]
-  })()
-
   // Close on outside click
   useEffect(() => {
     const handler = (e) => { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false) }
@@ -78,28 +52,20 @@ export default function Topbar({ activePage, onOpenSidebar }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Debounced server search — fires 300ms after user stops typing, falls back to demo on error/empty
+  // Debounced server search — fires 300ms after user stops typing
   const runSearch = useCallback((q, metier) => {
     clearTimeout(debounceRef.current)
     if (!q || q.trim().length < 2) { setSearchResults([]); return }
     debounceRef.current = setTimeout(async () => {
-      const localFallback = (dir) => {
-        const term = q.trim().toLowerCase()
-        const mt = metier || ''
-        return dir.filter(p => {
-          const mOk = !mt || p.metier === mt
-          return mOk && (p.nom + p.metier + (p.ville || '') + (p.specialite || '')).toLowerCase().includes(term)
-        }).slice(0, 8)
-      }
       try {
         const results = await api.professionals.search(q.trim(), metier || undefined)
         const mapped = (results || []).map(u => ({ id: u.id, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false })).filter(p => p.nom)
-        setSearchResults(mapped.length ? mapped : localFallback(prosDirectory))
+        setSearchResults(mapped)
       } catch {
-        setSearchResults(localFallback(prosDirectory))
+        setSearchResults([])
       }
     }, 300)
-  }, [prosDirectory])
+  }, [])
 
   const filtered = searchResults
 
@@ -186,7 +152,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
       </div>
 
       {/* Pro Directory overlay — same component as client */}
-      <ProDirectory open={showDirectory} onClose={() => setShowDirectory(false)} initialSearch={dirSearch} extraPros={prosDirectory} />
+      <ProDirectory open={showDirectory} onClose={() => setShowDirectory(false)} initialSearch={dirSearch} />
     </div>
   )
 }

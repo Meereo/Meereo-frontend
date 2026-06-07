@@ -1,23 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Briefcase, Star, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { METIERS_AO } from '../../data/ao'
-
-const DEMO_PROS = [
-  { id: 'pro_1', nom: 'Koné Architecture', metier: 'Architecte', ville: 'Abidjan, Cocody', note: 4.8, verified: true, specialite: 'Résidentiel haut standing', projets: 34, color: '#2563EB' },
-  { id: 'pro_2', nom: 'BTP Ivoire Construction', metier: 'Gros-oeuvre', ville: 'Abidjan, Marcory', note: 4.5, verified: true, specialite: 'Gros œuvre & structure béton', projets: 67, color: '#DC2626' },
-  { id: 'pro_3', nom: 'Diallo & Partners BET', metier: 'BET Structure', ville: 'Abidjan, Plateau', note: 4.7, verified: true, specialite: 'Études techniques & calcul', projets: 28, color: '#7C3AED' },
-  { id: 'pro_4', nom: 'ElectriPro CI', metier: 'Electricite', ville: 'Abidjan, Yopougon', note: 4.3, verified: true, specialite: 'CFO/CFA & courants faibles', projets: 41, color: '#F59E0B' },
-  { id: 'pro_5', nom: 'Hydrotech Plomberie', metier: 'Plomberie', ville: 'Abidjan, Riviera', note: 4.6, verified: true, specialite: 'Plomberie sanitaire & AEP', projets: 23, color: '#0891B2' },
-  { id: 'pro_6', nom: 'ACI Design Intérieur', metier: 'Designer interieur', ville: 'Abidjan, Zone 4', note: 4.9, verified: true, specialite: 'Aménagement luxe & hôtellerie', projets: 19, color: '#BE185D' },
-  { id: 'pro_7', nom: 'Traoré Menuiseries', metier: 'Menuiseries', ville: 'Abidjan, Abobo', note: 4.2, verified: false, specialite: 'Menuiseries alu & bois', projets: 55, color: '#92400E' },
-  { id: 'pro_8', nom: 'CVC Afrique', metier: 'CVC', ville: 'Abidjan, Cocody', note: 4.4, verified: true, specialite: 'Climatisation & ventilation', projets: 31, color: '#6366F1' },
-  { id: 'pro_9', nom: 'Géomètres Associés', metier: 'Geometre', ville: 'Abidjan, Plateau', note: 4.1, verified: true, specialite: 'Topographie & bornage', projets: 48, color: '#4338CA' },
-  { id: 'pro_10', nom: 'VRD Solutions', metier: 'VRD', ville: 'Abidjan, Bingerville', note: 4.3, verified: true, specialite: 'Voirie & réseaux divers', projets: 36, color: '#16A34A' },
-  { id: 'pro_11', nom: 'OPC Coordination', metier: 'OPC', ville: 'Abidjan, Cocody', note: 4.7, verified: true, specialite: 'Pilotage & coordination chantier', projets: 22, color: '#0F766E' },
-  { id: 'pro_12', nom: 'Façades Premium CI', metier: 'Facades', ville: 'Abidjan, Marcory', note: 4.0, verified: false, specialite: 'Ravalement & murs-rideaux', projets: 15, color: '#64748B' },
-]
+import { api } from '../../services/api/client'
 
 function Avatar({ nom, size = 44 }) {
   const av = getEntrepriseAvatar(nom)
@@ -33,27 +19,49 @@ function Avatar({ nom, size = 44 }) {
 /**
  * ProDirectory — Overlay annuaire des professionnels.
  * Shared across client, pro, fournisseur.
+ * Loads real users from the API (type=pro, metier + ville filled in).
  * @param {boolean} open
  * @param {Function} onClose
  * @param {string} initialSearch
- * @param {Array} extraPros — additional pros from store to merge with demo
  */
-export default function ProDirectory({ open, onClose, initialSearch = '', extraPros = [] }) {
+export default function ProDirectory({ open, onClose, initialSearch = '' }) {
   const navigate = useNavigate()
   const [search, setSearch] = useState(initialSearch)
   const [metier, setMetier] = useState('all')
+  const [pros, setPros] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    api.professionals.getAll()
+      .then(data => setPros(data || []))
+      .catch(() => setPros([]))
+      .finally(() => setLoading(false))
+  }, [open])
+
+  useEffect(() => {
+    if (open) setSearch(initialSearch)
+  }, [open, initialSearch])
 
   if (!open) return null
 
-  const allPros = (() => {
-    const ids = new Set(extraPros.map(p => p.id))
-    return [...extraPros, ...DEMO_PROS.filter(d => !ids.has(d.id))]
-  })()
+  // Normalise: API returns { name, company, metier, ville, verified, avatar }
+  // Display name = company if set, else name
+  const allPros = pros.map(u => ({
+    id: u.id,
+    nom: u.company || u.name || '',
+    metier: u.metier || '',
+    ville: u.ville || '',
+    note: 0,
+    verified: u.verified || false,
+    avatar: u.avatar || null,
+  }))
 
   const filtered = allPros.filter(p => {
     const metierOk = metier === 'all' || p.metier === metier
     const q = search.toLowerCase()
-    return metierOk && (!q || (p.nom + p.metier + p.ville + (p.specialite || '')).toLowerCase().includes(q))
+    return metierOk && (!q || (p.nom + p.metier + p.ville).toLowerCase().includes(q))
   })
 
   return (
@@ -63,7 +71,9 @@ export default function ProDirectory({ open, onClose, initialSearch = '', extraP
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>Annuaire des professionnels</div>
-            <div style={{ fontSize: 11.5, color: 'var(--t3)', marginTop: 2 }}>{allPros.length} professionnel{allPros.length > 1 ? 's' : ''} sur MEEREO</div>
+            <div style={{ fontSize: 11.5, color: 'var(--t3)', marginTop: 2 }}>
+              {loading ? 'Chargement…' : `${allPros.length} professionnel${allPros.length > 1 ? 's' : ''} sur MEEREO`}
+            </div>
           </div>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
         </div>
@@ -80,11 +90,19 @@ export default function ProDirectory({ open, onClose, initialSearch = '', extraP
         </div>
         {/* Cards */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--t3)', fontSize: 13 }}>Chargement…</div>
+          ) : filtered.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
               <div style={{ marginBottom: 12, opacity: .3 }}><Briefcase size={32}/></div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun résultat</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)' }}>Modifiez vos critères de recherche.</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>
+                {allPros.length === 0 ? 'Aucun professionnel inscrit' : 'Aucun résultat'}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--t3)' }}>
+                {allPros.length === 0
+                  ? 'Les professionnels apparaissent ici dès qu\'ils complètent leur profil (métier + ville).'
+                  : 'Modifiez vos critères de recherche.'}
+              </div>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>

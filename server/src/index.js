@@ -127,23 +127,33 @@ app.use('/api/photos', createCrudRouter(prisma.photo, { modelName: 'photo' }))
 // ═══════════════════════════════════════
 
 // GET /api/professionals?q=xxx&metier=xxx
-// Full-text search on registered pro users (type='pro') — nom, métier, ville.
+// Returns only pro users with a completed profile (metier + ville filled in).
 app.get('/api/professionals', async (req, res) => {
   try {
     const { q, metier } = req.query
-    const where = { type: 'pro' }
-    if (metier && metier !== 'all') where.metier = metier
+
+    // Base: only pros with a completed profile
+    const andClauses = [
+      { metier: { not: null } },
+      { metier: { not: '' } },
+      { ville:  { not: null } },
+      { ville:  { not: '' } },
+    ]
+
+    if (metier && metier !== 'all') andClauses.push({ metier })
+
     if (q && q.trim()) {
       const term = q.trim()
-      where.OR = [
+      andClauses.push({ OR: [
         { name:    { contains: term, mode: 'insensitive' } },
         { company: { contains: term, mode: 'insensitive' } },
         { metier:  { contains: term, mode: 'insensitive' } },
         { ville:   { contains: term, mode: 'insensitive' } },
-      ]
+      ]})
     }
+
     const pros = await prisma.user.findMany({
-      where,
+      where: { type: 'pro', AND: andClauses },
       select: { id: true, name: true, company: true, metier: true, ville: true, verified: true, avatar: true, type: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     })
