@@ -1,0 +1,554 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════
+//  USERS & AUTH
+// ═══════════════════════════════════════
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  avatar    String?
+  type      String   @default("pro") // pro | client | fournisseur
+  company   String?
+  metier    String?  // métier principal (ex: Architecte, BET Structure…)
+  ville     String?  // ville / localisation
+  wallet    Float    @default(0)
+  emailVerified         Boolean   @default(false)
+  verificationCode      String?
+  verificationExpiresAt DateTime?
+  verified              Boolean   @default(false) // MEEREO badge verification
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects       Project[]
+  aos            AO[]
+  offers         Offer[]
+  documents      Document[]
+  notifications  Notification[]
+  activities     Activity[]
+  products       Product[]
+  transactions   Transaction[]
+  projectMembers ProjectMember[]
+  messages       Message[]
+  rapports       Rapport[]
+  commandes      Commande[]
+  photos         Photo[]
+  paymentOrders  PaymentOrder[]  @relation("PayerOrders")
+  kaiEntitlement KaiEntitlement?
+}
+
+// ═══════════════════════════════════════
+//  PROJECTS
+// ═══════════════════════════════════════
+
+model Project {
+  id          String   @id @default(cuid())
+  nom         String
+  type        String?
+  phase       String   @default("ESQUISSE")
+  budget      String?
+  adresse     String?
+  livraison   String?
+  priorite    String   @default("Normale")
+  description String?
+  avancement    Int      @default(0)
+  status        String   @default("active")
+  kanbanStatus  String   @default("todo") // todo | in_progress | done
+  img         String?
+  client      String?
+  clientEmail String?
+  color       String?
+  clientId    String?
+  sourceAoId  String?
+  etapes      Json?       // Array of { n, label, done, current }
+  equipe      Json?       // Array of { nom, role, statut }
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  aos          AO[]
+  markets      Market[]
+  documents    Document[]
+  members      ProjectMember[]
+  events       Event[]
+  decisions    Decision[]
+  tasks        Task[]
+  commandes    Commande[]
+  rapports     Rapport[]
+  transactions Transaction[]
+  paymentOrders PaymentOrder[]
+  photos       Photo[]
+  clients      Client[]
+  intervenants Intervenant[]
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   @default("member")
+  userName  String?
+  userEmail String?
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+}
+
+// ═══════════════════════════════════════
+//  CLIENTS & INTERVENANTS
+// ═══════════════════════════════════════
+
+model Client {
+  id        String   @id @default(cuid())
+  nom       String
+  type      String?
+  statut    String   @default("actif")
+  contact   String?
+  poste     String?
+  email     String?
+  tel       String?
+  ville     String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Intervenant {
+  id         String   @id @default(cuid())
+  nom        String
+  role       String?
+  specialite String?
+  email      String?
+  tel        String?
+  photo      String?
+  statut     String   @default("actif")
+  entreprise Boolean  @default(false)
+  ville      String?
+  note       Float    @default(0)
+  nbAvis     Int      @default(0)
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  AO / OFFRES / MARCHÉS
+// ═══════════════════════════════════════
+
+model AO {
+  id               String   @id @default(cuid())
+  title            String
+  description      String?
+  budget           String?
+  lot              String?
+  status           String   @default("open")
+  ownerUserId      String?
+  ownerProfileType String?  // pro | client | fournisseur
+  requestedTrade   String?  // métier ciblé (ex: Architecte)
+  visibilityScope  String   @default("public") // public | trade_only | restricted
+  createdByClient  Boolean  @default(false)
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id])
+  owner            User?    @relation(fields: [ownerUserId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  offers Offer[]
+}
+
+model Offer {
+  id           String   @id @default(cuid())
+  titre        String
+  entreprise   String?
+  montant      String?
+  delai        String?
+  lot          String?
+  note         String?
+  message      String?
+  statut       String   @default("pending")
+  aoId         String?
+  ao           AO?      @relation(fields: [aoId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  supplierId   String?
+  supplierRole String?
+  acceptedBy   String?
+  acceptedAt   DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model Market {
+  id          String   @id @default(cuid())
+  titre       String?
+  entreprise  String
+  lot         String?
+  montant     String?
+  statut      String   @default("signed")
+  avancement  Int      @default(0)
+  delai       String?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  offerId     String?
+  aoId        String?
+  clientId    String?
+  supplierId  String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions  Transaction[]
+  paymentOrders PaymentOrder[]
+  milestones    Milestone[]
+}
+
+// ═══════════════════════════════════════
+//  DOCUMENTS / TASKS / EVENTS
+// ═══════════════════════════════════════
+
+model Document {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("general")
+  url       String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  PHOTOS
+// ═══════════════════════════════════════
+
+model Photo {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("todo")
+  priority    String    @default("normale")
+  progress    Int       @default(0)
+  dueDate     DateTime?
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id])
+  marketId    String?
+  assignedTo  String?
+  validatedBy String?
+  validatedAt DateTime?
+  rejectedBy  String?
+  rejectedAt  DateTime?
+  comment     String?
+  createdAt   DateTime  @default(now())
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  titre     String
+  date      String
+  heure     String?
+  type      String?
+  color     String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Decision {
+  id         String   @id @default(cuid())
+  titre      String
+  desc       String?
+  statut     String   @default("pending")
+  urgent     Boolean  @default(false)
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id])
+  visibility String   @default("client_visible")
+  createdAt  DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  MARKETPLACE / PRODUCTS / COMMANDES
+// ═══════════════════════════════════════
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  category    String?
+  price       Float?
+  unit        String   @default("unité")
+  photoUrl    String?
+  description String?
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Commande {
+  id        String   @id @default(cuid())
+  reference String?
+  statut    String   @default("confirmee")
+  total     Float    @default(0)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  FOURNISSEURS
+// ═══════════════════════════════════════
+
+model Fournisseur {
+  id         String   @id @default(cuid())
+  nom        String
+  specialite String?
+  ville      String?
+  tel        String?
+  email      String?
+  statut     String   @default("actif")
+  verified   Boolean  @default(false)
+  note       Float    @default(0)
+  nbAvis     Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  RAPPORTS
+// ═══════════════════════════════════════
+
+model Rapport {
+  id        String   @id @default(cuid())
+  type      String   @default("hebdo")
+  titre     String?
+  statut    String   @default("brouillon")
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  contenu   String?
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  PAIEMENTS / TRANSACTIONS
+// ═══════════════════════════════════════
+
+model Transaction {
+  id        String   @id @default(cuid())
+  type      String   @default("debit")
+  label     String
+  montant   Float    @default(0)
+  statut    String   @default("confirme")
+  provider  String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  marketId  String?
+  market    Market?  @relation(fields: [marketId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  NOTIFICATIONS / ACTIVITIES
+// ═══════════════════════════════════════
+
+model Notification {
+  id     String   @id @default(cuid())
+  msg    String
+  type   String   @default("info")
+  read   Boolean  @default(false)
+  role   String?
+  userId String?
+  user   User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Activity {
+  id     String   @id @default(cuid())
+  action String
+  data   Json?
+  userId String?
+  user   User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  CONVERSATIONS / MESSAGES
+// ═══════════════════════════════════════
+
+model Conversation {
+  id           String    @id @default(cuid())
+  title        String?
+  projectId    String?
+  aoId         String?
+  offerId      String?
+  marketId     String?
+  participants Json?     // Array of userIds
+  lastMessage  String?
+  lastAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  messages Message[]
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  contenu        String
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  createdAt      DateTime      @default(now())
+}
+
+// ═══════════════════════════════════════
+//  COMMISSION WORKFLOW (clé en main)
+// ═══════════════════════════════════════
+
+model Introduction {
+  id            String   @id @default(cuid())
+  projectId     String?
+  clientId      String?
+  structureId   String?
+  structureName String?
+  metier        String?
+  status        String   @default("introduced")
+  introDate     DateTime @default(now())
+  retainedAt    DateTime?
+  source        String   @default("meereo_cle_en_main")
+  createdAt     DateTime @default(now())
+}
+
+model Commission {
+  id               String   @id @default(cuid())
+  introductionId   String?
+  structureId      String?
+  structureName    String?
+  projectId        String?
+  clientId         String?
+  montantBase      Int      @default(0)
+  montantCommission Int     @default(0)
+  rate             Float    @default(0.05)
+  status           String   @default("potential")
+  paidAt           DateTime?
+  createdAt        DateTime @default(now())
+}
+// ═══════════════════════════════════════
+//  PAIEMENTS ESCROW (fintech)
+// ═══════════════════════════════════════
+
+model PaymentOrder {
+  id            String    @id @default(cuid())
+  amount        Float     @default(0)
+  status        String    @default("PAY_INIT")
+  // PAY_INIT | PAY_PENDING | FUNDS_CONFIRMED | HELD_FOR_MILESTONE
+  // PAYOUT_REQUESTED | PAYOUT_DONE | DISPUTE_OPEN | REVERSED
+  rail          String?   // virement | carte | mobile_money
+  label         String?
+  disputeReason String?
+  resolvedAt    DateTime?
+  projectId     String?
+  project       Project?  @relation(fields: [projectId], references: [id])
+  marketId      String?
+  market        Market?   @relation(fields: [marketId], references: [id])
+  payerId       String?
+  payer         User?     @relation("PayerOrders", fields: [payerId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  milestones   Milestone[]
+  proofs       PaymentProof[]
+  validations  PaymentValidation[]
+}
+
+model Milestone {
+  id             String        @id @default(cuid())
+  title          String
+  amount         Float         @default(0)
+  status         String        @default("pending")
+  order          Int           @default(0)
+  marketId       String?
+  market         Market?       @relation(fields: [marketId], references: [id])
+  paymentOrderId String?
+  paymentOrder   PaymentOrder? @relation(fields: [paymentOrderId], references: [id])
+  dueAt          DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime      @default(now())
+}
+
+model PaymentProof {
+  id             String       @id @default(cuid())
+  type           String       @default("document") // document | photo | pv | bon_livraison
+  url            String
+  paymentOrderId String
+  paymentOrder   PaymentOrder @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+  uploadedBy     String?
+  createdAt      DateTime     @default(now())
+}
+
+model PaymentValidation {
+  id             String       @id @default(cuid())
+  validated      Boolean      @default(false)
+  comment        String?
+  paymentOrderId String
+  paymentOrder   PaymentOrder @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+  validatedBy    String?
+  createdAt      DateTime     @default(now())
+}
+
+// ═══════════════════════════════════════
+//  MARKETPLACE CATEGORIES
+// ═══════════════════════════════════════
+
+model MarketplaceCategory {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  label     String
+  ico       String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════
+//  KAI AI ENTITLEMENT
+// ═══════════════════════════════════════
+
+model KaiEntitlement {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier        String    @default("standard") // standard | gold
+  quotaLimit  Int       @default(25)
+  quotaUsed   Int       @default(0)
+  quotaReset  DateTime?
+  goldEndDate DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
