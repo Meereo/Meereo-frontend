@@ -138,6 +138,12 @@ select.form-input, select.inp {
   margin-bottom: 16px;
 }
 .modal-row.single { grid-template-columns: 1fr; }
+
+@media (max-width: 768px) {
+  .modal-row { grid-template-columns: 1fr; gap: 12px; }
+  .kpi-strip { flex-direction: column; background: none; padding: 0; gap: 8px; }
+  .kpi-strip-card { border: 1px solid var(--border-subtle); border-radius: var(--r2); background: var(--surface-1); }
+}
 .form-group { margin-bottom: 18px; }
 .form-group label {
   display: block;
@@ -303,6 +309,26 @@ select.form-input, select.inp {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--t4); }
+
+/* ── Hamburger (mobile sidebar toggle — shared across all layouts) ── */
+.topbar-hamburger {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: var(--s2);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx);
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.topbar-hamburger:hover { background: var(--s3); }
+@media (max-width: 768px) {
+  .topbar-hamburger { display: flex; }
+}
 
 /* ── Skip link (accessibility) ── */
 .skip-link {

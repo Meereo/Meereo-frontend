@@ -294,3 +294,64 @@
 .pp-footer-links a { color: rgba(229,226,225,.4); text-decoration: none; font-size: 12px; transition: color .18s; }
 .pp-footer-links a:hover { color: rgba(229,226,225,.8); }
 .pp-footer-links span { color: rgba(229,226,225,.4); }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile ≤768px / Tablet 769–1024px
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .pp-nav { padding: 0 16px; }
+  .pp-body { padding: 0 16px; }
+
+  /* Metrics — 2 cols */
+  .pp-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1.25rem 1rem;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Two-col — stack */
+  .pp-two-col { grid-template-columns: 1fr; }
+
+  /* Three-col — 1 col */
+  .pp-three-col { grid-template-columns: 1fr; gap: 1rem; }
+
+  /* Portfolio — 2 cols */
+  .pp-portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+  .pp-portfolio-item.pp-feat { grid-column: span 1; aspect-ratio: 1; }
+
+  /* Project row — simplified */
+  .pp-project-row {
+    grid-template-columns: 40px 1fr auto;
+    gap: .5rem;
+    padding: 1rem;
+  }
+  .pp-project-progress,
+  .pp-project-budget { display: none; }
+
+  /* Footer */
+  .pp-footer {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem 16px;
+  }
+  .pp-footer-links { flex-wrap: wrap; justify-content: center; gap: .75rem; }
+
+  /* Sticky CTA */
+  .pp-sticky {
+    left: 16px;
+    right: 16px;
+    transform: none;
+    width: auto;
+    border-radius: 16px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .pp-metrics { grid-template-columns: repeat(2, 1fr); }
+  .pp-three-col { grid-template-columns: repeat(2, 1fr); }
+  .pp-portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+  .pp-two-col { grid-template-columns: 1fr; }
+}

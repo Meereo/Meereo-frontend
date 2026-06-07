@@ -165,3 +165,14 @@
   padding: 48px 20px;
   text-align: center;
 }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .notif-panel {
+    width: calc(100vw - 24px);
+    right: 12px;
+    left: 12px;
+    top: 60px;
+    max-height: 80vh;
+  }
+}

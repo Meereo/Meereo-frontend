@@ -204,6 +204,7 @@ export default function ClientApp() {
   const { conversations: mergedConversations } = useMergedData()
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
   const [page, setPage] = useState('home')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showToastMsg, setShowToastMsg] = useState(null)
   const showToast = msg => { setShowToastMsg(msg); setTimeout(() => setShowToastMsg(null), 2500) }
   // Client-side modal handler — cockpit components call openModal but client space handles differently
@@ -345,8 +346,10 @@ export default function ClientApp() {
 
   return (
     <div className="client-layout">
+      {/* Sidebar overlay (mobile) */}
+      {sidebarOpen && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.42)', zIndex: 199, backdropFilter: 'blur(2px)' }} onClick={() => setSidebarOpen(false)} />}
       {/* Sidebar */}
-      <aside className="client-sb">
+      <aside className={`client-sb${sidebarOpen ? ' sidebar-open' : ''}`}>
         <div className="client-sb-logo">
           <MeereoLogo size={28} />
           <div><div style={{ fontSize: 11, fontWeight: 300, letterSpacing: 3 }}>MEEREO</div><div style={{ fontSize: 8, color: 'var(--t3)', letterSpacing: '.07em', textTransform: 'uppercase', marginTop: 1 }}>Espace Client</div></div>
@@ -368,7 +371,7 @@ export default function ClientApp() {
             <div key={g}>
               <div style={{ fontSize: 8.5, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--t5)', padding: '10px 10px 4px' }}>{g}</div>
               {Object.entries(PAGES).filter(([, v]) => v.group === g).map(([k, v]) => (
-                <button key={k} className={`fourni-ni ${page === k ? 'on' : ''}`} onClick={() => setPage(k)}>
+                <button key={k} className={`fourni-ni ${page === k ? 'on' : ''}`} onClick={() => { setPage(k); setSidebarOpen(false) }}>
                   <span style={{ color: { home:'#191c1d', avancement:'#EA580C', budget:'#16A34A', messages:'#7C3AED', decisions:'#F59E0B', documents:'#0891B2', ao:'#DC2626', offres:'#F59E0B', marches:'#16A34A', marketplace:'#0891B2', fournisseurs:'#2563EB', commandes:'#EA580C', parametres:'#6B7280' }[k] || '#6B7280' }}>{v.icon}</span> {v.label}
                   {v.badge && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: v.badgeColor + '18', color: v.badgeColor }}>{v.badge}</span>}
                 </button>
@@ -393,7 +396,12 @@ export default function ClientApp() {
       {/* Main */}
       <main className="client-main">
         <div className="client-topbar">
-          <span style={{ fontSize: 13, fontWeight: 600 }}>{PAGES[page]?.label || 'Accueil'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button className="topbar-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{PAGES[page]?.label || 'Accueil'}</span>
+          </div>
           {/* Search bar — absolute center so it doesn't shift with title length */}
           <div ref={searchBarRef} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 420, maxWidth: 'calc(100% - 360px)', zIndex: 10 }}>
             <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>

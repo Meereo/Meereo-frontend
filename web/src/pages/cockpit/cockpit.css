@@ -1188,3 +1188,100 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   border-color: var(--border-medium);
   transform: translateX(2px);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile ≤768px / Tablet 769–1024px
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Page header */
+  .ph-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .ph-actions { flex-wrap: wrap; }
+  .ph-title { font-size: 18px; }
+
+  /* KPI grid — 2 cols */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi-card { padding: 16px 18px; }
+  .kpi-value { font-size: 24px; }
+
+  /* Two / three col — single column */
+  .two-col { grid-template-columns: 1fr; gap: 12px; margin-bottom: 14px; }
+  .three-col { grid-template-columns: 1fr; gap: 12px; margin-bottom: 14px; }
+
+  /* Integration grid — 1 col */
+  .int-grid { grid-template-columns: 1fr; }
+
+  /* Form row — stack */
+  .form-row { grid-template-columns: 1fr; }
+
+  /* Split view — stack vertically */
+  .split {
+    flex-direction: column;
+    height: auto;
+    margin: -16px -16px -60px;
+  }
+  .split-left {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 280px;
+  }
+  .split-right { padding: 16px; }
+
+  /* Param split — horizontal tabs on mobile */
+  .param-split {
+    flex-direction: column;
+    height: auto;
+    margin: -16px -16px -60px;
+  }
+  .param-nav {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 4px 8px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 2px;
+  }
+  .param-nav-item {
+    white-space: nowrap;
+    padding: 8px 14px;
+    flex-shrink: 0;
+  }
+  .param-content { padding: 16px; }
+
+  /* Cart drawer — bottom sheet */
+  .cart-drawer {
+    width: 100%;
+    right: 0;
+    left: 0;
+    height: 85vh;
+    top: auto;
+    bottom: 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* Dashboard hero */
+  .dash-hero-v2 { padding: 24px 20px; border-radius: 14px; margin-bottom: 14px; }
+  .dash-hero-v2-title { font-size: 22px; }
+  .dash-hero-v2-meta { gap: 16px; flex-wrap: wrap; }
+
+  /* Messages */
+  .msg-row { max-width: 90%; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* KPI grid — 2 cols */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Three col — 2 cols */
+  .three-col { grid-template-columns: repeat(2, 1fr); }
+
+  /* Int grid — 2 cols */
+  .int-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Split — narrower left panel */
+  .split-left { width: 260px; }
+  .split-right { padding: 20px 24px; }
+}

@@ -56,6 +56,7 @@ const STATUS_COLORS = { pending: 'var(--wrn)', accepted: 'var(--color-info)', de
 
 export default function FournisseurApp() {
   const [view, setView] = useState('dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { store, showToast, updateStore, addProduct } = useMeereo()
   const { format: fmtMoney } = useDevise()
 
@@ -224,7 +225,9 @@ export default function FournisseurApp() {
 
   return (
     <div className="fournisseur-layout">
-      <aside className="fourni-sb">
+      {/* Sidebar overlay (mobile) */}
+      {sidebarOpen && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.42)', zIndex: 199, backdropFilter: 'blur(2px)' }} onClick={() => setSidebarOpen(false)} />}
+      <aside className={`fourni-sb${sidebarOpen ? ' sidebar-open' : ''}`}>
         <div className="fourni-sb-logo">
           <MeereoLogo size={28} />
           <div>
@@ -244,13 +247,13 @@ export default function FournisseurApp() {
         <nav className="fourni-sb-nav">
           <div className="fourni-sb-cat">Activité</div>
           {['dashboard', 'bourse'].map(v => (
-            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
               <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
           <div className="fourni-sb-cat">Marketplace</div>
           {['catalogue', 'marketplace', 'commandes'].map(v => (
-            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
               <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
               {v === 'catalogue' && products.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>{products.length}</span>}
               {v === 'marketplace' && visibleMarketplace.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>{visibleMarketplace.length}</span>}
@@ -259,13 +262,13 @@ export default function FournisseurApp() {
           ))}
           <div className="fourni-sb-cat">Finance</div>
           {['paiements', 'stats'].map(v => (
-            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
               <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
           <div className="fourni-sb-cat">Compte</div>
           {['parametres'].map(v => (
-            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+            <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
               <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
@@ -287,8 +290,13 @@ export default function FournisseurApp() {
 
       <main className="fourni-page">
         {/* Header — sticky, toujours visible */}
-        <div style={{ padding: '0 36px', height: 52, maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50, background: '#fff', borderBottom: '1px solid var(--border-subtle)' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-.01em' }}>{VIEW_LABELS[view]}</span>
+        <div style={{ padding: '0 24px', height: 52, maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50, background: '#fff', borderBottom: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button className="topbar-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-.01em' }}>{VIEW_LABELS[view]}</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <NotifBell />
             <UserMenu onNavigate={setView} />

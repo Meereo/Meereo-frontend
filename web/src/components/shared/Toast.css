@@ -20,6 +20,22 @@
   animation: toastIn .25s ease both;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .toast-container {
+    bottom: 16px;
+    width: calc(100% - 32px);
+    left: 16px;
+    transform: none;
+  }
+  .toast-item {
+    white-space: normal;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

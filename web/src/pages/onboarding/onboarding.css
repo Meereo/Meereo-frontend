@@ -1595,3 +1595,41 @@
 }
 .wiz-nav .ob-btn-out { flex: 2; min-width: 0; font-size: 13.5px; padding: 14px 24px; }
 .wiz-nav .ob-btn-blk { flex: 3; min-width: 0; font-size: 13.5px; padding: 14px 24px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile ≤768px / Tablet 769–1024px
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Auth & type screens — stack panels */
+  .ob-screen { flex-direction: column; }
+  .ob-panel-dark {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 20px 20px;
+    min-height: auto;
+  }
+  .ob-panel-white {
+    border-left: none;
+    border-top: 1px solid var(--border-card);
+    padding: 24px 20px;
+    min-height: auto;
+    align-items: flex-start;
+  }
+
+  /* Hide stats on mobile dark panel — save space */
+  .ob-stats { display: none; }
+
+  .ob-hero-title { font-size: 22px; margin-bottom: 8px; }
+  .ob-hero-sub { font-size: 13px; margin-bottom: 20px; }
+
+  /* Wizard — stack panels */
+  .wiz-panel-left { width: 100%; padding: 20px; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+  .wiz-bourse-stats { grid-template-columns: repeat(2, 1fr); }
+  .wiz-reassurance { grid-template-columns: 1fr; }
+  .wiz-portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ob-panel-dark { width: 360px; padding: 28px 32px; }
+}

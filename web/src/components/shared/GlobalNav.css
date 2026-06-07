@@ -64,3 +64,15 @@
 }
 .global-nav-link:hover { background: rgba(255,255,255,.12); }
 .global-nav-link.active { background: rgba(255,255,255,.18); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .global-nav-widget {
+    bottom: 12px;
+    right: 12px;
+  }
+  .global-nav-link {
+    width: 32px;
+    height: 32px;
+  }
+}

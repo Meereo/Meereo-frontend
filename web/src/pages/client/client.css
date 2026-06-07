@@ -110,3 +110,31 @@
 
 /* Page enter animation */
 .cl-home-fadein { animation: clFadeIn .35s cubic-bezier(.22,1,.36,1) both; }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile ≤768px / Tablet 769–1024px
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* Sidebar — fixed overlay on mobile */
+  .client-sb {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.22,1,.36,1);
+    box-shadow: 6px 0 32px rgba(0,0,0,.15);
+  }
+  .client-sb.sidebar-open { transform: translateX(0); }
+
+  /* Topbar — compact padding, add room for hamburger */
+  .client-topbar { padding: 0 12px; }
+
+  /* Scroll area — less padding */
+  .client-scroll { padding: 16px 16px 60px; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .client-topbar { padding: 0 20px; }
+  .client-scroll { padding: 20px 24px 60px; }
+}
