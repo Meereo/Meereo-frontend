@@ -1,0 +1,849 @@
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Lock, MailOpen, Package, MessageSquare, Users, Camera, Video, Paperclip, Check, CheckCheck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+// CONVERSATIONS mock removed — store.conversations is source of truth
+import { INTERVENANTS_DATA } from '../../data/intervenants'
+import { CLIENTS_DATA } from '../../data/clients'
+import { ANNUAIRE_PLATEFORME } from '../../data/chantier'
+import { useMeereo } from '../../hooks/useMeereoStore'
+
+// Find avatar for a contact by name
+const getContactAvatar = (nom, projects = []) => {
+  if (!nom) return null
+  // Intervenants with photos
+  const inter = INTERVENANTS_DATA.find(i => i.nom === nom || nom.includes(i.nom.split(' ').pop()))
+  if (inter?.photo) return { type: 'img', value: inter.photo }
+  // Clients — use colored initials
+  const client = CLIENTS_DATA.find(c => c.nom === nom)
+  if (client) {
+    const colors = {}
+    return { type: 'color', value: colors[client.nom] || '#6B7280', initials: client.nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() }
+  }
+  // Partners from annuaire
+  const partner = ANNUAIRE_PLATEFORME.find(p => p.nom === nom)
+  if (partner) return { type: 'color', value: partner.color, initials: nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() }
+  // Group with project name — use project image
+  const proj = projects.find(p => nom.includes(p.nom.split(' ').pop()) || p.nom.includes(nom.split(' ').pop()))
+  if (proj?.img) return { type: 'img', value: proj.img }
+  return null
+}
+
+/**
+ * Build contact list with registration status.
+ * A contact is `registered: true` only if they have a real MEEREO account.
+ * Otherwise they are `registered: false` (invited / pending inscription).
+ *
+ * Registration is determined by:
+ *  - store.users[] contains a matching name or email
+ *  - project.clientInviteStatus === 'accepted'
+ *  - team member.registered === true (explicitly set)
+ */
+const getDirectContacts = (projects = [], store = {}) => {
+  const seen = new Set()
+  const contacts = []
+  // Registered users on the platform (by name, for demo matching)
+  const registeredNames = new Set((store.users || []).filter(u => u && u.status !== 'deleted').map(u => (u.name || '').toLowerCase()))
+  const registeredEmails = new Set((store.users || []).filter(u => u && u.status !== 'deleted').map(u => (u.email || '').toLowerCase()))
+
+  const isRegistered = (nom, email) => {
+    if (registeredNames.has((nom || '').toLowerCase())) return true
+    if (email && registeredEmails.has(email.toLowerCase())) return true
+    return false
+  }
+
+  INTERVENANTS_DATA.forEach(i => {
+    if (!seen.has(i.nom)) {
+      seen.add(i.nom)
+      contacts.push({ nom: i.nom, role: i.role, source: 'equipe', direct: true, registered: i.registered || isRegistered(i.nom, i.email) })
+    }
+  })
+  projects.forEach(p => {
+    if (p.client && !seen.has(p.client)) {
+      seen.add(p.client)
+      const clientRegistered = p.clientInviteStatus === 'accepted' || isRegistered(p.client, p.clientEmail)
+      contacts.push({ nom: p.client, role: 'Maitre d\'ouvrage', source: 'client', direct: true, registered: clientRegistered, email: p.clientEmail })
+    }
+  })
+  projects.forEach(p => (p.equipe || []).forEach(m => {
+    if (!seen.has(m.nom)) {
+      seen.add(m.nom)
+      contacts.push({ nom: m.nom, role: m.role, source: 'prestataire', direct: true, registered: m.registered || isRegistered(m.nom, m.email), email: m.email })
+    }
+  }))
+  return contacts
+}
+const EXTERNAL_PROS = []
+
+const srcLabel = s => s === 'client' ? 'MOA' : s === 'equipe' ? 'Equipe' : s === 'prestataire' ? 'Prestataire' : 'Externe'
+const srcColor = s => s === 'externe' ? '#F59E0B' : s === 'client' ? '#16A34A' : '#7C3AED'
+
+function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearch, setShowParticipants, projects, onAction }) {
+  if (!active) return null
+  const av = getContactAvatar(active.nom, projects)
+  const client = CLIENTS_DATA.find(c => c.nom === active.nom)
+  const isClientPrive = client && client.type === 'Particulier'
+  const isPro = !active.isGroup && !active.pending && !isClientPrive
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+      <div onClick={() => isPro && navigate('/profil')} style={{ width: 40, height: 40, borderRadius: active.isGroup ? 12 : 20, background: av?.type === 'color' ? av.value : (active.color || '#666') + '14', color: av?.type === 'color' ? '#fff' : (active.color || '#666'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: isPro ? 'pointer' : 'default', overflow: 'hidden' }}>
+        {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : av?.type === 'color' ? av.initials : active.avatar}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', cursor: isPro ? 'pointer' : 'default' }} onClick={() => isPro && navigate('/profil')}>{active.nom}</span>
+          {isPro && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate('/profil')}>→ profil</span>}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--t3)', cursor: active.isGroup ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 3 }} onClick={() => active.isGroup && setShowParticipants(true)}>
+          {active.pending ? <><Lock size={10}/> En attente d{'’'}acceptation</>
+            : active.invited ? <><MailOpen size={10}/> Invité — en attente d{'’'}inscription</>
+            : active.isGroup ? (active.participants || []).length + ' participants'
+            : '● En ligne'}
+        </div>
+      </div>
+      {!active.pending && (
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {/* Appel & Visio — uniquement pour les utilisateurs inscrits */}
+          {!active.invited && (
+            <>
+              <button onClick={() => showToast && showToast('Appel en cours...')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Appel">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              </button>
+              <button onClick={() => showToast && showToast('Videoconference...')} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Video">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              </button>
+            </>
+          )}
+          <button onClick={() => { setShowInvite(true); setInviteSearch('') }} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Ajouter">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </button>
+          {/* ─── Menu actions ─── */}
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <button onClick={() => setMenuOpen(v => !v)} style={{ width: 36, height: 36, borderRadius: 10, background: menuOpen ? 'var(--s3)' : 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }} title="Plus d'actions">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            {menuOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 210, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,.12)', overflow: 'hidden', zIndex: 100, animation: 'modalIn .12s ease' }}>
+                {/* Archiver / Restaurer */}
+                {active._archived ? (
+                  <button onClick={() => { setMenuOpen(false); onAction('unarchive', active.id) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 500, color: 'var(--tx)', textAlign: 'left', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                    <span>Restaurer</span>
+                  </button>
+                ) : (
+                  <button onClick={() => { setMenuOpen(false); onAction('archive', active.id) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 500, color: 'var(--tx)', textAlign: 'left', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    <span>Archiver</span>
+                  </button>
+                )}
+                {/* Marquer comme non lu */}
+                <button onClick={() => { setMenuOpen(false); onAction('unread', active.id) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 500, color: 'var(--tx)', textAlign: 'left', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="var(--t3)"/></svg>
+                  <span>Marquer non lu</span>
+                </button>
+                {/* Quitter le groupe — only for groups */}
+                {active.isGroup && (
+                  <button onClick={() => { setMenuOpen(false); onAction('quit', active.id) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 500, color: 'var(--wrn, #F59E0B)', textAlign: 'left', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span>Quitter le groupe</span>
+                  </button>
+                )}
+                {/* Separator */}
+                <div style={{ height: 1, background: 'var(--border-subtle)', margin: '2px 0' }} />
+                {/* Supprimer */}
+                <button onClick={() => { setMenuOpen(false); onAction('delete', active.id) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 500, color: 'var(--err, #EF4444)', textAlign: 'left', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(239,68,68,.04)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  <span>Supprimer pour moi</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function MessagesPage({ showToast }) {
+  const navigate = useNavigate()
+  const { store, updateStore } = useMeereo()
+  const [activeId, setActiveId] = useState(null)
+  const [msgTab, setMsgTab] = useState('all')
+  const [input, setInput] = useState('')
+  const [search, setSearch] = useState('')
+
+  const [showNewConv, setShowNewConv] = useState(false)
+  const [newConvSearch, setNewConvSearch] = useState('')
+  const [showNewGroup, setShowNewGroup] = useState(false)
+  const [groupName, setGroupName] = useState('')
+  const [groupMembers, setGroupMembers] = useState([])
+  const [groupSearch, setGroupSearch] = useState('')
+  const [showInvite, setShowInvite] = useState(false)
+  const [inviteSearch, setInviteSearch] = useState('')
+  const [showParticipants, setShowParticipants] = useState(false)
+  // Conversation management
+  const [confirmAction, setConfirmAction] = useState(null) // { type, convId, convName }
+  const [ctxMenu, setCtxMenu] = useState(null) // { convId, x, y }
+  const ctxRef = useRef(null)
+
+  // Fusionner conversations statiques + store.conversations + messages store
+  const allConversations = useMemo(() => {
+    const storeConvs = store.conversations || []
+    const storeMessages = store.messages || []
+    // Grouper les messages store par conversationId ou par dest
+    const convMap = new Map()
+    storeMessages.forEach(m => {
+      const key = m.conversationId || 'conv_' + m.dest
+      if (!convMap.has(key)) {
+        convMap.set(key, {
+          id: key, nom: m.dest || m.from || 'Contact', type: m.type === 'contact' ? 'client' : 'equipe',
+          avatar: (m.dest || m.from || '?')[0].toUpperCase(), color: '#7C3AED',
+          isGroup: false, participants: [m.from, m.dest].filter(Boolean),
+          dernier: m.texte || m.sujet || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '',
+          unread: 1, pending: false,
+          msgs: [{ side: m.senderRole === 'pro_owner' ? 'out' : 'in', text: m.texte || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' }]
+        })
+      } else {
+        const conv = convMap.get(key)
+        conv.msgs.push({ side: m.senderRole === 'pro_owner' ? 'out' : 'in', text: m.texte || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' })
+        conv.dernier = m.texte || conv.dernier
+      }
+    })
+    const msgConvs = [...convMap.values()]
+    // Fusionner: store.conversations (priorité) > msgConvs
+    // Static CONVERSATIONS mock excluded — store is source of truth
+    const all = []
+    const existingIds = new Set()
+    // 1. Add store conversations first (they may have _archived/_deleted flags)
+    storeConvs.forEach(c => { all.push(c); existingIds.add(c.id) })
+    // 2. Add message-derived conversations
+    msgConvs.forEach(c => { if (!existingIds.has(c.id)) { all.push(c); existingIds.add(c.id) } })
+
+    // Enrich: detect invited status for conversations missing the flag
+    // A contact is invited (not registered) if they don't match any store.users
+    const registeredNames = new Set((store.users || []).filter(u => u && u.status !== 'deleted').map(u => (u.name || '').toLowerCase()))
+    all.forEach(c => {
+      if (c.invited !== undefined || c.isGroup || c.pending) return // already set or not applicable
+      const nom = (c.nom || '').toLowerCase()
+      c.invited = nom ? !registeredNames.has(nom) : false
+    })
+
+    return all
+  }, [store.messages, store.conversations, store.users])
+
+  const visibleConversations = allConversations.filter(c => !c._deleted)
+  const filtered = visibleConversations.filter(c => {
+    if (msgTab === 'archives') return c._archived
+    if (c._archived) return false // hide archived from other tabs
+    const tabOk = msgTab === 'all' || c.type === msgTab || (msgTab === 'groupe' && c.isGroup) || (msgTab === 'demande' && c.pending)
+    const q = search.toLowerCase()
+    return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
+  })
+  const active = activeId ? visibleConversations.find(c => c.id === activeId) : null
+  const nonLus = visibleConversations.filter(c => !c._archived).reduce((s, c) => s + (c.unread || 0), 0)
+  const archivedCount = visibleConversations.filter(c => c._archived).length
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!ctxMenu) return
+    const handler = (e) => { if (ctxRef.current && !ctxRef.current.contains(e.target)) setCtxMenu(null) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [ctxMenu])
+
+  // Handle conversation actions
+  const handleConvAction = (type, convId) => {
+    const conv = allConversations.find(c => c.id === convId)
+    if (!conv) return
+    if (type === 'unread') {
+      updateConv(convId, c => ({ ...c, unread: 1 }))
+      showToast && showToast('Conversation marquée non lue')
+      return
+    }
+    if (type === 'unarchive') {
+      // Direct unarchive (no confirm needed, it's non-destructive)
+      updateConv(convId, c => ({ ...c, _archived: false }))
+      showToast && showToast('Conversation restaurée')
+      return
+    }
+    // Actions that require confirmation
+    setConfirmAction({ type, convId, convName: conv.nom, isGroup: conv.isGroup })
+  }
+
+  const executeAction = () => {
+    if (!confirmAction) return
+    const { type, convId } = confirmAction
+    const isStoreConv = (store.conversations || []).some(c => c.id === convId)
+
+    if (type === 'archive') {
+      if (isStoreConv) {
+        updateConv(convId, c => ({ ...c, _archived: true }))
+      } else {
+        // Legacy conversation — copy to store with archived flag
+        const conv = allConversations.find(c => c.id === convId)
+        if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _archived: true }] }))
+      }
+      if (activeId === convId) setActiveId(null)
+      showToast && showToast('Conversation archivée')
+    } else if (type === 'unarchive') {
+      updateConv(convId, c => ({ ...c, _archived: false }))
+      showToast && showToast('Conversation restaurée')
+    } else if (type === 'delete') {
+      if (isStoreConv) {
+        updateConv(convId, c => ({ ...c, _deleted: true }))
+      } else {
+        const conv = allConversations.find(c => c.id === convId)
+        if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _deleted: true }] }))
+      }
+      if (activeId === convId) setActiveId(null)
+      showToast && showToast('Conversation supprimée')
+    } else if (type === 'quit') {
+      updateConv(convId, c => ({
+        ...c,
+        _deleted: true,
+        msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: 'Vous avez quitté le groupe', time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }) }]
+      }))
+      if (activeId === convId) setActiveId(null)
+      showToast && showToast('Vous avez quitté le groupe')
+    }
+    setConfirmAction(null)
+  }
+
+  const updateConv = (convId, updater) => {
+    updateStore(prev => {
+      const storeConvs = prev.conversations || []
+      const inStore = storeConvs.some(c => c.id === convId)
+      if (inStore) {
+        return { ...prev, conversations: storeConvs.map(c => c.id === convId ? updater(c) : c) }
+      }
+      // Legacy conversation — copy to store with the update applied
+      const legacy = allConversations.find(c => c.id === convId)
+      if (legacy) {
+        return { ...prev, conversations: [...storeConvs, updater({ ...legacy })] }
+      }
+      return prev
+    })
+  }
+
+  const sendMsg = (text, type) => {
+    if (!active || active.pending) return
+    const msg = { side: 'out', text: text || input.trim(), time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }), read: false }
+    if (type) msg.type = type
+    if (!msg.text && !type) return
+    const dernier = type === 'image' ? 'Photo' : type === 'file' ? 'Fichier' : msg.text
+    updateConv(active.id, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier }))
+    setInput('')
+  }
+
+  const handleFileAttach = () => {
+    const inp = document.createElement('input')
+    inp.type = 'file'
+    inp.multiple = true
+    inp.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx'
+    inp.onchange = async (e) => {
+      const files = Array.from(e.target.files || [])
+      if (!files.length || !active) return
+      for (const f of files) {
+        const isImg = f.type.startsWith('image/')
+        const isVid = f.type.startsWith('video/')
+        const time = new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })
+        const msg = { side: 'out', time, read: false }
+
+        if (isImg) {
+          // Compress and embed image
+          try {
+            const { default: compress } = await import('../../utils/compressImage')
+            const url = await compress(f, 800, 0.75)
+            msg.type = 'image'; msg.url = url; msg.text = f.name
+          } catch { msg.type = 'file'; msg.text = f.name }
+        } else if (isVid) {
+          // Read video as data URL (only if small < 10MB)
+          if (f.size < 10 * 1024 * 1024) {
+            const url = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result); reader.readAsDataURL(f) })
+            msg.type = 'video'; msg.url = url; msg.text = f.name
+          } else {
+            msg.type = 'video'; msg.text = f.name; msg.size = (f.size / 1e6).toFixed(1) + ' Mo'
+          }
+        } else {
+          msg.type = 'file'; msg.text = f.name
+          msg.size = f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' Mo' : Math.round(f.size / 1024) + ' Ko'
+        }
+
+        const dernier = isImg ? 'Photo' : isVid ? 'Vidéo' : f.name
+        updateConv(active.id, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier, time: 'Maintenant' }))
+      }
+    }
+    inp.click()
+  }
+
+  const directContacts = getDirectContacts(store.projects || [], store)
+  const allSearchable = [...directContacts, ...EXTERNAL_PROS.filter(e => !directContacts.find(d => d.nom === e.nom)).map(e => ({ ...e, source: 'externe', direct: false }))]
+  const newConvFiltered = newConvSearch ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(newConvSearch.toLowerCase())) : directContacts
+  const inviteFiltered = inviteSearch ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(inviteSearch.toLowerCase())) : directContacts
+  const groupFiltered = groupSearch ? directContacts.filter(c => (c.nom + c.role).toLowerCase().includes(groupSearch.toLowerCase()) && !groupMembers.includes(c.nom)) : directContacts.filter(c => !groupMembers.includes(c.nom))
+
+  const startConversation = (c) => {
+    const existing = allConversations.find(conv => conv.nom === c.nom && !conv.isGroup)
+    if (existing) { setActiveId(existing.id); setShowNewConv(false); return }
+    const id = 'conv_' + Date.now()
+    let newConv
+    if (!c.direct) {
+      // External contact — requires acceptance
+      newConv = { id, nom: c.nom, type: 'demande', avatar: c.nom[0], color: '#F59E0B', isGroup: false, participants: [c.nom], pending: true, invited: true, dernier: 'Demande envoyée', time: 'Maintenant', unread: 0, msgs: [{ side: 'out', text: 'Bonjour, je souhaiterais échanger avec vous.', time: 'Maintenant', read: false }] }
+      showToast && showToast('Demande envoyée — en attente d\'acceptation')
+    } else if (!c.registered) {
+      // Known contact but not yet registered on MEEREO
+      newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: true, email: c.email || '', role: c.role, dernier: 'Invitation envoyée', time: 'Maintenant', unread: 0, msgs: [] }
+    } else {
+      // Registered MEEREO user — normal conversation
+      newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: false, dernier: '', time: 'Maintenant', unread: 0, msgs: [] }
+    }
+    updateStore(prev => ({ ...prev, conversations: [newConv, ...(prev.conversations || [])] }))
+    setActiveId(id); setShowNewConv(false)
+  }
+
+  const ContactRow = ({ c, onClick }) => {
+    const initials = c.nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+    const isInvited = c.direct && !c.registered
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={onClick} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
+        <div style={{ width: 36, height: 36, borderRadius: 18, background: !c.direct ? 'rgba(255,149,0,.1)' : isInvited ? 'rgba(107,114,128,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: !c.direct ? '#F59E0B' : isInvited ? '#9CA3AF' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
+          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}{c.ville ? ' · ' + c.ville : ''}</div>
+        </div>
+        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: srcColor(c.source) + '14', color: srcColor(c.source) }}>{srcLabel(c.source)}</span>
+        {!c.direct && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: '#F59E0B' }}>Demande</span>}
+        {isInvited && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF' }}>Invité</span>}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="split">
+        {/* Sidebar */}
+        <div className="split-left">
+          {/* Header inside split-left */}
+          <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Messages</span>
+                {nonLus > 0 && <span style={{ padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{nonLus}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => { setShowNewGroup(true); setGroupName(''); setGroupMembers([]); setGroupSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Créer un groupe">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </button>
+                <button onClick={() => { setShowNewConv(true); setNewConvSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Nouvelle conversation">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)' }}>
+            <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)', marginBottom: 10 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {[['all', 'Tout'], ['equipe', 'Equipe'], ['client', 'Clients'], ['entreprise', 'Prestataires'], ['groupe', 'Groupes'], ['demande', 'Demandes'], ['archives', 'Archivés']].map(([k, l]) => (
+                <button key={k} className={`filter-pill ${msgTab === k ? 'active' : ''}`} onClick={() => setMsgTab(k)} style={{ fontSize: 10.5 }}>{l}{k === 'archives' && archivedCount > 0 ? ` (${archivedCount})` : ''}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ overflowY: 'auto' }}>
+            {filtered.length === 0 && (
+              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, opacity: .3, marginBottom: 10 }}>{msgTab === 'archives' ? <Package size={28}/> : <MessageSquare size={28}/>}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>
+                  {msgTab === 'archives' ? 'Aucune archive' : 'Aucune conversation'}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>
+                  {msgTab === 'archives'
+                    ? 'Les conversations archivées apparaîtront ici. Utilisez le menu ··· ou le clic droit pour archiver.'
+                    : 'Vos échanges apparaîtront ici.'}
+                </div>
+              </div>
+            )}
+            {filtered.map(c => {
+              const av = getContactAvatar(c.nom, store.projects || [])
+              return (
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: active?.id === c.id ? 'var(--s2)' : undefined, transition: 'background .12s' }}
+                onClick={() => { setActiveId(c.id); if (c.unread) updateConv(c.id, cv => ({ ...cv, unread: 0 })) }}
+                onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ convId: c.id, x: e.clientX, y: e.clientY }) }}
+              >
+                <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 700, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar}
+                  {c.isGroup && <div style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface-1)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={8}/></div>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: c.unread ? 800 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.2px' }}>{c.nom}</div>
+                    <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0, marginLeft: 8 }}>{c.time}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: c.unread ? 'var(--tx)' : 'var(--t3)', fontWeight: c.unread ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c._archived && <span style={{ fontSize: 10, color: 'var(--t4)', marginRight: 4 }}><Package size={10}/></span>}
+                    {c.dernier}
+                  </div>
+                </div>
+                {c.pending && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: 'var(--wrn)', flexShrink: 0 }}>ATTENTE</span>}
+                {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVITÉ</span>}
+                {c.unread > 0 && !c.pending && !c.invited && <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>{c.unread}</div>}
+              </div>
+            )})}
+          </div>
+        </div>
+
+        {/* Chat */}
+        <div className="split-right" style={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {!active ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MessageSquare size={24}/></div>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>Vos messages</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)', maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>Selectionnez une conversation ou demarrez-en une nouvelle</div>
+              <button style={{ marginTop: 8, padding: '9px 18px', borderRadius: 10, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, color: '#fff' }} onClick={() => { setShowNewConv(true); setNewConvSearch('') }}>Nouvelle conversation</button>
+            </div>
+          ) : (
+            <>
+              {/* Header */}
+              <ChatHeader active={active} navigate={navigate} showToast={showToast} setShowInvite={setShowInvite} setInviteSearch={setInviteSearch} setShowParticipants={setShowParticipants} projects={store.projects || []} onAction={handleConvAction} />
+
+              {/* Archive banner */}
+              {active._archived && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: 'rgba(107,114,128,.04)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13 }}><Package size={13}/></span>
+                    <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>Cette conversation est archivée</span>
+                  </div>
+                  <button onClick={() => handleConvAction('unarchive', active.id)} style={{ padding: '6px 14px', borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 11.5, fontWeight: 600, color: '#fff', transition: 'opacity .12s' }} onMouseOver={e => e.currentTarget.style.opacity = '.85'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>Restaurer</button>
+                </div>
+              )}
+
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {/* Invited contact — info card at top of empty conversation */}
+                {active.invited && (active.msgs || []).length === 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)' }}>{active.nom}</div>
+                    <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
+                      Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour démarrer la conversation.
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF' }}>En attente d'inscription</span>
+                    </div>
+                  </div>
+                )}
+                {(active.msgs || []).map((m, i) => (
+                  <div key={i}>
+                    {active.isGroup && m.side === 'in' && m.from && (
+                      <div style={{ fontSize: 10, fontWeight: 700, color: m.from === 'Systeme' ? 'var(--t4)' : active.color, marginBottom: 3, marginLeft: 4 }}>{m.from}</div>
+                    )}
+                    {m.from === 'Systeme' ? (
+                      <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--t4)', fontStyle: 'italic', padding: '4px 0' }}>{m.text}</div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start' }}>
+                          {m.type === 'image' && m.url ? (
+                            <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }} onClick={() => window.open(m.url, '_blank')}>
+                              <img src={m.url} alt={m.text || 'Photo'} style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 300 }} />
+                              {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
+                            </div>
+                          ) : m.type === 'image' && !m.url ? (
+                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                              <span style={{ fontSize: 14 }}><Camera size={14}/></span>
+                              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Photo'}</div>
+                            </div>
+                          ) : m.type === 'video' && m.url ? (
+                            <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+                              <video src={m.url} controls style={{ width: '100%', display: 'block', maxHeight: 300, borderRadius: 14 }} />
+                              {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
+                            </div>
+                          ) : m.type === 'video' ? (
+                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                              <span style={{ fontSize: 14 }}><Video size={14}/></span>
+                              <div>
+                                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidéo'}</div>
+                                {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                              </div>
+                            </div>
+                          ) : m.type === 'file' ? (
+                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 8, background: m.side === 'out' ? 'rgba(255,255,255,.15)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.side === 'out' ? '#fff' : 'var(--t2)', flexShrink: 0 }}><Paperclip size={14}/></div>
+                              <div>
+                                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text}</div>
+                                {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{
+                              maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
+                              ...(m.side === 'out'
+                                ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
+                                : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
+                            }}>{m.text}</div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', padding: '0 4px', marginTop: 2 }}>
+                          <span style={{ fontSize: 10, color: 'var(--t4)' }}>{m.time}</span>
+                          {m.side === 'out' && <span style={{ color: m.read ? '#007AFF' : 'var(--t4)' }}>{m.read ? <CheckCheck size={10}/> : <Check size={10}/>}</span>}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Input — 3 states: pending / invited / normal */}
+              {active.pending ? (
+                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, background: 'rgba(255,149,0,.03)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><Lock size={12}/> En attente d’acceptation par <strong>{active.nom}</strong></div>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <button className="btn btn-sm" onClick={() => { updateStore(prev => ({ ...prev, conversations: (prev.conversations || []).filter(c => c.id !== active.id) })); setActiveId(null); showToast && showToast('Demande annulée') }}>Annuler</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => { updateConv(active.id, c => ({ ...c, pending: false, invited: false, type: 'entreprise', avatar: active.nom ? active.nom[0] : '?', color: '#16A34A', msgs: [...(c.msgs || []), { side: 'in', text: 'Bonjour, je suis disponible. Comment puis-je vous aider ?', time: 'Maintenant', read: true }], dernier: 'Demande acceptée' })); setActiveId(null); setTimeout(() => setActiveId(active.id), 0); showToast && showToast(active.nom + ' a accepté') }}>Simuler l'acceptation</button>
+                  </div>
+                </div>
+              ) : active.invited ? (
+                /* ─── Contact invité — pas encore inscrit sur MEEREO ─── */
+                <div style={{ padding: '18px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, background: 'rgba(107,114,128,.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)' }}>{active.nom} n'est pas encore sur MEEREO</div>
+                      <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 1 }}>La messagerie sera disponible après son inscription.</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn-primary btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
+                      const email = active.email
+                      if (email) {
+                        showToast && showToast('Invitation envoyée à ' + email)
+                      } else {
+                        showToast && showToast('Invitation envoyée')
+                      }
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: -1 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      {active.email ? 'Inviter par email' : 'Envoyer l\'invitation'}
+                    </button>
+                    <button className="btn btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
+                      const link = window.location.origin + '/inscription?ref=' + (store.user?.id || 'meereo')
+                      navigator.clipboard?.writeText(link)
+                      showToast && showToast('Lien d\'invitation copié')
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: -1 }}><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                      Copier le lien
+                    </button>
+                    <button className="btn btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
+                      showToast && showToast('Invitation relancée')
+                    }}>
+                      Relancer
+                    </button>
+                  </div>
+                  {active.email && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 10 }}>Email : {active.email}</div>}
+                </div>
+              ) : (
+                /* ─── Utilisateur inscrit — messagerie normale ─── */
+                <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-end' }}>
+                  <button onClick={handleFileAttach} style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Joindre un fichier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  </button>
+                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMsg() }} placeholder="Écrire un message..." style={{ flex: 1, padding: '11px 16px', border: '1px solid var(--border-card)', borderRadius: 14, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} />
+                  <button onClick={() => sendMsg()} style={{ width: 40, height: 40, borderRadius: 12, background: input.trim() ? 'var(--tx)' : 'var(--s3)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: input.trim() ? '#fff' : 'var(--t4)', transition: 'all .15s' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ MODAL: Nouvelle conversation ═══ */}
+      {showNewConv && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowNewConv(false)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, maxHeight: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Nouvelle conversation</div>
+                <button onClick={() => setShowNewConv(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
+              </div>
+              <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input value={newConvSearch} onChange={e => setNewConvSearch(e.target.value)} placeholder="Rechercher un contact..." style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 13, fontFamily: 'var(--f)', color: 'var(--tx)' }} autoFocus />
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 8 }}>Les contacts externes devront accepter votre demande.</div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
+              {newConvFiltered.length === 0 && <div style={{ padding: '24px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun contact</div>}
+              {newConvFiltered.map((c, i) => <ContactRow key={i} c={c} onClick={() => startConversation(c)} />)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: Inviter ═══ */}
+      {showInvite && active && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowInvite(false)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 440, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '18px 22px 12px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>Ajouter a la conversation</div>
+              <button onClick={() => setShowInvite(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
+            </div>
+            <div style={{ padding: '0 22px 12px' }}>
+              <input placeholder="Rechercher..." value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} style={{ width: '100%', padding: '8px 14px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} autoFocus />
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
+              {inviteFiltered.filter(c => c.direct && !(active.participants || []).includes(c.nom)).map((c, i) => (
+                <ContactRow key={i} c={c} onClick={() => { updateConv(active.id, cv => ({ ...cv, participants: [...(cv.participants || []), c.nom], isGroup: true, msgs: [...(cv.msgs || []), { side: 'in', from: 'Systeme', text: c.nom + ' a rejoint la conversation', time: 'Maintenant' }] })); setShowInvite(false); showToast && showToast(c.nom + ' ajoute') }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: Groupe ═══ */}
+      {showNewGroup && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowNewGroup(false)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un groupe</div>
+                <button onClick={() => setShowNewGroup(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
+              </div>
+              <input placeholder="Nom du groupe..." value={groupName} onChange={e => setGroupName(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)', marginBottom: 10 }} autoFocus />
+              {groupMembers.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>{groupMembers.map(m => <span key={m} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>{m} <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setGroupMembers(p => p.filter(x => x !== m))}>×</span></span>)}</div>}
+              <input placeholder="Ajouter des participants..." value={groupSearch} onChange={e => setGroupSearch(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} />
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>{groupFiltered.map((c, i) => <ContactRow key={i} c={c} onClick={() => { setGroupMembers(p => [...p, c.nom]); setGroupSearch('') }} />)}</div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
+              <button className="btn btn-sm" onClick={() => setShowNewGroup(false)}>Annuler</button>
+              <button className="btn btn-primary btn-sm" disabled={!groupName.trim() || !groupMembers.length} onClick={() => { const id = 'conv_g_' + Date.now(); const grp = { id, nom: groupName, type: 'groupe', avatar: groupName ? groupName[0].toUpperCase() : 'G', color: '#191c1d', isGroup: true, participants: [...groupMembers], dernier: 'Groupe créé', time: 'Maintenant', unread: 0, msgs: [{ side: 'in', from: 'Système', text: 'Groupe créé avec ' + groupMembers.length + ' participants', time: 'Maintenant' }] }; updateStore(prev => ({ ...prev, conversations: [grp, ...(prev.conversations || [])] })); setShowNewGroup(false); setActiveId(id); showToast && showToast('Groupe créé') }}>Créer le groupe</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: Participants ═══ */}
+      {showParticipants && active && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowParticipants(false)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 380, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>Participants ({(active.participants || []).length})</div>
+              <button onClick={() => setShowParticipants(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
+            </div>
+            <div style={{ padding: '8px 0' }}>
+              {(active.participants || []).map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 20px' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{(p || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
+                  <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{p}</div>
+                  {active.isGroup && (active.participants || []).length > 2 && <button onClick={() => { updateConv(active.id, c => ({ ...c, participants: (c.participants || []).filter(x => x !== p), msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: p + ' retire', time: 'Maintenant' }] })); setShowParticipants(false); setTimeout(() => setShowParticipants(true), 0); showToast && showToast(p + ' retire') }} style={{ fontSize: 10, color: 'var(--err)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }}>Retirer</button>}
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
+              <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setShowParticipants(false); setShowInvite(true); setInviteSearch('') }}>+ Ajouter</button>
+              <button className="btn btn-sm" onClick={() => setShowParticipants(false)}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CONTEXT MENU (right-click on sidebar) ═══ */}
+      {ctxMenu && (() => {
+        const conv = allConversations.find(c => c.id === ctxMenu.convId)
+        if (!conv) return null
+        return (
+          <div ref={ctxRef} style={{ position: 'fixed', left: ctxMenu.x, top: ctxMenu.y, zIndex: 3000, width: 200, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10, boxShadow: '0 10px 36px rgba(0,0,0,.14)', overflow: 'hidden', animation: 'modalIn .1s ease' }}>
+            {conv._archived ? (
+              <button onClick={() => { handleConvAction('unarchive', ctxMenu.convId); setCtxMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                Restaurer
+              </button>
+            ) : (
+              <button onClick={() => { handleConvAction('archive', ctxMenu.convId); setCtxMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                Archiver
+              </button>
+            )}
+            <button onClick={() => { handleConvAction('unread', ctxMenu.convId); setCtxMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="var(--t3)"/></svg>
+              Marquer non lu
+            </button>
+            {conv.isGroup && (
+              <button onClick={() => { handleConvAction('quit', ctxMenu.convId); setCtxMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--wrn, #F59E0B)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Quitter le groupe
+              </button>
+            )}
+            <div style={{ height: 1, background: 'var(--border-subtle)', margin: '2px 0' }} />
+            <button onClick={() => { handleConvAction('delete', ctxMenu.convId); setCtxMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--err, #EF4444)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(239,68,68,.04)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Supprimer pour moi
+            </button>
+          </div>
+        )
+      })()}
+
+      {/* ═══ CONFIRM MODAL ═══ */}
+      {confirmAction && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setConfirmAction(null)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 380, padding: '28px 24px 22px', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            {/* Icon */}
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: confirmAction.type === 'delete' ? 'rgba(239,68,68,.08)' : confirmAction.type === 'quit' ? 'rgba(245,158,11,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              {confirmAction.type === 'delete' && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>}
+              {confirmAction.type === 'archive' && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>}
+              {confirmAction.type === 'unarchive' && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>}
+              {confirmAction.type === 'quit' && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
+            </div>
+            {/* Title */}
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 8, color: 'var(--tx)' }}>
+              {confirmAction.type === 'delete' && 'Supprimer la conversation'}
+              {confirmAction.type === 'archive' && 'Archiver la conversation'}
+              {confirmAction.type === 'unarchive' && 'Restaurer la conversation'}
+              {confirmAction.type === 'quit' && 'Quitter le groupe'}
+            </div>
+            {/* Description */}
+            <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>
+              {confirmAction.type === 'delete' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera supprimée de votre liste. Les autres participants conserveront la leur.</>}
+              {confirmAction.type === 'archive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera déplacée dans vos archives. Vous pourrez la restaurer à tout moment.</>}
+              {confirmAction.type === 'unarchive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera restaurée dans votre liste principale.</>}
+              {confirmAction.type === 'quit' && <>Vous quitterez le groupe <strong>{confirmAction.convName}</strong>. Vous ne recevrez plus de messages de ce groupe.</>}
+            </div>
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-sm" onClick={() => setConfirmAction(null)} style={{ padding: '9px 18px', fontSize: 12.5 }}>Annuler</button>
+              <button onClick={executeAction} style={{
+                padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 700,
+                background: confirmAction.type === 'delete' ? '#EF4444' : confirmAction.type === 'quit' ? '#F59E0B' : 'var(--tx)',
+                color: '#fff', transition: 'opacity .12s'
+              }}
+                onMouseOver={e => e.currentTarget.style.opacity = '.85'}
+                onMouseOut={e => e.currentTarget.style.opacity = '1'}
+              >
+                {confirmAction.type === 'delete' && 'Supprimer'}
+                {confirmAction.type === 'archive' && 'Archiver'}
+                {confirmAction.type === 'unarchive' && 'Restaurer'}
+                {confirmAction.type === 'quit' && 'Quitter'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

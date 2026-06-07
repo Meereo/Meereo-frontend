@@ -1,0 +1,179 @@
+/* ══════════════════════════════════════════════════════════════
+   MEEREO DESIGN TOKENS — Unified from all cockpits
+   Apple Premium · Linear · Stripe · Notion inspired
+══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Spacing Scale (8px base) ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ── Typography ── */
+  --f: 'Inter', -apple-system, 'SF Pro Text', BlinkMacSystemFont, sans-serif;
+  --fs: 'Inter', sans-serif;
+  --f-serif: 'Instrument Serif', serif;
+
+  /* ── Surface Hierarchy ── */
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --s1: #ffffff;
+  --s2: #f3f4f5;
+  --s3: #e7e8e9;
+  --s4: #e1e3e4;
+  --surface-1: #ffffff;
+  --surface-2: #f3f4f5;
+  --surface-3: #e7e8e9;
+
+  /* ── Borders ──
+     RULE: all visible blocks use --border-card (the only standard)
+     --border-subtle is for internal separators only (lines, dividers)
+  */
+  --border: rgba(0,0,0,.16);
+  --border2: rgba(0,0,0,.09);
+  --border-subtle: rgba(0,0,0,.09);
+  --border-medium: rgba(0,0,0,.16);
+  --border-card: rgba(0,0,0,.18);
+  --hover: rgba(25,28,29,.04);
+
+  /* ── Text Hierarchy ── */
+  --tx: #191c1d;
+  --t1: #191c1d;
+  --t2: #3c3b3b;
+  --t3: #474747;
+  --t4: #777777;
+  --t5: #c6c6c6;
+  --text-primary: #191c1d;
+  --text-secondary: #474747;
+  --text-tertiary: #6b7280;
+  --text-disabled: #9ca3af;
+  --ink2: #474747;
+
+  /* ── Primary ── */
+  --primary: #000000;
+  --primary-container: #3c3b3b;
+  --on-primary: #e5e2e1;
+  --accent: #191c1d;
+  --acc-s: rgba(25,28,29,.06);
+  --gr: linear-gradient(145deg, #000000, #3c3b3b);
+
+  /* ── Status / Semantic Colors ── */
+  --green: #16A34A;
+  --green-s: rgba(22,163,74,.08);
+  --amber: #F59E0B;
+  --amber-s: rgba(245,158,11,.08);
+  --red: #ba1a1a;
+  --red-s: rgba(186,26,26,.07);
+
+  --ok: #16A34A;
+  --ok-s: rgba(22,163,74,.08);
+  --err: #ba1a1a;
+  --err-s: rgba(186,26,26,.07);
+  --inf: #007AFF;
+  --inf-s: rgba(0,122,255,.08);
+  --wrn: #F59E0B;
+  --wrn-s: rgba(245,158,11,.08);
+  --prp: #AF52DE;
+  --prp-s: rgba(175,82,222,.08);
+
+  --status-success: #16A34A;
+  --status-active: #191c1d;
+  --status-warning: #F59E0B;
+  --status-danger: #ba1a1a;
+  --status-neutral: #777777;
+  --progress-bg: #e7e8e9;
+
+  --color-info: #007AFF;
+  --color-info-bg: rgba(0,122,255,.06);
+  --color-info-border: rgba(0,122,255,.12);
+  --color-ok: #34c759;
+  --color-ok-bg: rgba(52,199,89,.07);
+  --color-ok-border: rgba(52,199,89,.18);
+  --color-warn: #e07b00;
+  --color-warn-bg: rgba(224,123,0,.07);
+  --color-warn-border: rgba(224,123,0,.18);
+  --color-err: #ba1a1a;
+  --color-err-bg: rgba(186,26,26,.07);
+  --color-err-border: rgba(186,26,26,.18);
+  --color-neutral: #9ca3af;
+
+  /* ── Fournisseur semantic ── */
+  --er: #ba1a1a;
+  --eb: #ffdad6;
+  --wn: #8b5e00;
+  --wb: #ffddb3;
+  --ok-f: #2d6a4f;
+  --ob: #d8f3dc;
+  --in: #00497d;
+  --ib: #cce5ff;
+
+  /* ── Radius ── */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r2: 8px;
+  --r3: 10px;
+  --r4: 12px;
+  --radius: 16px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 100px;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 2px 8px rgba(25,28,29,.04);
+  --shadow-sm: 0 4px 16px rgba(25,28,29,.04);
+  --shadow-md: 0 20px 40px rgba(25,28,29,.04);
+  --shadow-lg: 0 20px 40px rgba(25,28,29,.06);
+  --shadow-card: 0 20px 40px rgba(25,28,29,.04);
+  --shadow: 0 20px 40px rgba(0,0,0,.04);
+  --ring: 0 0 0 3px rgba(0,122,255,.2);
+
+  /* ── Layout ── */
+  --sidebar-w: 220px;
+  --topbar-h: 52px;
+  --sidebar-bg: #f0f0f2;
+  --sidebar-text-active: #191c1d;
+  --sidebar-text-inactive: #777777;
+  --sidebar-hover: rgba(25,28,29,.05);
+  --main-bg: #f5f5f7;
+
+  /* ── Motion ── */
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
+  --t: .14s;
+  --dur: .14s;
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1C1C1E;
+  --s1: #1C1C1E;
+  --s2: #2C2C2E;
+  --s3: #3A3A3C;
+  --s4: #48484A;
+  --border: #38383A;
+  --border2: #48484A;
+  --hover: #2C2C2E;
+  --tx: #FFFFFF;
+  --t1: #FFFFFF;
+  --t2: #EBEBF5;
+  --t3: #8E8E93;
+  --t4: #636366;
+  --t5: #3A3A3C;
+  --surface-3: #3A3A3C;
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.04);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.4);
+}

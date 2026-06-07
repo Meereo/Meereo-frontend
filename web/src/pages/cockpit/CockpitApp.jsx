@@ -1,0 +1,200 @@
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
+import CockpitLayout from '../../components/layout/CockpitLayout'
+import Modal from '../../components/shared/Modal'
+import { useMeereo } from '../../hooks/useMeereoStore'
+import KaiAssistant from '../../components/shared/KaiAssistant'
+import ProDirectory from '../../components/shared/ProDirectory'
+import CockpitModals from './CockpitModals'
+import './cockpit.css'
+
+// Dashboard loaded eagerly (first page seen), all others lazy
+import Dashboard from './Dashboard'
+const ProjetsPage = lazy(() => import('./ProjetsPage'))
+const ClientsPage = lazy(() => import('./ClientsPage'))
+const MessagesPage = lazy(() => import('./MessagesPage'))
+const ChantierPage = lazy(() => import('./ChantierPage'))
+const IntervenantsPage = lazy(() => import('./IntervenantsPage'))
+const PaiementsPage = lazy(() => import('./PaiementsPage'))
+const MarketplacePage = lazy(() => import('./MarketplacePage'))
+const AgendaPage = lazy(() => import('./AgendaPage'))
+const OffresPage = lazy(() => import('./OffresPage'))
+const BoursePage = lazy(() => import('./BoursePage'))
+const DocumentsPage = lazy(() => import('./DocumentsPage'))
+const IntegrationsPage = lazy(() => import('./IntegrationsPage'))
+const ParametresPage = lazy(() => import('./ParametresPage'))
+const MarchesPage = lazy(() => import('./MarchesPage'))
+const RapportsPage = lazy(() => import('./RapportsPage'))
+const CommandesPage = lazy(() => import('./CommandesPage'))
+const FournisseursPage = lazy(() => import('./FournisseursPage'))
+const FinancePage = lazy(() => import('./FinancePage'))
+const TasksBoardPage = lazy(() => import('./TasksBoardPage'))
+const PAGES = {
+  dashboard: Dashboard, projets: ProjetsPage, clients: ClientsPage, messages: MessagesPage,
+  chantier: ChantierPage, intervenants: IntervenantsPage, paiements: PaiementsPage,
+  marketplace: MarketplacePage, agenda: AgendaPage, offres: OffresPage, bourse: BoursePage,
+  documents: DocumentsPage, integrations: IntegrationsPage, parametres: ParametresPage,
+  marches: MarchesPage, rapports: RapportsPage, commandes: CommandesPage,
+  fournisseurs: FournisseursPage, finance: FinancePage, 'taches-board': TasksBoardPage,
+}
+
+// Suspense fallback — minimal loading indicator
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', opacity: .4 }}>
+    <div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />
+  </div>
+)
+
+// Form styles now in cockpit.css: .form-input, .form-label
+
+// Contacts invitables for EventForm — uses store.intervenants (API) + project equipe members
+function getInvitableContacts(projects, intervenants) {
+  const contacts = []
+  const seen = new Set()
+  ;(intervenants || []).forEach(i => { if (i && !seen.has(i.nom)) { seen.add(i.nom); contacts.push({ id: i.id, nom: i.nom, role: i.role || i.specialite || '', email: i.email || '', source: 'equipe' }) } })
+  ;(projects || []).forEach(p => (p.equipe || []).forEach(m => { if (!seen.has(m.nom)) { seen.add(m.nom); contacts.push({ id: m.id, nom: m.nom, role: m.role, email: '', source: 'projet' }) } }))
+  return contacts
+}
+
+function EventForm({ formRef }) {
+  const { store } = useMeereo()
+  const projects = store.projects || []
+  const intervenants = store.intervenants || []
+  const [evTitle, setEvTitle] = useState('')
+  const [evDate, setEvDate] = useState('')
+  const [evTime, setEvTime] = useState('09:00')
+  const [evProjet, setEvProjet] = useState('')
+  const [evType, setEvType] = useState('Reunion')
+  const [inviteSearch, setInviteSearch] = useState('')
+  const [invited, setInvited] = useState([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  if (formRef) formRef.current = { title: evTitle, date: evDate, time: evTime, projet: evProjet, type: evType, invited }
+
+  const available = inviteSearch
+    ? getInvitableContacts(projects, intervenants).filter(c => (c.nom + c.role).toLowerCase().includes(inviteSearch.toLowerCase()) && !invited.find(inv => inv.id === c.id))
+    : []
+
+  const addInvite = (c) => { setInvited(prev => [...prev, { ...c, status: 'pending' }]); setInviteSearch('') }
+  const removeInvite = (id) => setInvited(prev => prev.filter(i => i.id !== id))
+  const addByEmail = () => {
+    if (!inviteEmail.trim()) return
+    setInvited(prev => [...prev, { id: 'ext_' + Date.now(), nom: inviteEmail, role: 'Invité externe', email: inviteEmail, source: 'email', status: 'pending' }])
+    setInviteEmail('')
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div><label className="form-label">Titre</label><input className="form-input" placeholder="Réunion de chantier..." value={evTitle} onChange={e => setEvTitle(e.target.value)} /></div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div><label className="form-label">Date</label><input className="form-input" type="date" value={evDate} onChange={e => setEvDate(e.target.value)} /></div>
+        <div><label className="form-label">Heure</label><input className="form-input" type="time" value={evTime} onChange={e => setEvTime(e.target.value)} /></div>
+      </div>
+      <div><label className="form-label">Projet associé</label><select className="form-input" value={evProjet} onChange={e => setEvProjet(e.target.value)}><option value="">Général</option>{projects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
+      <div><label className="form-label">Type</label><select className="form-input" value={evType} onChange={e => setEvType(e.target.value)}><option>Réunion</option><option>Visite chantier</option><option>Remise pièces</option><option>Rendez-vous client</option><option>Deadline</option></select></div>
+
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+        <label className="form-label">Inviter des partenaires</label>
+        {invited.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+            {invited.map(inv => {
+              const initials = (inv.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+              return (
+                <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{inv.nom}</div>
+                    <div style={{ fontSize: 10, color: '#888' }}>{inv.role}</div>
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: inv.status === 'accepted' ? 'rgba(52,199,89,.1)' : 'rgba(255,149,0,.1)', color: inv.status === 'accepted' ? '#34C759' : '#FF9500' }}>{inv.status === 'accepted' ? 'Accepté' : 'En attente'}</span>
+                  <button onClick={() => removeInvite(inv.id)} style={{ width: 22, height: 22, borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.05)', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>×</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <input value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} placeholder="Rechercher un intervenant..." className="form-input" style={{ paddingRight: 36 }} />
+          {inviteSearch && available.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.1)', maxHeight: 180, overflowY: 'auto', zIndex: 10 }}>
+              {available.slice(0, 6).map(c => {
+                const initials = (c.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+                return (
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }} onClick={() => addInvite(c)}>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>{c.nom}</div>
+                      <div style={{ fontSize: 10, color: '#888' }}>{c.role}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addByEmail() }} placeholder="Ou inviter par email..." className="form-input" style={{ flex: 1 }} />
+          <button onClick={addByEmail} disabled={!inviteEmail.trim()} style={{ padding: '0 14px', borderRadius: 10, background: inviteEmail.trim() ? '#191c1d' : '#e1e3e4', color: inviteEmail.trim() ? '#fff' : '#888', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Inviter</button>
+        </div>
+        <div style={{ fontSize: 10.5, color: '#888', marginTop: 8, lineHeight: 1.5 }}>Les partenaires invités recevront une notification.</div>
+      </div>
+    </div>
+  )
+}
+
+export default function CockpitApp() {
+  const { store, updateStore, emitEvent } = useMeereo()
+  const ob = store.onboardingData || {}
+  const userName = ob.entreprise || store.user?.company || ob.prenom || store.user?.name?.split(' ')[0] || ''
+  const [activePage, setActivePage] = useState('dashboard')
+  const [modal, setModal] = useState(null)
+  const [toast, setToast] = useState(null)
+  const [showProDir, setShowProDir] = useState(false)
+  const eventFormRef = useRef(null)
+
+  const openModal = useCallback((name) => setModal(prev => prev ? prev : name), [])
+  const closeModal = useCallback(() => setModal(null), [])
+  const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(null), 2500) }, [])
+
+  // Listen for navigation events from Topbar menu
+  useEffect(() => {
+    const handler = (e) => setActivePage(e.detail)
+    window.addEventListener('meereo-navigate', handler)
+    return () => window.removeEventListener('meereo-navigate', handler)
+  }, [])
+
+  const PageComponent = PAGES[activePage] || Dashboard
+
+  return (
+    <CockpitLayout activePage={activePage} onNavigate={setActivePage}>
+      <Suspense fallback={<PageLoader />}>
+        <div className="page-enter" key={activePage}>
+          <PageComponent onNavigate={setActivePage} openModal={openModal} showToast={showToast} />
+        </div>
+      </Suspense>
+
+      <ProDirectory open={showProDir} onClose={() => setShowProDir(false)} />
+      <KaiAssistant context="pro" userName={userName} onNavigate={setActivePage} />
+
+      {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#191c1d', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 12.5, fontWeight: 600, zIndex: 99999, boxShadow: '0 8px 32px rgba(0,0,0,.18)', animation: 'modalIn .18s ease' }}>{toast}</div>}
+
+      {/* All creation modals — form states managed internally */}
+      <CockpitModals modal={modal} closeModal={closeModal} showToast={showToast} />
+
+      {/* Event modal — kept here because of ref pattern */}
+      <Modal isOpen={modal === 'newEvent'} onClose={closeModal} title="Nouvel événement" footer={<><button className="btn btn-sm" onClick={closeModal}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => {
+        const fd = eventFormRef.current || {}
+        const titre = fd.title || 'Nouvel événement'
+        const date = fd.date || new Date().toISOString().slice(0, 10)
+        const heure = fd.time || '09:00'
+        const type = fd.type || 'reunion'
+        const projet = fd.projet ? ((store.projects || []).find(p => p.id === fd.projet)?.nom || fd.projet) : ''
+        const newEvent = { id: 'ev_' + Date.now(), titre, date, heure, type, projet, projectId: fd.projet || null, color: 'var(--tx)', invited: fd.invited || [] }
+        updateStore(prev => ({ ...prev, events: [...(prev.events || []), newEvent] }))
+        emitEvent('event_created', { title: titre }, { notifMsg: 'Événement créé' })
+        showToast('Événement créé'); closeModal()
+      }}>Créer et inviter</button></>}>
+        <EventForm formRef={eventFormRef} />
+      </Modal>
+
+    </CockpitLayout>
+  )
+}
