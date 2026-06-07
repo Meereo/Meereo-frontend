@@ -1,0 +1,4442 @@
+openapi: 3.0.3
+info:
+  title: MEEREO API
+  description: >
+    API de la plateforme MEEREO — gestion de projets BTP et immobilier en Afrique de l'Ouest.
+    Inclut la gestion de projets, appels d'offres, marchés, paiements escrow, finances, marketplace et l'assistant IA KAI.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3001/api
+    description: Serveur de développement
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        type:
+          type: string
+          enum: [pro, client, fournisseur]
+        company:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          nullable: true
+        metier:
+          type: string
+          nullable: true
+        ville:
+          type: string
+          nullable: true
+        verified:
+          type: boolean
+        emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        nom:
+          type: string
+        type:
+          type: string
+          nullable: true
+        phase:
+          type: string
+        budget:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          nullable: true
+        livraison:
+          type: string
+          nullable: true
+        priorite:
+          type: string
+        description:
+          type: string
+          nullable: true
+        avancement:
+          type: integer
+        status:
+          type: string
+        kanbanStatus:
+          type: string
+          enum: [todo, in_progress, done]
+        img:
+          type: string
+          nullable: true
+        client:
+          type: string
+          nullable: true
+        clientEmail:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+        sourceAoId:
+          type: string
+          nullable: true
+        etapes:
+          type: array
+          nullable: true
+          items:
+            type: object
+        equipe:
+          type: array
+          nullable: true
+          items:
+            type: object
+        ownerId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AO:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        budget:
+          type: string
+          nullable: true
+        lot:
+          type: string
+          nullable: true
+        status:
+          type: string
+        ownerUserId:
+          type: string
+          nullable: true
+        ownerProfileType:
+          type: string
+          nullable: true
+        requestedTrade:
+          type: string
+          nullable: true
+        visibilityScope:
+          type: string
+          enum: [public, trade_only, restricted]
+        createdByClient:
+          type: boolean
+        projectId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        titre:
+          type: string
+        entreprise:
+          type: string
+          nullable: true
+        montant:
+          type: string
+          nullable: true
+        delai:
+          type: string
+          nullable: true
+        lot:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        aoId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        supplierId:
+          type: string
+          nullable: true
+        supplierRole:
+          type: string
+          nullable: true
+        acceptedBy:
+          type: string
+          nullable: true
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Market:
+      type: object
+      properties:
+        id:
+          type: string
+        titre:
+          type: string
+          nullable: true
+        entreprise:
+          type: string
+        lot:
+          type: string
+          nullable: true
+        montant:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        avancement:
+          type: integer
+        delai:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        offerId:
+          type: string
+          nullable: true
+        aoId:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+        supplierId:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [todo, in_progress, done, validated, rejected]
+        priority:
+          type: string
+          enum: [basse, normale, haute, urgente]
+        progress:
+          type: integer
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        marketId:
+          type: string
+          nullable: true
+        assignedTo:
+          type: string
+          nullable: true
+        validatedBy:
+          type: string
+          nullable: true
+        validatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        rejectedBy:
+          type: string
+          nullable: true
+        rejectedAt:
+          type: string
+          format: date-time
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [budget, depense, facture, credit, debit, paiement]
+        label:
+          type: string
+        montant:
+          type: number
+        statut:
+          type: string
+        provider:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        marketId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [PAY_INIT, PAY_PENDING, FUNDS_CONFIRMED, HELD_FOR_MILESTONE, PAYOUT_REQUESTED, PAYOUT_DONE, DISPUTE_OPEN, REVERSED]
+        rail:
+          type: string
+          enum: [virement, carte, mobile_money, wave, orange_money, mtn]
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        disputeReason:
+          type: string
+          nullable: true
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        marketId:
+          type: string
+          nullable: true
+        payerId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Milestone'
+        proofs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentProof'
+
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, in_progress, completed, disputed]
+        order:
+          type: integer
+        marketId:
+          type: string
+          nullable: true
+        paymentOrderId:
+          type: string
+          nullable: true
+        dueAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentProof:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [document, photo, pv, bon_livraison]
+        url:
+          type: string
+        paymentOrderId:
+          type: string
+        uploadedBy:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentValidation:
+      type: object
+      properties:
+        id:
+          type: string
+        validated:
+          type: boolean
+        comment:
+          type: string
+          nullable: true
+        paymentOrderId:
+          type: string
+        validatedBy:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        msg:
+          type: string
+        type:
+          type: string
+        read:
+          type: boolean
+        role:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        data:
+          type: object
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        aoId:
+          type: string
+          nullable: true
+        offerId:
+          type: string
+          nullable: true
+        marketId:
+          type: string
+          nullable: true
+        participants:
+          type: array
+          nullable: true
+          items:
+            type: string
+        lastMessage:
+          type: string
+          nullable: true
+        lastAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        contenu:
+          type: string
+        conversationId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        unit:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Commande:
+      type: object
+      properties:
+        id:
+          type: string
+        reference:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        total:
+          type: number
+        projectId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Fournisseur:
+      type: object
+      properties:
+        id:
+          type: string
+        nom:
+          type: string
+        specialite:
+          type: string
+          nullable: true
+        ville:
+          type: string
+          nullable: true
+        tel:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        verified:
+          type: boolean
+        note:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    Rapport:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        titre:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        projectId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        contenu:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+        nom:
+          type: string
+        type:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        email:
+          type: string
+          nullable: true
+        tel:
+          type: string
+          nullable: true
+        ville:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Intervenant:
+      type: object
+      properties:
+        id:
+          type: string
+        nom:
+          type: string
+        role:
+          type: string
+          nullable: true
+        specialite:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        tel:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectMember:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+        userName:
+          type: string
+          nullable: true
+        userEmail:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        titre:
+          type: string
+        date:
+          type: string
+        heure:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Decision:
+      type: object
+      properties:
+        id:
+          type: string
+        titre:
+          type: string
+        desc:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        urgent:
+          type: boolean
+        projectId:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Introduction:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+        structureId:
+          type: string
+          nullable: true
+        structureName:
+          type: string
+          nullable: true
+        metier:
+          type: string
+          nullable: true
+        status:
+          type: string
+        source:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Commission:
+      type: object
+      properties:
+        id:
+          type: string
+        introductionId:
+          type: string
+          nullable: true
+        structureId:
+          type: string
+          nullable: true
+        structureName:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+        montantBase:
+          type: integer
+        montantCommission:
+          type: integer
+        rate:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        caption:
+          type: string
+          nullable: true
+        projectId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketplaceCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        label:
+          type: string
+        ico:
+          type: string
+          nullable: true
+        order:
+          type: integer
+
+    FinanceReport:
+      type: object
+      properties:
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+            nom:
+              type: string
+            budget:
+              type: string
+              nullable: true
+            avancement:
+              type: integer
+            phase:
+              type: string
+            priorite:
+              type: string
+        kpi:
+          type: object
+          properties:
+            totalBudget:
+              type: number
+            totalExpenses:
+              type: number
+            totalInvoiced:
+              type: number
+            totalPaid:
+              type: number
+            totalCredits:
+              type: number
+            remaining:
+              type: number
+            burnRate:
+              type: integer
+              description: Pourcentage des dépenses sur le budget
+            invoiceCollectionRate:
+              type: integer
+              description: Pourcentage des factures encaissées
+        transactions:
+          type: object
+          properties:
+            budgets:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            expenses:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            invoices:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+            credits:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+        monthlyBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+                example: "2025-06"
+              budgets:
+                type: number
+              depenses:
+                type: number
+              factures:
+                type: number
+              paye:
+                type: number
+
+paths:
+
+  # ─────────────────────────────────────────
+  #  HEALTH
+  # ─────────────────────────────────────────
+
+  /health:
+    get:
+      tags: [Système]
+      summary: Healthcheck
+      security: []
+      responses:
+        '200':
+          description: Serveur opérationnel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  db:
+                    type: string
+                    example: postgresql
+                  ts:
+                    type: string
+                    format: date-time
+
+  # ─────────────────────────────────────────
+  #  AUTH
+  # ─────────────────────────────────────────
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Créer un compte
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [pro, client, fournisseur]
+                  default: pro
+                company:
+                  type: string
+                phone:
+                  type: string
+                avatar:
+                  type: string
+                  description: URL MinIO ou data URL base64
+      responses:
+        '201':
+          description: Compte créé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '400':
+          description: Email ou mot de passe manquant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email déjà utilisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Se connecter
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '401':
+          description: Mot de passe incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Utilisateur non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Compte supprimé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil de l'utilisateur connecté
+      responses:
+        '200':
+          description: Profil utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/send-verification:
+    post:
+      tags: [Auth]
+      summary: Envoyer un email de vérification
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email envoyé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: Vérifier l'adresse email (via token lien ou code)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                token:
+                  type: string
+                  description: JWT reçu par lien email
+                code:
+                  type: string
+                  description: Code court (fallback)
+      responses:
+        '200':
+          description: Email vérifié
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  verified:
+                    type: boolean
+        '400':
+          description: Token/code invalide ou expiré
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Changer le mot de passe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Mot de passe mis à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Mot de passe actuel incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/delete-account:
+    delete:
+      tags: [Auth]
+      summary: Supprimer le compte et toutes les données
+      responses:
+        '200':
+          description: Compte, données et fichiers supprimés
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Token manquant ou invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────────────────────────────────
+  #  USERS
+  # ─────────────────────────────────────────
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Lister les utilisateurs
+      responses:
+        '200':
+          description: Liste des utilisateurs (sans mot de passe)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Créer un utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                type:
+                  type: string
+                company:
+                  type: string
+                phone:
+                  type: string
+                avatar:
+                  type: string
+                metier:
+                  type: string
+                ville:
+                  type: string
+      responses:
+        '201':
+          description: Utilisateur créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Users]
+      summary: Récupérer un utilisateur par ID
+      responses:
+        '200':
+          description: Utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Users]
+      summary: Mettre à jour un utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                type:
+                  type: string
+                company:
+                  type: string
+                phone:
+                  type: string
+                avatar:
+                  type: string
+                metier:
+                  type: string
+                ville:
+                  type: string
+      responses:
+        '200':
+          description: Utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags: [Users]
+      summary: Supprimer un utilisateur
+      responses:
+        '204':
+          description: Supprimé
+
+  /professionals:
+    get:
+      tags: [Users]
+      summary: Annuaire des professionnels (recherche)
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Recherche full-text (nom, entreprise, métier, ville)
+        - name: metier
+          in: query
+          schema:
+            type: string
+          description: Filtrer par métier (ex. Architecte). "all" pour tous.
+      responses:
+        '200':
+          description: Liste de professionnels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  # ─────────────────────────────────────────
+  #  PROJECTS
+  # ─────────────────────────────────────────
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: Lister les projets
+      responses:
+        '200':
+          description: Liste des projets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      tags: [Projects]
+      summary: Créer un projet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom, ownerId]
+              properties:
+                nom:
+                  type: string
+                type:
+                  type: string
+                phase:
+                  type: string
+                budget:
+                  type: string
+                adresse:
+                  type: string
+                livraison:
+                  type: string
+                priorite:
+                  type: string
+                description:
+                  type: string
+                avancement:
+                  type: integer
+                status:
+                  type: string
+                kanbanStatus:
+                  type: string
+                img:
+                  type: string
+                client:
+                  type: string
+                clientEmail:
+                  type: string
+                clientId:
+                  type: string
+                sourceAoId:
+                  type: string
+                etapes:
+                  type: array
+                  items:
+                    type: object
+                equipe:
+                  type: array
+                  items:
+                    type: object
+                color:
+                  type: string
+                ownerId:
+                  type: string
+      responses:
+        '201':
+          description: Projet créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Projects]
+      summary: Récupérer un projet
+      responses:
+        '200':
+          description: Projet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Projects]
+      summary: Mettre à jour un projet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+      responses:
+        '200':
+          description: Projet mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    delete:
+      tags: [Projects]
+      summary: Supprimer un projet
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  AOS (Appels d'Offres)
+  # ─────────────────────────────────────────
+
+  /aos:
+    get:
+      tags: [Appels d'Offres]
+      summary: Lister les appels d'offres
+      responses:
+        '200':
+          description: Liste des AO
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AO'
+    post:
+      tags: [Appels d'Offres]
+      summary: Créer un appel d'offres
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                budget:
+                  type: string
+                lot:
+                  type: string
+                status:
+                  type: string
+                projectId:
+                  type: string
+                ownerUserId:
+                  type: string
+                ownerProfileType:
+                  type: string
+                requestedTrade:
+                  type: string
+                visibilityScope:
+                  type: string
+                  enum: [public, trade_only, restricted]
+                createdByClient:
+                  type: boolean
+      responses:
+        '201':
+          description: AO créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AO'
+
+  /aos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Appels d'Offres]
+      summary: Récupérer un AO
+      responses:
+        '200':
+          description: AO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AO'
+        '404':
+          description: Non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Appels d'Offres]
+      summary: Mettre à jour un AO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AO'
+      responses:
+        '200':
+          description: AO mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AO'
+    delete:
+      tags: [Appels d'Offres]
+      summary: Supprimer un AO (avec règles métier)
+      description: |
+        - Si un marché a été créé depuis cet AO → 409 (archive only)
+        - Si des offres existent → statut mis à `cancelled_by_owner`, pas de suppression
+        - Sinon → suppression réelle
+      responses:
+        '204':
+          description: AO supprimé
+        '200':
+          description: AO annulé (des offres existaient)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  action:
+                    type: string
+                    example: cancelled
+                  ao:
+                    $ref: '#/components/schemas/AO'
+        '403':
+          description: Non propriétaire de l'AO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: AO introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Un marché existe déjà — archiver uniquement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  action:
+                    type: string
+                    example: archive_only
+
+  # ─────────────────────────────────────────
+  #  OFFERS
+  # ─────────────────────────────────────────
+
+  /offers:
+    get:
+      tags: [Offres]
+      summary: Lister les offres
+      responses:
+        '200':
+          description: Liste des offres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+    post:
+      tags: [Offres]
+      summary: Créer une offre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titre]
+              properties:
+                titre:
+                  type: string
+                entreprise:
+                  type: string
+                montant:
+                  type: string
+                delai:
+                  type: string
+                statut:
+                  type: string
+                aoId:
+                  type: string
+                userId:
+                  type: string
+                supplierId:
+                  type: string
+                supplierRole:
+                  type: string
+                message:
+                  type: string
+                note:
+                  type: string
+                lot:
+                  type: string
+                acceptedBy:
+                  type: string
+                acceptedAt:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Offre créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+
+  /offers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Offres]
+      summary: Récupérer une offre
+      responses:
+        '200':
+          description: Offre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+    put:
+      tags: [Offres]
+      summary: Mettre à jour une offre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Offer'
+      responses:
+        '200':
+          description: Offre mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+    delete:
+      tags: [Offres]
+      summary: Supprimer une offre
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  MARKETS
+  # ─────────────────────────────────────────
+
+  /markets:
+    get:
+      tags: [Marchés]
+      summary: Lister les marchés
+      responses:
+        '200':
+          description: Liste des marchés
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Market'
+    post:
+      tags: [Marchés]
+      summary: Créer un marché
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entreprise]
+              properties:
+                titre:
+                  type: string
+                entreprise:
+                  type: string
+                lot:
+                  type: string
+                montant:
+                  type: string
+                statut:
+                  type: string
+                avancement:
+                  type: integer
+                projectId:
+                  type: string
+                offerId:
+                  type: string
+                aoId:
+                  type: string
+                clientId:
+                  type: string
+                supplierId:
+                  type: string
+                delai:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Marché créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Market'
+
+  /markets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Marchés]
+      summary: Récupérer un marché
+      responses:
+        '200':
+          description: Marché
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Market'
+    put:
+      tags: [Marchés]
+      summary: Mettre à jour un marché
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Market'
+      responses:
+        '200':
+          description: Marché mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Market'
+    delete:
+      tags: [Marchés]
+      summary: Supprimer un marché
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  TASKS
+  # ─────────────────────────────────────────
+
+  /tasks:
+    get:
+      tags: [Tâches]
+      summary: Lister les tâches
+      responses:
+        '200':
+          description: Liste des tâches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      tags: [Tâches]
+      summary: Créer une tâche
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                priority:
+                  type: string
+                progress:
+                  type: integer
+                dueDate:
+                  type: string
+                  format: date-time
+                projectId:
+                  type: string
+                marketId:
+                  type: string
+                assignedTo:
+                  type: string
+      responses:
+        '201':
+          description: Tâche créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /tasks/assigned-to-me:
+    get:
+      tags: [Tâches]
+      summary: Tâches assignées à l'utilisateur connecté
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tâches assignées
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Non authentifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Tâches]
+      summary: Récupérer une tâche
+      responses:
+        '200':
+          description: Tâche
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    put:
+      tags: [Tâches]
+      summary: Mettre à jour une tâche
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Tâche mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    delete:
+      tags: [Tâches]
+      summary: Supprimer une tâche
+      responses:
+        '204':
+          description: Supprimée
+
+  /tasks/{id}/comments:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Tâches]
+      summary: Ajouter un commentaire à une tâche
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Commentaire ajouté
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment:
+                    type: string
+                  activityId:
+                    type: string
+                  taskId:
+                    type: string
+        '404':
+          description: Tâche introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────────────────────────────────
+  #  DOCUMENTS
+  # ─────────────────────────────────────────
+
+  /documents:
+    get:
+      tags: [Documents]
+      summary: Lister les documents
+      responses:
+        '200':
+          description: Liste des documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+    post:
+      tags: [Documents]
+      summary: Créer un document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                url:
+                  type: string
+                projectId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Document créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+
+  /documents/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Documents]
+      summary: Récupérer un document
+      responses:
+        '200':
+          description: Document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+    put:
+      tags: [Documents]
+      summary: Mettre à jour un document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '200':
+          description: Document mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+    delete:
+      tags: [Documents]
+      summary: Supprimer un document
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  PHOTOS
+  # ─────────────────────────────────────────
+
+  /photos:
+    get:
+      tags: [Photos]
+      summary: Lister les photos
+      responses:
+        '200':
+          description: Liste des photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Photo'
+    post:
+      tags: [Photos]
+      summary: Ajouter une photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                caption:
+                  type: string
+                projectId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Photo créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photo'
+
+  /photos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Photos]
+      summary: Récupérer une photo
+      responses:
+        '200':
+          description: Photo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photo'
+    put:
+      tags: [Photos]
+      summary: Mettre à jour une photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Photo'
+      responses:
+        '200':
+          description: Photo mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photo'
+    delete:
+      tags: [Photos]
+      summary: Supprimer une photo
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  EVENTS
+  # ─────────────────────────────────────────
+
+  /events:
+    get:
+      tags: [Agenda]
+      summary: Lister les événements
+      responses:
+        '200':
+          description: Liste des événements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+    post:
+      tags: [Agenda]
+      summary: Créer un événement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titre, date]
+              properties:
+                titre:
+                  type: string
+                date:
+                  type: string
+                heure:
+                  type: string
+                type:
+                  type: string
+                projectId:
+                  type: string
+                color:
+                  type: string
+      responses:
+        '201':
+          description: Événement créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+  /events/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Agenda]
+      summary: Récupérer un événement
+      responses:
+        '200':
+          description: Événement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+    put:
+      tags: [Agenda]
+      summary: Mettre à jour un événement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '200':
+          description: Événement mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+    delete:
+      tags: [Agenda]
+      summary: Supprimer un événement
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  DECISIONS
+  # ─────────────────────────────────────────
+
+  /decisions:
+    get:
+      tags: [Décisions]
+      summary: Lister les décisions
+      responses:
+        '200':
+          description: Liste des décisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Decision'
+    post:
+      tags: [Décisions]
+      summary: Créer une décision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titre]
+              properties:
+                titre:
+                  type: string
+                desc:
+                  type: string
+                statut:
+                  type: string
+                urgent:
+                  type: boolean
+                projectId:
+                  type: string
+                visibility:
+                  type: string
+      responses:
+        '201':
+          description: Décision créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+
+  /decisions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Décisions]
+      summary: Récupérer une décision
+      responses:
+        '200':
+          description: Décision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+    put:
+      tags: [Décisions]
+      summary: Mettre à jour une décision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+      responses:
+        '200':
+          description: Décision mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+    delete:
+      tags: [Décisions]
+      summary: Supprimer une décision
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  PRODUCTS
+  # ─────────────────────────────────────────
+
+  /products:
+    get:
+      tags: [Marketplace]
+      summary: Lister les produits
+      responses:
+        '200':
+          description: Liste des produits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      tags: [Marketplace]
+      summary: Créer un produit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                unit:
+                  type: string
+                photoUrl:
+                  type: string
+                description:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Produit créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  /products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Marketplace]
+      summary: Récupérer un produit
+      responses:
+        '200':
+          description: Produit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    put:
+      tags: [Marketplace]
+      summary: Mettre à jour un produit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Produit mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    delete:
+      tags: [Marketplace]
+      summary: Supprimer un produit
+      responses:
+        '204':
+          description: Supprimé
+
+  /marketplace/categories:
+    get:
+      tags: [Marketplace]
+      summary: Lister les catégories de la marketplace
+      responses:
+        '200':
+          description: Catégories (avec entrée virtuelle "Tout" en première position)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketplaceCategory'
+
+  # ─────────────────────────────────────────
+  #  COMMANDES
+  # ─────────────────────────────────────────
+
+  /commandes:
+    get:
+      tags: [Commandes]
+      summary: Lister les commandes
+      responses:
+        '200':
+          description: Liste des commandes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Commande'
+    post:
+      tags: [Commandes]
+      summary: Créer une commande
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference:
+                  type: string
+                statut:
+                  type: string
+                total:
+                  type: number
+                userId:
+                  type: string
+                projectId:
+                  type: string
+      responses:
+        '201':
+          description: Commande créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+
+  /commandes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Commandes]
+      summary: Récupérer une commande
+      responses:
+        '200':
+          description: Commande
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+    put:
+      tags: [Commandes]
+      summary: Mettre à jour une commande
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Commande'
+      responses:
+        '200':
+          description: Commande mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commande'
+    delete:
+      tags: [Commandes]
+      summary: Supprimer une commande
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  CONVERSATIONS & MESSAGES
+  # ─────────────────────────────────────────
+
+  /conversations:
+    get:
+      tags: [Messagerie]
+      summary: Lister les conversations
+      responses:
+        '200':
+          description: Liste des conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conversation'
+    post:
+      tags: [Messagerie]
+      summary: Créer une conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                projectId:
+                  type: string
+                aoId:
+                  type: string
+                offerId:
+                  type: string
+                marketId:
+                  type: string
+                participants:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Conversation créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+
+  /conversations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Messagerie]
+      summary: Récupérer une conversation
+      responses:
+        '200':
+          description: Conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+    put:
+      tags: [Messagerie]
+      summary: Mettre à jour une conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Conversation'
+      responses:
+        '200':
+          description: Conversation mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+    delete:
+      tags: [Messagerie]
+      summary: Supprimer une conversation
+      responses:
+        '204':
+          description: Supprimée
+
+  /messages:
+    get:
+      tags: [Messagerie]
+      summary: Lister les messages
+      responses:
+        '200':
+          description: Liste des messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      tags: [Messagerie]
+      summary: Envoyer un message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contenu]
+              properties:
+                contenu:
+                  type: string
+                conversationId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Message envoyé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+
+  /messages/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Messagerie]
+      summary: Récupérer un message
+      responses:
+        '200':
+          description: Message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    put:
+      tags: [Messagerie]
+      summary: Mettre à jour un message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Message'
+      responses:
+        '200':
+          description: Message mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    delete:
+      tags: [Messagerie]
+      summary: Supprimer un message
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  NOTIFICATIONS & ACTIVITIES
+  # ─────────────────────────────────────────
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Lister les notifications de l'utilisateur connecté
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+    post:
+      tags: [Notifications]
+      summary: Créer une notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [msg]
+              properties:
+                msg:
+                  type: string
+                type:
+                  type: string
+                role:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Notification créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+
+  /notifications/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Notifications]
+      summary: Récupérer une notification
+      responses:
+        '200':
+          description: Notification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+    put:
+      tags: [Notifications]
+      summary: Mettre à jour une notification (ex. marquer comme lue)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+      responses:
+        '200':
+          description: Notification mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+    delete:
+      tags: [Notifications]
+      summary: Supprimer une notification
+      responses:
+        '204':
+          description: Supprimée
+
+  /activities:
+    get:
+      tags: [Notifications]
+      summary: Lister les activités de l'utilisateur connecté
+      responses:
+        '200':
+          description: Activités
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+    post:
+      tags: [Notifications]
+      summary: Créer une activité
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                data:
+                  type: object
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Activité créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+
+  /activities/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Notifications]
+      summary: Récupérer une activité
+      responses:
+        '200':
+          description: Activité
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+    put:
+      tags: [Notifications]
+      summary: Mettre à jour une activité
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '200':
+          description: Activité mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+    delete:
+      tags: [Notifications]
+      summary: Supprimer une activité
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  RAPPORTS
+  # ─────────────────────────────────────────
+
+  /rapports:
+    get:
+      tags: [Rapports]
+      summary: Lister les rapports de l'utilisateur connecté
+      responses:
+        '200':
+          description: Rapports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rapport'
+    post:
+      tags: [Rapports]
+      summary: Créer un rapport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titre:
+                  type: string
+                type:
+                  type: string
+                contenu:
+                  type: string
+                projectId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Rapport créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+
+  /rapports/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Rapports]
+      summary: Récupérer un rapport
+      responses:
+        '200':
+          description: Rapport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+    put:
+      tags: [Rapports]
+      summary: Mettre à jour un rapport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rapport'
+      responses:
+        '200':
+          description: Rapport mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+    delete:
+      tags: [Rapports]
+      summary: Supprimer un rapport
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  TRANSACTIONS
+  # ─────────────────────────────────────────
+
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Lister les transactions de l'utilisateur connecté
+      responses:
+        '200':
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      tags: [Transactions]
+      summary: Créer une transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              properties:
+                type:
+                  type: string
+                label:
+                  type: string
+                montant:
+                  type: number
+                statut:
+                  type: string
+                projectId:
+                  type: string
+                marketId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '201':
+          description: Transaction créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Transactions]
+      summary: Récupérer une transaction
+      responses:
+        '200':
+          description: Transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+    put:
+      tags: [Transactions]
+      summary: Mettre à jour une transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: Transaction mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+    delete:
+      tags: [Transactions]
+      summary: Supprimer une transaction
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  FOURNISSEURS
+  # ─────────────────────────────────────────
+
+  /fournisseurs:
+    get:
+      tags: [Répertoire]
+      summary: Lister les fournisseurs
+      responses:
+        '200':
+          description: Fournisseurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fournisseur'
+    post:
+      tags: [Répertoire]
+      summary: Créer un fournisseur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom]
+              properties:
+                nom:
+                  type: string
+                email:
+                  type: string
+                tel:
+                  type: string
+                ville:
+                  type: string
+                specialite:
+                  type: string
+                statut:
+                  type: string
+      responses:
+        '201':
+          description: Fournisseur créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fournisseur'
+
+  /fournisseurs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Répertoire]
+      summary: Récupérer un fournisseur
+      responses:
+        '200':
+          description: Fournisseur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fournisseur'
+    put:
+      tags: [Répertoire]
+      summary: Mettre à jour un fournisseur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Fournisseur'
+      responses:
+        '200':
+          description: Fournisseur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fournisseur'
+    delete:
+      tags: [Répertoire]
+      summary: Supprimer un fournisseur
+      responses:
+        '204':
+          description: Supprimé
+
+  /clients:
+    get:
+      tags: [Répertoire]
+      summary: Lister les clients
+      responses:
+        '200':
+          description: Clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+    post:
+      tags: [Répertoire]
+      summary: Créer un client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom]
+              properties:
+                nom:
+                  type: string
+                email:
+                  type: string
+                tel:
+                  type: string
+                ville:
+                  type: string
+                projectId:
+                  type: string
+      responses:
+        '201':
+          description: Client créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+
+  /clients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Répertoire]
+      summary: Récupérer un client
+      responses:
+        '200':
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    put:
+      tags: [Répertoire]
+      summary: Mettre à jour un client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Client mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    delete:
+      tags: [Répertoire]
+      summary: Supprimer un client
+      responses:
+        '204':
+          description: Supprimé
+
+  /intervenants:
+    get:
+      tags: [Répertoire]
+      summary: Lister les intervenants
+      responses:
+        '200':
+          description: Intervenants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Intervenant'
+    post:
+      tags: [Répertoire]
+      summary: Créer un intervenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom]
+              properties:
+                nom:
+                  type: string
+                role:
+                  type: string
+                specialite:
+                  type: string
+                email:
+                  type: string
+                tel:
+                  type: string
+                projectId:
+                  type: string
+      responses:
+        '201':
+          description: Intervenant créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intervenant'
+
+  /intervenants/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Répertoire]
+      summary: Récupérer un intervenant
+      responses:
+        '200':
+          description: Intervenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intervenant'
+    put:
+      tags: [Répertoire]
+      summary: Mettre à jour un intervenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Intervenant'
+      responses:
+        '200':
+          description: Intervenant mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intervenant'
+    delete:
+      tags: [Répertoire]
+      summary: Supprimer un intervenant
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  PROJECT MEMBERS
+  # ─────────────────────────────────────────
+
+  /project-members:
+    get:
+      tags: [Projects]
+      summary: Lister les membres de projets
+      responses:
+        '200':
+          description: Membres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectMember'
+    post:
+      tags: [Projects]
+      summary: Ajouter un membre à un projet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, userId]
+              properties:
+                projectId:
+                  type: string
+                userId:
+                  type: string
+                role:
+                  type: string
+                userName:
+                  type: string
+                userEmail:
+                  type: string
+      responses:
+        '201':
+          description: Membre ajouté
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+
+  /project-members/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Projects]
+      summary: Récupérer un membre
+      responses:
+        '200':
+          description: Membre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+    put:
+      tags: [Projects]
+      summary: Mettre à jour un membre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectMember'
+      responses:
+        '200':
+          description: Membre mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectMember'
+    delete:
+      tags: [Projects]
+      summary: Retirer un membre d'un projet
+      responses:
+        '204':
+          description: Supprimé
+
+  # ─────────────────────────────────────────
+  #  INTRODUCTIONS & COMMISSIONS
+  # ─────────────────────────────────────────
+
+  /introductions:
+    get:
+      tags: [Commission]
+      summary: Lister les introductions
+      responses:
+        '200':
+          description: Introductions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Introduction'
+    post:
+      tags: [Commission]
+      summary: Créer une introduction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId:
+                  type: string
+                clientId:
+                  type: string
+                structureId:
+                  type: string
+                structureName:
+                  type: string
+                metier:
+                  type: string
+                status:
+                  type: string
+                source:
+                  type: string
+      responses:
+        '201':
+          description: Introduction créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Introduction'
+
+  /introductions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Commission]
+      summary: Récupérer une introduction
+      responses:
+        '200':
+          description: Introduction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Introduction'
+    put:
+      tags: [Commission]
+      summary: Mettre à jour une introduction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Introduction'
+      responses:
+        '200':
+          description: Introduction mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Introduction'
+    delete:
+      tags: [Commission]
+      summary: Supprimer une introduction
+      responses:
+        '204':
+          description: Supprimée
+
+  /commissions-tracking:
+    get:
+      tags: [Commission]
+      summary: Lister les commissions
+      responses:
+        '200':
+          description: Commissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Commission'
+    post:
+      tags: [Commission]
+      summary: Créer une commission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                introductionId:
+                  type: string
+                structureId:
+                  type: string
+                structureName:
+                  type: string
+                projectId:
+                  type: string
+                clientId:
+                  type: string
+                montantBase:
+                  type: integer
+                montantCommission:
+                  type: integer
+                rate:
+                  type: number
+                status:
+                  type: string
+      responses:
+        '201':
+          description: Commission créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commission'
+
+  /commissions-tracking/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Commission]
+      summary: Récupérer une commission
+      responses:
+        '200':
+          description: Commission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commission'
+    put:
+      tags: [Commission]
+      summary: Mettre à jour une commission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Commission'
+      responses:
+        '200':
+          description: Commission mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commission'
+    delete:
+      tags: [Commission]
+      summary: Supprimer une commission
+      responses:
+        '204':
+          description: Supprimée
+
+  # ─────────────────────────────────────────
+  #  FINANCE
+  # ─────────────────────────────────────────
+
+  /finance/budgets:
+    get:
+      tags: [Finance]
+      summary: Lister les budgets
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Budgets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      tags: [Finance]
+      summary: Créer un budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [montant]
+              properties:
+                projectId:
+                  type: string
+                montant:
+                  type: number
+                label:
+                  type: string
+      responses:
+        '201':
+          description: Budget créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /finance/budgets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      tags: [Finance]
+      summary: Mettre à jour un budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                montant:
+                  type: number
+                label:
+                  type: string
+                statut:
+                  type: string
+      responses:
+        '200':
+          description: Budget mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+    delete:
+      tags: [Finance]
+      summary: Supprimer un budget
+      responses:
+        '204':
+          description: Supprimé
+
+  /finance/expenses:
+    get:
+      tags: [Finance]
+      summary: Lister les dépenses
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: statut
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dépenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      tags: [Finance]
+      summary: Créer une dépense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label, montant]
+              properties:
+                projectId:
+                  type: string
+                montant:
+                  type: number
+                label:
+                  type: string
+                statut:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '201':
+          description: Dépense créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /finance/expenses/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      tags: [Finance]
+      summary: Mettre à jour une dépense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                montant:
+                  type: number
+                label:
+                  type: string
+                statut:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '200':
+          description: Dépense mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+    delete:
+      tags: [Finance]
+      summary: Supprimer une dépense
+      responses:
+        '204':
+          description: Supprimée
+
+  /finance/invoices:
+    get:
+      tags: [Finance]
+      summary: Lister les factures
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: statut
+          in: query
+          schema:
+            type: string
+            enum: [brouillon, emise, payee, validee]
+      responses:
+        '200':
+          description: Factures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      tags: [Finance]
+      summary: Créer une facture (statut initial = brouillon)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label, montant]
+              properties:
+                projectId:
+                  type: string
+                montant:
+                  type: number
+                label:
+                  type: string
+                provider:
+                  type: string
+      responses:
+        '201':
+          description: Facture créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /finance/invoices/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      tags: [Finance]
+      summary: Mettre à jour / avancer le workflow d'une facture
+      description: |
+        Workflow : brouillon → emise → payee → validee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                montant:
+                  type: number
+                label:
+                  type: string
+                statut:
+                  type: string
+                  enum: [brouillon, emise, payee, validee]
+                provider:
+                  type: string
+      responses:
+        '200':
+          description: Facture mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Statut invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /finance/reports/{projectId}:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Finance]
+      summary: Rapport financier d'un projet (KPIs + ventilation mensuelle)
+      responses:
+        '200':
+          description: Rapport complet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceReport'
+        '404':
+          description: Projet introuvable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─────────────────────────────────────────
+  #  PAYMENTS (Escrow)
+  # ─────────────────────────────────────────
+
+  /payments:
+    get:
+      tags: [Paiements Escrow]
+      summary: Lister les ordres de paiement
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: marketId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PAY_INIT, PAY_PENDING, FUNDS_CONFIRMED, HELD_FOR_MILESTONE, PAYOUT_REQUESTED, PAYOUT_DONE, DISPUTE_OPEN, REVERSED]
+      responses:
+        '200':
+          description: Ordres de paiement
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentOrder'
+    post:
+      tags: [Paiements Escrow]
+      summary: Créer un ordre de paiement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+                rail:
+                  type: string
+                  enum: [virement, carte, mobile_money, wave, orange_money, mtn]
+                label:
+                  type: string
+                projectId:
+                  type: string
+                marketId:
+                  type: string
+                milestones:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                      amount:
+                        type: number
+                      dueAt:
+                        type: string
+                        format: date-time
+      responses:
+        '201':
+          description: Ordre créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrder'
+
+  /payments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Paiements Escrow]
+      summary: Récupérer un ordre de paiement (avec jalons, preuves, validations)
+      responses:
+        '200':
+          description: Ordre de paiement complet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrder'
+        '404':
+          description: Non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payments/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      tags: [Paiements Escrow]
+      summary: Changer le statut d'un ordre de paiement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [PAY_INIT, PAY_PENDING, FUNDS_CONFIRMED, HELD_FOR_MILESTONE, PAYOUT_REQUESTED, PAYOUT_DONE, DISPUTE_OPEN, REVERSED]
+                disputeReason:
+                  type: string
+                  description: Requis si status = DISPUTE_OPEN
+      responses:
+        '200':
+          description: Ordre mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrder'
+
+  /payments/{id}/milestones/{milestoneId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: milestoneId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      tags: [Paiements Escrow]
+      summary: Mettre à jour un jalon de paiement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, in_progress, completed, disputed]
+                completedAt:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Jalon mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+
+  /payments/{id}/proofs:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Paiements Escrow]
+      summary: Ajouter une preuve de paiement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                type:
+                  type: string
+                  enum: [document, photo, pv, bon_livraison]
+                url:
+                  type: string
+      responses:
+        '201':
+          description: Preuve ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentProof'
+
+  /payments/{id}/validate:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Paiements Escrow]
+      summary: Valider (ou rejeter) un ordre de paiement
+      description: Si `validated = true`, le statut passe automatiquement à FUNDS_CONFIRMED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [validated]
+              properties:
+                validated:
+                  type: boolean
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Validation enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentValidation'
+
+  /payments/{id}/logs:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Paiements Escrow]
+      summary: Historique (preuves + validations) d'un ordre de paiement
+      responses:
+        '200':
+          description: Logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  proofs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentProof'
+                  validations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentValidation'
+
+  /payments/initiate/wave:
+    post:
+      tags: [Paiements Escrow]
+      summary: Initier un paiement Wave CI (non implémenté)
+      responses:
+        '501':
+          description: Intégration à venir
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  provider:
+                    type: string
+
+  /payments/initiate/orange-money:
+    post:
+      tags: [Paiements Escrow]
+      summary: Initier un paiement Orange Money (non implémenté)
+      responses:
+        '501':
+          description: Intégration à venir
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  provider:
+                    type: string
+
+  /payments/initiate/mtn:
+    post:
+      tags: [Paiements Escrow]
+      summary: Initier un paiement MTN MoMo (non implémenté)
+      responses:
+        '501':
+          description: Intégration à venir
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  provider:
+                    type: string
+
+  /payments/webhook:
+    post:
+      tags: [Paiements Escrow]
+      summary: Webhook de callback provider de paiement
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Corps dépendant du provider
+      responses:
+        '200':
+          description: Webhook reçu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+
+  # ─────────────────────────────────────────
+  #  UPLOAD (MinIO)
+  # ─────────────────────────────────────────
+
+  /upload:
+    post:
+      tags: [Upload]
+      summary: Uploader un fichier vers MinIO (base64)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Data URL base64 (ex. data:image/png;base64,...)
+                folder:
+                  type: string
+                  description: Dossier de destination (ex. projects, avatars, documents)
+                  default: uploads
+                filename:
+                  type: string
+                  description: Nom de fichier souhaité (sans extension)
+      responses:
+        '201':
+          description: Fichier uploadé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    description: URL publique MinIO
+                  objectName:
+                    type: string
+                  size:
+                    type: integer
+                  contentType:
+                    type: string
+        '400':
+          description: Fichier manquant ou format invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /upload/{objectName}:
+    parameters:
+      - name: objectName
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Nom de l'objet MinIO (ex. projects/abc123_photo.png)
+    delete:
+      tags: [Upload]
+      summary: Supprimer un fichier de MinIO
+      responses:
+        '204':
+          description: Fichier supprimé
+
+  # ─────────────────────────────────────────
+  #  KAI — Assistant IA
+  # ─────────────────────────────────────────
+
+  /kai/chat:
+    post:
+      tags: [KAI]
+      summary: Envoyer un message à l'assistant IA KAI (Claude)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: Question ou demande de l'utilisateur
+                context:
+                  type: object
+                  description: Données contextuelles du compte utilisateur
+                  properties:
+                    userType:
+                      type: string
+                      enum: [pro, client, fournisseur]
+                    userName:
+                      type: string
+                    userCompany:
+                      type: string
+                    projects:
+                      type: array
+                      items:
+                        type: object
+                    pendingOffers:
+                      type: integer
+                    pendingDecisions:
+                      type: integer
+                    unreadMessages:
+                      type: integer
+                    activeMarkets:
+                      type: integer
+                    documentsCount:
+                      type: integer
+                    productsCount:
+                      type: integer
+                    pendingOrders:
+                      type: integer
+                    teamMembers:
+                      type: array
+                      items:
+                        type: object
+      responses:
+        '200':
+          description: Réponse de KAI
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+        '400':
+          description: Message manquant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: API Anthropic non configurée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  fallback:
+                    type: boolean
+
+  # ─────────────────────────────────────────
+  #  INTEGRATIONS (catalogue statique)
+  # ─────────────────────────────────────────
+
+  /integrations:
+    get:
+      tags: [Système]
+      summary: Catalogue des intégrations disponibles (statique)
+      responses:
+        '200':
+          description: Liste des intégrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    nom:
+                      type: string
+                    desc:
+                      type: string
+                    cat:
+                      type: string
+                    logo:
+                      type: string
+
+tags:
+  - name: Système
+    description: Health check et données système
+  - name: Auth
+    description: Authentification et gestion de compte
+  - name: Users
+    description: Gestion des utilisateurs et annuaire des professionnels
+  - name: Projects
+    description: Projets et membres d'équipe
+  - name: Appels d'Offres
+    description: Appels d'offres (AO)
+  - name: Offres
+    description: Offres en réponse aux AO
+  - name: Marchés
+    description: Marchés conclus
+  - name: Tâches
+    description: Gestion des tâches
+  - name: Documents
+    description: Documents de projet
+  - name: Photos
+    description: Photos de chantier
+  - name: Agenda
+    description: Événements et planning
+  - name: Décisions
+    description: Décisions de projet
+  - name: Marketplace
+    description: Produits et catégories de la marketplace
+  - name: Commandes
+    description: Commandes marketplace
+  - name: Messagerie
+    description: Conversations et messages
+  - name: Notifications
+    description: Notifications et activités
+  - name: Rapports
+    description: Rapports de chantier
+  - name: Transactions
+    description: Transactions financières génériques
+  - name: Finance
+    description: Budgets, dépenses, factures et KPIs financiers
+  - name: Paiements Escrow
+    description: Ordres de paiement sécurisés avec jalons et preuves
+  - name: Répertoire
+    description: Clients, intervenants et fournisseurs
+  - name: Commission
+    description: Introductions et suivi des commissions clé en main
+  - name: Upload
+    description: Upload de fichiers vers MinIO
+  - name: KAI
+    description: Assistant IA MEEREO (powered by Claude)
