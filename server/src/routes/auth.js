@@ -11,7 +11,7 @@ export default function authRouter(prisma) {
   // Register
   router.post('/register', async (req, res) => {
     try {
-      const { email, password, name, type, company, phone, avatar } = req.body
+      const { email, password, name, type, company, phone, avatar, metier, ville } = req.body
       if (!email || !password) return res.status(400).json({ error: 'Email et mot de passe requis' })
 
       const exists = await prisma.user.findUnique({ where: { email } })
@@ -21,7 +21,7 @@ export default function authRouter(prisma) {
       // avatar may be a MinIO URL or base64 string — store as-is (max 5MB guard)
       const safeAvatar = avatar && typeof avatar === 'string' && avatar.length < 5_000_000 ? avatar : null
       const user = await prisma.user.create({
-        data: { email, password: hashed, name: name || '', type: type || 'pro', company, phone, avatar: safeAvatar }
+        data: { email, password: hashed, name: name || '', type: type || 'pro', company, phone, avatar: safeAvatar, metier: metier || null, ville: ville || null }
       })
 
       const token = jwt.sign({ userId: user.id, type: user.type }, JWT_SECRET, { expiresIn: '30d' })

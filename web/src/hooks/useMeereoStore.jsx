@@ -377,7 +377,7 @@ export function MeereoProvider({ children }) {
     // Build onboardingData — keep only serializable, reasonably-sized fields
     const obData = {}
     // Text/number fields — safe to serialize
-    const textKeys = ['userType','prenom','nom','civilite','entreprise','ville','annee','rccm','ncc',
+    const textKeys = ['userType','prenom','nom','civilite','entreprise','metier','ville','annee','rccm','ncc',
       'email','emailPro','tel','telPro','slogan','bio','projetsN','effectif','pays',
       'situation','projectType','location','surface','budget','description','architecteEmail',
       'delaiLivraison','logoColor','logoShape','logoTypo','bannerPosition','emailVerified']
@@ -449,6 +449,8 @@ export function MeereoProvider({ children }) {
         type: user.type,
         company: user.company,
         phone: user.phone,
+        metier: data.metier || data.secteurs?.[0] || null,
+        ville: data.ville || null,
       })
       if (res?.token) {
         // Store token + hydrate shared business data from PostgreSQL
