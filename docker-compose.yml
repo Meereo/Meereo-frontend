@@ -1,117 +1,14 @@
-version: '3.8'
-
 services:
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: meereo-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-meereo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meereo2026}
-      POSTGRES_DB: ${POSTGRES_DB:-meereo}
-    ports:
-      - '5433:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-meereo} -d ${POSTGRES_DB:-meereo}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-    networks:
-      - meereo-net
-
-  redis:
-    image: redis:7-alpine
-    container_name: meereo-cache
-    restart: unless-stopped
-    ports:
-      - '6380:6379'
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - meereo-net
-
-  minio:
-    image: minio/minio:latest
-    container_name: meereo-storage
-    restart: unless-stopped
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-meereo}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-meereo2026}
-    command: server /data --console-address ":9003"
-    ports:
-      - '9002:9000'
-      - '9003:9003'
-    volumes:
-      - miniodata:/data
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - meereo-net
-
-  api:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: meereo-api
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-meereo}:${POSTGRES_PASSWORD:-meereo2026}@postgres:5432/${POSTGRES_DB:-meereo}
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: '9000'
-      MINIO_USE_SSL: 'false'
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-meereo}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-meereo2026}
-      MINIO_BUCKET: ${MINIO_BUCKET:-meereo-files}
-      PORT: '3001'
-      JWT_SECRET: ${JWT_SECRET:-meereo-dev-secret-2025}
-      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-https://dev.meereo.com}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      FRONTEND_URL: ${FRONTEND_URL:-https://dev.meereo.com}
-    ports:
-      - '3002:3001'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    networks:
-      - meereo-net
 
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: meereo-web
     restart: unless-stopped
     ports:
       - '8080:80'
-    depends_on:
-      - api
-    networks:
-      - meereo-net
 
 networks:
-  meereo-net:
+  default:
     driver: bridge
-
-volumes:
-  pgdata:
-  redisdata:
-  miniodata:
