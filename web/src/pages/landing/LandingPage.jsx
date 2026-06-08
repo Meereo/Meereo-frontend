@@ -221,7 +221,7 @@ export default function LandingPage() {
                 MEEREO vous donne un accès adapté à votre rôle. Chacun agit avec les bonnes informations et le bon niveau de validation.
               </p>
             </div>
-            <div style={{ marginTop:40, display:'grid', gap:14, gridTemplateColumns:'repeat(3,1fr)', maxWidth:940, margin:'40px auto 0' }} className="lp-act">
+            <div style={{ maxWidth:940, margin:'40px auto 0' }} className="lp-act">
               {[
                 {t:'Une visibilité claire', d:'Les bonnes informations, au bon moment, pour décider avec clarté.'},
                 {t:'Une messagerie intégrée', d:'Échangez, validez et coordonnez depuis un espace dédié au projet.'},
@@ -247,7 +247,7 @@ export default function LandingPage() {
               Centralisez l'avancement des chantiers, les arbitrages, les flux financiers et l'accès à de nouvelles opportunités. Achetez vos matériaux, répondez à des appels d'offres et gardez une lecture claire de chaque décision.
             </p>
           </div>
-          <div style={{ maxWidth:940, margin:'44px auto 0', display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14 }} className="lp-zoom-grid">
+          <div style={{ maxWidth:940, margin:'44px auto 0' }} className="lp-zoom-grid">
             {[
               { label:'Projet actif', val:'APD · 45 %', sub:'Suivez l\u2019avancement de vos projets en temps réel, où que vous soyez dans le monde, et gardez une maîtrise claire sur chaque phase.' },
               { label:'Appels d\u2019offres', val:'2 opportunités', sub:'Accédez à de nouveaux appels d\u2019offres, répondez à des besoins qualifiés et développez votre activité auprès de nouveaux clients.' },
@@ -273,7 +273,7 @@ export default function LandingPage() {
               </h2>
             </div>
             {/* Bloc principal */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1.15fr', gap:44, alignItems:'center', marginBottom:56 }} className="lp-fr">
+            <div style={{ marginBottom:56 }} className="lp-fr">
               <div style={{ padding:'4px 0' }}>
                 <h3 style={{ fontSize:26, fontWeight:700, letterSpacing:'-.035em', color:'#000', margin:0, lineHeight:1.2 }}>Une maîtrise complète de l'avancement du chantier</h3>
                 <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'#888' }}>Visualisez chaque phase du chantier, suivez les éléments attendus et validez l'avancement dans un cadre clair, traçable et maîtrisé.</p>
@@ -281,7 +281,7 @@ export default function LandingPage() {
               <div className="lp-frame"><ChantierMini/></div>
             </div>
             {/* Cartes secondaires */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20, alignItems:'center' }} className="lp-pills">
+            <div className="lp-pills">
               {[
                 {t:'Appels d\u2019offres & marchés', d:'Accédez à de nouvelles opportunités, répondez à des clients qualifiés et développez votre activité à travers un espace conçu pour ouvrir de nouvelles perspectives.', hero:false},
                 {t:'Marketplace', d:'Achetez vos matériaux et équipements depuis un espace centralisé, avec une vue d\u2019ensemble claire sur les offres disponibles sur le marché.', hero:true},
@@ -298,7 +298,7 @@ export default function LandingPage() {
 
         {/* ══ S5 — FINANCE + MARKETPLACE ══ */}
         <section style={{ background:'#fff', borderTop:'1px solid rgba(0,0,0,.1)', borderBottom:'1px solid rgba(0,0,0,.1)' }}>
-          <div style={{ maxWidth:1000, margin:'0 auto', padding:'68px 28px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:24 }} className="lp-fin">
+          <div style={{ maxWidth:1000, margin:'0 auto', padding:'68px 28px' }} className="lp-fin">
             {/* Centre financier */}
             <div style={{ borderRadius:18, border:'1px solid rgba(0,0,0,.08)', background:'#f5f5f7', padding:'28px 26px' }}>
               <Label>Centre financier</Label>
@@ -377,7 +377,7 @@ export default function LandingPage() {
               </p>
             </div>
             {/* KAI capabilities cards */}
-            <div style={{ maxWidth:600, margin:'0 auto 36px', display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+            <div style={{ maxWidth:600, margin:'0 auto 36px' }} className="lp-kai-caps">
               {[
                 {t:'Rapports chantier',d:'En langage naturel, générés depuis vos données.'},
                 {t:'Comparatif d\u2019offres',d:'Analyse, scoring et recommandation automatiques.'},
@@ -407,7 +407,7 @@ export default function LandingPage() {
                 Passez d'un projet désorganisé à un système structuré et maîtrisé.
               </h2>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:0, alignItems:'start' }} className="lp-diff">
+            <div className="lp-diff">
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2px', color:'#bbb', marginBottom:4 }}>Avant</div>
                 {['Fichiers Excel éparpillés','WhatsApp pour coordonner','Aucune visibilité financière','Outils fragmentés par métier'].map(t=>(
@@ -448,7 +448,7 @@ export default function LandingPage() {
 
       {/* ══ S9 — FOOTER ══ */}
       <footer style={{ background:'#0a0a0a', color:'#fff' }}>
-        <div style={{ maxWidth:1200, margin:'0 auto', display:'grid', gap:32, padding:'44px 28px', gridTemplateColumns:'1.5fr .7fr .7fr .7fr' }} className="lp-ft">
+        <div style={{ maxWidth:1200, margin:'0 auto', padding:'44px 28px' }} className="lp-ft">
           <div>
             <div style={{ display:'flex', alignItems:'center', gap:9 }}><MeereoLogo size={26}/><span style={{ fontSize:13, fontWeight:600, color:'#fff' }}>MEEREO</span></div>
             <p style={{ marginTop:12, maxWidth:260, fontSize:12, lineHeight:1.5, color:'rgba(255,255,255,.4)' }}>Plateforme BTP & Immobilier pour l'Afrique francophone.</p>

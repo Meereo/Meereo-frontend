@@ -96,7 +96,7 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
 
         {/* Comparaison */}
         <div style={{ padding: '20px 28px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+          <div className="rg-2" style={{ gap: 12, marginBottom: 20 }}>
             <div style={{ padding: '14px 16px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-subtle)' }}>
               <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Standard</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.6 }}>

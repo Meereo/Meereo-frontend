@@ -322,7 +322,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
 
         {/* Bannieres promo */}
         {activeCat === 'all' && !search && !activeFournisseur && (
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 22 }}>
+          <div className="rg-hero" style={{ gap: 12, marginBottom: 22 }}>
             <div onClick={() => setActiveCat('mobilier')} style={{ height: 150, borderRadius: 14, overflow: 'hidden', position: 'relative', cursor: 'pointer', background: 'linear-gradient(135deg, #1a1d1e 0%, #2d3436 50%, #191c1d 100%)' }}>
               <div style={{ position: 'absolute', inset: 0 }} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 28px' }}>
@@ -350,7 +350,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
               <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.3px' }}>Produits sponsorises</div>
               <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(245,158,11,.1)', color: '#F59E0B' }}>AD</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div className="rg-4" style={{ gap: 10 }}>
               {MKT_ITEMS.filter(m => m.sponsorise).map(m => (
                 <div key={m.id} onClick={() => { setDetail(m); setDetailQty(1) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--surface-1)', border: '1px solid rgba(245,158,11,.15)', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }} onMouseOver={e => e.currentTarget.style.borderColor = '#F59E0B'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,.15)'}>
                   <img src={m.img} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
@@ -399,7 +399,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
         </div>
 
         {/* Product grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div className="rg-3" style={{ gap: 12 }}>
           {sorted.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><ShoppingCart size={32}/></div>
@@ -485,12 +485,12 @@ export default function MarketplacePage({ showToast, commerceScope }) {
       {/* ── Product detail modal ── */}
       {detail && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setDetail(null)}>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 720, maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 720, maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
               <span style={{ fontSize: 15, fontWeight: 700 }}>Detail produit</span>
               <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 420 }}>
+            <div className="rg-2" style={{ minHeight: 420 }}>
               {/* Image */}
               <div style={{ background: 'var(--s2)', position: 'relative', overflow: 'hidden' }}>
                 <img src={detail.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none' }} />
@@ -652,7 +652,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
                     </div>
 
                     {/* Distance & poids */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div className="modal-row" style={{ gap: 8 }}>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)', marginBottom: 3 }}>Distance (km)</div>
                         <input type="number" value={livKm} onChange={e => setLivKm(parseInt(e.target.value) || 0)} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} />
@@ -684,7 +684,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
               {/* Moyen de paiement */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Moyen de paiement</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                <div className="rg-3" style={{ gap: 6 }}>
                   {PAY_PROVIDERS.filter(p => p.statut === 'Vérifié').map(p => (
                     <div key={p.id} onClick={() => setPayMethod(p.id)} style={{ padding: '10px 8px', borderRadius: 8, border: payMethod === p.id ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>{p.logo}</div>

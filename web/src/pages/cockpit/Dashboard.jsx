@@ -136,7 +136,7 @@ export default function Dashboard({ onNavigate, openModal }) {
         {/* Onboarding — 4 étapes visuelles */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Comment ça marche</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <div className="rg-4" style={{ gap: 10 }}>
             {[
               { n: '01', title: 'Créer un projet', desc: 'Définissez votre mission, budget et localisation.', color: 'var(--tx)' },
               { n: '02', title: 'Constituer l\'équipe', desc: 'Ajoutez intervenants et lancez un appel d\'offres.', color: 'var(--t2)' },
@@ -155,7 +155,7 @@ export default function Dashboard({ onNavigate, openModal }) {
         {/* Accès rapides — 3 max, pertinents pour le démarrage */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Explorer</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div className="rg-3" style={{ gap: 10 }}>
             {[
               { icon: <Radio size={16} />, label: 'Bourse des AO', desc: 'Consulter les opportunités', page: 'bourse' },
               { icon: <Package size={16} />, label: 'Marketplace', desc: 'Parcourir les produits', page: 'marketplace' },
@@ -231,7 +231,7 @@ export default function Dashboard({ onNavigate, openModal }) {
           </div>
 
           {/* Meta */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+          <div className="rg-4" style={{ gap: 14 }}>
             {[
               ['Phase', PHASE_LABELS[normalizePhase(mainProj.phase)] || mainProj.phase],
               ['Budget', formatShort(parseBudget(mainProj.budget))],
@@ -248,7 +248,7 @@ export default function Dashboard({ onNavigate, openModal }) {
       </div>
 
       {/* Synthèse portefeuille — compact, pas de KPI géants redondants */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}>
+      <div className="rg-3" style={{ gap: 12, marginBottom: 28 }}>
         <div onClick={() => onNavigate('projets')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .12s' }}>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: 'var(--tx)' }}>{allProjets.length}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3, textTransform: 'uppercase', letterSpacing: '.03em' }}>projet{allProjets.length > 1 ? 's' : ''} actif{allProjets.length > 1 ? 's' : ''}</div>

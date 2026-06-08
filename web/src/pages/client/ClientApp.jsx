@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, Suspense, useRef } from 'react'
+import { api } from '../../services/api/client'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import MoneyInput from '../../components/shared/MoneyInput'
@@ -114,7 +115,7 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
           </div>
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="modal-row" style={{ gap: 12 }}>
         <div><label className="form-label">Prenom</label><input className="form-input" value={prenom} onChange={e => setPrenom(e.target.value)} /></div>
         <div><label className="form-label">Nom</label><input className="form-input" value={nom} onChange={e => setNom(e.target.value)} /></div>
       </div>
@@ -569,7 +570,7 @@ export default function ClientApp() {
                   {/* Comment ça marche — version client */}
                   <div style={{ marginBottom: 32 }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Comment ça marche</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div className="rg-4" style={{ gap: 10 }}>
                       {[
                         { n: '01', title: 'Découvrir le projet', desc: 'Comprendre la mission, les étapes et les intervenants.' },
                         { n: '02', title: 'Suivre l\'avancement', desc: 'Voir où en est le chantier en temps réel.' },
@@ -588,7 +589,7 @@ export default function ClientApp() {
                   {/* Explorer */}
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Explorer</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                    <div className="rg-3" style={{ gap: 10 }}>
                       {[
                         { icon: <MessageSquare size={18}/>, label: 'Messages', desc: 'Échanger avec votre équipe', p: 'messages' },
                         { icon: <Store size={18}/>, label: 'Marketplace', desc: 'Parcourir les produits', p: 'marketplace' },
@@ -654,7 +655,7 @@ export default function ClientApp() {
                         <div className="dash-hero-v2-fill" style={{ width: projProgress + '%', background: proj.color || undefined }} />
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                    <div className="rg-4" style={{ gap: 12 }}>
                       {[
                         ['Phase', { ESQUISSE:'Esquisse', AVANT_PROJET:'Avant-projet', PROJET_DETAILLE:'Projet détaillé', PLANS_EXECUTION:'Plans d\'exécution', CONSULTATION_ENTREPRISES:'Consultation', ATTRIBUTION_MARCHES:'Attribution', SUIVI_CHANTIER:'Chantier', RECEPTION:'Réception' }[proj.phase] || proj.phase || '—'],
                         ['Budget engagé', totalEngage ? Math.round(totalEngage / Math.max(projBudget, 1) * 100) + '%' : '0%'],
@@ -717,7 +718,7 @@ export default function ClientApp() {
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 28 }}>
+                <div className="rg-3" style={{ gap: 10, marginBottom: 28 }}>
                   {[
                     { icon: <FolderOpen size={18}/>, label: 'Documents', sub: (projDocs?.length || 0) + ' disponibles', p: 'documents' },
                     { icon: <Users size={18}/>, label: 'Équipe', sub: ((proj?.equipe || []).length + projMarkets.filter(m => m.entreprise && !(proj?.equipe || []).some(e => e.nom === m.entreprise)).length) + ' intervenants', p: 'messages' },
@@ -734,7 +735,7 @@ export default function ClientApp() {
                 </div>
 
                 {/* Prochaines étapes + Équipe — 2 colonnes */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="rg-2" style={{ gap: 16 }}>
                   {/* Prochaines étapes */}
                   <div style={{ background: 'var(--surface-1)', borderRadius: 14, border: '1px solid var(--border-card)', overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -900,7 +901,7 @@ export default function ClientApp() {
           )}
           {page === 'budget' && proj && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
+              <div className="rg-3" style={{ gap: 12, marginBottom: 24 }}>
                 {[
                   { l: 'Budget total', v: formatShort(projBudget) },
                   { l: 'Paye', v: formatShort(totalPaye), color: 'var(--ok)' },
@@ -1018,7 +1019,7 @@ export default function ClientApp() {
 
           {/* DOCUMENTS */}
           {page === 'documents' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div className="rg-4" style={{ gap: 10 }}>
               {projDocs.map(d => (
                 <div key={d.id} className="card" style={{ padding: 14 }}>
                   <div style={{ height: 60, background: 'var(--s2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'var(--t3)', marginBottom: 8 }}>{(d.type || 'PDF').toUpperCase()}</div>
@@ -1049,7 +1050,7 @@ export default function ClientApp() {
                     <div style={{ fontSize: 12, color: 'var(--t3)' }}>Les photos de chantier apparaîtront ici au fur et à mesure de l'avancement.</div>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  <div className="rg-3" style={{ gap: 10 }}>
                     {photos.map((url, i) => (
                       <div key={i} style={{ borderRadius: 10, overflow: 'hidden', aspectRatio: '4/3' }}>
                         <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

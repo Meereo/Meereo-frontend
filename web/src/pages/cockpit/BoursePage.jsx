@@ -269,13 +269,13 @@ export default function BoursePage({ showToast, onNavigate }) {
       {tab !== 'docs' && (
         <>
           {/* KPI */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+          <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
             <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{tab === 'marche' ? 'Bourse des AO' : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}</div>
               <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{tab === 'marche' ? marcheFiltered.length : tab === 'mesao' ? allMesAO.length : clientReceivedOffers.length}</div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>{tab === 'marche' ? 'disponibles sur le marché' : tab === 'mesao' ? 'publiés par vous' : 'propositions de professionnels'}</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="rg-2" style={{ gap: 12 }}>
               {(tab === 'offres'
                 ? [{ v: clientReceivedOffers.filter(o => o.statut === 'pending').length, l: 'En attente' }, { v: clientReceivedOffers.filter(o => o.statut === 'accepted').length, l: 'Acceptées' }, { v: new Set(clientReceivedOffers.map(o => o.aoId)).size, l: 'AO concernés' }, { v: clientReceivedOffers.length, l: 'Total' }]
                 : tab === 'marche'
@@ -503,7 +503,7 @@ export default function BoursePage({ showToast, onNavigate }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }}>
+                  <div className="rg-3" style={{ gap: 12, marginBottom: 20 }}>
                     {[['Budget', selectedMarche.budget], ['Cloture', selectedMarche.deadline], ['Categorie', selectedMarche.categorie]].map(([l, v]) => (
                       <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v}</div></div>
                     ))}
@@ -588,7 +588,7 @@ export default function BoursePage({ showToast, onNavigate }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 20 }}>
+                  <div className="rg-3" style={{ gap: 12, marginBottom: 20 }}>
                     {[['Budget', selectedMesAO.budget], ['Cloture', selectedMesAO.deadline], ['Reponses', selectedMesAO.reponses]].map(([l, v]) => (
                       <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v}</div></div>
                     ))}
@@ -653,7 +653,7 @@ export default function BoursePage({ showToast, onNavigate }) {
                   {(store.projects || []).map(p => <option key={p.id} value={p.nom}>{p.nom}</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Budget (FCFA)</label><MoneyInput value={newAO.budget} onChange={v => setNewAO(p => ({ ...p, budget: v }))} placeholder="180 000 000" /></div>
                 <div><label className="form-label">Cloture</label><input className="form-input" type="date" value={newAO.deadline} onChange={e => setNewAO(p => ({ ...p, deadline: e.target.value }))} /></div>
               </div>
@@ -731,7 +731,7 @@ export default function BoursePage({ showToast, onNavigate }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Offre financiere */}
               <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Offre financiere</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div>
                   <label className="form-label">Montant proposé (FCFA) *</label>
                   <MoneyInput value={reponse.montant} onChange={v => setReponse(p => ({ ...p, montant: v }))} placeholder="1 200 000 000" />

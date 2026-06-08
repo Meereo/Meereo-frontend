@@ -107,7 +107,7 @@ export default function CommandesPage({ onNavigate, showToast, openModal }) {
               <div style={{ fontSize: 24, fontWeight: 800, marginTop: 12 }}>{fmtMoney(detail.montant)}</div>
             </div>
             <div style={{ padding: '18px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div className="modal-row" style={{ gap: 8 }}>
                 <div style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>Projet</div>
                   <div style={{ fontSize: 12, fontWeight: 700 }}>{detail.projet}</div>

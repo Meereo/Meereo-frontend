@@ -484,7 +484,7 @@ export default function FinancePage({ showToast }) {
               </div>
 
               {/* Charts */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:20 }}>
+              <div className="rg-2" style={{ gap:20, marginBottom:20 }}>
                 {/* Bar chart — évolution mensuelle */}
                 <div className="card" style={{ padding:'18px 22px' }}>
                   <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>Évolution mensuelle</div>
@@ -557,7 +557,7 @@ export default function FinancePage({ showToast }) {
             <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Achat ciment — 200 sacs" />
             {formSubmitted && !form.label && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          <div className="modal-row" style={{ gap:10 }}>
             <div>
               <label className="form-label">Montant (FCFA) *</label>
               <MoneyInput value={form.montant || ''} onChange={v => pf('montant', v)} placeholder="500 000" />
@@ -590,7 +590,7 @@ export default function FinancePage({ showToast }) {
             <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Facture situation n°1 — Gros œuvre" />
             {formSubmitted && !form.label && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          <div className="modal-row" style={{ gap:10 }}>
             <div>
               <label className="form-label">Montant (FCFA) *</label>
               <MoneyInput value={form.montant || ''} onChange={v => pf('montant', v)} placeholder="5 000 000" />

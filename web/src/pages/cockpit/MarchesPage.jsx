@@ -107,7 +107,7 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
 
       {/* Pipeline columns */}
       {filter === 'all' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="rg-3" style={{ gap: 16 }}>
           {[
             { key: MARKET_STATUS.SIGNED, label: 'Signés', color: 'var(--tx)', data: pipeline[MARKET_STATUS.SIGNED] },
             { key: MARKET_STATUS.IN_PROGRESS, label: 'En cours', color: '#F59E0B', data: pipeline[MARKET_STATUS.IN_PROGRESS] },
@@ -127,7 +127,7 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
           ))}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div className="rg-3" style={{ gap: 12 }}>
           {filtered.map(m => <MarcheCard key={m.id} m={m} />)}
         </div>
       )}
@@ -139,7 +139,7 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
         const initials = detail.entreprise.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
         return (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setDetail(null)}>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             {/* Hero */}
             <div style={{ padding: '22px 24px 16px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', color: '#fff', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
@@ -170,7 +170,7 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.3px' }}>{detail.titre}</div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <div className="rg-3" style={{ gap: 8 }}>
                 {[['Signature', formatDateFR(detail.dateSig)], ['Délai', detail.delai], ['Échéance', formatDateFR(detail.dateFin)]].map(([l, v]) => (
                   <div key={l} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>{l}</div>

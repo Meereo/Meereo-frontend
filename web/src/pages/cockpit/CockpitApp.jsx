@@ -84,7 +84,7 @@ function EventForm({ formRef }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div><label className="form-label">Titre</label><input className="form-input" placeholder="Réunion de chantier..." value={evTitle} onChange={e => setEvTitle(e.target.value)} /></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="modal-row" style={{ gap: 12 }}>
         <div><label className="form-label">Date</label><input className="form-input" type="date" value={evDate} onChange={e => setEvDate(e.target.value)} /></div>
         <div><label className="form-label">Heure</label><input className="form-input" type="time" value={evTime} onChange={e => setEvTime(e.target.value)} /></div>
       </div>

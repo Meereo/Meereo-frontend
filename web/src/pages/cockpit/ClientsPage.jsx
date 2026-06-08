@@ -45,13 +45,13 @@ export default function ClientsPage({ openModal, showToast }) {
         <button className="btn btn-primary btn-sm" onClick={() => openModal('newClient')}>+ Nouveau client</button>
       </DSPageHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>CRM</div>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>clients dans le CRM</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="rg-2" style={{ gap: 12 }}>
           {[{ v: actifs, l: 'Actifs' }, { v: allClients.filter(c => c.statut === 'prospect').length, l: 'Prospects' }, { v: total - actifs, l: 'Inactifs' }, { v: (store.projects || []).length, l: 'Projets lies' }].map((k, i) => (
             <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}
@@ -106,7 +106,7 @@ export default function ClientsPage({ openModal, showToast }) {
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div><label className="form-label">Nom / Raison sociale</label><input className="form-input" value={editClient.nom} onChange={e => setEditClient(p => ({ ...p, nom: e.target.value }))} /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Type</label>
                   <select className="form-input" value={editClient.type} onChange={e => setEditClient(p => ({ ...p, type: e.target.value }))}>
                     <option>Promoteur</option><option>Particulier</option><option>SCI</option><option>Collectivité</option><option>État</option><option>Entreprise</option>
@@ -118,11 +118,11 @@ export default function ClientsPage({ openModal, showToast }) {
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Contact</label><input className="form-input" value={editClient.contact} onChange={e => setEditClient(p => ({ ...p, contact: e.target.value }))} /></div>
                 <div><label className="form-label">Poste</label><input className="form-input" value={editClient.poste} onChange={e => setEditClient(p => ({ ...p, poste: e.target.value }))} /></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Email</label><input className="form-input" type="email" value={editClient.email} onChange={e => setEditClient(p => ({ ...p, email: e.target.value }))} /></div>
                 <div><label className="form-label">Telephone</label><input className="form-input" value={editClient.tel} onChange={e => setEditClient(p => ({ ...p, tel: e.target.value }))} /></div>
               </div>

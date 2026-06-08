@@ -105,7 +105,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <div className="rg-2" style={{ gap: 10 }}>
               {filtered.map(p => {
                 const mc = p.color || '#6B7280'
                 return (

@@ -246,7 +246,7 @@ export default function OffresPage({ showToast, openModal }) {
                           </div>
                           {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                        <div className="rg-3" style={{ gap: 8 }}>
                           <div style={{ padding: '8px 10px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>
                             <div style={{ fontSize: 14, fontWeight: 800 }}>{inter?.projets || selected.nbRef || 0}</div>
                             <div style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600 }}>Projets</div>

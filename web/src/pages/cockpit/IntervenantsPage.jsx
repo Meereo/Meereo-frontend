@@ -33,13 +33,13 @@ export default function IntervenantsPage({ showToast, openModal }) {
         <button className="btn btn-primary btn-sm" onClick={() => openModal('newInter')}>+ Intervenant</button>
       </DSPageHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Prestataires externes</div>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>intervenants references</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="rg-2" style={{ gap: 12 }}>
           {[{ v: entreprises, l: 'Entreprises' }, { v: independants, l: 'Independants' }, { v: allIntervenants.filter(i => i.statut === 'actif').length, l: 'Actifs' }, { v: [...new Set(allIntervenants.flatMap(i => i.projets || []))].length, l: 'Projets' }].map((k, i) => (
             <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}

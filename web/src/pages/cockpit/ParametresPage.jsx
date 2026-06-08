@@ -366,7 +366,7 @@ export default function ParametresPage({ showToast }) {
                 </div>
 
                 {/* Roles explanation */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+                <div className="rg-4" style={{ gap: 8, marginBottom: 20 }}>
                   {ROLES.map(r => (
                     <div key={r.id} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8, border: '1px solid var(--border-card)' }}>
                       <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{r.label}</div>
@@ -418,7 +418,7 @@ export default function ParametresPage({ showToast }) {
                 Le membre recevra un email d'invitation pour rejoindre votre espace MEEREO. Il aura acces au cockpit et pourra communiquer avec l'equipe.
               </div>
               <div><label className="form-label">Email *</label><input className="form-input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="collaborateur@entreprise.com" autoFocus /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Nom complet</label><input className="form-input" value={inviteNom} onChange={e => setInviteNom(e.target.value)} placeholder="Prenom Nom" /></div>
                 <div><label className="form-label">Poste</label><input className="form-input" value={invitePoste} onChange={e => setInvitePoste(e.target.value)} placeholder="Architecte, Ingenieur..." /></div>
               </div>

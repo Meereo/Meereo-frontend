@@ -54,13 +54,13 @@ export default function RapportsPage({ openModal, showToast }) {
         <button className="btn btn-primary btn-sm" onClick={() => openModal('newRapport')}>+ Nouveau rapport</button>
       </DSPageHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Rapports de chantier</div>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>rapports ce mois</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="rg-2" style={{ gap: 12 }}>
           {[{ v: valides, l: 'Valides' }, { v: total - valides, l: 'En attente' }, { v: allRapports.filter(r => r.medias?.length > 0).length, l: 'Avec medias' }, { v: allRapports.filter(r => r.alertes?.length > 0).length, l: 'Alertes' }].map((k, i) => (
             <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}
@@ -204,7 +204,7 @@ export default function RapportsPage({ openModal, showToast }) {
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 10px' }} onClick={() => showToast && showToast('Selectionnez des fichiers a ajouter')}>+ Ajouter</button>
                 </div>
                 {(selected.medias || []).length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  <div className="rg-3" style={{ gap: 8 }}>
                     {selected.medias.map((m, i) => (
                       <div key={i} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3' }}>
                         <img src={m.url} alt={m.legende || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />

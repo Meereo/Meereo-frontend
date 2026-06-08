@@ -350,7 +350,7 @@ export default function FournisseurApp() {
                   {/* Comment ça marche */}
                   <div style={{ marginBottom: 32 }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Comment ça marche</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div className="rg-4" style={{ gap: 10 }}>
                       {[
                         { n: '01', title: 'Présenter votre offre', desc: 'Ajoutez vos produits, catégories et informations clés.' },
                         { n: '02', title: 'Gagner en visibilité', desc: 'Rendez votre catalogue accessible aux clients et professionnels.' },
@@ -369,7 +369,7 @@ export default function FournisseurApp() {
                   {/* Explorer */}
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Explorer</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                    <div className="rg-3" style={{ gap: 10 }}>
                       {[
                         { icon: <Store size={18}/>, label: 'Boutique', desc: 'Découvrir le marketplace', v: 'marketplace' },
                         { icon: <Package size={18}/>, label: 'Commandes', desc: 'Voir les demandes', v: 'commandes' },
@@ -403,7 +403,7 @@ export default function FournisseurApp() {
                   )}
 
                   {/* Synthèse rapide */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}>
+                  <div className="rg-3" style={{ gap: 12, marginBottom: 28 }}>
                     <div onClick={() => setView('catalogue')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer' }}>
                       <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: 'var(--tx)' }}>{activeProducts.length}</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3 }}>produit{activeProducts.length > 1 ? 's' : ''} actif{activeProducts.length > 1 ? 's' : ''}</div>
@@ -449,7 +449,7 @@ export default function FournisseurApp() {
               {(ob.rccm || ob.ncc || ob.email) && (
                 <div className="card" style={{ padding: 20, marginTop: 8 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Informations entreprise</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="rg-2" style={{ gap: 10 }}>
                     {ob.rccm && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>RCCM</div><div style={{ fontSize: 12, fontWeight: 600 }}>{ob.rccm}</div></div>}
                     {ob.ncc && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>N° Contribuable</div><div style={{ fontSize: 12, fontWeight: 600 }}>{ob.ncc}</div></div>}
                     {ob.email && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Email</div><div style={{ fontSize: 12, fontWeight: 600 }}>{ob.email}</div></div>}
@@ -483,7 +483,7 @@ export default function FournisseurApp() {
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Mes produits ({products.length})</div>
                     <button className="btn btn-secondary btn-sm" onClick={() => setView('catalogue')}>Voir tout →</button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  <div className="rg-3" style={{ gap: 10 }}>
                     {products.slice(0, 6).map((p, i) => (
                       <div key={i} style={{ background: 'var(--s2)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
                         {p.sponsored && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'var(--tx)', color: '#fff' }}>Sponsorise</span>}
@@ -521,7 +521,7 @@ export default function FournisseurApp() {
                   <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>+ Ajouter un produit</button>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                <div className="rg-3" style={{ gap: 14 }}>
                   {filteredProducts.map((p, i) => (
                     <div key={i} className="card" style={{ overflow: 'hidden', position: 'relative' }}>
                       {p.sponsored && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--tx)', color: '#fff', zIndex: 2 }}>Sponsorise</span>}
@@ -635,7 +635,7 @@ export default function FournisseurApp() {
             )
             return (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                <div className="rg-4" style={{ gap: 12, marginBottom: 20 }}>
                   {[
                     { l: 'Total recu', v: fmtMoney(totalPaid), color: 'var(--ok)' },
                     { l: 'Transactions', v: String(paidOrders.length), sub: 'confirmees' },
@@ -706,7 +706,7 @@ export default function FournisseurApp() {
                   <button className="btn btn-primary btn-sm" onClick={() => setView('catalogue')}>Ajouter des produits</button>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+              <div className="rg-4" style={{ gap: 12, marginBottom: 20 }}>
                 {[
                   { l: 'Produits actifs', v: String(activeProducts.length), sub: sponsoredProducts.length + ' sponsorises' },
                   { l: 'Commandes', v: String(sellerOrders.length), sub: pendingOrders.length + ' en attente' },
@@ -902,7 +902,7 @@ export default function FournisseurApp() {
           {/* Section 1 — Identité */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Identite produit</div>
           <div><label className="form-label">Nom du produit *</label><input className="form-input" value={newProd.name} onChange={e => setNewProd(p => ({ ...p, name: e.target.value }))} placeholder="ex: Beton XR45, Carrelage 60x60..." /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Categorie *</label><select className="form-input" value={newProd.category} onChange={e => setNewProd(p => ({ ...p, category: e.target.value }))}><option value="">Choisir une categorie</option>{MKT_CATS.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.ico} {c.label}</option>)}</select></div>
             <div><label className="form-label">Unite</label><select className="form-input" value={newProd.unit} onChange={e => setNewProd(p => ({ ...p, unit: e.target.value }))}><option>unité</option><option>m²</option><option>m³</option><option>ml</option><option>kg</option><option>tonne</option><option>lot</option><option>sac</option><option>rouleau</option></select></div>
           </div>
@@ -910,7 +910,7 @@ export default function FournisseurApp() {
 
           {/* Section 2 — Prix & Stock */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Prix & stock</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Prix (FCFA)</label><MoneyInput value={newProd.price} onChange={v => setNewProd(p => ({ ...p, price: v }))} placeholder="0 = sur devis" /></div>
             <div><label className="form-label">Stock disponible</label><input className="form-input" type="number" value={newProd.stock} onChange={e => setNewProd(p => ({ ...p, stock: e.target.value }))} placeholder="Quantite" /></div>
           </div>
@@ -953,7 +953,7 @@ export default function FournisseurApp() {
               </label>
             </div>
             {newProd.flash && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 10 }}>
+              <div className="modal-row" style={{ gap: 12, marginTop: 10 }}>
                 <div><label className="form-label">Prix promo (FCFA)</label><MoneyInput value={newProd.flashPrice} onChange={v => setNewProd(p => ({ ...p, flashPrice: v }))} placeholder="Prix flash" /></div>
                 <div><label className="form-label">Durée</label><select className="form-input" value={newProd.flashDuration} onChange={e => setNewProd(p => ({ ...p, flashDuration: e.target.value }))}><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="72h">72 heures</option><option value="7j">7 jours</option></select></div>
               </div>
@@ -973,11 +973,11 @@ export default function FournisseurApp() {
         {editProduct && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div><label className="form-label">Nom *</label><input className="form-input" value={editProduct.name || ''} onChange={e => setEditProduct(p => ({ ...p, name: e.target.value }))} /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="modal-row" style={{ gap: 12 }}>
               <div><label className="form-label">Categorie</label><select className="form-input" value={editProduct.category || ''} onChange={e => setEditProduct(p => ({ ...p, category: e.target.value }))}><option value="">Choisir</option>{MKT_CATS.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.ico} {c.label}</option>)}</select></div>
               <div><label className="form-label">Unite</label><input className="form-input" value={editProduct.unit || ''} onChange={e => setEditProduct(p => ({ ...p, unit: e.target.value }))} /></div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="modal-row" style={{ gap: 12 }}>
               <div><label className="form-label">Prix (FCFA)</label><MoneyInput value={editProduct.price || ''} onChange={v => setEditProduct(p => ({ ...p, price: v }))} /></div>
               <div><label className="form-label">Stock</label><input className="form-input" type="number" value={editProduct.stock || ''} onChange={e => setEditProduct(p => ({ ...p, stock: e.target.value }))} /></div>
             </div>
@@ -1038,7 +1038,7 @@ export default function FournisseurApp() {
             Les offres flash sont des promotions temporaires avec un badge visible sur le marketplace. Elles attirent les acheteurs avec un prix réduit et un sentiment d'urgence.
           </div>
           <div><label className="form-label">Prix promotionnel (FCFA) *</label><MoneyInput value={flashPrice} onChange={v => setFlashPrice(v)} placeholder="Prix réduit" /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Durée</label><select className="form-input" value={flashDuration} onChange={e => setFlashDuration(e.target.value)}><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="72h">72 heures</option><option value="7j">7 jours</option></select></div>
             <div><label className="form-label">Stock limite (optionnel)</label><input className="form-input" type="number" value={flashStock} onChange={e => setFlashStock(e.target.value)} placeholder="Illimité" /></div>
           </div>
@@ -1073,7 +1073,7 @@ export default function FournisseurApp() {
               </div>
 
               {/* Infos */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="rg-2" style={{ gap: 12 }}>
                 <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Client</div><div style={{ fontSize: 13, fontWeight: 700 }}>{o.buyer}</div></div>
                 <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>{o.livMode === 'retrait' ? 'Point de retrait' : 'Adresse livraison'}</div><div style={{ fontSize: 12 }}>{o.address}</div></div>
                 <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Date</div><div style={{ fontSize: 12 }}>{formatDateFR(o.date)}</div></div>

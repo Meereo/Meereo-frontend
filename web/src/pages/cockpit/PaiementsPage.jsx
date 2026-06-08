@@ -282,7 +282,7 @@ export default function PaiementsPage({ showToast }) {
               <div style={{ flex:1, overflowY:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:20 }}>
 
                 {/* Montant + infos */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
+                <div className="rg-3" style={{ gap:10 }}>
                   {[
                     { l:'Montant', v:fmt(selected?.amount || 0) },
                     { l:'Mode',    v: RAILS.find(r => r.value === selected?.rail)?.label || selected?.rail },
@@ -407,7 +407,7 @@ export default function PaiementsPage({ showToast }) {
           </>
         }>
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="modal-row" style={{ gap:12 }}>
             <div>
               <label className="form-label">Montant (FCFA) *</label>
               <MoneyInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount:v }))} placeholder="5 000 000" />
@@ -431,7 +431,7 @@ export default function PaiementsPage({ showToast }) {
             <input className="form-input" value={form.label} onChange={e => setForm(p => ({ ...p, label:e.target.value }))} placeholder="ex: Règlement acompte — Gros œuvre" />
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="modal-row" style={{ gap:12 }}>
             <div>
               <label className="form-label">Projet associé</label>
               <select className="form-input" value={form.projectId} onChange={e => setForm(p => ({ ...p, projectId:e.target.value, marketId:'' }))}>

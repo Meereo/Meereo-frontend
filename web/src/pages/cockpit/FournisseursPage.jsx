@@ -149,7 +149,7 @@ export default function FournisseursPage({ showToast, openModal, onNavigate }) {
                 Décrivez votre besoin. Le fournisseur vous répondra avec un prix dans le <strong>Marketplace</strong>. Vous pourrez accepter, contre-proposer ou refuser.
               </div>
               <div><label className="form-label">Description du besoin *</label><textarea className="form-input" value={devis.description} onChange={e => setDevis(p => ({ ...p, description: e.target.value }))} placeholder="Decrivez les materiaux, les specifications, les quantites approximatives..." /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row">
                 <div><label className="form-label">Quantite</label><input className="form-input" value={devis.quantite} onChange={e => setDevis(p => ({ ...p, quantite: e.target.value }))} placeholder="ex: 50m², 200 unites, 5 tonnes" /></div>
                 <div><label className="form-label">Delai souhaite</label><input className="form-input" value={devis.delai} onChange={e => setDevis(p => ({ ...p, delai: e.target.value }))} placeholder="ex: Sous 2 semaines" /></div>
               </div>

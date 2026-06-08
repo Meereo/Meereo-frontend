@@ -33,7 +33,7 @@ export default function IntegrationsPage({ showToast }) {
         <DSFilterBar filters={[{key:'all',label:'Tous'}, ...cats.map(c => ({key:c,label:c}))]} active={filter} onChange={setFilter} />
       </DSPageHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div className="rg-3" style={{ gap: 12 }}>
         {filtered.map(g => (
           <div key={g.id} className="card" style={{ padding: 18, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>

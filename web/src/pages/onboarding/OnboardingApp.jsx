@@ -1253,7 +1253,7 @@ export default function OnboardingApp() {
                       </div>
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                         <input className="ob-input-v2" placeholder="Nom du produit (ex: Ciment CPA 45)" value={prodName} onChange={e=>setProdName(e.target.value)} />
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                        <div className="rg-2" style={{gap:6}}>
                           <MoneyInput className="ob-input-v2" placeholder="Prix (FCFA)" value={prodPrice} onChange={v=>setProdPrice(v)} />
                           <select className="ob-input-v2 ob-select" value={prodUnit} onChange={e=>setProdUnit(e.target.value)}>
                             <option value="/unité">/unité</option><option value="/m²">/m²</option><option value="/m³">/m³</option>
@@ -1498,7 +1498,7 @@ export default function OnboardingApp() {
                   {form.products.length>0 && (
                     <div style={{marginTop:14}}>
                       <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.08em',color:'var(--t3)',marginBottom:8}}>Vos produits sur le Marketplace</div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                      <div className="rg-2" style={{gap:8}}>
                         {form.products.slice(0,4).map((p,i)=>(
                           <div key={i} style={{background:'#fff',borderRadius:12,padding:'10px 12px',boxShadow:'0 20px 40px rgba(0,0,0,.04)',display:'flex',alignItems:'center',gap:10}}>
                             {p.photoUrl
@@ -1572,7 +1572,7 @@ export default function OnboardingApp() {
                   {/* ── Section: Métriques ── */}
                   <div className="wiz-edit-section">
                     <div className="wiz-edit-header"><span className="wiz-edit-label">Chiffres clés</span><EditBtn onClick={()=>setWizStep(3)} /></div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                    <div className="rg-3" style={{gap:8}}>
                       <div className="wiz-bourse-stat"><div className="wiz-bourse-stat-n">{form.projetsN||'—'}</div><div className="wiz-bourse-stat-l">Projets</div></div>
                       <div className="wiz-bourse-stat"><div className="wiz-bourse-stat-n">{form.effectif||'—'}</div><div className="wiz-bourse-stat-l">Effectif</div></div>
                       <div className="wiz-bourse-stat"><div className="wiz-bourse-stat-n">{form.annee?(2026-parseInt(form.annee)):'—'}</div><div className="wiz-bourse-stat-l">Ans d'exp.</div></div>
@@ -1593,7 +1593,7 @@ export default function OnboardingApp() {
                   <div className="wiz-edit-section">
                     <div className="wiz-edit-header"><span className="wiz-edit-label">Portfolio ({form.portfolioFiles.filter(Boolean).length} photos)</span><EditBtn onClick={()=>setWizStep(4)} /></div>
                     {form.portfolioFiles.filter(Boolean).length>0 ? (
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                      <div className="rg-3" style={{gap:6}}>
                         {form.portfolioFiles.filter(Boolean).map((url,i)=>(<div key={i} style={{aspectRatio:'4/3',borderRadius:8,overflow:'hidden'}}><img src={url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /></div>))}
                       </div>
                     ) : <div style={{fontSize:12,color:'var(--t4)',fontStyle:'italic'}}>Aucune photo — cliquez Modifier pour en ajouter</div>}

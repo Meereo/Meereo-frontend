@@ -154,7 +154,7 @@ export default function KaiSubscription({ role = 'pro' }) {
 
       {/* ═══ COMPARAISON PLANS ═══ */}
       <div style={sectionTitle}>Plans disponibles</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+      <div className="rg-2" style={{ gap: 12, marginBottom: 24 }}>
         {Object.entries(PLANS).map(([key, p]) => (
           <div key={key} style={{ ...cardStyle, marginBottom: 0, border: planKey === key ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', position: 'relative' }}>
             {planKey === key && <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>ACTUEL</div>}
@@ -203,7 +203,7 @@ export default function KaiSubscription({ role = 'pro' }) {
       {/* ═══ FACTURATION ═══ */}
       <div style={sectionTitle}>Informations de facturation</div>
       <div style={cardStyle}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="rg-2" style={{ gap: 14 }}>
           <div><div style={labelStyle}>Nom</div><div style={valueStyle}>{billingName || '—'}</div></div>
           <div><div style={labelStyle}>Email</div><div style={valueStyle}>{billingEmail || '—'}</div></div>
           <div><div style={labelStyle}>Téléphone</div><div style={valueStyle}>{billingPhone || '—'}</div></div>

@@ -115,7 +115,7 @@ export default function InviteProfessionalModal({ open, ao, professionals = [], 
                   {TRADES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="modal-row" style={{ gap: 10 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 5 }}>Nom</label>
                   <input value={extForm.name} onChange={e => setExtForm(p => ({ ...p, name: e.target.value }))} placeholder="Jean Koné" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #E5E5E5', fontSize: 13, fontFamily: 'var(--f)', boxSizing: 'border-box', outline: 'none' }} />

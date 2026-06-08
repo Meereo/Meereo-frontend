@@ -644,13 +644,13 @@ export default function ProfilApp() {
           <div><label className="form-label">Slogan / accroche</label><input className="form-input" value={epSlogan} onChange={e => setEpSlogan(e.target.value)} placeholder="Une architecture ancree dans la duree" /></div>
           <div><label className="form-label">Bio / presentation</label><textarea className="form-input" value={epBio} onChange={e => setEpBio(e.target.value)} placeholder="Presentez votre structure..." /></div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 8 }}>Coordonnees</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Email</label><input className="form-input" type="email" value={epEmail} onChange={e => setEpEmail(e.target.value)} /></div>
             <div><label className="form-label">Telephone</label><input className="form-input" value={epTel} onChange={e => setEpTel(e.target.value)} /></div>
           </div>
           <div><label className="form-label">Numero RCCM</label><input className="form-input" value={epRccm} onChange={e => setEpRccm(e.target.value)} /></div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 8 }}>Zone d'intervention</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Ville principale</label><input className="form-input" value={epVille} onChange={e => setEpVille(e.target.value)} /></div>
             <div><label className="form-label">Pays</label><input className="form-input" value={epPays} onChange={e => setEpPays(e.target.value)} /></div>
           </div>

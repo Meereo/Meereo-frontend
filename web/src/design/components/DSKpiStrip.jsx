@@ -1,3 +1,5 @@
+import useIsMobile from '../../hooks/useIsMobile'
+
 /**
  * DSKpiStrip — Unified KPI grid for all cockpit pages.
  * Replaces the 8+ inline KPI grids with inconsistent styling.
@@ -6,10 +8,12 @@
  * @param {boolean} hero - If true, first item uses dark hero style
  */
 export default function DSKpiStrip({ items = [], hero = false }) {
+  const isMobile = useIsMobile()
+  const cols = isMobile ? Math.min(2, items.length) : items.length
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
       gap: 12,
       marginBottom: 24,
     }}>

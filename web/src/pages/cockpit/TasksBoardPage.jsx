@@ -210,7 +210,7 @@ function TaskDrawer({ task, onClose, onUpdate, onDelete, showToast }) {
           </div>
 
           {/* Méta */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="modal-row" style={{ gap:12 }}>
             <div>
               <label className="form-label">Priorité</label>
               <select className="form-input" value={priority} onChange={e => { setPriority(e.target.value); patch({ priority:e.target.value }); onUpdate(task.id, { priority:e.target.value }) }}>
@@ -551,7 +551,7 @@ export default function TasksBoardPage({ showToast }) {
                 <input className="form-input" value={newTask.title} onChange={e => setNewTask(p => ({ ...p, title:e.target.value }))} placeholder="ex: Valider les plans d'exécution" autoFocus />
                 {taskSubmitted && !newTask.title.trim() && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div className="modal-row" style={{ gap:10 }}>
                 <div>
                   <label className="form-label">Priorité</label>
                   <select className="form-input" value={newTask.priority} onChange={e => setNewTask(p => ({ ...p, priority:e.target.value }))}>
@@ -563,7 +563,7 @@ export default function TasksBoardPage({ showToast }) {
                   <input className="form-input" type="date" value={newTask.dueDate} onChange={e => setNewTask(p => ({ ...p, dueDate:e.target.value }))} />
                 </div>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div className="modal-row" style={{ gap:10 }}>
                 <div>
                   <label className="form-label">Assigné à</label>
                   <input className="form-input" value={newTask.assignedTo} onChange={e => setNewTask(p => ({ ...p, assignedTo:e.target.value }))} placeholder="Nom du responsable" />

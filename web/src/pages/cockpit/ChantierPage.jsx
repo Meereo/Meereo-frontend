@@ -266,7 +266,7 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
           ) : (
             <div>
               {/* KPI strip */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+              <div className="rg-4" style={{ gap: 10, marginBottom: 16 }}>
                 {[
                   { v: doneTasks + '/' + totalTasks, l: 'Terminées', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>, iconBg: 'rgba(52,199,89,.08)', iconColor: 'var(--ok)' },
                   { v: activeTasks, l: 'En cours', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>, iconBg: 'rgba(0,122,255,.07)', iconColor: '#007AFF' },
@@ -569,7 +569,7 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
                   </div>
                   <div><label className="form-label">Nom complet *</label><input className="form-input" value={newInter.nom} onChange={e => setNewInter(p => ({ ...p, nom: e.target.value }))} placeholder="Prenom Nom" autoFocus /></div>
                   <div><label className="form-label">Rôle / Spécialité</label><input className="form-input" value={newInter.role} onChange={e => setNewInter(p => ({ ...p, role: e.target.value }))} placeholder="Electricien, Plombier, Architecte..." /></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="modal-row">
                     <div><label className="form-label">Email (optionnel)</label><input className="form-input" type="email" value={newInter.email} onChange={e => setNewInter(p => ({ ...p, email: e.target.value }))} placeholder="email@exemple.com" /></div>
                     <div><label className="form-label">Telephone (optionnel)</label><input className="form-input" value={newInter.tel} onChange={e => setNewInter(p => ({ ...p, tel: e.target.value }))} placeholder="+225 07 00 00 00" /></div>
                   </div>

@@ -156,14 +156,14 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
       </DSPageHeader>
 
       {/* KPI strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Apercu</div>
           <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginBottom: 14 }}>projets en portefeuille</div>
           <NewProjectButton onOpen={() => openModal('newProjet')} context="overview" variant="light" />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="rg-2" style={{ gap: 12 }}>
           {[
             { v: enCours, l: 'En cours' }, { v: avgAvt + '%', l: 'Avancement moyen' },
             { v: allProjets.filter(p => p.phase === 'ACT' || p.phase === 'DET').length, l: 'En chantier' },
@@ -182,7 +182,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
           { key: 'done',        label: 'Terminé',   color: 'var(--ok)' },
         ]
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 4 }}>
+          <div className="rg-3" style={{ gap: 14, marginTop: 4 }}>
             {COLS.map(col => {
               const colProjects = filtered.filter(p => (p.kanbanStatus || 'todo') === col.key)
               return (
@@ -291,7 +291,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
               </div>
 
               {/* KPI row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+              <div className="rg-4" style={{ gap: 12, marginBottom: 20 }}>
                 {[['Budget', selected.budget ? fmtMoney(parseBgt(selected.budget)) : '—'], ['Phase', selected.phase], ['Avancement', selected.avancement + '%'], ['Livraison', formatDateFR(selected.livraison)]].map(([l, v]) => (
                   <div key={l} className="card" style={{ padding: '14px 16px' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--t4)', marginBottom: 5 }}>{l}</div>
@@ -520,7 +520,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
               {/* ── Section: Projet ── */}
               {editSection === 'projet' && (<>
                 <div><label className="form-label">Nom du projet</label><input className="form-input" value={editModal.nom} onChange={e => setEditModal(p => ({ ...p, nom: e.target.value }))} /></div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="modal-row">
                   <div><label className="form-label">Client</label><input className="form-input" value={editModal.client} onChange={e => setEditModal(p => ({ ...p, client: e.target.value }))} /></div>
                   <div><label className="form-label">Type</label>
                     <select className="form-input" value={editModal.type || ''} onChange={e => setEditModal(p => ({ ...p, type: e.target.value }))}>
@@ -528,7 +528,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="modal-row">
                   <div><label className="form-label">Phase</label>
                     <select className="form-input" value={editModal.phase} onChange={e => setEditModal(p => ({ ...p, phase: e.target.value }))}>
                       {[['ESQUISSE','Esquisse'],['AVANT_PROJET','Avant-projet'],['PROJET_DETAILLE','Projet détaillé'],['PLANS_EXECUTION','Plans d\'exécution'],['CONSULTATION_ENTREPRISES','Consultation des entreprises'],['ATTRIBUTION_MARCHES','Attribution des marchés'],['SUIVI_CHANTIER','Suivi de chantier'],['RECEPTION','Réception du projet']].map(([k,l]) => <option key={k} value={k}>{l}</option>)}
@@ -540,7 +540,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="modal-row">
                   <div><label className="form-label">Budget (FCFA)</label><MoneyInput value={editModal.budget} onChange={v => setEditModal(p => ({ ...p, budget: v }))} placeholder="100 000 000" /></div>
                   <div><label className="form-label">Livraison</label><input className="form-input" type="date" value={editModal.livraison || ''} onChange={e => setEditModal(p => ({ ...p, livraison: e.target.value }))} /></div>
                 </div>
@@ -767,7 +767,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
                   <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, lineHeight: 1.5 }}>Ce membre sera ajouté à votre équipe interne et affecté à ce projet.</div>
                   <div><label className="form-label">Nom complet *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Prénom Nom" /></div>
                   <div><label className="form-label">Poste / Rôle</label><input className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))} placeholder="Chef de projet, Architecte..." /></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="modal-row">
                     <div><label className="form-label">Email</label><input className="form-input" type="email" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} /></div>
                     <div><label className="form-label">Téléphone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
                   </div>
@@ -780,7 +780,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'rgba(37,99,235,.04)', borderRadius: 8, lineHeight: 1.5, border: '1px solid rgba(37,99,235,.08)' }}>Les intervenants externes sont des partenaires, prestataires ou structures qui interviennent sur ce projet.</div>
                   <div><label className="form-label">Nom / Structure *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Ex: BET Sigma, Entreprise Koné..." /></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="modal-row">
                     <div><label className="form-label">Métier / Rôle *</label>
                       <select className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))}>
                         <option value="">Choisir un métier</option>
@@ -789,7 +789,7 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
                     </div>
                     <div><label className="form-label">Personne de contact</label><input className="form-input" value={newMember.contact || ''} onChange={e => setNewMember(p => ({ ...p, contact: e.target.value }))} placeholder="Nom du contact" /></div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div className="modal-row">
                     <div><label className="form-label">Email</label><input className="form-input" type="email" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} /></div>
                     <div><label className="form-label">Téléphone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
                   </div>
