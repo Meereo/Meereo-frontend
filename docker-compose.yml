@@ -2,10 +2,6 @@ version: '3.8'
 
 services:
 
-  # ─────────────────────────────────────────
-  #  INFRASTRUCTURE
-  # ─────────────────────────────────────────
-
   postgres:
     image: postgres:16-alpine
     container_name: meereo-db
@@ -15,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meereo2026}
       POSTGRES_DB: ${POSTGRES_DB:-meereo}
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -24,13 +20,15 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    networks:
+      - meereo-net
 
   redis:
     image: redis:7-alpine
     container_name: meereo-cache
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '6380:6379'
     volumes:
       - redisdata:/data
     healthcheck:
@@ -38,6 +36,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - meereo-net
 
   minio:
     image: minio/minio:latest
@@ -46,10 +46,10 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-meereo}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-meereo2026}
-    command: server /data --console-address ":9001"
+    command: server /data --console-address ":9003"
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '9002:9000'
+      - '9003:9003'
     volumes:
       - miniodata:/data
     healthcheck:
@@ -58,10 +58,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
-
-  # ─────────────────────────────────────────
-  #  API (Node.js / Express / Prisma)
-  # ─────────────────────────────────────────
+    networks:
+      - meereo-net
 
   api:
     build:
@@ -81,11 +79,11 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-meereo-files}
       PORT: '3001'
       JWT_SECRET: ${JWT_SECRET:-meereo-dev-secret-2025}
-      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:80}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-https://dev.meereo.com}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-https://dev.meereo.com}
     ports:
-      - '3001:3001'
+      - '3002:3001'
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,22 +92,16 @@ services:
     networks:
       - meereo-net
 
-  # ─────────────────────────────────────────
-  #  WEB (React / Vite → nginx)
-  # ─────────────────────────────────────────
-
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
       args:
-        # In production, set to your public domain (e.g. https://api.meereo.ci)
-        # In Docker Compose, nginx proxies /api → api:3001, so default is fine.
         VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: meereo-web
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '8080:80'
     depends_on:
       - api
     networks:
