@@ -575,49 +575,17 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     setKaiView('conv')
     setKaiState('thinking')
 
-    // Try Claude API via backend
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
-    const kaiToken = (() => { try { return JSON.parse(localStorage.getItem('meereo_store_v2') || '{}')._token || '' } catch { return '' } })()
-    fetch(`${apiBase}/kai/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': kaiToken ? `Bearer ${kaiToken}` : '' },
-      body: JSON.stringify({ message: q, context: buildKaiContext() }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.fallback || data.error) throw new Error('fallback')
-        setKaiState('responding')
-        // Typing reveal: show response progressively
-        const fullText = data.response
-        let charIdx = 0
-        const typingMsgs = [...newMsgs, { side: 'kai', text: '' }]
-        setKaiMessages(typingMsgs)
-        const iv = setInterval(() => {
-          charIdx += 2
-          if (charIdx >= fullText.length) {
-            clearInterval(iv)
-            const finalMsgs = [...newMsgs, { side: 'kai', text: fullText }]
-            setKaiMessages(finalMsgs)
-            setKaiState('idle')
-            saveConversation(finalMsgs, convId)
-          } else {
-            setKaiMessages([...newMsgs, { side: 'kai', text: fullText.slice(0, charIdx) }])
-          }
-        }, 16)
-      })
-      .catch(() => {
-        // Fallback: local keyword engine
-        setTimeout(() => {
-          setKaiState('responding')
-          setTimeout(() => {
-            const response = getKaiResponse(q, context, store, memory)
-            const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
-            setKaiMessages(finalMsgs)
-            setKaiState('idle')
-            saveConversation(finalMsgs, convId)
-          }, 400 + Math.random() * 400)
-        }, 300)
-      })
+    // Local keyword engine (mock mode — no backend)
+    setTimeout(() => {
+      setKaiState('responding')
+      setTimeout(() => {
+        const response = getKaiResponse(q, context, store, memory)
+        const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
+        setKaiMessages(finalMsgs)
+        setKaiState('idle')
+        saveConversation(finalMsgs, convId)
+      }, 400 + Math.random() * 400)
+    }, 300)
   }
 
   // Open a past conversation
