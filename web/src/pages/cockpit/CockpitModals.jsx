@@ -7,6 +7,7 @@ import { useState } from 'react'
 import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 
 // Styles now in cockpit.css: .form-input, .form-label, .form-row, .form-stack
 
@@ -27,10 +28,13 @@ function ProjetModal({ isOpen, onClose, showToast }) {
     setSubmitting(true)
     createProject({ name: f.nom, type: f.type, budget: f.budget, address: f.localisation, phase: f.phase, livraison: f.livraison, priorite: f.priorite, description: f.description, client: f.client, clientEmail: f.clientEmail })
     if (f.client) {
-      updateStore(prev => {
-        if ((prev.clients || []).some(c => c.nom === f.client)) return prev
-        return { ...prev, clients: [...(prev.clients || []), { id: 'cli_' + Date.now(), nom: f.client, type: 'Prive', createdAt: new Date().toISOString() }] }
-      })
+      // Créer le contact client en base si pas déjà présent
+      api.contacts.create({ type: 'client', nom: f.client, email: f.clientEmail || null })
+        .then(created => updateStore(prev => {
+          if ((prev.clients || []).some(c => c.nom === f.client)) return prev
+          return { ...prev, contacts: [...(prev.contacts || []), created], clients: [...(prev.clients || []), created] }
+        }))
+        .catch(() => {})
     }
     showToast('Projet créé')
     setF({ nom: '', type: 'Maison / Villa', phase: 'ESQUISSE', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' })
@@ -66,15 +70,20 @@ function ClientModal({ isOpen, onClose, showToast }) {
   const { updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ nom: '', type: 'Public', statut: 'actif', contact: '', poste: '', email: '', tel: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const submit = async () => {
     setSubmitted(true)
     if (!f.nom.trim()) return
-    updateStore(prev => ({ ...prev, clients: [...(prev.clients || []), { id: 'cli_' + Date.now(), ...f, createdAt: new Date().toISOString() }] }))
-    emitEvent('client_created', { name: f.nom })
-    showToast('Client créé')
-    setF({ nom: '', type: 'Public', statut: 'actif', contact: '', poste: '', email: '', tel: '' })
-    setSubmitted(false)
-    onClose()
+    try {
+      const created = await api.contacts.create({ type: 'client', nom: f.nom, email: f.email || null, tel: f.tel || null, poste: f.poste || null, statut: f.statut || null, entreprise: f.contact || null })
+      updateStore(prev => ({ ...prev, contacts: [...(prev.contacts || []), created], clients: [...(prev.clients || []), created] }))
+      emitEvent('client_created', { name: f.nom })
+      showToast('Client créé')
+      setF({ nom: '', type: 'Public', statut: 'actif', contact: '', poste: '', email: '', tel: '' })
+      setSubmitted(false)
+      onClose()
+    } catch (e) {
+      showToast(e.message || 'Erreur création client', 'red')
+    }
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouveau client" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Créer le client</button></>}>
@@ -162,14 +171,19 @@ function InterModal({ isOpen, onClose, showToast }) {
   const { updateStore } = useMeereo()
   const [f, setF] = useState({ nom: '', role: '', email: '', tel: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const submit = async () => {
     setSubmitted(true)
     if (!f.nom.trim()) return
-    updateStore(prev => ({ ...prev, intervenants: [...(prev.intervenants || []), { id: 'int_' + Date.now(), ...f, createdAt: new Date().toISOString() }] }))
-    showToast('Intervenant ajouté')
-    setF({ nom: '', role: '', email: '', tel: '' })
-    setSubmitted(false)
-    onClose()
+    try {
+      const created = await api.contacts.create({ type: 'intervenant', nom: f.nom, role: f.role || null, email: f.email || null, tel: f.tel || null })
+      updateStore(prev => ({ ...prev, contacts: [...(prev.contacts || []), created], intervenants: [...(prev.intervenants || []), created] }))
+      showToast('Intervenant ajouté')
+      setF({ nom: '', role: '', email: '', tel: '' })
+      setSubmitted(false)
+      onClose()
+    } catch (e) {
+      showToast(e.message || 'Erreur ajout intervenant', 'red')
+    }
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouvel intervenant" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Ajouter</button></>}>

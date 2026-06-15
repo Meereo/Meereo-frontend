@@ -1,10 +1,73 @@
 /**
- * MEEREO API Client — Mock localStorage
- * Remplace le backend Express/PostgreSQL par un store localStorage.
- * Interface identique : tous les appelants fonctionnent sans modification.
+ * MEEREO API Client
+ *
+ * auth.*  → appels HTTP réels vers le backend Express / PostgreSQL
+ * tout le reste → mock localStorage (inchangé jusqu'à la migration)
  */
 
-// ─── DB helpers ──────────────────────────────────────────────────────────────
+// ─── Backend HTTP (auth uniquement) ──────────────────────────────────────────
+
+// En développement (Vite), VITE_API_URL=/api → proxy Vite → pas de CORS
+// En production, pointer vers l'URL réelle du backend
+const API_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+    ? import.meta.env.VITE_API_URL
+    : '/api'  // fallback proxy (Vite dev server)
+
+/**
+ * Lit le JWT stocké dans le store Meereo (localStorage).
+ * @returns {string|null}
+ */
+function getStoredToken() {
+  try {
+    const raw = localStorage.getItem('meereo_store_v2')
+    if (!raw) return null
+    return JSON.parse(raw)?._token || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Effectue un appel HTTP vers le backend.
+ * Lance une Error avec err.message = message retourné par le serveur.
+ *
+ * @param {string} path       - Chemin sans la base, ex: '/auth/login'
+ * @param {'GET'|'POST'|'PUT'|'PATCH'|'DELETE'} method
+ * @param {object|null} body
+ * @param {boolean} withAuth  - Inclure le JWT dans les headers
+ * @returns {Promise<any>}
+ */
+async function apiFetch(path, method = 'GET', body = null, withAuth = false) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (withAuth) {
+    // Envoyer aussi le Bearer token pour la rétrocompatibilité
+    // (le cookie httpOnly est envoyé automatiquement via credentials: 'include')
+    const token = getStoredToken()
+    if (token) headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    credentials: 'include',   // envoie le cookie httpOnly meereo_token automatiquement
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  })
+
+  const data = await res.json().catch(() => ({}))
+
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Erreur ${res.status}`
+    const err = new Error(msg)
+    err.status = res.status
+    err.errors = data?.errors || null
+    throw err
+  }
+
+  return data
+}
+
+// ─── DB helpers (mock localStorage) ──────────────────────────────────────────
 
 const DB_KEY = 'meereo_mock_db'
 
@@ -96,88 +159,86 @@ function createEntityApi(table) {
   }
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─── Auth — appels HTTP réels vers le backend ─────────────────────────────────
 
 const auth = {
+  /**
+   * Inscription — crée le compte + profil selon le type.
+   * Payload : { email, password, name, type, ...profilComplet }
+   * Réponse : { user, token }
+   */
   register: async (data) => {
-    const users = getTable('users')
-    if (users.find(u => u.email === data.email)) {
-      throw new Error('Email déjà utilisé')
-    }
-    const user = {
-      id: uid(),
-      email: data.email || '',
-      password: data.password || '',
-      name: data.name || '',
-      type: data.type || 'pro',
-      company: data.company || null,
-      phone: data.phone || null,
-      avatar: data.avatar || null,
-      metier: data.metier || null,
-      ville: data.ville || null,
-      wallet: 0,
-      emailVerified: false,
-      verified: false,
-      createdAt: now(),
-      updatedAt: now(),
-    }
-    users.push(user)
-    saveTable('users', users)
-    const token = makeToken(user.id, user.type)
-    return { user: userPublic(user), token }
+    return apiFetch('/auth/register', 'POST', data)
   },
 
+  /**
+   * Connexion — authentifie email + mot de passe.
+   * Payload : { email, password }
+   * Réponse : { user, token }
+   */
   login: async (data) => {
-    const users = getTable('users')
-    const user = users.find(u => u.email === data.email)
-    if (!user) throw new Error('Utilisateur non trouvé')
-    if (user.password === 'DELETED') throw new Error('Ce compte a été supprimé')
-    if (user.password !== data.password) throw new Error('Mot de passe incorrect')
-    const token = makeToken(user.id, user.type)
-    return { user: userPublic(user), token }
+    return apiFetch('/auth/login', 'POST', data)
   },
 
+  /**
+   * Profil courant — vérifie le JWT et retourne le user.
+   * Réponse : { id, email, name, type, ... }
+   */
   me: async () => {
-    const userId = getCurrentUserId()
-    if (!userId) throw new Error('Non authentifié')
-    const user = getTable('users').find(u => u.id === userId)
-    if (!user) throw new Error('Utilisateur non trouvé')
-    return userPublic(user)
+    return apiFetch('/auth/me', 'GET', null, true)
   },
 
+  /**
+   * Suppression de compte (soft-delete).
+   */
   deleteAccount: async () => {
-    const userId = getCurrentUserId()
-    if (!userId) throw new Error('Non authentifié')
-    const users = getTable('users').map(u =>
-      u.id === userId
-        ? { ...u, name: 'Compte supprimé', email: `deleted_${userId}@meereo.ci`, password: 'DELETED', avatar: null }
-        : u
-    )
-    saveTable('users', users)
-    return { success: true }
+    return apiFetch('/auth/account', 'DELETE', null, true)
   },
 
-  sendVerification: async () => ({ success: true, message: 'Email de vérification envoyé (mock)' }),
+  /**
+   * Déconnexion — supprime le cookie httpOnly côté serveur.
+   */
+  logout: async () => {
+    return apiFetch('/auth/logout', 'POST', null, false).catch(() => {})
+  },
 
+  /**
+   * Envoi d'un email de vérification.
+   */
+  sendVerification: async () => {
+    return apiFetch('/auth/send-verification', 'POST', null, true)
+  },
+
+  /**
+   * Vérifie l'email (clic sur le lien).
+   * @param {string} email
+   */
   verifyEmail: async (email) => {
-    const users = getTable('users').map(u =>
-      u.email === email ? { ...u, emailVerified: true } : u
-    )
-    saveTable('users', users)
-    return { success: true, verified: true }
+    return apiFetch('/auth/verify-email', 'POST', { email })
   },
 
+  /**
+   * Changement de mot de passe (utilisateur connecté).
+   * Payload : { currentPassword, newPassword, confirmPassword }
+   */
   changePassword: async (data) => {
-    const userId = getCurrentUserId()
-    if (!userId) throw new Error('Non authentifié')
-    const users = getTable('users')
-    const user = users.find(u => u.id === userId)
-    if (!user) throw new Error('Utilisateur non trouvé')
-    if (user.password !== data.currentPassword) throw new Error('Mot de passe actuel incorrect')
-    if ((data.newPassword || '').length < 8) throw new Error('Le nouveau mot de passe doit faire au moins 8 caractères')
-    const updated = users.map(u => u.id === userId ? { ...u, password: data.newPassword } : u)
-    saveTable('users', updated)
-    return { success: true }
+    return apiFetch('/auth/change-password', 'POST', data, true)
+  },
+
+  /**
+   * Demande de réinitialisation de mot de passe.
+   * Payload : { email }
+   */
+  forgotPassword: async (email) => {
+    return apiFetch('/auth/forgot-password', 'POST', { email })
+  },
+
+  /**
+   * Réinitialisation du mot de passe via le token du mail.
+   * Payload : { token, newPassword, confirmPassword }
+   */
+  resetPassword: async (data) => {
+    return apiFetch('/auth/reset-password', 'POST', data)
   },
 }
 
@@ -274,57 +335,215 @@ const payments = {
   getLogs:         async () => [],
 }
 
-// ─── KAI (mock) ──────────────────────────────────────────────────────────────
+// ─── KAI API (real HTTP → PostgreSQL) ───────────────────────────────────────
 
 const kai = {
-  chat: async (message) => ({
-    reply: `[KAI Mock] Message reçu : "${message}". Le backend KAI n'est pas actif en mode mock.`,
-    suggestions: [],
-  }),
+  // ── Entitlements (tier, quota, onboarding) ──
+  getEntitlements: () =>
+    apiFetch('/kai/entitlements', 'GET', null, true),
+  updateEntitlement: (role, data) =>
+    apiFetch(`/kai/entitlements/${role}`, 'PATCH', data, true),
+  incrementQuota: (role) =>
+    apiFetch(`/kai/entitlements/${role}`, 'PATCH', { incrementQuota: true }, true),
+  markOnboardingDone: (role) =>
+    apiFetch(`/kai/entitlements/${role}`, 'PATCH', { onboardingDone: true }, true),
+
+  // ── Conversations ──
+  getConversations: (context) => {
+    const qs = context ? `?context=${context}` : ''
+    return apiFetch(`/kai/conversations${qs}`, 'GET', null, true)
+  },
+  saveConversation: (id, data) =>
+    apiFetch(`/kai/conversations/${id}`, 'PUT', data, true),
+  deleteConversation: (id) =>
+    apiFetch(`/kai/conversations/${id}`, 'DELETE', null, true),
+
+  // ── Memory ──
+  getMemory: () =>
+    apiFetch('/kai/memory', 'GET', null, true),
+  saveMemory: (topic, context) =>
+    apiFetch('/kai/memory', 'PUT', { topic, context }, true),
 }
 
-// ─── Tasks (extended) ────────────────────────────────────────────────────────
-
-const tasksBase = createEntityApi('tasks')
+// ─── Tasks API (real HTTP → PostgreSQL) ──────────────────────────────────────
 const tasks = {
-  ...tasksBase,
-  assignedToMe: async (params = {}) => {
-    const userId = getCurrentUserId()
-    return getTable('tasks').filter(t => t.assignedTo === userId && (!params.projectId || t.projectId === params.projectId))
+  getAll:       (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/tasks${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
-  addComment: async (id, comment) => {
-    const rows = getTable('tasks').map(t => t.id === id ? { ...t, comment } : t)
-    saveTable('tasks', rows)
-    return { comment, taskId: id }
+  getById:      (id)          => apiFetch(`/tasks/${id}`, 'GET', null, true),
+  create:       (data)        => apiFetch('/tasks', 'POST', data, true),
+  update:       (id, data)    => apiFetch(`/tasks/${id}`, 'PATCH', data, true),
+  delete:       (id)          => apiFetch(`/tasks/${id}`, 'DELETE', null, true),
+  assignedToMe: (params = {}) => {
+    const qs = new URLSearchParams({ ...params, assignedToMe: 'true' }).toString()
+    return apiFetch(`/tasks?${qs}`, 'GET', null, true)
   },
+  addComment:   (id, comment) => apiFetch(`/tasks/${id}`, 'PATCH', { comment }, true),
+}
+
+// ─── Projects API (real HTTP → PostgreSQL) ────────────────────────────────────
+const projectsApi = {
+  getAll:  ()         => apiFetch('/projects', 'GET', null, true),
+  getById: (id)       => apiFetch(`/projects/${id}`, 'GET', null, true),
+  create:  (data)     => apiFetch('/projects', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/projects/${id}`, 'PATCH', data, true),
+  delete:  (id)       => apiFetch(`/projects/${id}`, 'DELETE', null, true),
+}
+
+// ─── ProjectMembers API (real HTTP → PostgreSQL) ──────────────────────────────
+const projectMembersApi = {
+  getAll:  (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/project-members${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create:  (data)     => apiFetch('/project-members', 'POST', data, true),
+  delete:  (id)       => apiFetch(`/project-members/${id}`, 'DELETE', null, true),
+}
+
+// ─── Events API (real HTTP → PostgreSQL) ──────────────────────────────────────
+const eventsApi = {
+  getAll:  (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/events${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  getById: (id)       => apiFetch(`/events/${id}`, 'GET', null, true),
+  create:  (data)     => apiFetch('/events', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/events/${id}`, 'PATCH', data, true),
+  delete:  (id)       => apiFetch(`/events/${id}`, 'DELETE', null, true),
+}
+
+// ─── Documents API (real HTTP → PostgreSQL) ───────────────────────────────────
+const documentsApi = {
+  getAll:  (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/documents${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  getById: (id)       => apiFetch(`/documents/${id}`, 'GET', null, true),
+  create:  (data)     => apiFetch('/documents', 'POST', data, true),
+  delete:  (id)       => apiFetch(`/documents/${id}`, 'DELETE', null, true),
+}
+
+// ─── Decisions API (real HTTP → PostgreSQL) ───────────────────────────────────
+const decisionsApi = {
+  getAll:  (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/decisions${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create:  (data)     => apiFetch('/decisions', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/decisions/${id}`, 'PATCH', data, true),
+  delete:  (id)       => apiFetch(`/decisions/${id}`, 'DELETE', null, true),
+}
+
+// ─── Notifications API (real HTTP → PostgreSQL) ───────────────────────────────
+const notificationsApi = {
+  getAll:   () => apiFetch('/notifications', 'GET', null, true),
+  create:   (data) => apiFetch('/notifications', 'POST', data, true),
+  markRead: (id)   => apiFetch(`/notifications/${id}/read`, 'PATCH', null, true),
+  markAllRead: ()  => apiFetch('/notifications/read-all', 'PATCH', null, true),
+}
+
+// ─── Activities API (real HTTP → PostgreSQL) ──────────────────────────────────
+const activitiesApi = {
+  getAll:  () => apiFetch('/activities', 'GET', null, true),
+  create:  (data) => apiFetch('/activities', 'POST', data, true),
+}
+
+// ─── Markets API (real HTTP → PostgreSQL) ─────────────────────────────────────
+const marketsApi = {
+  getAll:  ()        => apiFetch('/markets', 'GET', null, true),
+  getById: (id)      => apiFetch(`/markets/${id}`, 'GET', null, true),
+  create:  (data)    => apiFetch('/markets', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/markets/${id}`, 'PATCH', data, true),
+  delete:  (id)      => apiFetch(`/markets/${id}`, 'DELETE', null, true),
+}
+
+// ─── Orders API (real HTTP → PostgreSQL) ─────────────────────────────────────
+const ordersApi = {
+  getAll: () => apiFetch('/orders', 'GET', null, true),
+  create: (data) => apiFetch('/orders', 'POST', data, true),
+  update: (id, data) => apiFetch(`/orders/${id}`, 'PATCH', data, true),
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
+
+// ─── AOs API (real HTTP → PostgreSQL) ────────────────────────────────────────
+const aosApi = {
+  getAll: () => apiFetch('/aos', 'GET', null, true),
+  create: (data) => apiFetch('/aos', 'POST', data, true),
+  update: (id, data) => apiFetch(`/aos/${id}`, 'PATCH', data, true),
+  delete: (id) => apiFetch(`/aos/${id}`, 'DELETE', null, true),
+  getById: (id) => apiFetch(`/aos/${id}`, 'GET', null, true),
+}
+
+// ─── Offers API (real HTTP → PostgreSQL) ─────────────────────────────────────
+const offersApi = {
+  getAll: () => apiFetch('/offers', 'GET', null, true),
+  create: (data) => apiFetch('/offers', 'POST', data, true),
+  update: (id, data) => apiFetch(`/offers/${id}`, 'PATCH', data, true),
+}
+
+// ─── Products API (real HTTP → PostgreSQL) ────────────────────────────────────
+const productsApi = {
+  getAll: () => apiFetch('/products', 'GET'),
+  getMine: () => apiFetch('/products/mine', 'GET', null, true),
+  create: (data) => apiFetch('/products', 'POST', data, true),
+  update: (id, data) => apiFetch(`/products/${id}`, 'PATCH', data, true),
+  delete: (id) => apiFetch(`/products/${id}`, 'DELETE', null, true),
+}
+
+// ─── Users / Fournisseurs API (real HTTP → PostgreSQL) ───────────────────────
+const usersApi = {
+  getFournisseurs: () => apiFetch('/users/fournisseurs', 'GET', null, true),
+  getPrefs:        () => apiFetch('/users/me/prefs', 'GET', null, true),
+  updatePrefs:     (data) => apiFetch('/users/me/prefs', 'PATCH', data, true),
+}
+
+// ─── Conversations API (real HTTP → PostgreSQL) ───────────────────────────────
+// ─── Contacts API (real HTTP → PostgreSQL) ───────────────────────────────────
+const contactsApi = {
+  getAll:  (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/contacts${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create:  (data)     => apiFetch('/contacts', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/contacts/${id}`, 'PATCH', data, true),
+  delete:  (id)       => apiFetch(`/contacts/${id}`, 'DELETE', null, true),
+}
+
+const conversationsApi = {
+  getAll: () => apiFetch('/conversations', 'GET', null, true),
+  create: (data) => apiFetch('/conversations', 'POST', data, true),
+  getMessages: (id, params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return apiFetch(`/conversations/${id}/messages${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  markRead: (id) => apiFetch(`/conversations/${id}/read`, 'PATCH', null, true),
+}
 
 export const api = {
   auth,
   upload,
   users:               createEntityApi('users'),
-  projects:            createEntityApi('projects'),
-  clients:             createEntityApi('clients'),
-  intervenants:        createEntityApi('intervenants'),
-  aos:                 createEntityApi('aos'),
-  offers:              createEntityApi('offers'),
-  markets:             createEntityApi('markets'),
-  documents:           createEntityApi('documents'),
+  projects:            projectsApi,
+  contacts:            contactsApi,
+  clients:             contactsApi,      // alias — filtre par type='client' côté appelant
+  intervenants:        contactsApi,      // alias — filtre par type='intervenant' côté appelant
+  aos:                 aosApi,
+  offers:              offersApi,
+  markets:             marketsApi,
+  documents:           documentsApi,
   tasks,
-  events:              createEntityApi('events'),
-  decisions:           createEntityApi('decisions'),
-  products:            createEntityApi('products'),
-  commandes:           createEntityApi('commandes'),
-  fournisseurs:        createEntityApi('fournisseurs'),
-  rapports:            createEntityApi('rapports'),
+  events:              eventsApi,
+  decisions:           decisionsApi,
+  products:            productsApi,
+  commandes:           ordersApi,
+  usersApi,
   transactions:        createEntityApi('transactions'),
-  notifications:       createEntityApi('notifications'),
-  activities:          createEntityApi('activities'),
-  conversations:       createEntityApi('conversations'),
-  messages:            createEntityApi('messages'),
-  projectMembers:      createEntityApi('project-members'),
+  notifications:       notificationsApi,
+  activities:          activitiesApi,
+  conversations:       conversationsApi,
+  projectMembers:      projectMembersApi,
   introductions:       createEntityApi('introductions'),
   commissionsTracking: createEntityApi('commissions-tracking'),
   photos:              createEntityApi('photos'),

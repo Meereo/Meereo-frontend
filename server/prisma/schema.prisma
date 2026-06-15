@@ -1,0 +1,628 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  MEEREO — Prisma Schema
+//  Base de données PostgreSQL
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserType {
+  pro
+  client
+  fournisseur
+}
+
+// ─── User (compte authentifié) ───────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  type          UserType
+  company       String?
+  phone         String?
+  avatar        String?
+  metier        String?
+  ville         String?
+  emailVerified Boolean  @default(false)
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Profils étendus — 1 seul selon le type
+  clientProfile      ClientProfile?
+  proProfile         ProProfile?
+  fournisseurProfile FournisseurProfile?
+
+  // Tokens de réinitialisation MDP
+  passwordResetTokens PasswordResetToken[]
+
+  // Produits marketplace (fournisseurs)
+  products Product[]
+
+  // Commandes passées (acheteur)
+  buyerOrders  Order[] @relation("BuyerOrders")
+  // Commandes reçues (vendeur/fournisseur)
+  sellerOrders Order[] @relation("SellerOrders")
+
+  // Marchés (maître d'ouvrage ou prestataire)
+  clientMarkets   Market[] @relation("ClientMarkets")
+  supplierMarkets Market[] @relation("SupplierMarkets")
+
+  // Projets & membres
+  ownedProjects    Project[]       @relation("OwnedProjects")
+  projectMemberships ProjectMember[] @relation("ProjectMemberships")
+
+  // Tâches, événements, documents, décisions créés
+  createdTasks     Task[]         @relation("CreatedTasks")
+  createdEvents    Event[]        @relation("CreatedEvents")
+  uploadedDocuments Document[]    @relation("UploadedDocuments")
+  createdDecisions Decision[]     @relation("CreatedDecisions")
+
+  // Notifications & activités
+  notifications Notification[] @relation("UserNotifications")
+  activities    Activity[]     @relation("UserActivities")
+
+  // Carnet d'adresses
+  contacts Contact[] @relation("OwnedContacts")
+
+  // Appels d'offres créés
+  aos AO[]
+
+  // Offres soumises (pro/fournisseur)
+  offers Offer[]
+
+  // Conversations
+  participations ConversationParticipant[]
+  sentMessages   Message[]
+
+  // KAI
+  kaiEntitlements  KaiEntitlement[]
+  kaiConversations KaiConversation[]
+  kaiMemory        KaiMemory[]
+
+  // Préférences utilisateur (notifications, UI…)
+  // Format : { notifEmail, notifPush, rappels, resume, devise, theme, langue, … }
+  prefs Json @default("{}")
+
+  @@map("users")
+}
+
+// ─── Profil Client (Maître d'Ouvrage) ────────────────────────────────────────
+
+model ClientProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Identité
+  prenom   String
+  nom      String
+  civilite String? // Monsieur | Madame
+
+  // Coordonnées
+  tel      String
+  ville    String  @default("Abidjan")
+  pays     String  @default("Côte d'Ivoire")
+  photoUrl String?
+
+  // Projet (rempli lors du wizard)
+  projectType     String? // Villa/Maison | Immeuble R+ | Local commercial | Rénovation | Autre
+  location        String?
+  surface         String?
+  budget          String?
+  description     String?
+  situation       String? // architecte trouvé | à trouver | clé en main
+  architecteEmail String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_profiles")
+}
+
+// ─── Profil Professionnel (Pro / BTP) ────────────────────────────────────────
+
+model ProProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Structure
+  entreprise String
+  ville      String  @default("Abidjan")
+  pays       String  @default("Côte d'Ivoire")
+  annee      String? // Année de fondation
+  rccm       String? // Registre du Commerce
+  ncc        String? // Numéro de Contribuable (NCC/NIF)
+  tel        String
+
+  // Activité
+  secteurs String[] // ex: ["Architecture & Design", "Gros Œuvre & Génie Civil"]
+  services String[] // sous-services sélectionnés
+
+  // Identité visuelle (logo généré ou uploadé)
+  logoColor   String  @default("#1D1D1F")
+  logoShape   String  @default("Hexagone")
+  logoTypo    String  @default("Gras")
+  logoFileUrl String?
+
+  // Présentation publique
+  slogan    String?
+  bio       String?
+  projetsN  String? // Nombre de projets réalisés
+  effectif  String? // Taille de l'équipe
+
+  // Portfolio & Équipe (JSON : [{img, cap, feat}] / [{nom, role, photoUrl}])
+  portfolioFiles Json @default("[]")
+  cockpitTeam    Json @default("[]")
+  coverUrl       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pro_profiles")
+}
+
+// ─── Profil Fournisseur ───────────────────────────────────────────────────────
+
+model FournisseurProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Structure
+  entreprise String
+  ville      String  @default("Abidjan")
+  pays       String  @default("Côte d'Ivoire")
+  rccm       String?
+  ncc        String?
+  tel        String
+
+  // Identité visuelle
+  logoColor   String  @default("#1D1D1F")
+  logoShape   String  @default("Hexagone")
+  logoTypo    String  @default("Gras")
+  logoFileUrl String?
+
+  // Catalogue
+  categories     String[] // catégories de produits
+  zones          String[] // zones de livraison
+  delaiLivraison String?
+
+  // Premiers produits (JSON : [{name, price, unit, category, photoUrl}])
+  products Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("fournisseur_profiles")
+}
+
+// ─── Appel d'Offres ──────────────────────────────────────────────────────────
+
+model AO {
+  id                String   @id @default(cuid())
+  title             String
+  description       String   @default("")
+  budget            String   @default("")
+  lot               String   @default("")
+  status            String   @default("open")   // open | closed | cancelled
+  requestedTrade    String   @default("")
+  visibilityScope   String   @default("public") // public | trade_only
+  ownerUserId       String
+  owner             User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerProfileType  String   @default("client")
+  projectId         String?
+  createdByClient   Boolean  @default(false)
+  autoGenerated     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Offres reçues sur cet AO
+  offers Offer[]
+
+  @@map("aos")
+}
+
+// ─── Produit Marketplace ─────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    User     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  name        String
+  category    String   @default("")
+  price       Float    @default(0)
+  unit        String   @default("unité")
+  description String   @default("")
+  photoUrl    String?
+  isPublished Boolean  @default(true)
+  sponsored   Boolean  @default(false)
+  flash       Boolean  @default(false)
+  flashPrice  Float?
+  status      String   @default("active") // active | archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
+
+// ─── Offre de prestation (réponse d'un pro à un AO) ─────────────────────────
+
+model Offer {
+  id          String   @id @default(cuid())
+  aoId        String
+  ao          AO       @relation(fields: [aoId], references: [id], onDelete: Cascade)
+  supplierId  String
+  supplier    User     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  entreprise  String   @default("")
+  montant     String   @default("0")
+  delai       String   @default("")
+  message     String   @default("")
+  statut      String   @default("pending") // pending | accepted | rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([aoId, supplierId]) // Un pro ne peut soumettre qu'une offre par AO
+  @@map("offers")
+}
+
+// ─── Messagerie temps réel ────────────────────────────────────────────────────
+
+model Conversation {
+  id           String   @id @default(cuid())
+  title        String?  // null = 1:1, rempli pour les groupes
+  isGroup      Boolean  @default(false)
+  // Contexte métier optionnel (lié à une offre / un AO)
+  aoId         String?
+  offerId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text           String
+  type           String       @default("text") // text | image | file | video | system
+  fileUrl        String?
+  fileName       String?
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
+}
+
+// ─── Commande Marketplace ────────────────────────────────────────────────────
+
+model Order {
+  id            String   @id @default(cuid())
+  ref           String   @unique
+  buyerId       String
+  buyer         User     @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId      String?
+  seller        User?    @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: SetNull)
+  designation   String   @default("")
+  fournisseur   String   @default("")
+  items         Json     @default("[]")   // [{name, qty, price, fournisseur}]
+  total         Float    @default(0)
+  statut        String   @default("confirmee") // confirmee | en_transit | livre | annulee
+  livMode       String   @default("retrait")   // retrait | livraison
+  step          Int      @default(1)
+  projet        String   @default("")
+  address       String   @default("")
+  paymentMethod String   @default("")
+  img           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("orders")
+}
+
+// ─── Marché (contrat signé suite à une offre acceptée) ───────────────────────
+
+model Market {
+  id          String   @id @default(cuid())
+  titre       String   @default("")
+  lot         String   @default("")
+  entreprise  String   @default("")
+  montant     String   @default("0")
+  statut      String   @default("signed")  // signed | ongoing | paused | completed
+  avancement  Int      @default(0)         // 0–100
+  description String   @default("")
+  delai       String   @default("")
+
+  // Relations métier
+  projectId  String?
+  aoId       String?
+  offerId    String?
+
+  // Acteurs contractuels (userId)
+  clientId   String?
+  client     User?    @relation("ClientMarkets",   fields: [clientId],   references: [id], onDelete: SetNull)
+  supplierId String?
+  supplier   User?    @relation("SupplierMarkets", fields: [supplierId], references: [id], onDelete: SetNull)
+
+  // Données structurées (JSON)
+  milestones  Json @default("[]")
+  validations Json @default("[]")
+  documents   Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("markets")
+}
+
+// ─── Token de réinitialisation de mot de passe ───────────────────────────────
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// ─── Contact (carnet d'adresses privé : clients + intervenants) ──────────────
+
+model Contact {
+  id         String   @id @default(cuid())
+  type       String                         // 'client' | 'intervenant'
+  nom        String
+  email      String?
+  tel        String?
+  role       String?                        // spécialité / rôle (intervenant)
+  poste      String?                        // poste dans l'organisation (client)
+  statut     String?                        // actif | prospect | inactif (client)
+  entreprise String?                        // société du contact
+  ownerId    String
+  owner      User     @relation("OwnedContacts", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("contacts")
+}
+
+// ─── Projet ───────────────────────────────────────────────────────────────────
+
+model Project {
+  id          String   @id @default(cuid())
+  nom         String
+  type        String   @default("")
+  phase       String   @default("CONCEPTION")
+  budget      String   @default("")
+  adresse     String   @default("")
+  livraison   String?
+  priorite    String   @default("normale")
+  description String   @default("")
+  avancement  Int      @default(0)
+  status      String   @default("active")  // active | archived | completed
+  client      String   @default("")
+  clientEmail String   @default("")
+  clientId    String?
+  ownerId     String
+  owner       User     @relation("OwnedProjects", fields: [ownerId], references: [id], onDelete: Cascade)
+  sourceAoId  String?
+  color       String?
+  etapes      Json?
+  equipe      Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     ProjectMember[]
+  tasks       Task[]
+  events      Event[]
+  documents   Document[]
+  decisions   Decision[]
+
+  @@map("projects")
+}
+
+// ─── Membre de projet ─────────────────────────────────────────────────────────
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("ProjectMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER")
+  userName  String   @default("")
+  userEmail String   @default("")
+  joinedAt  DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+// ─── Tâche ────────────────────────────────────────────────────────────────────
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  status      String   @default("todo")    // todo | in_progress | review | done
+  priority    String   @default("normale") // basse | normale | haute | urgente
+  assignedTo  String   @default("")        // nom ou userId de l'assigné
+  dueDate     DateTime?
+  comment     String   @default("")
+  marketId    String?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy   String
+  creator     User     @relation("CreatedTasks", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tasks")
+}
+
+// ─── Événement Agenda ─────────────────────────────────────────────────────────
+
+model Event {
+  id          String   @id @default(cuid())
+  titre       String
+  date        String                        // ISO date string (YYYY-MM-DD)
+  type        String   @default("event")   // event | deadline | milestone | meeting
+  description String   @default("")
+  color       String   @default("#2563EB")
+  auto        Boolean  @default(false)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy   String
+  creator     User     @relation("CreatedEvents", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
+}
+
+// ─── Document ─────────────────────────────────────────────────────────────────
+
+model Document {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("")
+  url       String   @default("")
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  userId    String
+  uploader  User     @relation("UploadedDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("documents")
+}
+
+// ─── Décision ─────────────────────────────────────────────────────────────────
+
+model Decision {
+  id          String   @id @default(cuid())
+  titre       String
+  description String   @default("")
+  statut      String   @default("en_attente") // en_attente | validee | refusee
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy   String
+  creator     User     @relation("CreatedDecisions", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("decisions")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  msg       String
+  type      String   @default("info")   // info | success | warning | error
+  role      String?
+  read      Boolean  @default(false)
+  link      String?
+  page      String?
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// ─── Activité (journal) ───────────────────────────────────────────────────────
+
+model Activity {
+  id       String   @id @default(cuid())
+  action   String
+  data     Json?
+  userId   String
+  user     User     @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("activities")
+}
+
+// ─── KAI — Entitlement (abonnement + quota) ──────────────────────────────────
+// Une ligne par userId × role. Contient le tier (standard/gold), le compteur
+// de messages du mois, les dates d'abonnement Gold et le flag onboarding.
+
+model KaiEntitlement {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            String    // 'pro' | 'client' | 'fournisseur'
+  tier            String    @default("standard") // 'standard' | 'gold'
+  quotaLimit      Int       @default(25)
+  quotaUsed       Int       @default(0)
+  goldStartDate   DateTime?
+  goldEndDate     DateTime?
+  onboardingDone  Boolean   @default(false)
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, role])
+  @@map("kai_entitlements")
+}
+
+// ─── KAI — Conversations (historique) ────────────────────────────────────────
+
+model KaiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  context   String   // 'pro' | 'client' | 'fournisseur'
+  title     String   @default("")
+  messages  Json     @default("[]") // [{side, text, timestamp}]
+  topic     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("kai_conversations")
+}
+
+// ─── KAI — Memory (sujets mémorisés) ─────────────────────────────────────────
+
+model KaiMemory {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic         String
+  context       String   // 'pro' | 'client' | 'fournisseur'
+  lastDiscussed DateTime @default(now())
+
+  @@unique([userId, topic, context])
+  @@map("kai_memory")
+}

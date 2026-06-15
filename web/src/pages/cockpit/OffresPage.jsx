@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
-import { ClipboardList, Clock, CheckCircle2, XCircle, Star } from 'lucide-react'
+import { useState, useMemo, useCallback } from 'react'
+import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { api } from '../../services/api/client'
+import { sendSocketMessage, getSocket } from '../../services/socket'
 import { getRoleLabel, getRoleBadgeStyle } from '../../domain/roleLabels'
 import { normalizeOfferStatus, OFFER_STATUS, getStatusLabel } from '../../domain/status'
 import { DSPageHeader, DSKpiStrip, DSFilterBar, DSStatusBadge, DSSearchBar, DSEmptyState } from '../../design/components'
@@ -17,51 +18,66 @@ const FILTERS = [
   { key: OFFER_STATUS.REJECTED, label: 'Refusées' },
 ]
 
-export default function OffresPage({ showToast, openModal }) {
+// Délai d'archivage : offre décidée depuis plus de 30 jours
+const ARCHIVE_DAYS = 30
+function isArchivable(offer) {
+  if (offer.statut === OFFER_STATUS.PENDING) return false
+  if (!offer.updatedAt && !offer.createdAt) return false
+  const ref = new Date(offer.updatedAt || offer.createdAt)
+  if (isNaN(ref.getTime())) return false
+  return (Date.now() - ref.getTime()) > ARCHIVE_DAYS * 24 * 3600 * 1000
+}
+
+export default function OffresPage({ showToast, openModal, onNavigate }) {
   const { formatShort, parseBudget } = useDevise()
   const { store, acceptOffer, rejectOffer, updateStore, emitEvent } = useMeereo()
   const { offers: rawOffres, STATIC: { INTERVENANTS_DATA } } = useMergedData()
+  // Onglet principal : 'offres' | 'contrats'
+  const [mainTab, setMainTab] = useState('offres')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [infoModal, setInfoModal] = useState(null) // offer object for "Demander info"
   const [infoMessage, setInfoMessage] = useState('')
 
-  // Client context: show only offers linked to client's own AOs
-  // Pro context: show all offers (they see offers they received or submitted)
+  // Le backend filtre déjà les offres par utilisateur (offres sur ses AOs pour un client,
+  // offres soumises pour un pro). On utilise rawOffres directement.
   const isClient = store.user?.type === 'client'
-  const userId = store.user?.id
-  const myAOIds = useMemo(() => {
-    if (!isClient) return null // Pro sees all
-    return new Set((store.aos || []).filter(a => a.ownerUserId === userId).map(a => a.id))
-  }, [isClient, store.aos, userId])
-
-  const allOffres = useMemo(() => {
-    if (!isClient || !myAOIds) return rawOffres
-    return rawOffres.filter(o => myAOIds.has(o.aoId))
-  }, [rawOffres, isClient, myAOIds])
+  const allOffres = useMemo(() => rawOffres, [rawOffres])
 
   const total = allOffres.length
   const attente = allOffres.filter(o => o.statut === OFFER_STATUS.PENDING).length
   const acceptees = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED).length
   const refusees = allOffres.filter(o => o.statut === OFFER_STATUS.REJECTED).length
 
-  const filtered = allOffres.filter(o => {
+  // Séparer actives / archivées pour l'onglet offres
+  const activeOffres = allOffres.filter(o => !isArchivable(o))
+  const archivedOffres = allOffres.filter(o => isArchivable(o))
+
+  const filtered = activeOffres.filter(o => {
     const statOk = filter === 'all' || o.statut === filter
     const q = search.toLowerCase()
     return statOk && (!q || (o.titre + o.entreprise + o.projet + o.lot).toLowerCase().includes(q))
   })
+  const filteredArchived = archivedOffres.filter(o => {
+    const q = search.toLowerCase()
+    return !q || (o.titre + o.entreprise + o.projet + o.lot).toLowerCase().includes(q)
+  })
+
+  // Contrats = offres acceptées (actives + archivées)
+  const contrats = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED)
+  const contratsActifs = contrats.filter(o => !isArchivable(o))
+  const contratsArchives = contrats.filter(o => isArchivable(o))
 
   const selected = selectedId ? allOffres.find(o => o.id === selectedId) : filtered[0]
 
   const decide = (id, decision) => {
     const normalized = normalizeOfferStatus(decision)
     if (normalized === OFFER_STATUS.ACCEPTED) {
-      acceptOffer(id) // Store handles: market creation, auto-membership, tasks, events, notifications
+      acceptOffer(id)
     } else if (normalized === OFFER_STATUS.REJECTED) {
       rejectOffer(id)
     } else {
-      // Reset to pending (undo decision)
       updateStore(prev => ({ ...prev, offerStatuts: { ...(prev.offerStatuts || {}), [id]: decision } }))
     }
   }
@@ -69,10 +85,23 @@ export default function OffresPage({ showToast, openModal }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ flexShrink: 0 }}>
-        <DSPageHeader title="Offres reçues" subtitle={`${total} offres · ${attente} en attente de décision`}>
+        <DSPageHeader title="Offres & Contrats" subtitle={`${total} offres · ${attente} en attente · ${acceptees} contrats`}>
           <button className="btn btn-sm" onClick={() => { exportCSV(allOffres.map(o => ({ entreprise: o.entreprise, lot: o.lot, montant: o.montant, statut: o.statut, delai: o.delai, soumis: o.soumis })), 'offres_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
           <button className="btn btn-primary btn-sm" onClick={() => openModal('newOffre')}>+ Nouvelle offre</button>
         </DSPageHeader>
+
+        {/* Onglets principaux */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 0 }}>
+          {[
+            { key: 'offres', label: 'Offres reçues', icon: <ClipboardList size={13}/>, count: total },
+            { key: 'contrats', label: 'Contrats Validés', icon: <FileText size={13}/>, count: acceptees },
+          ].map(t => (
+            <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, fontWeight: mainTab === t.key ? 700 : 500, color: mainTab === t.key ? 'var(--tx)' : 'var(--t3)', borderBottom: mainTab === t.key ? '2px solid var(--tx)' : '2px solid transparent', marginBottom: -1, transition: 'all .15s' }}>
+              {t.icon} {t.label}
+              {t.count > 0 && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: mainTab === t.key ? 'var(--tx)' : 'var(--s2)', color: mainTab === t.key ? '#fff' : 'var(--t3)' }}>{t.count}</span>}
+            </button>
+          ))}
+        </div>
 
         <DSKpiStrip items={[
           { icon: <ClipboardList size={14}/>, iconBg: 'rgba(0,0,0,.04)', value: total, label: 'Total' },
@@ -82,6 +111,39 @@ export default function OffresPage({ showToast, openModal }) {
         ]} />
       </div>
 
+      {/* ═══ VUE CONTRATS VALIDÉS ═══ */}
+      {mainTab === 'contrats' && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          {contrats.length === 0 ? (
+            <DSEmptyState icon={<FileText size={24}/>} title="Aucun contrat validé" description="Les offres acceptées apparaîtront ici comme contrats actifs." />
+          ) : (
+            <>
+              {contratsActifs.length > 0 && (
+                <>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Contrats actifs ({contratsActifs.length})</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+                    {contratsActifs.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} />)}
+                  </div>
+                </>
+              )}
+              {contratsArchives.length > 0 && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <Archive size={12} color="var(--t4)" />
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Archives ({contratsArchives.length})</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.45 }}>
+                    {contratsArchives.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} archived />)}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ═══ VUE OFFRES REÇUES ═══ */}
+      {mainTab === 'offres' && (
       <div className="split" style={{ marginTop: 0, flex: 1, overflow: 'hidden' }}>
         {/* Liste */}
         <div className="split-left">
@@ -104,8 +166,31 @@ export default function OffresPage({ showToast, openModal }) {
               <DSStatusBadge status={o.statut} />
             </div>
           ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && filteredArchived.length === 0 && (
             <DSEmptyState icon={<ClipboardList size={24}/>} title="Aucune offre trouvée" description="Modifiez vos filtres ou enregistrez une nouvelle offre." />
+          )}
+          {/* Archives */}
+          {filteredArchived.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 14px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--s2)' }}>
+                <Archive size={11} color="var(--t4)" />
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Archivées ({filteredArchived.length})</span>
+              </div>
+              {filteredArchived.map(o => (
+                <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', opacity: 0.45, background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
+                  {(() => { const av = getEntrepriseAvatar(o.entreprise); return (
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0 }}>
+                      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+                    </div>
+                  )})()}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.entreprise}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} · {formatShort(parseBudget(o.montant))}</div>
+                  </div>
+                  <DSStatusBadge status={o.statut} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
@@ -125,7 +210,9 @@ export default function OffresPage({ showToast, openModal }) {
                     <span style={{ fontSize: 13, fontWeight: 600 }}>Offre {getStatusLabel(selected.statut).toLowerCase()}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-sm" style={{ fontSize: 10 }} onClick={() => decide(selected.id, 'en_attente')}>Annuler</button>
+                    {selected.statut === OFFER_STATUS.REJECTED && (
+                      <button className="btn btn-sm" style={{ fontSize: 10 }} onClick={() => decide(selected.id, 'en_attente')}>Annuler</button>
+                    )}
                     {selected.statut === OFFER_STATUS.REJECTED && (
                       <button className="btn btn-sm" style={{ fontSize: 10, color: 'var(--err)', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.12)' }} onClick={() => {
                         updateStore(prev => ({ ...prev, offers: (prev.offers || []).filter(o => o.id !== selected.id) }))
@@ -313,10 +400,10 @@ export default function OffresPage({ showToast, openModal }) {
 
               {/* Boutons décision */}
               <div style={{ display: 'flex', gap: 8 }}>
-                {selected.statut !== OFFER_STATUS.REJECTED && (
+                {selected.statut === OFFER_STATUS.PENDING && (
                   <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => decide(selected.id, 'refusee')}>Refuser</button>
                 )}
-                {selected.statut === OFFER_STATUS.PENDING && (
+                {selected.statut === OFFER_STATUS.PENDING && selected.supplierId !== store.user?.id && (
                   <button className="btn" style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--t2)', border: '1px solid var(--border-card)', fontWeight: 500, fontSize: 12 }} onClick={() => {
                     setInfoModal(selected)
                     setInfoMessage('')
@@ -330,9 +417,9 @@ export default function OffresPage({ showToast, openModal }) {
           )}
         </div>
       </div>
+      )} {/* fin mainTab === 'offres' */}
 
-      {/* ═══ Modale "Demander plus d'infos" ═══ */}
-      {infoModal && (
+      {/* ═══ Modale "Demander plus d'infos" ═══ */}      {infoModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInfoModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)' }}>
@@ -351,28 +438,68 @@ export default function OffresPage({ showToast, openModal }) {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setInfoModal(null)}>Annuler</button>
-              <button className="btn btn-primary btn-sm" disabled={!infoMessage.trim()} style={{ opacity: infoMessage.trim() ? 1 : .5 }} onClick={() => {
-                // Create contextual conversation linked to AO + offer
+              <button className="btn btn-primary btn-sm" disabled={!infoMessage.trim()} style={{ opacity: infoMessage.trim() ? 1 : .5 }} onClick={async () => {
                 const ao = (store.aos || []).find(a => a.id === infoModal.aoId)
+                const supplierId = infoModal.supplierId || infoModal.userId
+
+                // Guard: cannot send a message to yourself
+                if (supplierId === store.user?.id) {
+                  showToast && showToast('Vous ne pouvez pas vous envoyer un message à vous-même')
+                  setInfoModal(null)
+                  return
+                }
+
+                // Try to create a real backend conversation with the supplier
+                if (supplierId && store._token && !String(supplierId).startsWith('u_')) {
+                  try {
+                    const { conversation } = await api.conversations.create({
+                      participantId: supplierId,
+                      aoId: infoModal.aoId || null,
+                      offerId: infoModal.id || null,
+                    })
+                    // Add to store if not present
+                    updateStore(prev => {
+                      const ids = new Set((prev.conversations || []).map(x => x.id))
+                      if (ids.has(conversation.id)) return prev
+                      return { ...prev, conversations: [conversation, ...(prev.conversations || [])] }
+                    })
+                    // Join the room then send the first message via WebSocket
+                    const socket = getSocket(store._token)
+                    socket.emit('conversation:join', conversation.id)
+                    sendSocketMessage(
+                      { conversationId: conversation.id, text: infoMessage.trim(), type: 'text' },
+                      (ack) => {
+                        if (ack?.error) showToast && showToast('Erreur envoi: ' + ack.error)
+                      }
+                    )
+                    showToast && showToast('Message envoyé à ' + infoModal.entreprise)
+                    setInfoModal(null)
+                    setInfoMessage('')
+                    // Navigate to messaging
+                    if (onNavigate) onNavigate('messages')
+                    else window.dispatchEvent(new CustomEvent('meereo-navigate', { detail: 'messages' }))
+                    return
+                  } catch (e) {
+                    console.warn('[infoModal]', e.message)
+                    // fallthrough to local conversation
+                  }
+                }
+
+                // Fallback: local conversation
                 const conv = {
                   id: 'conv_info_' + Date.now(),
                   projectId: ao?.projectId || null,
                   aoId: infoModal.aoId || null,
                   offerId: infoModal.id,
-                  participants: [store.user?.id, infoModal.userId || infoModal.supplierId].filter(Boolean),
+                  participants: [store.user?.id, supplierId].filter(Boolean),
                   title: (ao?.title || 'Offre') + ' — Demande d\'informations',
                   nom: infoModal.entreprise,
-                  lastMessage: infoMessage,
+                  lastMessage: { text: infoMessage },
                   lastAt: new Date().toISOString(),
                   unread: 0,
                   msgs: [{ side: 'out', text: infoMessage, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }],
                 }
-                updateStore(prev => ({
-                  ...prev,
-                  conversations: [...(prev.conversations || []), conv],
-                }))
-                // Sync message to backend
-                api.messages.create({ contenu: infoMessage, conversationId: conv.id, userId: store.user?.id }).catch(() => {})
+                updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), conv] }))
                 emitEvent('info_requested', { offerId: infoModal.id, company: infoModal.entreprise, message: infoMessage }, {
                   notifMsg: 'Demande d\'information envoyée à ' + infoModal.entreprise,
                   toast: 'Message envoyé à ' + infoModal.entreprise,
@@ -384,6 +511,54 @@ export default function OffresPage({ showToast, openModal }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Composant carte contrat ──────────────────────────────────────────────────
+function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, archived }) {
+  const inter = INTERVENANTS_DATA.find(i => i.nom === o.entreprise)
+  const av = getEntrepriseAvatar(o.entreprise)
+  return (
+    <div style={{ padding: '18px 20px', background: archived ? 'var(--s2)' : 'var(--surface-1)', border: '1px solid', borderColor: archived ? 'var(--border)' : 'rgba(52,199,89,.15)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ width: 46, height: 46, borderRadius: 12, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
+        {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>{o.entreprise}</span>
+          {archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>}
+          {!archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>Contrat actif</span>}
+          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 8 }}>
+          {o.lot && <span>{o.lot}</span>}
+          {o.projet && <span> · {o.projet}</span>}
+          {o.soumis && <span style={{ color: 'var(--t4)' }}> · Soumis le {o.soumis}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Montant</div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-1px' }}>{formatShort(parseBudget(o.montant))}</div>
+          </div>
+          {o.delai && (
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Délai</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{o.delai}</div>
+            </div>
+          )}
+          {inter && (
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Note</div>
+              <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                {Array.from({length: 5}, (_, i) => <Star key={i} size={11} fill={i < Math.round(inter.note || 0) ? '#F59E0B' : 'none'} color="#F59E0B" strokeWidth={1.5}/>)}
+                <span style={{ fontSize: 11, fontWeight: 700, marginLeft: 3 }}>{inter.note || '—'}</span>
+              </div>
+            </div>
+          )}
+        </div>
+        {o.message && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--t2)', fontStyle: 'italic', lineHeight: 1.5, borderLeft: '2px solid var(--border)', paddingLeft: 10 }}>"{o.message}"</div>}
+      </div>
     </div>
   )
 }

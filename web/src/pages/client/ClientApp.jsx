@@ -171,10 +171,14 @@ function ClientSecurityForm({ showToast, updateStore }) {
 function ClientPrefsForm({ store, updateStore }) {
   const prefs = store.clientPrefs || { notifEmail: true, notifPush: true, rappels: false, resume: false }
   const toggle = (key) => {
+    const newVal = !(prefs[key])
+    // Optimistic update
     updateStore(prev => ({
       ...prev,
-      clientPrefs: { ...(prev.clientPrefs || prefs), [key]: !(prev.clientPrefs || prefs)[key] }
+      clientPrefs: { ...(prev.clientPrefs || prefs), [key]: newVal }
     }))
+    // Persister côté serveur
+    api.usersApi.updatePrefs({ [key]: newVal }).catch(() => {})
   }
   const items = [
     { key: 'notifEmail', label: 'Notifications email' },
@@ -363,7 +367,7 @@ export default function ClientApp() {
           )}
           {clientProjects.length <= 1 && <div style={{ fontSize: 8, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--t4)', marginBottom: 4 }}>Projet suivi</div>}
           <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{proj?.nom}</div>
-          <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{proj?.adresse} · {formatShort(projBudget)}</div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{[proj?.address || proj?.localisation || proj?.adresse, proj?.budget || (projBudget > 0 ? formatShort(projBudget) : null)].filter(Boolean).join(' · ') || ' '}</div>
           <div className="prog-track" style={{ height: 3 }}><div className="prog-fill" style={{ width: projProgress + '%', background: '#F59E0B' }} /></div>
           <div style={{ fontSize: 9, color: 'var(--t4)', marginTop: 4 }}>{projProgress}%</div>
         </div>
@@ -806,7 +810,7 @@ export default function ClientApp() {
           {/* AVANCEMENT */}
           {page === 'avancement' && !proj && (
             <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: .3 }}><HardHat size={32}/></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: .3 }}><HardHatIcon size={32}/></div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>Aucun projet actif</div>
               <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 400, margin: '0 auto', marginBottom: 20 }}>Le suivi de projet démarre automatiquement quand vous acceptez une offre et qu'un marché est signé.</div>
               <button className="btn btn-primary btn-sm" onClick={() => setPage('ao')}>Publier un appel d'offres</button>

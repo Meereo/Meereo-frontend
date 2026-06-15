@@ -73,33 +73,66 @@ export default function MarketplacePage({ showToast, commerceScope }) {
   const { format: fmt, formatShort: fmtShort } = useDevise()
   const { store, updateStore } = useMeereo()
 
-  // Fusionner produits statiques (MKT_ITEMS) + produits fournisseur du store
+  // Fetch produits depuis le backend (PostgreSQL) — partagés entre tous les utilisateurs
+  const [backendProducts, setBackendProducts] = useState([])
+  useEffect(() => {
+    api.products.getAll()
+      .then(prods => { if (Array.isArray(prods)) setBackendProducts(prods) })
+      .catch(() => {}) // fallback silencieux sur store.products si backend KO
+  }, [])
+
+  // Fusionner produits backend + produits locaux (ajoutés en offline) + catalogue statique
   const allProducts = useMemo(() => {
-    const storeProducts = (store.products || []).filter(p => p.isPublished !== false && p.status !== 'archived')
-    // Convertir les produits store au format MKT_ITEMS pour compatibilité
-    const converted = storeProducts.map(p => ({
-      id: p.id,
-      nom: p.name || p.nom || '',
-      cat: MKT_CATS.find(c => c.id === p.category)?.id || MKT_CATS.find(c => c.label === p.category)?.id || p.category || 'gros-oeuvre',
-      fournisseur: p.sellerId ? (store.onboardingData?.entreprise || 'Mon entreprise') : (p.fournisseur || 'Fournisseur'),
-      marque: '',
-      prix: p.price ? fmt(Number(p.price)) : 'Sur devis',
-      prix_num: Number(p.price) || 0,
-      unit: '/ ' + (p.unit || 'unité').replace(/^\/\s*/, ''),
-      img: p.photoUrl || '',
-      dispo: true,
-      note: 4.5,
-      nb_avis: 0,
-      desc: p.description || '',
-      sponsorise: p.sponsored || false,
-      flash: p.flash || false,
-      flashPrice: p.flashPrice,
-      fromStore: true,
-    }))
-    // Store products first (real), then static catalog (demo)
-    const storeIds = new Set(converted.map(c => c.id))
-    return [...converted, ...MKT_ITEMS.filter(m => !storeIds.has(m.id))]
-  }, [store.products, store.onboardingData?.entreprise])
+    // Produits backend (source principale — partagés entre tous les users)
+    const fromBackend = backendProducts
+      .filter(p => p.isPublished !== false && p.status !== 'archived')
+      .map(p => ({
+        id: p.id,
+        nom: p.name || '',
+        cat: MKT_CATS.find(c => c.id === p.category)?.id || p.category || 'gros-oeuvre',
+        fournisseur: p.supplier?.fournisseurProfile?.entreprise || p.supplier?.company || p.supplier?.name || 'Fournisseur',
+        marque: '',
+        prix: p.price ? fmt(Number(p.price)) : 'Sur devis',
+        prix_num: Number(p.price) || 0,
+        unit: '/ ' + (p.unit || 'unité').replace(/^\/\s*/, ''),
+        img: p.photoUrl || '',
+        dispo: true,
+        note: 4.5,
+        nb_avis: 0,
+        desc: p.description || '',
+        sponsorise: p.sponsored || false,
+        flash: p.flash || false,
+        flashPrice: p.flashPrice,
+        fromStore: true,
+      }))
+    // Produits locaux (offline / pas encore synchro) — dédupliqués
+    const backendIds = new Set(fromBackend.map(p => p.id))
+    const fromLocal = (store.products || [])
+      .filter(p => !backendIds.has(p.id) && p.isPublished !== false && p.status !== 'archived')
+      .map(p => ({
+        id: p.id,
+        nom: p.name || p.nom || '',
+        cat: MKT_CATS.find(c => c.id === p.category)?.id || p.category || 'gros-oeuvre',
+        fournisseur: p.supplier?.fournisseurProfile?.entreprise || store.onboardingData?.entreprise || 'Fournisseur',
+        marque: '',
+        prix: p.price ? fmt(Number(p.price)) : 'Sur devis',
+        prix_num: Number(p.price) || 0,
+        unit: '/ ' + (p.unit || 'unité').replace(/^\/\s*/, ''),
+        img: p.photoUrl || '',
+        dispo: true,
+        note: 4.5,
+        nb_avis: 0,
+        desc: p.description || '',
+        sponsorise: p.sponsored || false,
+        flash: p.flash || false,
+        flashPrice: p.flashPrice,
+        fromStore: true,
+      }))
+    const realIds = new Set([...fromBackend.map(p => p.id), ...fromLocal.map(p => p.id)])
+    // Catalogue statique en dernier (démo)
+    return [...fromBackend, ...fromLocal, ...MKT_ITEMS.filter(m => !realIds.has(m.id))]
+  }, [backendProducts, store.products, store.onboardingData?.entreprise, fmt])
+
   const [categories, setCategories] = useState(MKT_CATS) // fallback to static data
   useEffect(() => {
     api.marketplace.getCategories()
@@ -128,9 +161,33 @@ export default function MarketplacePage({ showToast, commerceScope }) {
   const [devisRequests, setDevisRequests] = useState([])
   const [showDevis, setShowDevis] = useState(null)
   const [commandes, setCommandes] = useState([])
+  const [commandesLoaded, setCommandesLoaded] = useState(false)
   const [showTracking, setShowTracking] = useState(null)
   const [showCommandes, setShowCommandes] = useState(false)
   const [, refresh] = useState(0)
+
+  // Charger les commandes depuis le backend au montage
+  useEffect(() => {
+    api.commandes.getAll()
+      .then(orders => {
+        if (Array.isArray(orders)) {
+          setCommandes(orders.map(o => ({
+            id: o.id, ref: o.ref,
+            items: Array.isArray(o.items) ? o.items : [],
+            designation: o.designation || '',
+            fournisseur: o.fournisseur || '',
+            total: o.total || 0,
+            date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+            statut: o.statut || 'confirmee',
+            livMode: o.livMode || 'retrait',
+            step: o.step || 1,
+            img: o.img || '',
+          })))
+        }
+        setCommandesLoaded(true)
+      })
+      .catch(() => setCommandesLoaded(true))
+  }, [])
 
   // Filter — utilise allProducts (statiques + store)
   const filtered = allProducts.filter(m => {
@@ -167,7 +224,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
   const livraisonAmount = livMode === 'livraison' ? calcLivraison(livKm, livKg) : 0
   const grandTotal = cartTotal + commissionAmount + livraisonAmount
 
-  const passerCommande = () => {
+  const passerCommande = async () => {
     if (cart.length === 0 || !payMethod) return
     const prov = PAY_PROVIDERS.find(p => p.id === payMethod)
     // Vérification solde avant paiement
@@ -176,53 +233,56 @@ export default function MarketplacePage({ showToast, commerceScope }) {
       return
     }
     const cmdRef = genRef('CMD')
-    const facRef = genRef('FAC')
-    const livRef = livMode === 'livraison' ? genRef('LIV') : null
+    const activeProject = (store.projects || [])[0]
+    const resolvedAddress = livAdresse ? livAdresse : (livDest === 'chantier' ? 'Chantier' : 'Domicile')
+
+    // Trouver l'id vendeur depuis le premier produit du panier (backend)
+    const firstProduct = backendProducts.find(p => cart[0] && p.id === cart[0].id)
+    const sellerId = firstProduct?.supplierId || null
+
+    // Persister la transaction locale (solde)
     const tx = { id: 'tx_mkt_' + Date.now(), type: 'debit', label: 'Achat Marketplace ' + cmdRef + ' — ' + cart.length + ' articles', montant: grandTotal, date: 'Aujourd\'hui', provider: payMethod, statut: 'confirme', projet: '' }
     updateStore(prev => ({ ...prev, transactions: [tx, ...(prev.transactions || [])] }))
-    const activeProject = (store.projects || [])[0]
-    const newCmd = {
-      id: 'cmd_' + Date.now(), ref: cmdRef, refFac: facRef, refLiv: livRef,
-      projectId: activeProject?.id || null,
-      projet: activeProject?.nom || activeProject?.name || '',
-      items: cart.map(c => ({ nom: c.nom, qty: c.qty, prix_num: c.prix_num, fournisseur: c.fournisseur })),
-      total: grandTotal, date: 'Aujourd\'hui', livMode,
-      step: 1, fournisseur: cart[0]?.fournisseur || 'Fournisseur',
-      scope: commerceScope || 'shared_with_project',
-      ...(livMode === 'livraison' ? { partner: LOGISTICS_PARTNERS[Math.floor(Math.random() * LOGISTICS_PARTNERS.length)], lat: 5.32 + Math.random() * .05, lng: -3.97 + Math.random() * .03 } : {})
-    }
-    setCommandes(prev => [newCmd, ...prev])
-    // Persister dans le store pour que le fournisseur voie la commande
-    const resolvedAddress = livAdresse ? livAdresse : (livDest === 'chantier' ? 'Chantier' : 'Domicile')
-    const sellerOrder = {
-      id: newCmd.id,
-      ref: newCmd.ref,
-      buyer: store.user?.name || store.onboardingData?.entreprise || 'Client',
-      fournisseur: newCmd.fournisseur,
-      items: newCmd.items.map(it => ({ name: it.nom, qty: it.qty, price: it.prix_num, fournisseur: it.fournisseur })),
-      total: newCmd.total,
-      date: newCmd.date,
-      statut: 'pending',
-      address: resolvedAddress,
-      livMode: newCmd.livMode,
+
+    // Payload pour le backend
+    const orderPayload = {
+      ref: cmdRef,
+      sellerId,
+      designation: cart.map(c => c.nom).join(', '),
+      fournisseur: cart[0]?.fournisseur || 'Fournisseur',
+      items: cart.map(c => ({ name: c.nom, qty: c.qty, price: c.prix_num, fournisseur: c.fournisseur })),
+      total: grandTotal,
+      statut: 'confirmee',
+      livMode,
       step: 1,
+      projet: activeProject?.nom || activeProject?.name || '',
+      address: resolvedAddress,
       paymentMethod: prov?.name || 'Plateforme',
-      paymentStatus: 'paid',
-      scope: newCmd.scope,
-      ...(newCmd.partner ? { partner: newCmd.partner } : {}),
+      img: cart[0]?.img || '',
     }
-    updateStore(prev => ({
-      ...prev,
-      sellerOrders: [sellerOrder, ...(prev.sellerOrders || [])],
-    }))
-    setCart([]); setShowCheckout(false); setShowCart(false)
-    setShowCommandes(true) // Ouvrir directement les commandes après achat
-    showToast && showToast('Commande confirmee — ' + fmt(grandTotal))
-    // Simulate tracking progression
-    if (livMode === 'livraison') {
-      setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 2 } : c)); refresh(n => n + 1) }, 3000)
-      setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 3 } : c)); refresh(n => n + 1) }, 8000)
-      setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 4 } : c)); refresh(n => n + 1) }, 15000)
+
+    try {
+      const saved = await api.commandes.create(orderPayload)
+      const newCmd = {
+        id: saved.id, ref: saved.ref,
+        items: orderPayload.items, designation: saved.designation,
+        fournisseur: saved.fournisseur, total: saved.total,
+        date: new Date(saved.createdAt).toLocaleDateString('fr-FR'),
+        statut: saved.statut, livMode: saved.livMode, step: saved.step, img: saved.img || '',
+        ...(livMode === 'livraison' ? { partner: LOGISTICS_PARTNERS[Math.floor(Math.random() * LOGISTICS_PARTNERS.length)] } : {})
+      }
+      setCommandes(prev => [newCmd, ...prev])
+      setCart([]); setShowCheckout(false); setShowCart(false)
+      setShowCommandes(true)
+      showToast && showToast('Commande confirmée — ' + fmt(grandTotal))
+      // Simulate tracking progression (livraison)
+      if (livMode === 'livraison') {
+        setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 2 } : c)); api.commandes.update(newCmd.id, { step: 2 }) }, 3000)
+        setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 3 } : c)); api.commandes.update(newCmd.id, { step: 3 }) }, 8000)
+        setTimeout(() => { setCommandes(prev => prev.map(c => c.id === newCmd.id ? { ...c, step: 4 } : c)); api.commandes.update(newCmd.id, { step: 4 }) }, 15000)
+      }
+    } catch {
+      showToast && showToast('Erreur lors de la commande — réessayez')
     }
   }
 
@@ -247,7 +307,7 @@ export default function MarketplacePage({ showToast, commerceScope }) {
   }
 
   const dispoColor = d => d === 'En stock' ? 'var(--ok)' : d === 'Sur commande' ? 'var(--wrn)' : 'var(--t4)'
-  const fournisseurs = [...new Set(MKT_ITEMS.map(m => m.fournisseur))]
+  const fournisseurs = [...new Set(allProducts.map(m => m.fournisseur).filter(Boolean))]
 
   // Flash items
   const flashItems = MKT_FLASH.map(f => ({ ...MKT_ITEMS.find(m => m.id === f.id), flashRemise: f.remise })).filter(Boolean)
@@ -296,12 +356,12 @@ export default function MarketplacePage({ showToast, commerceScope }) {
           <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--t4)', marginBottom: 10 }}>Fournisseurs</div>
             <div onClick={() => setActiveFournisseur(null)} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--tx)', background: !activeFournisseur ? 'var(--s2)' : 'transparent', borderRadius: 8, marginBottom: 4, transition: 'background .12s' }}>
-              <Store size={13}/> Tous les fournisseurs <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500 }}>({MKT_ITEMS.length})</span>
+              <Store size={13}/> Tous les fournisseurs <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500 }}>({allProducts.length})</span>
             </div>
           </div>
           <div style={{ padding: '8px 8px' }}>
             {fournisseurs.map(f => {
-              const count = MKT_ITEMS.filter(m => m.fournisseur === f).length
+              const count = allProducts.filter(m => m.fournisseur === f).length
               const active = activeFournisseur === f
               const initials = f.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
               return (

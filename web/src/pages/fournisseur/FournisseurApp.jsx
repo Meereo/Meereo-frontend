@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Store, Package, Settings, ShoppingCart, Truck, Wallet, BarChart2, Camera, Check, Smartphone } from 'lucide-react'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import Modal from '../../components/shared/Modal'
 import ModalConfirm from '../../components/shared/ModalConfirm'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
@@ -92,12 +93,30 @@ export default function FournisseurApp() {
     return sorted.slice(0, 20)
   }, [activeProducts])
 
-  // Seller orders — fusionner démo + commandes réelles du store
-  const sellerOrders = (() => {
-    const real = store.sellerOrders || []
-    const demoIds = new Set(real.map(o => o.id))
-    return [...real, ...DEMO_ORDERS.filter(d => !demoIds.has(d.id))]
-  })()
+  // Seller orders — chargées depuis le backend (PostgreSQL)
+  const [sellerOrders, setSellerOrders] = useState([])
+  const [ordersLoaded, setOrdersLoaded] = useState(false)
+  useEffect(() => {
+    api.commandes.getAll()
+      .then(orders => {
+        if (Array.isArray(orders)) setSellerOrders(orders.map(o => ({
+          id: o.id, ref: o.ref,
+          buyer: o.buyer?.name || o.buyer?.company || 'Client',
+          fournisseur: o.fournisseur || '',
+          items: Array.isArray(o.items) ? o.items : [],
+          total: o.total || 0,
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+          statut: o.statut === 'confirmee' ? 'pending' : o.statut,
+          livMode: o.livMode || 'retrait',
+          step: o.step || 1,
+          address: o.address || '',
+          paymentMethod: o.paymentMethod || '',
+        })))
+        setOrdersLoaded(true)
+      })
+      .catch(() => setOrdersLoaded(true))
+  }, [])
+
   const sellerPayments = sellerOrders.filter(o => o.statut === 'completed' || o.statut === 'delivered')
   const pendingOrders = sellerOrders.filter(o => o.statut === 'pending')
   const caTotal = sellerPayments.reduce((s, o) => s + (o.total || 0), 0)
@@ -122,6 +141,22 @@ export default function FournisseurApp() {
   const [notifPrefs, setNotifPrefs] = useState([true, true, true, false, false])
   const [fPwd, setFPwd] = useState({ current: '', nouveau: '', confirm: '' })
   const [fEntreprise, setFEntreprise] = useState({ nom: ob.entreprise || '', email: ob.email || '', tel: ob.tel || '', ville: ob.ville || '' })
+
+  // Charger les produits depuis PostgreSQL au montage (source de vérité partagée)
+  useEffect(() => {
+    api.products.getMine()
+      .then(backendProds => {
+        if (!Array.isArray(backendProds) || backendProds.length === 0) return
+        updateStore(prev => {
+          // Garder les produits locaux sans ID backend (créés offline)
+          const backendIds = new Set(backendProds.map(p => p.id))
+          const localOnly = (prev.products || []).filter(p => String(p.id).startsWith('prod_') && !backendIds.has(p.id))
+          return { ...prev, products: [...backendProds, ...localOnly] }
+        })
+      })
+      .catch(() => {}) // silencieux si backend KO
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Sync fEntreprise when onboardingData changes (e.g. after save)
   useEffect(() => {
@@ -171,12 +206,17 @@ export default function FournisseurApp() {
       ...prev,
       products: (prev.products || []).map(p => p.id === editProduct.id ? { ...p, ...editProduct } : p)
     }))
+    api.products.update(editProduct.id, {
+      name: editProduct.name, category: editProduct.category, price: editProduct.price,
+      unit: editProduct.unit, description: editProduct.description, photoUrl: editProduct.photoUrl,
+    }).catch(e => console.warn('[editProduct] sync failed:', e.message))
     showToast('Produit mis à jour', 'green')
     setEditProduct(null)
   }
 
   const handleDeleteProduct = (id) => {
     updateStore(prev => ({ ...prev, products: (prev.products || []).filter(p => p.id !== id) }))
+    api.products.delete(id).catch(e => console.warn('[deleteProduct] sync failed:', e.message))
     showToast('Produit supprime')
   }
 
@@ -185,6 +225,10 @@ export default function FournisseurApp() {
       ...prev,
       products: (prev.products || []).map(p => p.id === id ? { ...p, [field]: !p[field] } : p)
     }))
+    const product = (store.products || []).find(p => p.id === id)
+    if (product) {
+      api.products.update(id, { [field]: !product[field] }).catch(e => console.warn('[toggleProduct] sync failed:', e.message))
+    }
   }
 
   const handleSponsor = () => {
@@ -209,10 +253,11 @@ export default function FournisseurApp() {
   }
 
   const handleOrderAction = (orderId, newStatus) => {
-    updateStore(prev => ({
-      ...prev,
-      sellerOrders: (prev.sellerOrders || DEMO_ORDERS).map(o => o.id === orderId ? { ...o, statut: newStatus } : o)
-    }))
+    // Mapper statut fournisseur → statut backend (step)
+    const stepMap = { pending: 1, accepted: 1, preparing: 2, shipped: 3, delivered: 5, completed: 5, cancelled: 1, rejected: 1 }
+    const step = stepMap[newStatus] || 1
+    api.commandes.update(orderId, { statut: newStatus, step }).catch(e => console.warn('[order update]', e.message))
+    setSellerOrders(prev => prev.map(o => o.id === orderId ? { ...o, statut: newStatus, step } : o))
     showToast('Commande ' + (STATUS_LABELS[newStatus] || newStatus).toLowerCase(), newStatus === 'rejected' || newStatus === 'cancelled' ? 'orange' : 'green')
     setShowOrderDetail(null)
   }

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMeereo } from '../../hooks/useMeereoStore'
-import { useMergedData } from '../../hooks/useMergedData'
+import { api } from '../../services/api/client'
 import { useDevise } from '../../hooks/useDevise'
 import { formatDateFR } from '../../utils/helpers'
 import { DSPageHeader, DSKpiStrip, DSFilterBar , DSEmptyState } from '../../design/components'
@@ -18,12 +18,32 @@ const STEPS = [
 export default function CommandesPage({ onNavigate, showToast, openModal }) {
   const { updateStore } = useMeereo()
   const { format: fmtMoney } = useDevise()
-  const { commandes: allCommandes } = useMergedData()
+  const [allCommandes, setAllCommandes] = useState([])
   const [filter, setFilter] = useState('all')
   const [tracking, setTracking] = useState(null)
   const [detail, setDetail] = useState(null)
   const [evalFourn, setEvalFourn] = useState(null)
   const [rated, setRated] = useState([])
+
+  // Charger depuis le backend au montage
+  useEffect(() => {
+    api.commandes.getAll()
+      .then(orders => {
+        if (Array.isArray(orders)) setAllCommandes(orders.map(o => ({
+          id: o.id, ref: o.ref,
+          designation: o.designation || '',
+          fournisseur: o.fournisseur || '',
+          montant: o.total || 0,
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+          statut: o.statut || 'confirmee',
+          projet: o.projet || '',
+          livMode: o.livMode || 'retrait',
+          step: o.step || 1,
+          img: o.img || '',
+        })))
+      })
+      .catch(() => {})
+  }, [])
 
   const total = allCommandes.length
   const enCours = allCommandes.filter(c => c.step < 5).length

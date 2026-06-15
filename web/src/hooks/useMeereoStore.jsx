@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import { ROLES, isAllowed, getProjectRole } from '../domain/permissions'
 import { computePhaseProgress } from '../domain/projectAggregates'
 import { api } from '../services/api/client'
+import { getSocket, disconnectSocket, onConversationUpdated, offConversationUpdated } from '../services/socket'
 
 // Palette de couleurs projet — sobres, premium, variées
 const PROJECT_COLORS = ['#2563EB', '#7C3AED', '#0891B2', '#DC2626', '#16A34A', '#F59E0B', '#EA580C', '#6366F1', '#0F766E', '#BE185D', '#92400E', '#4338CA', '#6B7280']
@@ -53,10 +54,9 @@ const defaultStore = {
   onboardingData: null,
   clients: [],
   intervenants: [],
-  rapports: [],
+  contacts: [],
   commandes: [],
   fournisseurs: [],
-  messages: [],
   notes: [],
   decisions: [],
   paymentRequests: [],
@@ -104,6 +104,22 @@ const defaultStore = {
   _projectsSeeded: false,
 }
 
+// ─── Clés autorisées à être persistées dans localStorage ────────────────────
+// RÈGLE DE SÉCURITÉ : seules ces clés survivent à un rechargement de page.
+// Toute donnée métier (projects, aos, offers, tasks, contacts…) est EXCLUE —
+// elle est refetchée depuis l'API au login/montage. En cas de XSS, l'attaquant
+// ne peut récupérer ni les données utilisateurs ni les données de projet.
+const PERSIST_KEYS = new Set([
+  '_token',              // JWT (sera supprimé une fois cookie httpOnly généralisé)
+  '_hydrated',           // flag de session — évite un double-fetch au montage
+  '_onboardingByUser',   // état du wizard onboarding par userId
+  'onboardingData',      // données du wizard en cours (photos, préférences)
+  // Acceptations légales
+  'commissionAcceptances',
+  // Note : KAI (entitlements, conversations, mémoire) et clientPrefs (préférences
+  // utilisateur) sont désormais stockés en PostgreSQL et rechargés à chaque session.
+])
+
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORE_KEY)
@@ -114,24 +130,13 @@ function loadFromStorage() {
         localStorage.removeItem(STORE_KEY)
         return { ...defaultStore }
       }
+      // Sécurité : on ne restaure QUE les clés de la liste blanche (PERSIST_KEYS).
+      // Tout le reste (projets, aos, tasks…) sera refetché depuis l'API à
+      // l'hydratation. Cela évite d'exposer des données métier en cas de XSS.
       const merged = { ...defaultStore }
       Object.keys(parsed).forEach(k => {
-        if (merged.hasOwnProperty(k)) merged[k] = parsed[k]
+        if (PERSIST_KEYS.has(k) && merged.hasOwnProperty(k)) merged[k] = parsed[k]
       })
-      // Sanitize: remove null/undefined entries from arrays
-      if (Array.isArray(merged.users)) merged.users = merged.users.filter(Boolean)
-      if (Array.isArray(merged.projects)) merged.projects = merged.projects.filter(Boolean)
-      if (Array.isArray(merged.notifications)) merged.notifications = merged.notifications.filter(Boolean)
-      // Migration: assign colors to projects that don't have one
-      if (merged.projects && merged.projects.length > 0) {
-        let changed = false
-        merged.projects.forEach((p, i) => {
-          if (!p.color) {
-            p.color = autoProjectColor(merged.projects.slice(0, i))
-            changed = true
-          }
-        })
-      }
       return merged
     }
   } catch (e) {
@@ -143,31 +148,27 @@ function loadFromStorage() {
 
 function saveToStorage(store) {
   try {
-    const seen = new WeakSet()
-    const json = JSON.stringify(store, (key, value) => {
-      if (value instanceof File || value instanceof Blob || typeof value === 'function') return undefined
-      if (typeof value === 'string' && value.length > 500000 && value.startsWith('data:')) return value.slice(0, 200) + '...[truncated]'
-      // Circular reference protection
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) return undefined
-        seen.add(value)
-      }
-      return value
-    })
-    localStorage.setItem(STORE_KEY, json)
-    // Verify save was successful
-    const verify = localStorage.getItem(STORE_KEY)
-    if (!verify) console.error('[MEEREO] saveToStorage: localStorage write FAILED — key not found after setItem')
-  } catch (e) {
-    console.error('[MEEREO] saveToStorage CRASHED:', e.message, '— store size:', JSON.stringify(store).length)
-    // Last resort: save at least the user to keep the session alive
-    try {
-      const minimal = { ...store, onboardingData: null }
-      localStorage.setItem(STORE_KEY, JSON.stringify(minimal, (k, v) => v instanceof File || v instanceof Blob || typeof v === 'function' ? undefined : v))
-      console.warn('[MEEREO] saveToStorage: saved minimal store (without onboardingData)')
-    } catch (e2) {
-      console.error('[MEEREO] saveToStorage: even minimal save failed:', e2.message)
+    const toSave = {}
+    for (const key of PERSIST_KEYS) {
+      if (store[key] !== undefined) toSave[key] = store[key]
     }
+    // Tronquer les images base64 volumineuses dans onboardingData
+    if (toSave.onboardingData) {
+      const safeOb = { ...toSave.onboardingData }
+      for (const k of ['photoUrl', 'logoFileUrl', 'coverUrl', 'bannerUrl']) {
+        if (typeof safeOb[k] === 'string' && safeOb[k].startsWith('data:') && safeOb[k].length > 500000) {
+          safeOb[k] = safeOb[k].slice(0, 200) + '...[truncated]'
+        }
+      }
+      toSave.onboardingData = safeOb
+    }
+    localStorage.setItem(STORE_KEY, JSON.stringify(toSave))
+  } catch (e) {
+    console.error('[MEEREO] saveToStorage CRASHED:', e.message)
+    // Minimal fallback — au moins le token pour garder la session
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ _token: store._token }))
+    } catch { /* rien à faire */ }
   }
 }
 
@@ -180,6 +181,37 @@ function mergeById(localArr, apiArr) {
 }
 
 const MeereoContext = createContext(null)
+
+/**
+ * Transforme le tableau d'entitlements retourné par GET /api/kai/entitlements
+ * en les 3 clés du store : kaiEntitlement, kaiOnboardingDone.
+ * Accepte aussi conversations + memory pour construire kaiConversations/kaiMemory.
+ */
+function buildKaiState(entitlements = [], conversations = [], memory = []) {
+  const entObj = {
+    pro: { tier: 'standard', quotaLimit: 25, quotaUsed: 0, goldStartDate: null, goldEndDate: null },
+    client: { tier: 'standard', quotaLimit: 25, quotaUsed: 0, goldStartDate: null, goldEndDate: null },
+    fournisseur: { tier: 'standard', quotaLimit: 25, quotaUsed: 0, goldStartDate: null, goldEndDate: null },
+  }
+  const onboardingDone = { pro: false, client: false, fournisseur: false }
+  for (const e of entitlements) {
+    if (!['pro', 'client', 'fournisseur'].includes(e.role)) continue
+    entObj[e.role] = {
+      tier: e.tier || 'standard',
+      quotaLimit: e.quotaLimit ?? 25,
+      quotaUsed: e.quotaUsed ?? 0,
+      goldStartDate: e.goldStartDate || null,
+      goldEndDate: e.goldEndDate || null,
+    }
+    onboardingDone[e.role] = e.onboardingDone ?? false
+  }
+  return {
+    kaiEntitlement: entObj,
+    kaiOnboardingDone: onboardingDone,
+    kaiConversations: conversations,
+    kaiMemory: memory,
+  }
+}
 
 export function MeereoProvider({ children }) {
   const [store, setStore] = useState(loadFromStorage)
@@ -219,18 +251,26 @@ export function MeereoProvider({ children }) {
         }
 
         // 2. Fetch business data from PostgreSQL (source of truth)
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
           api.markets.getAll().catch(() => []),
           api.documents.getAll().catch(() => []),
           api.projectMembers.getAll().catch(() => []),
+          api.usersApi.getFournisseurs().catch(() => []),
+          api.contacts.getAll().catch(() => []),
+          api.kai.getEntitlements().catch(() => []),
+          api.kai.getConversations().catch(() => []),
+          api.kai.getMemory().catch(() => []),
+          api.usersApi.getPrefs().catch(() => ({})),
         ])
 
         // 3. PostgreSQL is source of truth — replace business data entirely
         // Local-only items (ao_xxx IDs) are discarded; backend data wins
         setStore(prev => {
+          const apiClients = apiContacts.filter(c => c.type === 'client')
+          const apiIntervenants = apiContacts.filter(c => c.type === 'intervenant')
           const next = {
             ...prev,
             _hydrated: true,
@@ -243,6 +283,14 @@ export function MeereoProvider({ children }) {
             markets: apiMarkets,
             documents: apiDocuments,
             projectMembers: apiProjectMembers,
+            fournisseurs: apiFournisseurs,
+            contacts: apiContacts,
+            clients: apiClients,
+            intervenants: apiIntervenants,
+            // KAI — depuis la base
+            ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
+            // Préférences utilisateur
+            clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
           }
           saveToStorage(next)
           return next
@@ -255,6 +303,67 @@ export function MeereoProvider({ children }) {
       }
     })()
   }, []) // Run once on mount — no deps needed
+
+  // ═══ SOCKET.IO — connexion automatique dès qu'un token est disponible ═══
+  useEffect(() => {
+    const token = store._token
+    if (!token) {
+      disconnectSocket()
+      return
+    }
+    // Initialiser le socket avec le token courant
+    const socket = getSocket(token)
+
+    // Écouter les mises à jour de conversation émises par d'autres utilisateurs
+    const handleConvUpdated = ({ conversationId, lastMessage }) => {
+      setStore(prev => {
+        const convs = prev.conversations || []
+        const exists = convs.some(c => c.id === conversationId)
+        if (!exists) {
+          // Nouvelle conversation reçue → re-fetcher la liste complète
+          api.conversations.getAll().then(res => {
+            const list = Array.isArray(res) ? res : (res?.conversations || [])
+            setStore(p => {
+              const next = { ...p, conversations: list.length ? list : p.conversations }
+              saveToStorage(next)
+              return next
+            })
+          }).catch(() => {})
+          return prev
+        }
+        const next = {
+          ...prev,
+          conversations: convs.map(c =>
+            c.id === conversationId
+              ? { ...c, lastMessage, updatedAt: lastMessage?.createdAt || c.updatedAt }
+              : c
+          ),
+        }
+        saveToStorage(next)
+        return next
+      })
+    }
+
+    socket.on('conversation:updated', handleConvUpdated)
+
+    // Charger les conversations depuis l'API au premier login
+    if (!store.conversations || store.conversations.length === 0) {
+      api.conversations.getAll().then(res => {
+        const list = Array.isArray(res) ? res : (res?.conversations || [])
+        if (list.length > 0) {
+          setStore(prev => {
+            const next = { ...prev, conversations: list }
+            saveToStorage(next)
+            return next
+          })
+        }
+      }).catch(() => {})
+    }
+
+    return () => {
+      socket.off('conversation:updated', handleConvUpdated)
+    }
+  }, [store._token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ═══ BACKGROUND SYNC — refetch business data every 30s ═══
   // Ensures pro sees AO closed / offer accepted without manual refresh
@@ -276,10 +385,11 @@ export function MeereoProvider({ children }) {
         setStore(prev => {
           // Merge conversations: keep local ones not yet synced, add backend ones
           let mergedConvs = prev.conversations || []
-          if (apiConversations) {
-            const backendIds = new Set(apiConversations.map(c => c.id))
+          const convList = Array.isArray(apiConversations) ? apiConversations : (apiConversations?.conversations || null)
+          if (convList) {
+            const backendIds = new Set(convList.map(c => c.id))
             const localOnly = mergedConvs.filter(c => !backendIds.has(c.id) && String(c.id).startsWith('conv_'))
-            mergedConvs = [...apiConversations, ...localOnly]
+            mergedConvs = [...convList, ...localOnly]
           }
           const next = {
             ...prev,
@@ -422,11 +532,8 @@ export function MeereoProvider({ children }) {
         // Save onboarding data IN THE SAME atomic update
         onboardingData: obData,
         _onboardingByUser: savedObs,
-        // Reset KAI per-user data for a clean start
-        kaiOnboardingDone: { pro: false, client: false, fournisseur: false },
-        kaiConversations: [],
-        kaiMemory: [],
-        kaiUsage: [],
+        // Reset KAI pour un nouveau compte (entitlements créés côté backend à la 1ère requête)
+        ...buildKaiState([], [], []),
         // Reset user-specific data only (messages, notifications, personal events)
         notifications: [],
         activities: [],
@@ -447,10 +554,10 @@ export function MeereoProvider({ children }) {
         password: userPassword,
         name: user.name,
         type: user.type,
-        company: user.company,
-        phone: user.phone,
-        metier: data.metier || data.secteurs?.[0] || null,
-        ville: data.ville || null,
+        ...(user.company ? { company: user.company } : {}),
+        ...(user.phone ? { phone: user.phone } : {}),
+        ...(data.metier || data.secteurs?.[0] ? { metier: data.metier || data.secteurs?.[0] } : {}),
+        ...(data.ville ? { ville: data.ville } : {}),
       })
       if (res?.token) {
         // Store token + hydrate shared business data from PostgreSQL
@@ -468,6 +575,16 @@ export function MeereoProvider({ children }) {
           type: res.user?.type || user.type,
           company: res.user?.company || user.company,
         }
+        // Écriture synchrone du token — React batchant les setState,
+        // saveToStorage n'aurait pas encore tourné quand addProduct est appelé
+        try {
+          const _raw = localStorage.getItem('meereo_store_v2')
+          const _st = JSON.parse(_raw || '{}')
+          _st._token = res.token
+          localStorage.setItem('meereo_store_v2', JSON.stringify(_st))
+        } catch (_) {}
+        // Mise à jour immédiate de storeRef (useEffect ne l'a pas encore fait)
+        storeRef.current = { ...storeRef.current, user: realUser, _token: res.token }
         updateStore(prev => {
           // Re-key _onboardingByUser from temp ID to real backend ID
           const updatedObs = { ...(prev._onboardingByUser || {}) }
@@ -509,6 +626,14 @@ export function MeereoProvider({ children }) {
             api.projects.getAll().catch(() => []),
             api.markets.getAll().catch(() => []),
           ])
+          // Écriture synchrone du token (login fallback)
+          try {
+            const _raw = localStorage.getItem('meereo_store_v2')
+            const _st = JSON.parse(_raw || '{}')
+            _st._token = loginRes.token
+            localStorage.setItem('meereo_store_v2', JSON.stringify(_st))
+          } catch (_) {}
+          storeRef.current = { ...storeRef.current, user: realUser, _token: loginRes.token }
           updateStore(prev => {
             // Re-key _onboardingByUser from temp ID to real backend ID
             const updatedObs = { ...(prev._onboardingByUser || {}) }
@@ -531,6 +656,17 @@ export function MeereoProvider({ children }) {
           })
         }
       } catch (loginErr) {
+        // 409 = email existe avec un autre mot de passe → erreur bloquante
+        if (e.status === 409 && (loginErr.status === 401 || loginErr.status === 422)) {
+          // Retirer l'utilisateur local fantôme qu'on vient d'ajouter
+          updateStore(prev => ({
+            ...prev,
+            user: null,
+            users: (prev.users || []).filter(u => u.id !== user.id),
+            onboardingData: null,
+          }))
+          throw new Error('Un compte existe déjà avec cet email. Connectez-vous ou réinitialisez votre mot de passe.')
+        }
         console.warn('[MEEREO] Login fallback also failed:', loginErr.message)
       }
     }
@@ -557,12 +693,18 @@ export function MeereoProvider({ children }) {
           wallet: 0,
         }
         // 2. Hydrate business data from PostgreSQL
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
           api.markets.getAll().catch(() => []),
           api.projectMembers.getAll().catch(() => []),
+          api.usersApi.getFournisseurs().catch(() => []),
+          api.contacts.getAll().catch(() => []),
+          api.kai.getEntitlements().catch(() => []),
+          api.kai.getConversations().catch(() => []),
+          api.kai.getMemory().catch(() => []),
+          api.usersApi.getPrefs().catch(() => ({})),
         ])
         // 3. Update store with API data + token + restore per-user onboardingData
         updateStore(prev => {
@@ -598,6 +740,14 @@ export function MeereoProvider({ children }) {
             projects: apiProjects,
             markets: apiMarkets,
             projectMembers: apiProjectMembers,
+            fournisseurs: apiFournisseurs,
+            contacts: apiContacts,
+            clients: apiContacts.filter(c => c.type === 'client'),
+            intervenants: apiContacts.filter(c => c.type === 'intervenant'),
+            // KAI — depuis la base
+            ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
+            // Préférences utilisateur
+            clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
           }
         })
         log('USER_LOGIN', { email, source: 'api' })
@@ -605,22 +755,115 @@ export function MeereoProvider({ children }) {
       }
     } catch (e) {
       const msg = e.message || ''
-      // Propagate specific backend errors so the UI can show the right message
-      if (msg.includes('Mot de passe incorrect')) throw new Error('Mot de passe incorrect')
+      const status = e.status || 0
+
+      // Compte supprimé — erreur définitive, ne pas chercher en local
       if (msg.includes('supprimé')) throw new Error('Ce compte a été supprimé')
-      // For network errors or "Utilisateur non trouvé", fall through to local
-      if (msg.includes('non trouvé')) {
-        // User genuinely doesn't exist in backend — don't waste time on local
-        return null
+
+      // 401 depuis le backend : email introuvable OU mauvais mot de passe
+      // On distingue grâce au compte local :
+      //   • Pas de compte local → email inconnu → "Aucun compte trouvé" (return null)
+      //   • Compte local trouvé → il a été créé offline, on le migre vers PostgreSQL
+      if (status === 401 || msg.includes('Mot de passe incorrect') || msg.includes('Email ou mot de passe')) {
+        let localUser = null
+        updateStore(prev => {
+          localUser = (prev.users || []).find(
+            u => u && (u.email || '').toLowerCase() === email.toLowerCase() && u.email !== ''
+          ) || null
+          return prev
+        })
+
+        if (!localUser) {
+          // L'email n'existe vraiment nulle part → message clair
+          return null
+        }
+
+        // Compte trouvé en local mais pas encore dans PostgreSQL
+        // Tentative de migration : on l'enregistre côté backend avec le mot de passe fourni
+        console.info('[LOGIN] Compte local détecté — migration vers PostgreSQL…')
+        try {
+          const ob = (() => {
+            let d = null
+            updateStore(prev => {
+              d = prev._onboardingByUser?.[localUser.id] || prev.onboardingData || null
+              return prev
+            })
+            return d
+          })()
+
+          const migrateRes = await api.auth.register({
+            email: localUser.email,
+            password,
+            name: localUser.name || localUser.company || 'Utilisateur',
+            type: localUser.type || 'pro',
+            company: localUser.company || null,
+            phone: localUser.phone || ob?.tel || null,
+            metier: ob?.metier || ob?.secteurs?.[0] || null,
+            ville: localUser.ville || ob?.ville || null,
+            // Profil complet selon le type
+            ...(ob || {}),
+          })
+
+          if (migrateRes?.user && migrateRes?.token) {
+            // Migration réussie — mettre à jour le store avec le vrai ID backend
+            const migratedUser = {
+              id: migrateRes.user.id,
+              type: migrateRes.user.type || localUser.type,
+              name: migrateRes.user.name || localUser.name,
+              company: migrateRes.user.company || localUser.company || '',
+              email: migrateRes.user.email,
+              phone: migrateRes.user.phone || localUser.phone || '',
+              avatar: migrateRes.user.avatar || localUser.avatar || '',
+              wallet: 0,
+            }
+            updateStore(prev => {
+              const savedObs = { ...(prev._onboardingByUser || {}) }
+              const ob = prev.onboardingData || savedObs[localUser.id] || null
+              if (ob) savedObs[migratedUser.id] = ob
+              delete savedObs[localUser.id]
+              return {
+                ...prev,
+                user: migratedUser,
+                users: mergeById(prev.users || [], [migratedUser]),
+                _token: migrateRes.token,
+                _hydrated: true,
+                _onboardingByUser: savedObs,
+                onboardingData: ob,
+              }
+            })
+            log('USER_LOGIN', { email, source: 'migrated' })
+            return migratedUser
+          }
+        } catch (regErr) {
+          // 409 = email déjà en base avec un autre mot de passe → mauvais mot de passe
+          if (regErr.status === 409) {
+            throw new Error('Mot de passe incorrect')
+          }
+          // Autre erreur de migration — laisser passer au fallback local
+          console.warn('[LOGIN] Migration échouée :', regErr.message)
+        }
+
+        // Fallback ultime : connecter avec le compte local (mode dégradé / offline)
+        updateStore(prev => {
+          const savedObs = { ...(prev._onboardingByUser || {}) }
+          if (prev.user?.id && prev.onboardingData) savedObs[prev.user.id] = prev.onboardingData
+          return { ...prev, user: localUser, onboardingData: savedObs[localUser.id] || null, _onboardingByUser: savedObs }
+        })
+        log('USER_LOGIN', { email, source: 'local_fallback' })
+        return localUser
       }
-      console.warn('[LOGIN] API unreachable, trying local fallback:', msg)
+
+      // Erreur réseau (serveur inaccessible) — fallback local
+      console.warn('[LOGIN] Backend inaccessible, fallback local :', msg)
     }
-    // 4. Fallback: try local store (offline mode only — backend was unreachable)
+
+    // 4. Fallback réseau : chercher en local si le serveur est down
     let found = null
     updateStore(prev => {
-      found = (prev.users || []).find(u => u && u.email === email && u.status !== 'deleted' && u.email !== '')
+      found = (prev.users || []).find(
+        u => u && (u.email || '').toLowerCase() === email.toLowerCase() && u.status !== 'deleted' && u.email !== ''
+      ) || null
       if (found) {
-        // Also restore this user's onboardingData — never inherit another user's
         const savedObs = { ...(prev._onboardingByUser || {}) }
         if (prev.user?.id && prev.onboardingData) savedObs[prev.user.id] = prev.onboardingData
         return { ...prev, user: found, onboardingData: savedObs[found.id] || null, _onboardingByUser: savedObs }
@@ -631,7 +874,7 @@ export function MeereoProvider({ children }) {
       log('USER_LOGIN', { email, source: 'local' })
       return found
     }
-    // 5. Not found anywhere
+    // 5. Introuvable partout
     return null
   }, [updateStore, log])
 
@@ -700,14 +943,16 @@ export function MeereoProvider({ children }) {
   }, [store.projectMembers])
 
   const createProject = useCallback((data) => {
+    // Use storeRef for fresh values — avoids stale closure after createUser (same pattern as createAO)
+    const currentUser = storeRef.current.user
     const p = {
       id: 'proj_' + Date.now(),
-      color: data.color || autoProjectColor(store.projects || []),
+      color: data.color || autoProjectColor(storeRef.current.projects || []),
       name: data.name || data.nom || 'Nouveau projet',
-      clientId: data.clientId || null,
+      clientId: data.clientId || currentUser?.id || null,
       clientEmail: data.clientEmail || null,
       clientInviteStatus: data.clientEmail ? 'pending' : null,
-      ownerId: store.user?.id || null,
+      ownerId: data.ownerId || currentUser?.id || null,
       nom: data.name || data.nom || 'Nouveau projet',
       type: data.type || '',
       budget: data.budget || '',
@@ -751,8 +996,8 @@ export function MeereoProvider({ children }) {
     addNotif('Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green', null, 'projets')
     showToast('\u2705 Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green')
     // Auto-membership: enregistrer le créateur comme membre du projet
-    const creatorRole = store.user?.type === 'client' ? ROLES.CLIENT : ROLES.PRO_ADMIN
-    addProjectMember(p.id, store.user?.id, creatorRole, { userName: store.user?.name, userEmail: store.user?.email })
+    const creatorRole = currentUser?.type === 'client' ? ROLES.CLIENT : ROLES.PRO_ADMIN
+    addProjectMember(p.id, currentUser?.id, creatorRole, { userName: currentUser?.name, userEmail: currentUser?.email })
     // Auto-invite si email client fourni
     if (data.clientEmail) {
       addNotif('Invitation envoyée à ' + data.clientEmail + ' pour le projet « ' + p.name + ' »', 'blue', null, 'projets')
@@ -1133,12 +1378,19 @@ export function MeereoProvider({ children }) {
         entreprise: offerPayload.entreprise,
         supplierName: offerPayload.entreprise,
         price: data.price || data.montant || 0,
+        montant: offerPayload.montant,
         delai: data.delai || '',
         message: data.message || '',
         status: 'pending',
+        statut: 'pending',
         createdAt: backendOffer.createdAt || new Date().toISOString(),
       }
     } catch (e) {
+      // 409 = déjà postulé sur cet AO (contrainte unique aoId+supplierId)
+      if (e.status === 409 || (e.message || '').includes('Unique constraint') || (e.message || '').includes('déjà postulé')) {
+        showToast('Vous avez déjà soumis une offre pour cet AO', 'orange')
+        return null
+      }
       console.warn('[submitOffer] Backend failed, using local ID:', e.message)
       offer = {
         id: 'off_' + Date.now(),
@@ -1148,9 +1400,11 @@ export function MeereoProvider({ children }) {
         entreprise: offerPayload.entreprise,
         supplierName: offerPayload.entreprise,
         price: data.price || data.montant || 0,
+        montant: offerPayload.montant,
         delai: data.delai || '',
         message: data.message || '',
         status: 'pending',
+        statut: 'pending',
         createdAt: new Date().toISOString(),
       }
     }
@@ -1482,10 +1736,12 @@ export function MeereoProvider({ children }) {
   }, [store.user, updateStore, log, addNotif, showToast])
 
   const addProduct = useCallback((data) => {
+    // Use storeRef for fresh user (avoids stale closure after createUser)
+    const currentUser = storeRef.current.user
     const product = {
       id: 'prod_' + Date.now(),
-      supplierId: store.user?.id || null,
-      sellerId: data.sellerId || store.user?.id || null,
+      supplierId: data.supplierId || currentUser?.id || null,
+      sellerId: data.sellerId || currentUser?.id || null,
       name: data.name || data.nom || '',
       category: data.category || data.categorie || '',
       price: data.price || data.prix || 0,
@@ -1504,7 +1760,26 @@ export function MeereoProvider({ children }) {
       createdAt: new Date().toISOString()
     }
     updateStore(prev => ({ ...prev, products: [...prev.products, product] }))
-    sync(api.products.create({ name: product.name, category: product.category, price: product.price, unit: product.unit, photoUrl: product.photoUrl, userId: product.supplierId }))
+    // POST vers PostgreSQL — produit partagé entre tous les utilisateurs
+    api.products.create({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      unit: product.unit,
+      description: product.description,
+      photoUrl: product.photoUrl || null,
+      sponsored: product.sponsored,
+      flash: product.flash,
+      flashPrice: product.flashPrice || null,
+    }).then(saved => {
+      // Remplacer l'ID local par l'ID PostgreSQL
+      if (saved?.id && saved.id !== product.id) {
+        updateStore(prev => ({
+          ...prev,
+          products: prev.products.map(p => p.id === product.id ? { ...p, id: saved.id } : p),
+        }))
+      }
+    }).catch(e => console.warn('[addProduct] Backend sync failed:', e.message))
     log('PRODUCT_ADDED', { name: product.name })
     showToast('\ud83d\udce6 Produit ajout\u00e9 au catalogue', 'green')
     return product
@@ -1930,8 +2205,14 @@ export function MeereoProvider({ children }) {
     const now = new Date()
     const end = new Date(now)
     end.setMonth(end.getMonth() + 1)
-    const goldData = { tier: 'gold', goldStartDate: now.toISOString(), goldEndDate: end.toISOString() }
-    // Activation isolee par profil — uniquement le profil actif
+    const goldData = {
+      tier: 'gold',
+      goldStartDate: now.toISOString(),
+      goldEndDate: end.toISOString(),
+    }
+    // Persister côté serveur
+    api.kai.updateEntitlement(activeRole, goldData).catch(() => {})
+    // Optimistic update
     updateStore(prev => {
       const allEnt = prev.kaiEntitlement || {}
       return {

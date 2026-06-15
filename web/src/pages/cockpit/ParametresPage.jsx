@@ -5,6 +5,7 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 import KaiSubscription from '../../components/shared/KaiSubscription'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
 import { METIERS_AO } from '../../data/ao'
+import { api } from '../../services/api/client'
 
 const TABS = [
   { id: 'profil', label: 'Profil' },
@@ -16,7 +17,12 @@ const TABS = [
   { id: 'donnees', label: 'Données' },
 ]
 
-const PREFS = ['Notifications email', 'Notifications push', 'Rappels planning', 'Resume hebdomadaire']
+const PREFS = [
+  { key: 'notifEmail',  label: 'Notifications email' },
+  { key: 'notifPush',   label: 'Notifications push' },
+  { key: 'rappels',     label: 'Rappels planning' },
+  { key: 'resume',      label: 'Résumé hebdomadaire' },
+]
 const ROLES = [
   { id: 'admin', label: 'Administrateur', desc: 'Accès complet, gestion équipe et paramètres' },
   { id: 'chef', label: 'Chef de projet', desc: 'Gestion projets, chantier, documents, rapports' },
@@ -251,13 +257,22 @@ export default function ParametresPage({ showToast }) {
 
             {tab === 'prefs' && (
               <div>
-                {PREFS.map((pref, i) => {
-                  const on = i < 2
+                {PREFS.map((pref) => {
+                  const prefs = store.clientPrefs || { notifEmail: true, notifPush: true, rappels: false, resume: false }
+                  const on = !!prefs[pref.key]
+                  const toggle = () => {
+                    const newVal = !on
+                    updateStore(prev => ({
+                      ...prev,
+                      clientPrefs: { ...(prev.clientPrefs || prefs), [pref.key]: newVal }
+                    }))
+                    api.usersApi.updatePrefs({ [pref.key]: newVal }).catch(() => {})
+                  }
                   return (
-                    <div key={pref} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 13, color: 'var(--t2)' }}>{pref}</span>
-                      <div style={{ width: 36, height: 20, borderRadius: 100, background: on ? 'var(--tx)' : 'var(--s3)', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, ...(on ? { right: 3 } : { left: 3 }), transition: 'all .15s' }} />
+                    <div key={pref.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 13, color: 'var(--t2)' }}>{pref.label}</span>
+                      <div onClick={toggle} style={{ width: 36, height: 20, borderRadius: 100, background: on ? 'var(--tx)' : 'var(--s3)', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background .15s' }}>
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, transition: 'all .15s', ...(on ? { right: 3 } : { left: 3 }) }} />
                       </div>
                     </div>
                   )

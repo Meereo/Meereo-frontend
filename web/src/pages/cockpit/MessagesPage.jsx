@@ -1,11 +1,24 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Lock, MailOpen, Package, MessageSquare, Users, Camera, Video, Paperclip, Check, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-// CONVERSATIONS mock removed — store.conversations is source of truth
 import { INTERVENANTS_DATA } from '../../data/intervenants'
 import { CLIENTS_DATA } from '../../data/clients'
 import { ANNUAIRE_PLATEFORME } from '../../data/chantier'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
+import {
+  getSocket,
+  joinConversation,
+  leaveConversation,
+  sendSocketMessage,
+  onNewMessage,
+  offNewMessage,
+  emitTypingStart,
+  emitTypingStop,
+  onTyping,
+  offTyping,
+  emitRead,
+} from '../../services/socket'
 
 // Find avatar for a contact by name
 const getContactAvatar = (nom, projects = []) => {
@@ -191,59 +204,70 @@ export default function MessagesPage({ showToast }) {
   const [inviteSearch, setInviteSearch] = useState('')
   const [showParticipants, setShowParticipants] = useState(false)
   // Conversation management
-  const [confirmAction, setConfirmAction] = useState(null) // { type, convId, convName }
-  const [ctxMenu, setCtxMenu] = useState(null) // { convId, x, y }
+  const [confirmAction, setConfirmAction] = useState(null)
+  const [ctxMenu, setCtxMenu] = useState(null)
   const ctxRef = useRef(null)
 
-  // Fusionner conversations statiques + store.conversations + messages store
+  // ── Real-time state ──────────────────────────────────────────────────────────
+  // messages: Map<conversationId, Message[]> — loaded per-conversation from API
+  const [messagesMap, setMessagesMap] = useState({})
+  const [loadingMessages, setLoadingMessages] = useState(false)
+  // typingUsers: Set<userId> typing in active conversation
+  const [typingUsers, setTypingUsers] = useState(new Set())
+  const typingTimers = useRef({})
+  const typingRef = useRef(false) // whether WE are currently "typing"
+  const messagesEndRef = useRef(null)
+
+  // ── Conversations from store (hydrated by socket useEffect in useMeereoStore) ─
   const allConversations = useMemo(() => {
     const storeConvs = store.conversations || []
-    const storeMessages = store.messages || []
-    // Grouper les messages store par conversationId ou par dest
-    const convMap = new Map()
-    storeMessages.forEach(m => {
-      const key = m.conversationId || 'conv_' + m.dest
-      if (!convMap.has(key)) {
-        convMap.set(key, {
-          id: key, nom: m.dest || m.from || 'Contact', type: m.type === 'contact' ? 'client' : 'equipe',
-          avatar: (m.dest || m.from || '?')[0].toUpperCase(), color: '#7C3AED',
-          isGroup: false, participants: [m.from, m.dest].filter(Boolean),
-          dernier: m.texte || m.sujet || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '',
-          unread: 1, pending: false,
-          msgs: [{ side: m.senderRole === 'pro_owner' ? 'out' : 'in', text: m.texte || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' }]
-        })
-      } else {
-        const conv = convMap.get(key)
-        conv.msgs.push({ side: m.senderRole === 'pro_owner' ? 'out' : 'in', text: m.texte || '', time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '' })
-        conv.dernier = m.texte || conv.dernier
-      }
-    })
-    const msgConvs = [...convMap.values()]
-    // Fusionner: store.conversations (priorité) > msgConvs
-    // Static CONVERSATIONS mock excluded — store is source of truth
-    const all = []
-    const existingIds = new Set()
-    // 1. Add store conversations first (they may have _archived/_deleted flags)
-    storeConvs.forEach(c => { all.push(c); existingIds.add(c.id) })
-    // 2. Add message-derived conversations
-    msgConvs.forEach(c => { if (!existingIds.has(c.id)) { all.push(c); existingIds.add(c.id) } })
+    // Normalize backend conversations to the UI shape expected by existing components
+    return storeConvs
+      .filter(c => !c._deleted)
+      .map(c => {
+        // Backend shape: { id, title, isGroup, participants: [{id,name,type}], lastMessage, ... }
+        // Local shape: { id, nom, msgs, ... } — always has a 'nom' field
+        // Detect backend conv: no 'nom' AND participants are objects (not strings/names)
+        const isBackend = !c.nom && !!c.participants && Array.isArray(c.participants)
+          && (c.participants.length === 0 || (typeof c.participants[0] === 'object' && c.participants[0] !== null && 'id' in c.participants[0]))
+        if (!isBackend) return c // already in UI shape (local-only convs)
 
-    // Enrich: detect invited status for conversations missing the flag
-    // A contact is invited (not registered) if they don't match any store.users
-    const registeredNames = new Set((store.users || []).filter(u => u && u.status !== 'deleted').map(u => (u.name || '').toLowerCase()))
-    all.forEach(c => {
-      if (c.invited !== undefined || c.isGroup || c.pending) return // already set or not applicable
-      const nom = (c.nom || '').toLowerCase()
-      c.invited = nom ? !registeredNames.has(nom) : false
-    })
-
-    return all
-  }, [store.messages, store.conversations, store.users])
+        const myId = store.user?.id
+        const otherParticipants = c.participants.filter(p => p.id !== myId)
+        const nom = c.isGroup
+          ? (c.title || 'Groupe')
+          : (otherParticipants[0]?.name || 'Contact')
+        const color = c.isGroup ? '#7C3AED' : '#2563EB'
+        const lastMsg = c.lastMessage
+        const dernier = lastMsg ? (lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : lastMsg.text || '') : ''
+        // Safe date formatting — guard against undefined/invalid createdAt
+        let time = ''
+        if (lastMsg?.createdAt) {
+          const d = new Date(lastMsg.createdAt)
+          if (!isNaN(d.getTime())) {
+            time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+          }
+        }
+        // Unread: messages after lastReadAt (simplified: keep existing unread count)
+        const unread = c.unread || 0
+        return {
+          ...c,
+          nom,
+          color,
+          avatar: nom?.[0]?.toUpperCase() || '?',
+          dernier,
+          time,
+          unread,
+          // msgs is served from messagesMap; keep empty here so UI renders from messagesMap
+          msgs: messagesMap[c.id] || [],
+        }
+      })
+  }, [store.conversations, store.user?.id, messagesMap])
 
   const visibleConversations = allConversations.filter(c => !c._deleted)
   const filtered = visibleConversations.filter(c => {
     if (msgTab === 'archives') return c._archived
-    if (c._archived) return false // hide archived from other tabs
+    if (c._archived) return false
     const tabOk = msgTab === 'all' || c.type === msgTab || (msgTab === 'groupe' && c.isGroup) || (msgTab === 'demande' && c.pending)
     const q = search.toLowerCase()
     return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
@@ -259,6 +283,136 @@ export default function MessagesPage({ showToast }) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [ctxMenu])
+
+  // ── Load messages when active conversation changes ──────────────────────────
+  useEffect(() => {
+    if (!activeId) return
+    const convId = activeId
+
+    // If we already have messages, skip
+    if (messagesMap[convId]) {
+      joinConversation(convId)
+      return
+    }
+
+    // Only load from API if the conversation has a backend ID (not a local "conv_xxx" ID)
+    if (String(convId).startsWith('conv_')) {
+      joinConversation(convId)
+      return
+    }
+
+    setLoadingMessages(true)
+    joinConversation(convId)
+
+    api.conversations.getMessages(convId)
+      .then(({ messages }) => {
+        const shaped = (messages || []).map(m => ({
+          id: m.id,
+          side: m.senderId === store.user?.id ? 'out' : 'in',
+          from: m.sender?.name,
+          text: m.text,
+          type: m.type || 'text',
+          fileUrl: m.fileUrl,
+          fileName: m.fileName,
+          time: new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          senderId: m.senderId,
+          read: true,
+        }))
+        setMessagesMap(prev => ({ ...prev, [convId]: shaped }))
+        // Mark read
+        api.conversations.markRead(convId).catch(() => {})
+        emitRead(convId)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMessages(false))
+
+    return () => {
+      leaveConversation(convId)
+    }
+  }, [activeId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Real-time: subscribe to new messages ───────────────────────────────────
+  useEffect(() => {
+    const token = store._token
+    if (!token) return
+    const socket = getSocket(token)
+
+    const handleNewMessage = (msg) => {
+      const convId = msg.conversationId
+      const shaped = {
+        id: msg.id,
+        side: msg.senderId === store.user?.id ? 'out' : 'in',
+        from: msg.sender?.name,
+        text: msg.text,
+        type: msg.type || 'text',
+        fileUrl: msg.fileUrl,
+        fileName: msg.fileName,
+        time: new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        senderId: msg.senderId,
+        read: convId === activeId,
+      }
+
+      setMessagesMap(prev => {
+        const existing = prev[convId] || []
+        // Prevent duplicate (optimistic already inserted)
+        if (existing.some(m => m.id === msg.id)) return prev
+        return { ...prev, [convId]: [...existing, shaped] }
+      })
+
+      // Update conversation lastMessage + unread in store
+      updateStore(prev => ({
+        ...prev,
+        conversations: (prev.conversations || []).map(c => {
+          if (c.id !== convId) return c
+          const isActive = convId === activeId
+          return {
+            ...c,
+            lastMessage: { id: msg.id, text: msg.text, type: msg.type, senderId: msg.senderId, senderName: msg.sender?.name, createdAt: msg.createdAt },
+            unread: isActive ? 0 : (c.unread || 0) + 1,
+          }
+        }),
+      }))
+
+      if (convId === activeId) {
+        emitRead(convId)
+      }
+    }
+
+    socket.on('message:new', handleNewMessage)
+    return () => { socket.off('message:new', handleNewMessage) }
+  }, [store._token, store.user?.id, activeId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Typing indicators ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeId || !store._token) return
+    const socket = getSocket(store._token)
+
+    const handleTyping = ({ userId: uid, conversationId }) => {
+      if (conversationId !== activeId) return
+      setTypingUsers(prev => new Set([...prev, uid]))
+      // Clear typing after 3s
+      clearTimeout(typingTimers.current[uid])
+      typingTimers.current[uid] = setTimeout(() => {
+        setTypingUsers(prev => { const next = new Set(prev); next.delete(uid); return next })
+      }, 3000)
+    }
+    const handleTypingStop = ({ userId: uid, conversationId }) => {
+      if (conversationId !== activeId) return
+      setTypingUsers(prev => { const next = new Set(prev); next.delete(uid); return next })
+    }
+
+    socket.on('typing', handleTyping)
+    socket.on('typing:stop', handleTypingStop)
+    return () => {
+      socket.off('typing', handleTyping)
+      socket.off('typing:stop', handleTypingStop)
+    }
+  }, [activeId, store._token])
+
+  // ── Auto-scroll to bottom when messages arrive ─────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messagesMap, activeId])
 
   // Handle conversation actions
   const handleConvAction = (type, convId) => {
@@ -334,15 +488,78 @@ export default function MessagesPage({ showToast }) {
     })
   }
 
-  const sendMsg = (text, type) => {
+  const sendMsg = useCallback((text, type) => {
     if (!active || active.pending) return
-    const msg = { side: 'out', text: text || input.trim(), time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }), read: false }
-    if (type) msg.type = type
-    if (!msg.text && !type) return
-    const dernier = type === 'image' ? 'Photo' : type === 'file' ? 'Fichier' : msg.text
-    updateConv(active.id, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier }))
+    const msgText = text || input.trim()
+    if (!msgText && !type) return
+
+    const convId = active.id
+    const myId = store.user?.id
+    const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    const dernier = type === 'image' ? 'Photo' : type === 'file' ? 'Fichier' : msgText
+
+    // Optimistic insert
+    const optimistic = {
+      id: '_opt_' + Date.now(),
+      side: 'out',
+      text: msgText,
+      type: type || 'text',
+      time,
+      senderId: myId,
+      read: false,
+      _pending: true,
+    }
+
+    setMessagesMap(prev => ({ ...prev, [convId]: [...(prev[convId] || []), optimistic] }))
     setInput('')
-  }
+    if (typingRef.current) { emitTypingStop(convId); typingRef.current = false }
+
+    // If this is a local (legacy) conversation without backend, just update in-place
+    if (String(convId).startsWith('conv_')) {
+      updateConv(convId, c => ({ ...c, msgs: [...(c.msgs || []), { ...optimistic, _pending: false }], dernier }))
+      return
+    }
+
+    // Send via WebSocket
+    sendSocketMessage({ conversationId: convId, text: msgText, type: type || 'text' }, (ack) => {
+      if (ack?.error) {
+        // Revert optimistic on error
+        setMessagesMap(prev => ({
+          ...prev,
+          [convId]: (prev[convId] || []).filter(m => m.id !== optimistic.id),
+        }))
+        showToast && showToast('Erreur envoi — ' + ack.error)
+        return
+      }
+      // Replace optimistic with confirmed message from server
+      const confirmed = ack?.message
+      if (confirmed) {
+        const shaped = {
+          id: confirmed.id,
+          side: 'out',
+          from: confirmed.sender?.name,
+          text: confirmed.text,
+          type: confirmed.type || 'text',
+          time: new Date(confirmed.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          senderId: confirmed.senderId,
+          read: true,
+        }
+        setMessagesMap(prev => ({
+          ...prev,
+          [convId]: (prev[convId] || []).map(m => m.id === optimistic.id ? shaped : m),
+        }))
+        // Update conversation list
+        updateStore(prev => ({
+          ...prev,
+          conversations: (prev.conversations || []).map(c =>
+            c.id === convId
+              ? { ...c, lastMessage: { id: confirmed.id, text: confirmed.text, type: confirmed.type, senderId: myId, senderName: '', createdAt: confirmed.createdAt }, dernier }
+              : c
+          ),
+        }))
+      }
+    })
+  }, [active, input, store.user?.id, updateStore, showToast]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFileAttach = () => {
     const inp = document.createElement('input')
@@ -379,7 +596,17 @@ export default function MessagesPage({ showToast }) {
         }
 
         const dernier = isImg ? 'Photo' : isVid ? 'Vidéo' : f.name
-        updateConv(active.id, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier, time: 'Maintenant' }))
+        // For local conversations: update msgs array in store
+        // For backend conversations: send via socket (file support future)
+        const convId = active.id
+        if (String(convId).startsWith('conv_')) {
+          updateConv(convId, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier, time: 'Maintenant' }))
+        } else {
+          // Optimistic for backend conv (file text only for now)
+          const optimistic = { ...msg, id: '_opt_' + Date.now(), senderId: store.user?.id }
+          setMessagesMap(prev => ({ ...prev, [convId]: [...(prev[convId] || []), optimistic] }))
+          sendSocketMessage({ conversationId: convId, text: msg.text || dernier, type: msg.type || 'text' }, () => {})
+        }
       }
     }
     inp.click()
@@ -391,24 +618,43 @@ export default function MessagesPage({ showToast }) {
   const inviteFiltered = inviteSearch ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(inviteSearch.toLowerCase())) : directContacts
   const groupFiltered = groupSearch ? directContacts.filter(c => (c.nom + c.role).toLowerCase().includes(groupSearch.toLowerCase()) && !groupMembers.includes(c.nom)) : directContacts.filter(c => !groupMembers.includes(c.nom))
 
-  const startConversation = (c) => {
+  const startConversation = async (c) => {
     const existing = allConversations.find(conv => conv.nom === c.nom && !conv.isGroup)
     if (existing) { setActiveId(existing.id); setShowNewConv(false); return }
+
+    // Try to find matching backend user
+    const backendUser = (store.fournisseurs || []).find(u => u.name === c.nom || u.nom === c.nom)
+      || (store.users || []).find(u => u.name === c.nom && u.id && !String(u.id).startsWith('u_'))
+
+    if (backendUser?.id && store._token) {
+      try {
+        const { conversation } = await api.conversations.create({ participantId: backendUser.id })
+        updateStore(prev => {
+          const ids = new Set((prev.conversations || []).map(x => x.id))
+          if (ids.has(conversation.id)) return prev
+          return { ...prev, conversations: [conversation, ...(prev.conversations || [])] }
+        })
+        setActiveId(conversation.id)
+        setShowNewConv(false)
+        return
+      } catch (e) {
+        console.warn('[startConversation]', e.message)
+      }
+    }
+
     const id = 'conv_' + Date.now()
     let newConv
     if (!c.direct) {
-      // External contact — requires acceptance
       newConv = { id, nom: c.nom, type: 'demande', avatar: c.nom[0], color: '#F59E0B', isGroup: false, participants: [c.nom], pending: true, invited: true, dernier: 'Demande envoyée', time: 'Maintenant', unread: 0, msgs: [{ side: 'out', text: 'Bonjour, je souhaiterais échanger avec vous.', time: 'Maintenant', read: false }] }
       showToast && showToast('Demande envoyée — en attente d\'acceptation')
     } else if (!c.registered) {
-      // Known contact but not yet registered on MEEREO
       newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: true, email: c.email || '', role: c.role, dernier: 'Invitation envoyée', time: 'Maintenant', unread: 0, msgs: [] }
     } else {
-      // Registered MEEREO user — normal conversation
       newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: false, dernier: '', time: 'Maintenant', unread: 0, msgs: [] }
     }
     updateStore(prev => ({ ...prev, conversations: [newConv, ...(prev.conversations || [])] }))
-    setActiveId(id); setShowNewConv(false)
+    setActiveId(id)
+    setShowNewConv(false)
   }
 
   const ContactRow = ({ c, onClick }) => {
@@ -532,79 +778,103 @@ export default function MessagesPage({ showToast }) {
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {/* Invited contact — info card at top of empty conversation */}
-                {active.invited && (active.msgs || []).length === 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8 }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)' }}>{active.nom}</div>
-                    <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
-                      Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour démarrer la conversation.
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF' }}>En attente d'inscription</span>
-                    </div>
-                  </div>
-                )}
-                {(active.msgs || []).map((m, i) => (
-                  <div key={i}>
-                    {active.isGroup && m.side === 'in' && m.from && (
-                      <div style={{ fontSize: 10, fontWeight: 700, color: m.from === 'Systeme' ? 'var(--t4)' : active.color, marginBottom: 3, marginLeft: 4 }}>{m.from}</div>
-                    )}
-                    {m.from === 'Systeme' ? (
-                      <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--t4)', fontStyle: 'italic', padding: '4px 0' }}>{m.text}</div>
-                    ) : (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start' }}>
-                          {m.type === 'image' && m.url ? (
-                            <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }} onClick={() => window.open(m.url, '_blank')}>
-                              <img src={m.url} alt={m.text || 'Photo'} style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 300 }} />
-                              {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
-                            </div>
-                          ) : m.type === 'image' && !m.url ? (
-                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                              <span style={{ fontSize: 14 }}><Camera size={14}/></span>
-                              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Photo'}</div>
-                            </div>
-                          ) : m.type === 'video' && m.url ? (
-                            <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
-                              <video src={m.url} controls style={{ width: '100%', display: 'block', maxHeight: 300, borderRadius: 14 }} />
-                              {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
-                            </div>
-                          ) : m.type === 'video' ? (
-                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                              <span style={{ fontSize: 14 }}><Video size={14}/></span>
-                              <div>
-                                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidéo'}</div>
-                                {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
-                              </div>
-                            </div>
-                          ) : m.type === 'file' ? (
-                            <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                              <div style={{ width: 32, height: 32, borderRadius: 8, background: m.side === 'out' ? 'rgba(255,255,255,.15)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.side === 'out' ? '#fff' : 'var(--t2)', flexShrink: 0 }}><Paperclip size={14}/></div>
-                              <div>
-                                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text}</div>
-                                {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
-                              </div>
-                            </div>
+                {(() => {
+                  const activeMsgs = active.invited ? (messagesMap[active.id] || active.msgs || []) : (messagesMap[active.id] || active.msgs || [])
+                  return (
+                    <>
+                      {active.invited && activeMsgs.length === 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 8 }}>
+                          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)' }}>{active.nom}</div>
+                          <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
+                            Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour démarrer la conversation.
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
+                            <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF' }}>En attente d'inscription</span>
+                          </div>
+                        </div>
+                      )}
+                      {loadingMessages && !activeMsgs.length && (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+                          <span style={{ fontSize: 11, color: 'var(--t4)' }}>Chargement...</span>
+                        </div>
+                      )}
+                      {activeMsgs.map((m, i) => (
+                        <div key={m.id || i}>
+                          {active.isGroup && m.side === 'in' && m.from && (
+                            <div style={{ fontSize: 10, fontWeight: 700, color: m.from === 'Systeme' ? 'var(--t4)' : active.color, marginBottom: 3, marginLeft: 4 }}>{m.from}</div>
+                          )}
+                          {m.from === 'Systeme' ? (
+                            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--t4)', fontStyle: 'italic', padding: '4px 0' }}>{m.text}</div>
                           ) : (
-                            <div style={{
-                              maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
-                              ...(m.side === 'out'
-                                ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
-                                : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
-                            }}>{m.text}</div>
+                            <>
+                              <div style={{ display: 'flex', justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', opacity: m._pending ? 0.65 : 1 }}>
+                                {m.type === 'image' && m.url ? (
+                                  <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }} onClick={() => window.open(m.url, '_blank')}>
+                                    <img src={m.url} alt={m.text || 'Photo'} style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 300 }} />
+                                    {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
+                                  </div>
+                                ) : m.type === 'image' && !m.url ? (
+                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                                    <span style={{ fontSize: 14 }}><Camera size={14}/></span>
+                                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Photo'}</div>
+                                  </div>
+                                ) : m.type === 'video' && m.url ? (
+                                  <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+                                    <video src={m.url} controls style={{ width: '100%', display: 'block', maxHeight: 300, borderRadius: 14 }} />
+                                    {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
+                                  </div>
+                                ) : m.type === 'video' ? (
+                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                                    <span style={{ fontSize: 14 }}><Video size={14}/></span>
+                                    <div>
+                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidéo'}</div>
+                                      {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                                    </div>
+                                  </div>
+                                ) : m.type === 'file' ? (
+                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: m.side === 'out' ? 'rgba(255,255,255,.15)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.side === 'out' ? '#fff' : 'var(--t2)', flexShrink: 0 }}><Paperclip size={14}/></div>
+                                    <div>
+                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text}</div>
+                                      {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{
+                                    maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
+                                    ...(m.side === 'out'
+                                      ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
+                                      : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
+                                  }}>{m.text}</div>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', padding: '0 4px', marginTop: 2 }}>
+                                <span style={{ fontSize: 10, color: 'var(--t4)' }}>{m.time}</span>
+                                {m.side === 'out' && <span style={{ color: m.read ? '#007AFF' : 'var(--t4)' }}>{m.read ? <CheckCheck size={10}/> : <Check size={10}/>}</span>}
+                              </div>
+                            </>
                           )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', padding: '0 4px', marginTop: 2 }}>
-                          <span style={{ fontSize: 10, color: 'var(--t4)' }}>{m.time}</span>
-                          {m.side === 'out' && <span style={{ color: m.read ? '#007AFF' : 'var(--t4)' }}>{m.read ? <CheckCheck size={10}/> : <Check size={10}/>}</span>}
+                      ))}
+                      {/* Typing indicator */}
+                      {typingUsers.size > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0' }}>
+                          <div style={{ display: 'flex', gap: 3, padding: '8px 14px', background: 'var(--s2)', borderRadius: '18px 18px 18px 4px' }}>
+                            {[0,1,2].map(j => (
+                              <div key={j} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--t3)', animation: `bounce 1.2s ${j*0.2}s infinite` }} />
+                            ))}
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      )}
+                      {/* Auto-scroll anchor */}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )
+                })()}
               </div>
 
               {/* Input — 3 states: pending / invited / normal */}
@@ -662,7 +932,32 @@ export default function MessagesPage({ showToast }) {
                   <button onClick={handleFileAttach} style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Joindre un fichier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                   </button>
-                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMsg() }} placeholder="Écrire un message..." style={{ flex: 1, padding: '11px 16px', border: '1px solid var(--border-card)', borderRadius: 14, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} />
+                  <input
+                    value={input}
+                    onChange={e => {
+                      setInput(e.target.value)
+                      // Typing indicator
+                      if (active && !String(active.id).startsWith('conv_')) {
+                        if (!typingRef.current) {
+                          typingRef.current = true
+                          emitTypingStart(active.id)
+                        }
+                        clearTimeout(typingRef._timer)
+                        typingRef._timer = setTimeout(() => {
+                          typingRef.current = false
+                          emitTypingStop(active.id)
+                        }, 2000)
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMsg()
+                      }
+                    }}
+                    placeholder="Écrire un message..."
+                    style={{ flex: 1, padding: '11px 16px', border: '1px solid var(--border-card)', borderRadius: 14, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }}
+                  />
                   <button onClick={() => sendMsg()} style={{ width: 40, height: 40, borderRadius: 12, background: input.trim() ? 'var(--tx)' : 'var(--s3)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: input.trim() ? '#fff' : 'var(--t4)', transition: 'all .15s' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                   </button>

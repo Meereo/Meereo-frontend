@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import './GlobalNav.css'
 
 export default function GlobalNav() {
@@ -38,7 +39,7 @@ export default function GlobalNav() {
           <a
             key={l.path}
             className={`global-nav-link ${location.pathname.startsWith(l.path) ? 'active' : ''}`}
-            onClick={(e) => { e.preventDefault(); if (l.logout) updateStore(prev => ({ ...prev, user: null, _token: null })); navigate(l.path) }}
+            onClick={(e) => { e.preventDefault(); if (l.logout) { api.auth.logout(); updateStore(prev => ({ ...prev, user: null, _token: null })) } navigate(l.path) }}
             title={l.title}
             href={l.path}
           >

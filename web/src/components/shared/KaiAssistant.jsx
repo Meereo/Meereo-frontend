@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { BarChart2, Folder, ClipboardList, Package, MessageSquare, Home, CheckCircle2, FileText, ShoppingCart, Wallet } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import useUserIdentity from '../../hooks/useUserIdentity'
+import { api } from '../../services/api/client'
 
 // ── Response engine ──
 function getKaiResponse(q, context, store, memory) {
@@ -24,7 +25,7 @@ function getKaiResponse(q, context, store, memory) {
   const disputes = (store.disputeCases || []).filter(d => d.status === 'open')
   const offers = store.offers || []
   const pendingOffers = offers.filter(o => o.status === 'pending')
-  const msgs = (store.messages || []).filter(m => !m.read)
+  const msgs = []  // store.messages supprimé — la messagerie passe par store.conversations
   const kaiEnt = store.kaiEntitlement || {}
   const isGold = kaiEnt.tier === 'gold' && kaiEnt.goldEndDate && new Date(kaiEnt.goldEndDate) > new Date()
 
@@ -351,7 +352,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
 
   const pendingOffers = (store.offers || []).filter(o => o.statut === 'pending' || o.status === 'pending')
   const offersCount = pendingOffers.length
-  const msgsUnread = (store.messages || []).filter(m => !m.read).length
+  const msgsUnread = (store.conversations || []).reduce((s, c) => s + (c.unread || 0), 0)
   const decPending = (store.decisions || []).filter(d => d.statut === 'pending').length
   const openAOs = (store.aos || []).filter(a => a.status === 'open')
   const aoWithoutOffers = openAOs.filter(a => !(store.offers || []).some(o => o.aoId === a.id))
@@ -478,6 +479,9 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   }
 
   const dismissOnboarding = () => {
+    // Persist côté serveur
+    api.kai.markOnboardingDone(context).catch(() => {})
+    // Optimistic update
     updateStore(prev => ({
       ...prev,
       kaiOnboardingDone: { ...(prev.kaiOnboardingDone || {}), [context]: true }
@@ -502,7 +506,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   }
   const onBarClick = () => { if (!kaiDrag.current.moved) { setKaiOpen(o => !o); if (!kaiOpen) setKaiView('idle') } }
 
-  // Save conversation to store
+  // Save conversation to store + API
   const saveConversation = useCallback((msgs, convId) => {
     if (!msgs || msgs.length === 0) return
     const firstUserMsg = msgs.find(m => m.side === 'user')
@@ -511,6 +515,11 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const topic = extractTopic(firstUserMsg.text)
     const now = new Date().toISOString()
 
+    // Persist to PostgreSQL
+    api.kai.saveConversation(convId, { context, title, messages: msgs, topic }).catch(() => {})
+    if (topic) api.kai.saveMemory(topic, context).catch(() => {})
+
+    // Optimistic store update (source of truth est la BD, mais on met à jour l'UI)
     updateStore(prev => {
       const convs = [...(prev.kaiConversations || [])]
       const idx = convs.findIndex(c => c.id === convId)
@@ -519,17 +528,13 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
       } else {
         convs.unshift({ id: convId, title, context, messages: msgs, createdAt: now, updatedAt: now, topic })
       }
-      // Keep max 20 conversations
       const trimmed = convs.slice(0, 20)
-
-      // Update memory if topic found
       let mem = [...(prev.kaiMemory || [])]
       if (topic) {
         const existing = mem.findIndex(m => m.topic === topic && m.context === context)
         if (existing >= 0) { mem[existing] = { ...mem[existing], lastDiscussed: now } }
         else { mem.unshift({ topic, context, lastDiscussed: now }); mem = mem.slice(0, 15) }
       }
-
       return { ...prev, kaiConversations: trimmed, kaiMemory: mem }
     })
   }, [updateStore, context])
@@ -539,7 +544,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const projects = store.projects || []
     const offers = store.offers || []
     const decisions = store.decisions || []
-    const msgs = store.messages || []
+    const msgs = []
     const markets = store.markets || []
     const docs = store.documents || []
     const products = store.products || []
@@ -553,7 +558,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
       projects: projects.slice(0, 5).map(p => ({ nom: p.nom || p.name, phase: p.phase, avancement: p.avancement || 0, budget: p.budget, client: p.client })),
       pendingOffers: offers.filter(o => o.status === 'pending' || o.statut === 'pending').length,
       pendingDecisions: decisions.filter(d => d.statut === 'pending').length,
-      unreadMessages: msgs.filter(m => !m.read).length,
+      unreadMessages: (store.conversations || []).reduce((s, c) => s + (c.unread || 0), 0),
       activeMarkets: markets.filter(m => m.status === 'ongoing' || m.statut === 'signe' || m.statut === 'signed').length,
       documentsCount: docs.length,
       productsCount: products.length,
@@ -584,6 +589,16 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
         setKaiMessages(finalMsgs)
         setKaiState('idle')
         saveConversation(finalMsgs, convId)
+        // Incrémenter le quota côté serveur (atomique — évite les race conditions)
+        api.kai.incrementQuota(context).then(updated => {
+          if (updated?.quotaUsed !== undefined) {
+            updateStore(prev => {
+              const ent = { ...(prev.kaiEntitlement || {}) }
+              ent[context] = { ...(ent[context] || {}), quotaUsed: updated.quotaUsed }
+              return { ...prev, kaiEntitlement: ent }
+            })
+          }
+        }).catch(() => {})
       }, 400 + Math.random() * 400)
     }, 300)
   }
@@ -605,6 +620,9 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   // Delete a conversation
   const deleteConversation = (convId, e) => {
     e.stopPropagation()
+    // Persist côté serveur
+    api.kai.deleteConversation(convId).catch(() => {})
+    // Optimistic update
     updateStore(prev => ({
       ...prev,
       kaiConversations: (prev.kaiConversations || []).filter(c => c.id !== convId)

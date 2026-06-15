@@ -148,6 +148,10 @@ export default function BoursePage({ showToast, onNavigate }) {
   const selectedMarche = tab === 'marche' ? (selectedId ? allPublicAO.find(a => a.id === selectedId) : marcheFiltered[0]) : null
   const selectedMesAO = tab === 'mesao' ? (selectedId ? allMesAO.find(a => a.id === selectedId) : allMesAO[0]) : null
 
+  // Vérifier si le pro a déjà postulé à un AO donné
+  const myOfferForAO = (aoId) => (store.offers || []).find(o => o.aoId === aoId && (o.supplierId === store.user?.id || o.userId === store.user?.id))
+  const alreadyApplied = (aoId) => !!myOfferForAO(aoId)
+
   const createAO = () => {
     setAoSubmitted(true)
     if (!newAO.titre.trim() || !newAO.metier) return
@@ -530,6 +534,10 @@ export default function BoursePage({ showToast, onNavigate }) {
                     <ShareMenu url={window.location.origin + '/ao/' + selectedMarche.id} text={'Appel d\'offres : ' + (selectedMarche.titre || '')} onCopied={() => showToast && showToast('Lien copié')} />
                     {isClient ? (
                       <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => setShowInviteModal(selectedMarche)}>Inviter un professionnel →</button>
+                    ) : alreadyApplied(selectedMarche.id) ? (
+                      <div style={{ flex: 2, padding: 11, borderRadius: 9, background: 'rgba(52,199,89,.08)', border: '1px solid rgba(52,199,89,.3)', fontSize: 12.5, fontWeight: 600, color: '#16a34a', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        <Check size={14}/> Offre soumise — {myOfferForAO(selectedMarche.id)?.montant || ''} FCFA
+                      </div>
                     ) : (
                       <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => { setShowRepondre(selectedMarche); setReponse({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: availableDocs.map(d => d.id) }) }}>Répondre à l'appel d'offres →</button>
                     )}

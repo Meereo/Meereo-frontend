@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
 import { exportCSV } from '../../utils/export'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
+import { api } from '../../services/api/client'
 import PaymentBadge from '../../components/shared/PaymentBadge'
 import { recommendRail, RAIL_META, RAILS, PAY_STATUS, calculateCommission } from '../../domain/fintech'
 
@@ -32,6 +33,18 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
   const { markets: allMarches, STATIC: { INTERVENANTS_DATA } } = useMergedData()
   const [filter, setFilter] = useState('all')
   const [detail, setDetail] = useState(null)
+
+  // Rafraîchir les marchés au montage (permet au pro de voir un marché
+  // créé par le client depuis l'acceptation d'une offre)
+  useEffect(() => {
+    api.markets.getAll()
+      .then(markets => {
+        if (Array.isArray(markets) && markets.length > 0) {
+          updateStore(prev => ({ ...prev, markets }))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const total = allMarches.length
   const signes = allMarches.filter(m => m.statut === MARKET_STATUS.SIGNED).length
