@@ -67,6 +67,34 @@ async function apiFetch(path, method = 'GET', body = null, withAuth = false) {
   return data
 }
 
+/**
+ * Effectue un appel multipart/form-data vers le backend (pour les uploads de fichiers).
+ * Ne pose pas de Content-Type — le browser le fait automatiquement avec le boundary.
+ */
+async function apiFetchForm(path, method = 'POST', formData) {
+  const headers = {}
+  const token = getStoredToken()
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    credentials: 'include',
+    body: formData,
+  })
+
+  const data = await res.json().catch(() => ({}))
+
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Erreur ${res.status}`
+    const err = new Error(msg)
+    err.status = res.status
+    throw err
+  }
+
+  return data
+}
+
 // ─── DB helpers (mock localStorage) ──────────────────────────────────────────
 
 const DB_KEY = 'meereo_mock_db'
@@ -253,13 +281,8 @@ const upload = {
 
 const professionals = {
   getAll: async (params = {}) => {
-    let pros = getTable('users').filter(u => u.type === 'pro')
-    if (params.metier && params.metier !== 'all') pros = pros.filter(u => u.metier === params.metier)
-    if (params.q) {
-      const q = params.q.toLowerCase()
-      pros = pros.filter(u => ((u.name || '') + (u.company || '') + (u.metier || '') + (u.ville || '')).toLowerCase().includes(q))
-    }
-    return pros.map(userPublic)
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v))).toString()
+    return apiFetch(`/users/pros${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
   search: async (q, metier) => professionals.getAll({ q, metier }),
 }
@@ -421,7 +444,17 @@ const documentsApi = {
   },
   getById: (id)       => apiFetch(`/documents/${id}`, 'GET', null, true),
   create:  (data)     => apiFetch('/documents', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/documents/${id}`, 'PATCH', data, true),
   delete:  (id)       => apiFetch(`/documents/${id}`, 'DELETE', null, true),
+  /** Upload a real File object to the server (saves to /uploads/documents/) */
+  upload: (file, { name, type, projectId } = {}) => {
+    const form = new FormData()
+    form.append('file', file)
+    if (name)      form.append('name',      name)
+    if (type)      form.append('type',      type)
+    if (projectId) form.append('projectId', projectId)
+    return apiFetchForm('/documents/upload', 'POST', form)
+  },
 }
 
 // ─── Decisions API (real HTTP → PostgreSQL) ───────────────────────────────────
@@ -494,9 +527,13 @@ const productsApi = {
 
 // ─── Users / Fournisseurs API (real HTTP → PostgreSQL) ───────────────────────
 const usersApi = {
-  getFournisseurs: () => apiFetch('/users/fournisseurs', 'GET', null, true),
-  getPrefs:        () => apiFetch('/users/me/prefs', 'GET', null, true),
-  updatePrefs:     (data) => apiFetch('/users/me/prefs', 'PATCH', data, true),
+  getMe:               () => apiFetch('/auth/me', 'GET', null, true),
+  getFournisseurs:     () => apiFetch('/users/fournisseurs', 'GET', null, true),
+  getPrefs:            () => apiFetch('/users/me/prefs', 'GET', null, true),
+  updatePrefs:         (data) => apiFetch('/users/me/prefs', 'PATCH', data, true),
+  getOnboardingData:   () => apiFetch('/users/me/onboarding', 'GET', null, true),
+  updateOnboardingData:(data) => apiFetch('/users/me/onboarding', 'PATCH', data, true),
+  getProProfile:       (publicId) => apiFetch(`/pro/${publicId}`, 'GET', null, false),
 }
 
 // ─── Conversations API (real HTTP → PostgreSQL) ───────────────────────────────

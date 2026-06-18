@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { FileText, LayoutGrid, List } from 'lucide-react'
+import { FileText, LayoutGrid, List, X, Download, ExternalLink } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader , DSEmptyState } from '../../design/components'
 import { formatDateFR } from '../../utils/helpers'
+import { api } from '../../services/api/client'
 
 const typeConf = {
   plan: { color: '#007AFF', bg: 'rgba(0,122,255,.07)', label: 'PLAN' },
@@ -71,7 +72,7 @@ const detectDocType = (filename) => {
 }
 
 export default function DocumentsPage({ showToast }) {
-  const { store, updateStore, emitEvent, uploadDocument } = useMeereo()
+  const { store, updateStore, emitEvent } = useMeereo()
   const { documents: allDocs, markets: allMarches } = useMergedData()
   const [typeFilter, setTypeFilter] = useState('all')
   const [projetFilter, setProjetFilter] = useState('all')
@@ -81,11 +82,22 @@ export default function DocumentsPage({ showToast }) {
   const [importModal, setImportModal] = useState(false)
   const [importFiles, setImportFiles] = useState([])
   const [importProjet, setImportProjet] = useState('')
+  const [uploading, setUploading] = useState(false)
   // Document actions
   const [docMenu, setDocMenu] = useState(null) // { id, x, y }
   const [confirmDelete, setConfirmDelete] = useState(null) // { id, nom }
   const [renameModal, setRenameModal] = useState(null) // { id, nom }
+  const [viewerDoc, setViewerDoc] = useState(null) // doc object for inline viewer
   const menuRef = useRef(null)
+
+  // Fetch documents from backend on mount so shared project docs are visible
+  useEffect(() => {
+    api.documents.getAll().then(docs => {
+      if (docs && docs.length >= 0) {
+        updateStore(prev => ({ ...prev, documents: docs }))
+      }
+    }).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!docMenu) return
@@ -95,6 +107,8 @@ export default function DocumentsPage({ showToast }) {
   }, [docMenu])
 
   const deleteDocument = (docId) => {
+    // Call backend first (non-blocking — optimistic UI)
+    api.documents.delete(docId).catch(() => {})
     updateStore(prev => {
       const inStore = (prev.documents || []).some(d => d.id === docId)
       if (inStore) {
@@ -113,15 +127,17 @@ export default function DocumentsPage({ showToast }) {
 
   const renameDocument = (docId, newName) => {
     if (!newName.trim()) return
+    // Call backend (non-blocking — optimistic UI)
+    api.documents.update(docId, { name: newName.trim() }).catch(() => {})
     updateStore(prev => {
       const inStore = (prev.documents || []).some(d => d.id === docId)
       if (inStore) {
-        return { ...prev, documents: (prev.documents || []).map(d => d.id === docId ? { ...d, nom: newName.trim() } : d) }
+        return { ...prev, documents: (prev.documents || []).map(d => d.id === docId ? { ...d, nom: newName.trim(), name: newName.trim() } : d) }
       }
       // Static doc — copy to store with new name (store overrides static in merge)
       const staticDoc = allDocs.find(d => d.id === docId)
       if (staticDoc) {
-        return { ...prev, documents: [...(prev.documents || []), { ...staticDoc, nom: newName.trim() }] }
+        return { ...prev, documents: [...(prev.documents || []), { ...staticDoc, nom: newName.trim(), name: newName.trim() }] }
       }
       return prev
     })
@@ -202,7 +218,7 @@ export default function DocumentsPage({ showToast }) {
               {filtered.map(d => {
                 const tc = getTC(d.type)
                 return (
-                  <div key={d.id} className="doc-card" style={{ position: 'relative' }}>
+                  <div key={d.id} className="doc-card" style={{ position: 'relative', cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
                     <div style={{ height: 80, background: tc.bg, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative' }}>
                       <span style={{ fontSize: 16, fontWeight: 900, color: tc.color }}>{tc.label}</span>
                       {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
@@ -225,7 +241,7 @@ export default function DocumentsPage({ showToast }) {
                   {filtered.map(d => {
                     const tc = getTC(d.type)
                     return (
-                      <tr key={d.id}>
+                      <tr key={d.id} style={{ cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
                         <td><span style={{ fontSize: 9, fontWeight: 900, color: tc.color, background: tc.bg, padding: '3px 7px', borderRadius: 4 }}>{tc.label}</span></td>
                         <td className="bold">{d.nom}{d.isNew && <span className="doc-card-new">NEW</span>}</td>
                         <td className="muted">{d.projet}</td>
@@ -327,6 +343,7 @@ export default function DocumentsPage({ showToast }) {
                 <input id="doc-file-input" type="file" multiple style={{ display: 'none' }} onChange={e => {
                   const files = Array.from(e.target.files || [])
                   const newFiles = files.map(f => ({
+                    file: f,   // actual File object kept for upload
                     name: f.name,
                     size: f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' Mo' : Math.round(f.size / 1024) + ' Ko',
                     fileType: detectType(f.name),
@@ -371,36 +388,104 @@ export default function DocumentsPage({ showToast }) {
               <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center' }}>{importFiles.length > 0 ? importFiles.length + ' fichier' + (importFiles.length > 1 ? 's' : '') : ''}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-sm" onClick={() => setImportModal(false)}>Annuler</button>
-                <button className="btn btn-primary btn-sm" disabled={importFiles.length === 0 || !importProjet} onClick={() => {
-                  const projObj = (store.projects || []).find(p => p.nom === importProjet)
-                  importFiles.forEach((f, i) => {
-                    const doc = {
-                      id: 'd_' + Date.now() + '_' + i,
-                      nom: f.name.replace(/\.[^.]+$/, ''),
-                      type: f.docType,
-                      projet: importProjet || '',
-                      projectId: projObj?.id || null,
-                      cat: f.cat,
-                      auteur: 'Moi',
-                      date: 'Aujourd\'hui',
-                      taille: f.size,
-                      isNew: true,
-                      visibility: 'client_visible',
+                <button
+                  className="btn btn-primary btn-sm"
+                  disabled={importFiles.length === 0 || !importProjet || uploading}
+                  onClick={async () => {
+                    const projObj = (store.projects || []).find(p => p.nom === importProjet)
+                    const projectId = projObj?.id || null
+                    setUploading(true)
+                    const uploaded = []
+                    for (const f of importFiles) {
+                      const docName = f.name.replace(/\.[^.]+$/, '')
+                      try {
+                        const doc = await api.documents.upload(f.file, {
+                          name: docName,
+                          type: f.docType,
+                          projectId,
+                        })
+                        // Merge display-only fields onto the returned doc
+                        uploaded.push({ ...doc, nom: doc.name, projet: importProjet, cat: f.cat, taille: f.size, isNew: true })
+                      } catch (err) {
+                        console.warn('[DocumentsPage] upload error:', err.message)
+                        showToast && showToast(`Échec : ${f.name}`, 'red')
+                      }
                     }
-                    uploadDocument({ projectId: doc.projectId, type: doc.type, name: doc.nom })
-                  })
-                  emitEvent('document_uploaded', { count: importFiles.length, project: importProjet }, {
-                    notifMsg: importFiles.length + ' document' + (importFiles.length > 1 ? 's' : '') + ' ajouté' + (importFiles.length > 1 ? 's' : ''),
-                    notifType: 'info',
-                  })
-                  setImportModal(false)
-                  showToast && showToast(importFiles.length + ' document' + (importFiles.length > 1 ? 's' : '') + ' importe' + (importFiles.length > 1 ? 's' : ''))
-                }}>Importer</button>
+                    setUploading(false)
+                    if (uploaded.length > 0) {
+                      updateStore(prev => ({
+                        ...prev,
+                        documents: [
+                          ...(prev.documents || []).filter(d => !uploaded.some(u => u.id === d.id)),
+                          ...uploaded,
+                        ],
+                      }))
+                      emitEvent('document_uploaded', { count: uploaded.length, project: importProjet }, {
+                        notifMsg: uploaded.length + ' document' + (uploaded.length > 1 ? 's' : '') + ' ajouté' + (uploaded.length > 1 ? 's' : ''),
+                        notifType: 'info',
+                      })
+                      showToast && showToast(uploaded.length + ' document' + (uploaded.length > 1 ? 's' : '') + ' importé' + (uploaded.length > 1 ? 's' : ''))
+                    }
+                    setImportModal(false)
+                    setImportFiles([])
+                  }}
+                >
+                  {uploading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 12, height: 12, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'inline-block' }} />
+                      Importation...
+                    </span>
+                  ) : 'Importer'}
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* ═══ VIEWER: Visualiseur de document ═══ */}
+      {viewerDoc && (() => {
+        const d = viewerDoc
+        const isImg  = d.type === 'img'  || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
+        const isPdf  = d.type === 'pdf'  || /\.pdf$/i.test(d.url || '')
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setViewerDoc(null)}>
+            <div style={{ position: 'relative', width: '90vw', maxWidth: 900, maxHeight: '85vh', background: 'var(--surface-1)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.35)' }} onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface-1)', flexShrink: 0 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{d.projet || '—'} · {formatDateFR(d.date)} · {d.taille}</div>
+                </div>
+                <a href={d.url} download={d.nom} onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--tx)', textDecoration: 'none', flexShrink: 0 }}>
+                  <Download size={13} /> Télécharger
+                </a>
+                {d.url && <a href={d.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--tx)', textDecoration: 'none', flexShrink: 0 }}>
+                  <ExternalLink size={13} /> Ouvrir
+                </a>}
+                <button onClick={() => setViewerDoc(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)', flexShrink: 0 }}><X size={14}/></button>
+              </div>
+              {/* Content */}
+              <div style={{ overflow: 'auto', maxHeight: 'calc(85vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--s1)', minHeight: 300 }}>
+                {isImg ? (
+                  <img src={d.url} alt={d.nom} style={{ maxWidth: '100%', maxHeight: 'calc(85vh - 80px)', objectFit: 'contain', display: 'block' }} />
+                ) : isPdf ? (
+                  <iframe src={d.url} title={d.nom} style={{ width: '100%', height: 'calc(85vh - 70px)', border: 'none' }} />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: 40, color: 'var(--t3)' }}>
+                    <FileText size={48} style={{ opacity: .3, marginBottom: 12 }} />
+                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Aperçu non disponible</div>
+                    <div style={{ fontSize: 12, marginBottom: 20 }}>Ce type de fichier ne peut pas être prévisualisé dans le navigateur.</div>
+                    <a href={d.url} download={d.nom} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700 }}>
+                      <Download size={14} /> Télécharger
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

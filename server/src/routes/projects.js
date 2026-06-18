@@ -13,11 +13,18 @@ const ALLOWED = [
 ]
 
 // ─── GET /api/projects ────────────────────────────────────────────────────────
-// Renvoie les projets où l'utilisateur est owner OU membre
+// Renvoie les projets où l'utilisateur est owner OU membre OU prestataire signataire
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const userId = req.user.id
+
+    // Projets liés via un marché (supplier) — rétrocompat marchés déjà en DB
+    const supplierMarkets = await prisma.market.findMany({
+      where: { supplierId: userId, projectId: { not: null } },
+      select: { projectId: true },
+    })
+    const supplierProjectIds = supplierMarkets.map(m => m.projectId).filter(Boolean)
 
     const projects = await prisma.project.findMany({
       where: {
@@ -25,6 +32,7 @@ router.get('/', requireAuth, async (req, res, next) => {
           { ownerId: userId },
           { clientId: userId },
           { members: { some: { userId } } },
+          ...(supplierProjectIds.length ? [{ id: { in: supplierProjectIds } }] : []),
         ],
       },
       orderBy: { createdAt: 'desc' },

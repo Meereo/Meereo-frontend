@@ -108,13 +108,13 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-      <div onClick={() => isPro && navigate('/profil')} style={{ width: 40, height: 40, borderRadius: active.isGroup ? 12 : 20, background: av?.type === 'color' ? av.value : (active.color || '#666') + '14', color: av?.type === 'color' ? '#fff' : (active.color || '#666'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: isPro ? 'pointer' : 'default', overflow: 'hidden' }}>
+      <div onClick={() => isPro && navigate('/pro')} style={{ width: 40, height: 40, borderRadius: active.isGroup ? 12 : 20, background: av?.type === 'color' ? av.value : (active.color || '#666') + '14', color: av?.type === 'color' ? '#fff' : (active.color || '#666'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: isPro ? 'pointer' : 'default', overflow: 'hidden' }}>
         {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : av?.type === 'color' ? av.initials : active.avatar}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', cursor: isPro ? 'pointer' : 'default' }} onClick={() => isPro && navigate('/profil')}>{active.nom}</span>
-          {isPro && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate('/profil')}>→ profil</span>}
+          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', cursor: isPro ? 'pointer' : 'default' }} onClick={() => isPro && navigate('/pro')}>{active.nom}</span>
+          {isPro && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate('/pro')}>→ profil</span>}
         </div>
         <div style={{ fontSize: 11, color: 'var(--t3)', cursor: active.isGroup ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 3 }} onClick={() => active.isGroup && setShowParticipants(true)}>
           {active.pending ? <><Lock size={10}/> En attente d{'’'}acceptation</>

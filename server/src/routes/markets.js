@@ -82,6 +82,28 @@ router.post('/', requireAuth, async (req, res, next) => {
         documents:   documents   || [],
       },
     })
+
+    // Auto-ajouter le prestataire comme membre du projet dès la signature du marché
+    if (supplierId && market.projectId) {
+      try {
+        const supplierUser = await prisma.user.findUnique({
+          where: { id: supplierId },
+          select: { name: true, email: true },
+        })
+        await prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: market.projectId, userId: supplierId } },
+          update: { role: 'SUPPLIER' },
+          create: {
+            projectId: market.projectId,
+            userId:    supplierId,
+            role:      'SUPPLIER',
+            userName:  supplierUser?.name  || entreprise || '',
+            userEmail: supplierUser?.email || '',
+          },
+        })
+      } catch (_) { /* non bloquant */ }
+    }
+
     res.status(201).json(market)
   } catch (e) {
     next(e)
@@ -96,9 +118,14 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     const market = await prisma.market.findUnique({ where: { id: req.params.id } })
     if (!market) throw createError('Marché introuvable', 404)
 
-    // Seul le client ou le prestataire peut modifier
+    // Seul le client ou le prestataire peut accéder au marché
     if (market.clientId !== req.user.id && market.supplierId !== req.user.id) {
       throw createError('Accès non autorisé', 403)
+    }
+
+    // Seul le maître d'ouvrage (clientId) peut changer le statut du marché
+    if (req.body.statut !== undefined && market.clientId !== req.user.id) {
+      throw createError("Seul le maître d'ouvrage peut modifier le statut du marché", 403)
     }
 
     const allowed = [
@@ -114,6 +141,30 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       where: { id: req.params.id },
       data,
     })
+
+    // Rétrocompat : si le marché a un supplierId + projectId mais pas encore de ProjectMember, l'ajouter
+    const pid = updated.projectId || market.projectId
+    const sid = updated.supplierId || market.supplierId
+    if (pid && sid) {
+      try {
+        const supplierUser = await prisma.user.findUnique({
+          where: { id: sid },
+          select: { name: true, email: true },
+        })
+        await prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: pid, userId: sid } },
+          update: { role: 'SUPPLIER' },
+          create: {
+            projectId: pid,
+            userId:    sid,
+            role:      'SUPPLIER',
+            userName:  supplierUser?.name  || updated.entreprise || '',
+            userEmail: supplierUser?.email || '',
+          },
+        })
+      } catch (_) { /* non bloquant */ }
+    }
+
     res.json(updated)
   } catch (e) {
     next(e)

@@ -7,7 +7,7 @@ import { disconnectSocket } from '../../services/socket'
 import { api } from '../../services/api/client'
 
 export default function UserMenu({ onNavigate }) {
-  const { updateStore } = useMeereo()
+  const { store, updateStore } = useMeereo()
   const navigate = useNavigate()
   const id = useUserIdentity()
   const [open, setOpen] = useState(false)
@@ -40,7 +40,8 @@ export default function UserMenu({ onNavigate }) {
 
   const handleProfil = () => {
     setOpen(false)
-    navigate('/profil')
+    const publicId = store?.user?.publicId
+    navigate(publicId ? `/pro?uuid=${publicId}` : '/pro')
   }
 
   const btnStyle = { width: '100%', padding: '9px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12.5, fontFamily: 'var(--f)', color: 'var(--tx)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }

@@ -25,7 +25,7 @@ export default function GlobalNav() {
   const links = (() => {
     if (!user) return [{ label: icons.login, title: 'Connexion', path: '/onboarding' }]
     const base = []
-    if (userType === 'pro') base.push({ label: icons.cockpit, title: 'Mon cockpit', path: '/cockpit' }, { label: icons.profil, title: 'Mon profil', path: '/profil' })
+    if (userType === 'pro') base.push({ label: icons.cockpit, title: 'Mon cockpit', path: '/cockpit' }, { label: icons.profil, title: 'Mon profil', path: user?.publicId ? `/pro?uuid=${user.publicId}` : '/pro' })
     if (userType === 'client') base.push({ label: icons.client, title: 'Mon espace', path: '/client' })
     if (userType === 'fournisseur') base.push({ label: icons.fournisseur, title: 'Mon espace', path: '/fournisseur' })
     base.push({ label: icons.logout, title: 'Changer de compte', path: '/onboarding', logout: true })

@@ -146,11 +146,14 @@ export default function ParametresPage({ showToast }) {
         <div><div className="ph-title">Parametres</div><div className="ph-sub">Espace de travail</div></div>
         <div className="ph-actions"><button className="btn btn-primary btn-sm" onClick={() => {
           if (tab === 'profil') {
+            const patch = { entreprise: pEntreprise, rccm: pRccm, email: pEmail, tel: pTel, ville: pVille, bio: pBio, slogan: pSlogan, logoFileUrl: pLogoUrl, secteurs: pSecteurs, services: pServices }
             updateStore(prev => ({
               ...prev,
-              onboardingData: { ...(prev.onboardingData || {}), entreprise: pEntreprise, rccm: pRccm, email: pEmail, tel: pTel, ville: pVille, bio: pBio, slogan: pSlogan, logoFileUrl: pLogoUrl, secteurs: pSecteurs, services: pServices },
+              onboardingData: { ...(prev.onboardingData || {}), ...patch },
               user: prev.user ? { ...prev.user, name: pEntreprise || prev.user.name, email: pEmail || prev.user.email, phone: pTel || prev.user.phone } : prev.user,
             }))
+            // Persister côté serveur
+            api.usersApi.updateOnboardingData(patch).catch(() => {})
             setPSaved(true); setTimeout(() => setPSaved(false), 1500)
           }
           showToast && showToast('Paramètres enregistrés')

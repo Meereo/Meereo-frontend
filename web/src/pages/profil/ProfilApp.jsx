@@ -1,12 +1,13 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Star } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../utils/logoShape'
 import { formatBudgetDisplay } from '../../utils/helpers'
 // Mock imports removed — store is source of truth
 import Modal from '../../components/shared/Modal'
 import MeereoLogo from '../../components/shared/MeereoLogo'
+import { api } from '../../services/api/client'
 import './profil.css'
 
 const PORTFOLIO = []
@@ -23,26 +24,46 @@ const getProjects = (projects) => (projects || []).map((p, i) => ({
   progress: p.avancement || 0,
 }))
 const REVIEWS = []
-const SERVICES = [] // Services viennent uniquement du profil utilisateur
-// getMetrics supprimé — les métriques sont calculées inline dans le JSX
+const SERVICES = []
 
 
 export default function ProfilApp() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const uuid = searchParams.get('uuid')
   const { store, showToast, updateStore, emitEvent } = useMeereo()
-  const ob = store.onboardingData || {}
 
-  // Contexte visiteur — détection stricte du rôle
-  const userType = store.user?.type || ob.userType || null
-  const isOwner = userType === 'pro' && store.user // Pro connecté = propriétaire
-  const isClient = userType === 'client'
-  const isVisitor = !store.user // Pas connecté = visiteur externe (traité comme un prospect)
+  // ── Données publiques (chargées depuis le backend via UUID) ──────────────
+  const [pubData, setPubData]   = useState(null)   // { profile, stats, id, publicId, name, verified }
+  const [pubLoading, setPubLoading] = useState(!!uuid)
+  const [pubError, setPubError] = useState(null)
+
+  useEffect(() => {
+    if (!uuid) return
+    setPubLoading(true)
+    api.usersApi.getProProfile(uuid)
+      .then(data => { setPubData(data); setPubLoading(false) })
+      .catch(e  => { setPubError(e.message || 'Profil introuvable'); setPubLoading(false) })
+  }, [uuid])
+
+  // ── Détection rôle : propriétaire = pro connecté dont publicId = uuid ──
+  const myPublicId = store.user?.publicId
+  const isOwner = store.user?.type === 'pro' && (
+    !uuid || uuid === myPublicId   // /pro sans uuid = toujours son propre profil
+  )
+  const isClient  = store.user?.type === 'client'
+  const isVisitor = !store.user
+
+  // ── Source de données : backend si uuid fourni, sinon store local ────────
+  // Pour le propriétaire sans uuid → utilise store. Sinon → pubData.profile
+  const ob = isOwner && !pubData ? (store.onboardingData || {}) : (pubData?.profile || store.onboardingData || {})
+  const remoteStats = pubData?.stats || null
 
   // Données profil dynamiques — onboarding d'abord, puis user, puis défaut
-  const proName = ob.entreprise || store.user?.company || store.user?.name || ''
+  const proName = ob.entreprise || store.user?.company || store.user?.name || pubData?.name || ''
   const proInitials = proName ? proName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() : ''
   const proSpecialite = ob.secteurs?.[0] || ''
-  const isVerified = store.user?.verified === true || ob.verified === true
+  const isVerified = pubData?.verified ?? store.user?.verified === true ?? ob.verified === true
   const verificationLevel = ob.verificationLevel || (isVerified ? 'full' : 'none')
   const [showVerifTooltip, setShowVerifTooltip] = useState(false)
   const proVille = ob.ville || 'Abidjan'
@@ -66,11 +87,12 @@ export default function ProfilApp() {
       setTempPos(bannerPos)
     }
     reader.readAsDataURL(f)
-    try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'banners', 'cover'); updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: url } })) } catch {}
+    try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'banners', 'cover'); updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: url } })); api.usersApi.updateOnboardingData({ bannerUrl: url }).catch(() => {}) } catch {}
   }
 
   const saveBannerPos = () => {
     updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerPosition: tempPos } }))
+    api.usersApi.updateOnboardingData({ bannerPosition: tempPos }).catch(() => {})
     setBannerPos(tempPos)
     setEditingBanner(false)
     showToast('Bannière ajustée')
@@ -140,6 +162,7 @@ export default function ProfilApp() {
 
   const saveEdit = (field, value) => {
     updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), [field]: value } }))
+    api.usersApi.updateOnboardingData({ [field]: value }).catch(() => {})
     showToast('Profil mis à jour', 'green')
     setEditModal(null)
   }
@@ -224,6 +247,23 @@ export default function ProfilApp() {
   return (
     <div className="pp-page">
 
+      {/* LOADING / ERROR — pour les profils publics */}
+      {pubLoading && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 16 }}>
+          <div style={{ width: 28, height: 28, border: '3px solid rgba(0,0,0,.08)', borderTopColor: '#111', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />
+          <div style={{ fontSize: 13, color: '#999' }}>Chargement du profil...</div>
+        </div>
+      )}
+      {pubError && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 32, opacity: .3 }}>🔍</div>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>Profil introuvable</div>
+          <div style={{ fontSize: 13, color: '#666' }}>{pubError}</div>
+          <button className="pp-btn-primary" onClick={() => navigate('/')}>Retour à l'accueil</button>
+        </div>
+      )}
+      {(pubLoading || pubError) ? null : (<>
+
       {/* NAV */}
       <nav className="pp-nav">
         <div className="pp-nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}><MeereoLogo size={28} /> MEEREO <span>Profil professionnel</span></div>
@@ -234,8 +274,7 @@ export default function ProfilApp() {
               <button className="pp-btn-ghost" onClick={() => navigate('/cockpit/bourse')}>Bourse des AO</button>
               <button className="pp-btn-primary" onClick={() => navigate('/cockpit')}>+ Nouveau projet</button>
             </>
-          ) : isVisitor ? (
-            <>
+          ) : isVisitor ? (            <>
               <button className="pp-btn-ghost" onClick={() => navigate('/onboarding')}>S'inscrire</button>
               <button className="pp-btn-primary" onClick={() => navigate('/onboarding')}>Se connecter</button>
             </>
@@ -265,7 +304,7 @@ export default function ProfilApp() {
               <button onClick={() => setEditingBanner(false)} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)' }}>Annuler</button>
             </>) : (<>
               {bannerUrl && <button onClick={() => { setTempPos(bannerPos); setEditingBanner(true) }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Ajuster</button>}
-              {bannerUrl && <button onClick={() => { updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: null, bannerPosition: 50 } })); showToast('Bannière supprimée') }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(220,38,38,.3)', color: '#fff', border: '1px solid rgba(220,38,38,.3)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Supprimer</button>}
+              {bannerUrl && <button onClick={() => { updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: null, bannerPosition: 50 } })); api.usersApi.updateOnboardingData({ bannerUrl: null, bannerPosition: 50 }).catch(() => {}); showToast('Bannière supprimée') }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(220,38,38,.3)', color: '#fff', border: '1px solid rgba(220,38,38,.3)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Supprimer</button>}
               <button onClick={() => bannerInputRef.current?.click()} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>{bannerUrl ? 'Changer' : 'Ajouter une bannière'}</button>
             </>)}
             <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerUpload} />
@@ -345,13 +384,14 @@ export default function ProfilApp() {
         {/* METRICS — toujours visibles, contextualisés */}
         {(() => {
           const allReviews = [...REVIEWS, ...(store.reviews || [])]
-          const allProj = (store.projects || [])
-          const projTotal = allProj.length
-          const livres = allProj.filter(p => p.avancement >= 100).length
-          const enCours = projTotal - livres
-          const allMarches = store.markets || []
-          const allOffres = store.offers || []
-          const missionsCount = allMarches.filter(m => m.statut === 'completed' || m.statut === 'livre').length + allOffres.filter(o => o.statut === 'accepted' || o.statut === 'acceptee').length
+          // Si profil public chargé depuis backend → utilise les stats agregees
+          const projTotal      = remoteStats ? remoteStats.projectsCount     : (store.projects || []).length
+          const livres         = remoteStats ? remoteStats.projectsCompleted  : (store.projects || []).filter(p => p.avancement >= 100).length
+          const enCours        = remoteStats ? remoteStats.projectsActive     : projTotal - livres
+          const missionsCount  = remoteStats ? remoteStats.missionsCompleted  : (
+            (store.markets || []).filter(m => m.statut === 'completed' || m.statut === 'livre').length +
+            (store.offers  || []).filter(o => o.statut === 'accepted'  || o.statut === 'acceptee').length
+          )
           const avgStars = allReviews.length > 0 ? allReviews.reduce((s, r) => s + (r.stars || 0), 0) / allReviews.length : 0
           const satisfaction = allReviews.length > 0 ? Math.round((avgStars / 5) * 100) : 0
           const ville = ob?.ville || ''
@@ -826,6 +866,7 @@ export default function ProfilApp() {
           <span>© 2025 MEEREO SAS</span>
         </div>
       </footer>
+      </>)}
     </div>
   )
 }

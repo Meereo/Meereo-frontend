@@ -35,6 +35,9 @@ model User {
   ville         String?
   emailVerified Boolean  @default(false)
   verified      Boolean  @default(false)
+  // Identifiant public unique pour les pages de profil public (/pro?uuid=XXX)
+  // Nullable pour les comptes existants — généré à l'inscription pour les nouveaux
+  publicId      String?  @unique @default(uuid())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -93,6 +96,9 @@ model User {
   // Préférences utilisateur (notifications, UI…)
   // Format : { notifEmail, notifPush, rappels, resume, devise, theme, langue, … }
   prefs Json @default("{}")
+
+  // Données du wizard d'onboarding (profil complet : entreprise, logo, bio, secteurs…)
+  onboardingData Json @default("{}")
 
   @@map("users")
 }

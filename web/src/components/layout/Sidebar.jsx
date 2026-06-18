@@ -20,7 +20,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'chantier',      label: 'Avancement',       icon: 'hardhat' },
       { id: 'taches-board',  label: 'Tâches',            icon: 'kanban' },
-      { id: 'finance',       label: 'Budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
+      { id: 'budget',        label: 'Budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
     ]
   },
   {

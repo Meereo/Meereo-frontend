@@ -1,6 +1,10 @@
 const path = require('path')
+const fs = require('fs')
 // Charge .env depuis server/ quel que soit le répertoire de lancement
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+
+// S'assurer que le dossier uploads existe au démarrage
+fs.mkdirSync(path.join(__dirname, '../uploads/documents'), { recursive: true })
 
 const express = require('express')
 const cors = require('cors')
@@ -30,6 +34,7 @@ const notificationsRouter = require('./routes/notifications')
 const activitiesRouter = require('./routes/activities')
 const contactsRouter = require('./routes/contacts')
 const kaiRouter = require('./routes/kai')
+const proRouter  = require('./routes/pro')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -55,37 +60,56 @@ app.use(
     },
     credentials: true,           // indispensable pour envoyer les cookies cross-origin
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Disposition'],
   })
 )
 
 // ─── Rate limiting ─────────────────────────────────────────────────────────────
+// En développement le rate limiter est désactivé (React Strict Mode double les
+// effets → 2× les appels API au boot, ce qui déclenche faussement le limiteur).
+const isDev = process.env.NODE_ENV !== 'production'
 
-// Limite globale : 300 req / 15 min par IP
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 300,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: 'Trop de requêtes — réessayez dans quelques minutes' },
-  })
-)
+// Limite globale : 2000 req / 15 min par IP en prod, désactivé en dev
+if (!isDev) {
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 2000,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Trop de requêtes — réessayez dans quelques minutes' },
+    })
+  )
+}
 
-// Limite renforcée sur les endpoints d'authentification sensibles
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { error: 'Trop de tentatives — réessayez dans 15 minutes' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
+// Limite renforcée sur les endpoints d'authentification sensibles (prod seulement)
+const authLimiter = isDev
+  ? (req, res, next) => next()  // no-op en dev
+  : rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      message: { error: 'Trop de tentatives — réessayez dans 15 minutes' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 
 // Limite à 10 MB pour supporter les images base64 du wizard
 app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))app.use(cookieParser())
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(cookieParser())
+
+// ─── Fichiers statiques — uploads utilisateurs ────────────────────────────────
+// Les fichiers uploadés sont servis à /uploads/**
+// Ex: /uploads/documents/proj-uuid/file-uuid.pdf
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  // Désactiver le listing des répertoires (sécurité)
+  index: false,
+  dotfiles: 'deny',
+}))
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get('/health', (req, res) => {
@@ -122,6 +146,7 @@ app.use('/api/notifications', notificationsRouter)
 app.use('/api/activities', activitiesRouter)
 app.use('/api/contacts', contactsRouter)
 app.use('/api/kai', kaiRouter)
+app.use('/api/pro', proRouter)  // public — pas de requireAuth
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 
@@ -135,10 +160,32 @@ app.use(errorHandler)
 
 // ─── Démarrage ────────────────────────────────────────────────────────────────
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`\n🚀 Meereo API — http://localhost:${PORT}`)
   console.log(`   Environnement : ${process.env.NODE_ENV || 'development'}`)
   console.log(`   CORS autorisé : ${allowedOrigins.join(', ')}\n`)
+
+  // Backfill publicId pour les comptes existants qui n'en ont pas encore
+  try {
+    const { getPrisma } = require('./db')
+    const { randomUUID } = require('crypto')
+    const prisma = getPrisma()
+    const nullUsers = await prisma.user.findMany({
+      where: { publicId: null },
+      select: { id: true },
+    })
+    if (nullUsers.length > 0) {
+      await Promise.all(nullUsers.map(u =>
+        prisma.user.update({
+          where: { id: u.id },
+          data: { publicId: randomUUID() },
+        })
+      ))
+      console.log(`[BACKFILL] publicId généré pour ${nullUsers.length} utilisateur(s)`)
+    }
+  } catch (e) {
+    console.warn('[BACKFILL] publicId:', e.message)
+  }
 })
 
 // Attacher Socket.IO au serveur HTTP

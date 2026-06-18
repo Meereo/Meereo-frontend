@@ -114,8 +114,23 @@ export function useMergedData() {
   }, [store.conversations])
 
   const documents = useMemo(() => {
-    return (store.documents || []).filter(d => !d._deleted)
-  }, [store.documents])
+    const projectsMap = {}
+    ;(store.projects || []).forEach(p => { if (p.id) projectsMap[p.id] = p.nom || p.name || '' })
+    return (store.documents || [])
+      .filter(d => !d._deleted)
+      .map(d => ({
+        ...d,
+        // Backend returns `name`; legacy store/static data uses `nom`
+        nom: d.nom || d.name || 'Sans titre',
+        // Resolve project name from projectId if not already set
+        projet: d.projet || (d.projectId ? projectsMap[d.projectId] || '' : ''),
+        auteur: d.auteur || 'Moi',
+        taille: d.taille || '—',
+        date: d.date || d.createdAt || '',
+        cat: d.cat || d.type || '',
+        isNew: d.isNew || false,
+      }))
+  }, [store.documents, store.projects])
 
   // Badge counts — computed from store data only
   const badgeCounts = useMemo(() => ({

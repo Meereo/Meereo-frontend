@@ -26,6 +26,8 @@ const MarchesPage = lazy(() => import('../cockpit/MarchesPage'))
 const CommandesPage = lazy(() => import('../cockpit/CommandesPage'))
 const FournisseursPage = lazy(() => import('../cockpit/FournisseursPage'))
 const MessagesPage = lazy(() => import('../cockpit/MessagesPage'))
+const ProjetsPage = lazy(() => import('../cockpit/ProjetsPage'))
+const BudgetPage = lazy(() => import('../cockpit/BudgetPage'))
 
 import { METIERS_AO } from '../../data/ao'
 import { getEntrepriseAvatar } from '../../data/avatars'
@@ -94,11 +96,14 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
+    const patch = { prenom, nom, email, tel, ville }
     updateStore(prev => ({
       ...prev,
-      onboardingData: { ...(prev.onboardingData || {}), prenom, nom, email, tel, ville },
+      onboardingData: { ...(prev.onboardingData || {}), ...patch },
       user: prev.user ? { ...prev.user, name: `${prenom} ${nom}`.trim(), email, phone: tel } : prev.user,
     }))
+    // Persister côté serveur
+    api.usersApi.updateOnboardingData(patch).catch(() => {})
     setSaved(true)
     showToast('Profil mis à jour')
     setTimeout(() => setSaved(false), 1500)
@@ -222,6 +227,23 @@ export default function ClientApp() {
     return () => window.removeEventListener('meereo-navigate', handler)
   }, [])
 
+  // Refresh projects / markets / members on mount so the client sees projects
+  // that were auto-created from an accepted offer (possibly by the pro or by them)
+  useEffect(() => {
+    Promise.all([
+      api.projects.getAll().catch(() => null),
+      api.projectMembers.getAll().catch(() => null),
+      api.markets.getAll().catch(() => null),
+    ]).then(([freshProjects, freshMembers, freshMarkets]) => {
+      updateStore(prev => ({
+        ...prev,
+        ...(freshProjects ? { projects: freshProjects } : {}),
+        ...(freshMembers  ? { projectMembers: freshMembers } : {}),
+        ...(freshMarkets  ? { markets: freshMarkets } : {}),
+      }))
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Identite utilisateur — source unique
   const uid = useUserIdentity()
   const ob = store.onboardingData || {}
@@ -334,6 +356,7 @@ export default function ClientApp() {
 
   const PAGES = {
     home: { label: 'Accueil', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>, group: 'Mon projet' },
+    projets: { label: 'Mes projets', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>, group: 'Mon projet' },
     avancement: { label: 'Suivi du projet', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 18h20M4 18v-4a8 8 0 0116 0v4M12 2v4"/></svg>, group: 'Mon projet' },
     budget: { label: 'Budget', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, group: 'Mon projet' },
     messages: { label: 'Messages', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>, group: 'Échanges', badge: nonLus > 0 ? nonLus : null, badgeColor: 'var(--err)' },
@@ -896,81 +919,11 @@ export default function ClientApp() {
           )}
 
           {/* BUDGET */}
-          {page === 'budget' && !proj && (
-            <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-              <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><Wallet size={32}/></div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>Aucun budget à afficher</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 400, margin: '0 auto' }}>Le budget détaillé sera alimenté au démarrage du marché, après acceptation d'une offre.</div>
-            </div>
+          {page === 'budget' && (
+            <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
+              <BudgetPage showToast={showToast} onNavigate={p => setPage(p)} />
+            </Suspense>
           )}
-          {page === 'budget' && proj && (
-            <div>
-              <div className="rg-3" style={{ gap: 12, marginBottom: 24 }}>
-                {[
-                  { l: 'Budget total', v: formatShort(projBudget) },
-                  { l: 'Paye', v: formatShort(totalPaye), color: 'var(--ok)' },
-                  { l: 'Reste', v: formatShort(projBudget - totalPaye) },
-                ].map((k, i) => (
-                  <div key={i} className="card" style={{ padding: '18px 20px' }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 6 }}>{k.l}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: k.color || 'var(--tx)' }}>{k.v}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Demandes de paiement en attente */}
-              {pendingPaymentReqs.length > 0 && (
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiements a valider</div>
-                  {pendingPaymentReqs.map(r => (
-                    <div key={r.id} className="card" style={{ padding: '14px 18px', marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>{r.label}</div>
-                        <span style={{ fontSize: 14, fontWeight: 800 }}>{fmtDevise(r.amount)}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="btn btn-primary btn-sm" onClick={() => { respondPayment(r.id, 'approved'); showToast('Paiement approuve — budget mis à jour') }}>Approuver</button>
-                        <button className="btn btn-sm" onClick={() => { respondPayment(r.id, 'rejected'); showToast('Paiement refuse') }}>Refuser</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Paiements approuvés récemment */}
-              {(() => {
-                const recentApproved = (store.paymentRequests || []).filter(r => (r.projectId === proj?.id) && r.statut === 'approved').slice(0, 3)
-                return recentApproved.length > 0 && (
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Recemment approuves</div>
-                    {recentApproved.map(r => (
-                      <div key={r.id} className="card" style={{ padding: '12px 18px', marginBottom: 6, opacity: .7 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(52,199,89,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ok)', flexShrink: 0 }}><Check size={9}/></div>
-                          <div style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{r.label}</div>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ok)' }}>+{fmtDevise(r.amount)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-
-              <div className="card">
-                <div className="card-header"><div className="card-title">Historique paiements</div></div>
-                <div className="card-body" style={{ padding: 0 }}>
-                  {projTx.length === 0 && <div style={{ padding: '24px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucune transaction</div>}
-                  {projTx.map(t => (
-                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.type === 'credit' ? 'var(--ok)' : 'var(--err)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, fontSize: 12 }}>{t.label}</div>
-                      <span style={{ fontSize: 10, color: 'var(--t4)' }}>{formatDateFR(t.date)}</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: t.type === 'credit' ? 'var(--ok)' : 'var(--err)' }}>{t.type === 'credit' ? '+' : '-'}{fmtDevise(t.montant || t.amount || 0)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              </div>
-              )}
 
           {/* MARKETPLACE */}
           {page === 'marketplace' && <MarketplacePage showToast={showToast} commerceScope="private" />}
@@ -1020,6 +973,11 @@ export default function ClientApp() {
           {page === 'ao' && <BoursePage showToast={showToast} onNavigate={p => setPage(p)} />}
           {page === 'offres' && <OffresPage showToast={showToast} openModal={openModal} />}
           {page === 'marches' && <MarchesPage showToast={showToast} openModal={openModal} onNavigate={p => setPage(p)} />}
+          {page === 'projets' && (
+            <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
+              <ProjetsPage showToast={showToast} openModal={openModal} onNavigate={p => setPage(p)} />
+            </Suspense>
+          )}
 
           {/* DOCUMENTS */}
           {page === 'documents' && (
@@ -1100,7 +1058,7 @@ export default function ClientApp() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 10 }}>{Array.from({length:5},(_,i) => <Star key={i} size={12} fill={i < Math.round(p.note) ? '#F59E0B' : 'none'} color="#F59E0B" strokeWidth={1.5}/>)} <span style={{ fontWeight: 700, color: 'var(--t2)', fontSize: 12, marginLeft: 4 }}>{p.note}/5</span> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({p.nbAvis} avis)</span></div>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => navigate('/profil')}>Voir profil</button>
+                        <button className="btn btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => navigate('/pro')}>Voir profil</button>
                         <button className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => {
                           updateStore(prev => ({ ...prev, messages: [...(prev.messages || []), { id: 'msg_' + Date.now(), dest: p.nom, sujet: 'Demande de contact', texte: 'Bonjour, je souhaite vous contacter pour un projet.', type: 'contact', createdAt: new Date().toISOString() }] }))
                           showToast('Demande de contact envoyee a ' + p.nom)
@@ -1361,7 +1319,7 @@ export default function ClientApp() {
                 {results.length > 0 ? (<>
                   <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
                   {results.map((p, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => { setTopSearchOpen(false); setTopSearch(''); navigate('/profil') }} onMouseOver={e => e.currentTarget.style.background = '#f5f5f7'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => { setTopSearchOpen(false); setTopSearch(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} onMouseOver={e => e.currentTarget.style.background = '#f5f5f7'} onMouseOut={e => e.currentTarget.style.background = ''}>
                       <ProAvatar nom={p.nom} size={32} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

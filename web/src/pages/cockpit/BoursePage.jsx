@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import MoneyInput from '../../components/shared/MoneyInput'
 import AoGear, { getMetierColor } from '../../components/shared/AoGear'
 import ShareMenu from '../../components/shared/ShareMenu'
@@ -56,6 +56,7 @@ export default function BoursePage({ showToast, onNavigate }) {
   const [tradeDropdownOpen, setTradeDropdownOpen] = useState(false)
   const tradeComboRef = useRef(null)
   const [, refresh] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
   const [aoSubmitted, setAoSubmitted] = useState(false)
   const [reponseSubmitted, setReponseSubmitted] = useState(false)
   const [showEditAO, setShowEditAO] = useState(null) // AO object being edited
@@ -63,12 +64,11 @@ export default function BoursePage({ showToast, onNavigate }) {
   const userType = store.user?.type || 'pro'
   const isClient = userType === 'client'
 
-  // Secteurs de l'utilisateur — depuis onboarding ou défaut
+  // Secteurs de l'utilisateur — depuis onboarding uniquement (pas de fallback codé en dur)
+  // Si vide → mesSecteurs.length === 0 → le filtre trade_only ne s'applique pas
   const mesSecteurs = useMemo(() => {
     const ob = store.onboardingData || {}
-    const services = ob.services || ob.secteurs || []
-    if (services.length > 0) return services
-    return ['Architecte', 'Gros-œuvre'] // défaut si non renseigné
+    return ob.services || ob.secteurs || []
   }, [store.onboardingData])
 
   // Source unique : tous les AO visibles par cet utilisateur (store only, no mocks)
@@ -78,12 +78,17 @@ export default function BoursePage({ showToast, onNavigate }) {
     return (store.aos || [])
       .filter(a => a.status === 'open')
       .filter(a => {
-        // Si trade_only, vérifier que le pro est du bon métier
-        if (a.visibilityScope === 'trade_only' && a.requestedTrade && uType === 'pro') {
-          return mesSecteurs.some(s => s.toLowerCase() === (a.requestedTrade || '').toLowerCase())
-        }
-        // Les clients ne voient pas les AO des autres clients
+        // Les clients ne voient pas les AOs des autres clients
         if (uType === 'client' && a.ownerUserId && a.ownerUserId !== userId) return false
+        // trade_only : filtrer par métier SEULEMENT si le pro a des secteurs renseignés
+        // → un nouveau compte sans secteurs voit quand même tous les AOs publics
+        if (a.visibilityScope === 'trade_only' && a.requestedTrade && uType === 'pro' && mesSecteurs.length > 0) {
+          return mesSecteurs.some(s =>
+            s.toLowerCase() === (a.requestedTrade || '').toLowerCase() ||
+            (a.requestedTrade || '').toLowerCase().includes(s.toLowerCase()) ||
+            s.toLowerCase().includes((a.requestedTrade || '').toLowerCase())
+          )
+        }
         return true
       })
       .map(a => ({
@@ -137,6 +142,25 @@ export default function BoursePage({ showToast, onNavigate }) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [tradeDropdownOpen])
+
+  // Rafraîchir les AOs + offres — appelé au montage et via le bouton Actualiser
+  const doRefresh = useCallback(() => {
+    setRefreshing(true)
+    Promise.all([
+      api.aos.getAll().catch(() => null),
+      api.offers.getAll().catch(() => null),
+    ]).then(([freshAos, freshOffers]) => {
+      updateStore(prev => ({
+        ...prev,
+        ...(freshAos ? { aos: freshAos } : {}),
+        ...(freshOffers ? { offers: freshOffers } : {}),
+      }))
+    }).finally(() => setRefreshing(false))
+  }, [updateStore])
+
+  useEffect(() => {
+    doRefresh()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtered trades for combobox search
   const filteredTrades = useMemo(() => {
@@ -195,6 +219,15 @@ export default function BoursePage({ showToast, onNavigate }) {
           active={tab}
           onChange={k => { setTab(k); setSelectedId(null) }}
         />
+        <button
+          className="btn btn-sm"
+          onClick={doRefresh}
+          disabled={refreshing}
+          title="Actualiser les appels d'offres"
+          style={{ opacity: refreshing ? .5 : 1, transition: 'opacity .2s' }}
+        >
+          {refreshing ? '⏳' : '🔄'}
+        </button>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateAO(true)}>+ Créer un AO</button>
       </DSPageHeader>
 

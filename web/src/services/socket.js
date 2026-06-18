@@ -1,12 +1,17 @@
 /**
  * MEEREO Socket Service — Socket.IO client
  *
- * L'URL de connexion est '/' car Vite proxifie /socket.io → backend.
+ * L'URL de connexion est '/' car Vite proxifie /socket.io → backend (port 3001).
  * En production, pointer vers le domaine du backend.
+ *
+ * Note : React Strict Mode en dev monte/démonte les effets deux fois.
+ * On laisse un délai court avant la reconnexion pour éviter le message
+ * "WebSocket is closed before the connection is established".
  */
 import { io } from 'socket.io-client'
 
 let socket = null
+let connectTimer = null  // debounce pour éviter connect/disconnect immédiat (Strict Mode)
 
 /**
  * Initialiser (ou récupérer) la connexion Socket.IO.
@@ -15,6 +20,12 @@ let socket = null
  */
 export function getSocket(token) {
   if (socket && socket.connected) return socket
+
+  // Annuler une reconnexion en attente (Strict Mode cleanup → remount rapide)
+  if (connectTimer) {
+    clearTimeout(connectTimer)
+    connectTimer = null
+  }
 
   // Si le socket existait mais déconnecté, le détruire proprement
   if (socket) {

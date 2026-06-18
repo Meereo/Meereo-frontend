@@ -471,13 +471,12 @@ export default function OnboardingApp() {
       }
     }
 
-    // 5. Redirect — small delay to ensure saveToStorage completes
+    // 5. Redirect — navigate() via React Router (évite le rechargement complet de page)
     setTimeout(() => {
-      if (overrideDest) { window.location.href = overrideDest; return }
-      if(userType==='client') window.location.href = '/client'
-      else if(userType==='fournisseur') window.location.href = '/fournisseur'
-      else if(userType==='pro') window.location.href = '/cockpit'
-      else window.location.href = '/cockpit'
+      if (overrideDest) { navigate(overrideDest); return }
+      if(userType==='client') navigate('/client')
+      else if(userType==='fournisseur') navigate('/fournisseur')
+      else navigate('/cockpit')
     }, 150)
   }
 
@@ -1673,7 +1672,10 @@ export default function OnboardingApp() {
                   {/* Pro step 5: two action buttons */}
                   {wizStep===totalSteps && userType==='pro' ? (
                     <div style={{display:'flex',gap:8}}>
-                      <button className="ob-btn-out" onClick={() => handleFinish('/profil')}>Voir mon profil public</button>
+                      <button className="ob-btn-out" onClick={() => {
+                        const publicId = store?.user?.publicId
+                        handleFinish(publicId ? `/pro?uuid=${publicId}` : '/pro')
+                      }}>Voir mon profil public</button>
                       <button className="ob-btn-blk" onClick={() => handleFinish()}>Accéder au Cockpit →</button>
                     </div>
                   ) : (

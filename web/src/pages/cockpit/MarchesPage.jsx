@@ -325,36 +325,48 @@ export default function MarchesPage({ showToast, onNavigate, openModal }) {
 
             {/* Footer actions */}
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, flexShrink: 0 }}>
-              {detail.statut === MARKET_STATUS.SIGNED && (
-                <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={() => {
-                  const newInter = { id: 'i_' + Date.now(), nom: detail.entreprise, role: detail.lot, email: '', tel: detail.tel, photo: '', statut: 'actif', entreprise: true, ville: '', note: 0, nbAvis: 0, projets: [detail.projet], profilUrl: '/profil' }
+              {(() => {
+                const isOwner = store.user?.id && (store.user.id === detail.clientId || store.user.id === detail.aoOwnerId)
+                const updateMarketStatus = async (newStatut, extraFields = {}) => {
+                  try { await api.markets.update(detail.id, { statut: newStatut, ...extraFields }) } catch (_) {}
                   updateStore(prev => ({
                     ...prev,
-                    marketStatuts: { ...(prev.marketStatuts || {}), [detail.id]: { statut: 'en_cours' } },
-                    intervenants: [...(prev.intervenants || []).filter(i => i.nom !== detail.entreprise), newInter]
+                    markets: (prev.markets || []).map(m =>
+                      m.id === detail.id ? { ...m, statut: newStatut, ...extraFields } : m
+                    ),
                   }))
-                  setDetail({ ...detail, statut: MARKET_STATUS.IN_PROGRESS })
-                  showToast && showToast('Mission démarrée — ' + detail.entreprise + ' ajouté aux intervenants')
-                }}>Démarrer la mission</button>
-              )}
-              {detail.statut === MARKET_STATUS.IN_PROGRESS && (
-                <>
-                  <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setDetail(null); onNavigate && onNavigate('chantier') }}>Suivi chantier →</button>
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={() => {
-                    updateStore(prev => ({
-                      ...prev,
-                      marketStatuts: { ...(prev.marketStatuts || {}), [detail.id]: { statut: 'livre', avancement: 100 } }
-                    }))
-                    setDetail({ ...detail, statut: MARKET_STATUS.COMPLETED, avancement: 100 })
-                    showToast && showToast('Marché clôturé')
-                  }}>Clôturer</button>
-                </>
-              )}
-              {detail.statut === MARKET_STATUS.COMPLETED && (
-                <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)', textAlign: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Marché livré</span>
-                </div>
-              )}
+                  setDetail(prev => ({ ...prev, statut: newStatut, ...extraFields }))
+                }
+                if (detail.statut === MARKET_STATUS.SIGNED) return (
+                  isOwner ? (
+                    <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={async () => {
+                      await updateMarketStatus(MARKET_STATUS.IN_PROGRESS)
+                      showToast && showToast('Mission démarrée — ' + detail.entreprise)
+                    }}>Démarrer la mission</button>
+                  ) : (
+                    <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.12)', textAlign: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wrn)' }}>⏳ En attente du démarrage par le maître d'ouvrage</span>
+                    </div>
+                  )
+                )
+                if (detail.statut === MARKET_STATUS.IN_PROGRESS) return (
+                  <>
+                    <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setDetail(null); onNavigate && onNavigate('chantier') }}>Suivi chantier →</button>
+                    {isOwner && (
+                      <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={async () => {
+                        await updateMarketStatus(MARKET_STATUS.COMPLETED, { avancement: 100 })
+                        showToast && showToast('Marché clôturé')
+                      }}>Clôturer</button>
+                    )}
+                  </>
+                )
+                if (detail.statut === MARKET_STATUS.COMPLETED) return (
+                  <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)', textAlign: 'center' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Marché livré</span>
+                  </div>
+                )
+                return null
+              })()}
             </div>
           </div>
         </div>

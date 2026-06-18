@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
+      // Proxifie les fichiers uploadés (stockés dans server/uploads/)
+      '/uploads': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
 })

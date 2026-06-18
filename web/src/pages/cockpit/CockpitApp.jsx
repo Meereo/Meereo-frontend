@@ -28,6 +28,7 @@ const CommandesPage = lazy(() => import('./CommandesPage'))
 const FournisseursPage = lazy(() => import('./FournisseursPage'))
 const FinancePage = lazy(() => import('./FinancePage'))
 const TasksBoardPage = lazy(() => import('./TasksBoardPage'))
+const BudgetPage = lazy(() => import('./BudgetPage'))
 const PAGES = {
   dashboard: Dashboard, projets: ProjetsPage, clients: ClientsPage, messages: MessagesPage,
   chantier: ChantierPage, intervenants: IntervenantsPage, paiements: PaiementsPage,
@@ -35,6 +36,7 @@ const PAGES = {
   documents: DocumentsPage, integrations: IntegrationsPage, parametres: ParametresPage,
   marches: MarchesPage, rapports: RapportsPage, commandes: CommandesPage,
   fournisseurs: FournisseursPage, finance: FinancePage, 'taches-board': TasksBoardPage,
+  budget: BudgetPage,
 }
 
 // Suspense fallback — minimal loading indicator

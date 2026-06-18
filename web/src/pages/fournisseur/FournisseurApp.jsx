@@ -8,7 +8,7 @@ import ModalConfirm from '../../components/shared/ModalConfirm'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
 import { lazy, Suspense } from 'react'
 const MarketplacePage = lazy(() => import('../cockpit/MarketplacePage'))
-const BoursePage = lazy(() => import('../cockpit/BoursePage'))
+const FournisseurPaiementsPage = lazy(() => import('./FournisseurPaiementsPage'))
 import KaiAssistant from '../../components/shared/KaiAssistant'
 import KaiQuota from '../../components/shared/KaiQuota'
 import NotifBell from '../../components/shared/NotifBell'
@@ -21,15 +21,14 @@ import useUserIdentity from '../../hooks/useUserIdentity'
 import { MKT_CATS } from '../../data/marketplace'
 import './fournisseur.css'
 
-const VIEWS = ['dashboard', 'catalogue', 'bourse', 'marketplace', 'commandes', 'paiements', 'stats', 'parametres']
+const VIEWS = ['dashboard', 'catalogue', 'marketplace', 'commandes', 'paiements', 'stats', 'parametres']
 const VIEW_LABELS = {
-  dashboard: 'Accueil', catalogue: 'Mes produits', bourse: 'Appels d\'offres', marketplace: 'Boutique',
+  dashboard: 'Accueil', catalogue: 'Mes produits', marketplace: 'Boutique',
   commandes: 'Commandes', paiements: 'Paiements', stats: 'Performance', parametres: 'Paramètres'
 }
 const VIEW_ICONS = {
   dashboard: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
   catalogue: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>,
-  bourse: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
   marketplace: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   commandes: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
   paiements: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
@@ -37,7 +36,7 @@ const VIEW_ICONS = {
   parametres: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
 }
 const VIEW_GROUPS = {
-  dashboard: 'Mon activité', catalogue: 'Mon activité', bourse: 'Mon activité',
+  dashboard: 'Mon activité', catalogue: 'Mon activité',
   marketplace: 'Ventes', commandes: 'Ventes',
   paiements: 'Finance', stats: 'Finance',
   parametres: 'Système',
@@ -291,15 +290,15 @@ export default function FournisseurApp() {
 
         <nav className="fourni-sb-nav">
           <div className="fourni-sb-cat">Activité</div>
-          {['dashboard', 'bourse'].map(v => (
+          {['dashboard'].map(v => (
             <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
-              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
+              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
           <div className="fourni-sb-cat">Marketplace</div>
           {['catalogue', 'marketplace', 'commandes'].map(v => (
             <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
-              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
+              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
               {v === 'catalogue' && products.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>{products.length}</span>}
               {v === 'marketplace' && visibleMarketplace.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>{visibleMarketplace.length}</span>}
               {v === 'commandes' && pendingOrders.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'rgba(224,123,0,.1)', color: 'var(--wrn)' }}>{pendingOrders.length}</span>}
@@ -308,13 +307,13 @@ export default function FournisseurApp() {
           <div className="fourni-sb-cat">Finance</div>
           {['paiements', 'stats'].map(v => (
             <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
-              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
+              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
           <div className="fourni-sb-cat">Compte</div>
           {['parametres'].map(v => (
             <button key={v} className={`fourni-ni ${view === v ? 'on' : ''}`} onClick={() => { setView(v); setSidebarOpen(false) }}>
-              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', bourse:'#DC2626', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
+              <span style={{ color: { dashboard:'#191c1d', catalogue:'#0891B2', marketplace:'#EA580C', commandes:'#F59E0B', paiements:'#16A34A', stats:'#7C3AED', parametres:'#6B7280' }[v] || '#6B7280' }}>{VIEW_ICONS[v]}</span> {VIEW_LABELS[v]}
             </button>
           ))}
         </nav>
@@ -349,14 +348,6 @@ export default function FournisseurApp() {
         </div>
 
         {/* Marketplace — wrapper avec padding pour que le breakout du composant fonctionne */}
-        {view === 'bourse' && (
-          <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
-            <div style={{ padding: '28px 36px 80px' }}>
-              <BoursePage showToast={showToast} />
-            </div>
-          </Suspense>
-        )}
-
         {view === 'marketplace' && (
           <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
             <div style={{ padding: '28px 36px 80px' }}>
@@ -666,79 +657,11 @@ export default function FournisseurApp() {
           )}
 
           {/* ═══ PAIEMENTS ═══ */}
-          {view === 'paiements' && (() => {
-            const paidOrders = sellerOrders.filter(o => o.paymentStatus === 'paid')
-            const pendingPay = sellerOrders.filter(o => o.paymentStatus === 'pending' || (!o.paymentStatus && o.statut === 'pending'))
-            const totalPaid = paidOrders.reduce((s, o) => s + (o.total || 0), 0)
-            const totalPending = pendingPay.reduce((s, o) => s + (o.total || 0), 0)
-            if (sellerOrders.length === 0) return (
-              <div className="card" style={{ padding: 48, textAlign: 'center' }}>
-                <div style={{ marginBottom: 12, opacity: .4 }}><Wallet size={32}/></div>
-                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Aucun paiement</div>
-                <div style={{ fontSize: 12, color: 'var(--t3)' }}>Les paiements apparaîtront ici après vos premières ventes.</div>
-              </div>
-            )
-            return (
-              <div>
-                <div className="rg-4" style={{ gap: 12, marginBottom: 20 }}>
-                  {[
-                    { l: 'Total recu', v: fmtMoney(totalPaid), color: 'var(--ok)' },
-                    { l: 'Transactions', v: String(paidOrders.length), sub: 'confirmees' },
-                    { l: 'En attente', v: fmtMoney(totalPending) },
-                    { l: 'Methodes', v: String([...new Set(paidOrders.map(o => o.paymentMethod).filter(Boolean))].length), sub: 'Mobile Money' },
-                  ].map((k, i) => (
-                    <div key={i} className="card" style={{ padding: '16px 18px' }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 6 }}>{k.l}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: k.color || 'var(--tx)' }}>{k.v}</div>
-                      {k.sub && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>{k.sub}</div>}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Transactions détaillées */}
-                <div className="card">
-                  <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Transactions recues</div>
-                  {paidOrders.length === 0 && <div style={{ padding: '24px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun paiement recu</div>}
-                  {paidOrders.map(o => (
-                    <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ok)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600 }}>{o.buyer}</div>
-                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>{o.ref} · {o.items?.map(it => it.name).join(', ')}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--ok)' }}>+{fmtMoney(o.total)}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', marginTop: 2 }}>
-                          <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--s2)', color: 'var(--t3)' }}>{o.paymentMethod || '—'}</span>
-                          <span style={{ fontSize: 9, color: 'var(--t4)' }}>{formatDateFR(o.date)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Paiements en attente */}
-                {pendingPay.length > 0 && (
-                  <div className="card" style={{ marginTop: 16 }}>
-                    <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>En attente de paiement</div>
-                    {pendingPay.map(o => (
-                      <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--wrn)', flexShrink: 0 }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600 }}>{o.buyer}</div>
-                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{o.ref}</div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700 }}>{fmtMoney(o.total)}</div>
-                          <span style={{ fontSize: 9, color: 'var(--wrn)' }}>En attente</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })()}
+          {view === 'paiements' && (
+            <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
+              <FournisseurPaiementsPage showToast={showToast} />
+            </Suspense>
+          )}
 
           {/* ═══ STATISTIQUES ═══ */}
           {view === 'stats' && (

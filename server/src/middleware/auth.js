@@ -46,6 +46,7 @@ async function requireAuth(req, res, next) {
       ville: true,
       emailVerified: true,
       verified: true,
+      publicId: true,
     },
   })
 

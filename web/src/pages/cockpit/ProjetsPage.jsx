@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { HardHat, Check, Wallet, FileText } from 'lucide-react'
 import { INTERVENANTS_DATA } from '../../data/intervenants'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import { getUserProjects, getUserActiveProjects } from '../../domain/projectsRepository'
 import PaymentBadge from '../../components/shared/PaymentBadge'
 import NewProjectButton from '../../components/shared/NewProjectButton'
@@ -55,6 +56,20 @@ export default function ProjetsPage({ onNavigate, openModal, showToast }) {
   const [newMember, setNewMember] = useState({ nom: '', role: '', email: '', tel: '' })
   // Edit member modal
   const [editMember, setEditMember] = useState(null) // { idx, member }
+
+  // Refresh projects + members on mount so pro sees projects they've been added to
+  useEffect(() => {
+    Promise.all([
+      api.projects.getAll().catch(() => null),
+      api.projectMembers.getAll().catch(() => null),
+    ]).then(([freshProjects, freshMembers]) => {
+      updateStore(prev => ({
+        ...prev,
+        ...(freshProjects ? { projects: freshProjects } : {}),
+        ...(freshMembers ? { projectMembers: freshMembers } : {}),
+      }))
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const userId = store.user?.id
   const allProjetsRaw = useMemo(() => getUserProjects(store, userId), [store.projects, userId, store.projectMembers])

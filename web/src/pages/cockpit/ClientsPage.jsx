@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, User, Mail, Phone, Trash2 } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader , DSEmptyState } from '../../design/components'
 import { exportCSV } from '../../utils/export'
+import { api } from '../../services/api/client'
 
 
 export default function ClientsPage({ openModal, showToast }) {
@@ -13,6 +14,51 @@ export default function ClientsPage({ openModal, showToast }) {
   const [editClient, setEditClient] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [, refresh] = useState(0)
+
+  // Auto-sync clients from markets — pour les pros, chaque marché signé/en cours/complété
+  // dont le pro est fournisseur ajoute automatiquement le client dans le carnet d'adresses
+  useEffect(() => {
+    if (store.user?.type !== 'pro') return
+    const userId = store.user?.id
+    const markets = store.markets || []
+    const existingContacts = store.contacts || []
+
+    const ACCEPTED_STATUSES = ['SIGNED', 'IN_PROGRESS', 'COMPLETED', 'signed', 'in_progress', 'completed']
+    const myMarkets = markets.filter(m =>
+      m.supplierId === userId &&
+      ACCEPTED_STATUSES.some(s => (m.statut || '').toUpperCase() === s.toUpperCase()) &&
+      (m.clientId || m.entreprise)
+    )
+
+    const newOnes = []
+    for (const m of myMarkets) {
+      const alreadyExists = existingContacts.some(c =>
+        (m.email && c.email && c.email === m.email) ||
+        (m.entreprise && c.nom && c.nom === m.entreprise)
+      )
+      if (!alreadyExists) {
+        newOnes.push({
+          type: 'client',
+          nom: m.entreprise || m.clientName || ('Client ' + (m.id || '').slice(-4)),
+          email: m.email || '',
+          tel: m.tel || '',
+          statut: 'actif',
+          note: '',
+        })
+      }
+    }
+    if (newOnes.length === 0) return
+
+    Promise.all(newOnes.map(c => api.contacts.create(c).catch(() => null))).then(created => {
+      const valid = created.filter(Boolean)
+      if (valid.length > 0) {
+        updateStore(prev => ({
+          ...prev,
+          contacts: [...(prev.contacts || []), ...valid],
+        }))
+      }
+    })
+  }, [store.markets, store.user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = allClients.length
   const actifs = allClients.filter(c => c.statut === 'actif').length

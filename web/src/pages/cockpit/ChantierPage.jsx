@@ -4,6 +4,7 @@ import { CHANTIER_PHASES, ANNUAIRE_PLATEFORME } from '../../data/chantier'
 import { getUserProjects } from '../../domain/projectsRepository'
 import { INTERVENANTS_DATA } from '../../data/intervenants'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import { syncEtapesFromChantier } from '../../domain/projectAggregates'
 import { useDevise } from '../../hooks/useDevise'
 import { DSPageHeader } from '../../design/components'
@@ -24,6 +25,21 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
   const { store, updateStore, updateProjectEtapes, saveTaskStates, emitEvent, requestCloture } = useMeereo()
   const { format: fmtMoney } = useDevise()
   const ob = store.onboardingData || {}
+
+  // Refresh projects + members on mount so pro sees projects they've been added to
+  useEffect(() => {
+    Promise.all([
+      api.projects.getAll().catch(() => null),
+      api.projectMembers.getAll().catch(() => null),
+    ]).then(([freshProjects, freshMembers]) => {
+      updateStore(prev => ({
+        ...prev,
+        ...(freshProjects ? { projects: freshProjects } : {}),
+        ...(freshMembers ? { projectMembers: freshMembers } : {}),
+      }))
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const allChantierProjets = getUserProjects(store, store.user?.id)
   const [selProjId, setSelProjId] = useState(allChantierProjets[0]?.id)
   const [openPhases, setOpenPhases] = useState({ 0: true })
@@ -155,7 +171,7 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
         email: '', tel: '', photo: '',
         statut: 'actif', entreprise: true, ville: partner?.ville || 'Abidjan',
         note: partner?.note || 0, projets: [proj?.nom || ''],
-        profilUrl: '/profil'
+        profilUrl: store.user?.publicId ? `/pro?uuid=${store.user.publicId}` : '/pro'
       }
       updateStore(prev => ({ ...prev, intervenants: [...(prev.intervenants || []), newInter] }))
     } else {
