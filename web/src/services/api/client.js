@@ -251,11 +251,11 @@ const auth = {
   },
 
   /**
-   * Vérifie l'email (clic sur le lien).
-   * @param {string} email
+   * Vérifie l'email de l'utilisateur connecté.
+   * (requireAuth côté backend — le token est envoyé automatiquement via cookie/Bearer)
    */
-  verifyEmail: async (email) => {
-    return apiFetch('/auth/verify-email', 'POST', { email })
+  verifyEmail: async () => {
+    return apiFetch('/auth/verify-email', 'POST', {}, true)
   },
 
   /**

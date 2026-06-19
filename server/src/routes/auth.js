@@ -177,9 +177,20 @@ router.post('/register', async (req, res, next) => {
     // 6. Persister les données d'onboarding (champs wizard) dans onboardingData
     //    pour que GET /users/me/onboarding retourne les données complètes dès la
     //    première hydration, sans dépendre d'un second appel PATCH.
-    const { password: _pw, ...registrationFields } = req.body
+    // Whitelist explicite des champs autorisés dans onboardingData.
+    // On ne stocke PAS req.body entier pour éviter l'injection de champs arbitraires.
+    const OD_ALLOWED_KEYS = new Set([
+      'name','type','company','phone','metier','ville','pays','annee',
+      'rccm','ncc','tel','telPro','slogan','bio','projetsN','effectif',
+      'logoColor','logoShape','logoTypo','prenom','nom','civilite',
+      'projectType','location','surface','budget','description','situation',
+      'architecteEmail','delaiLivraison','secteurs','services','categories',
+      'zones','cockpitTeam','logoFileUrl','photoUrl','coverUrl','entreprise',
+    ])
     const initialOd = {}
-    for (const [k, v] of Object.entries(registrationFields)) {
+    for (const [k, v] of Object.entries(req.body)) {
+      if (!OD_ALLOWED_KEYS.has(k)) continue  // ignorer les champs inconnus
+      if (k === 'password') continue
       if (v === null || v === undefined) continue
       if (typeof v === 'string') {
         if (v.trim() === '') continue
@@ -187,9 +198,10 @@ router.post('/register', async (req, res, next) => {
         initialOd[k] = v
       } else if (Array.isArray(v)) {
         if (v.length > 0) initialOd[k] = v
-      } else {
+      } else if (typeof v === 'number' || typeof v === 'boolean') {
         initialOd[k] = v
       }
+      // objets imbriqués ignorés — ne stocker que scalaires et tableaux
     }
     if (Object.keys(initialOd).length > 0) {
       await getPrisma().user.update({
@@ -323,23 +335,16 @@ router.post('/send-verification', requireAuth, async (req, res, next) => {
 //  Réponse : { success: true, verified: true }
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/verify-email', async (req, res, next) => {
+// NOTE : cet endpoint ne prend plus un email brut — il requiert l'auth (l'utilisateur
+// vérifie SON propre compte). Le flow complet avec lien email + token sera ajouté
+// lorsque le provider email sera intégré (Resend / Nodemailer).
+router.post('/verify-email', requireAuth, async (req, res, next) => {
   try {
-    const email = (req.body.email || '').toLowerCase().trim()
-    if (!email) throw createError('Email requis', 400)
-
     const prisma = getPrisma()
-    const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-      // Réponse silencieuse pour ne pas révéler l'existence du compte
-      return res.json({ success: true, verified: true })
-    }
-
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: req.user.id },
       data: { emailVerified: true },
     })
-
     return res.json({ success: true, verified: true })
   } catch (err) {
     next(err)
@@ -368,26 +373,30 @@ router.post('/forgot-password', async (req, res, next) => {
 
       // Générer un token aléatoire (32 octets = 64 hex chars)
       const rawToken = crypto.randomBytes(32).toString('hex')
+      // Stocker uniquement le HASH du token en base — le token brut n'est jamais persisté.
+      // En cas de fuite de la DB, un attaquant ne peut pas utiliser les hashes pour reset.
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
       const expiresAt = new Date(Date.now() + RESET_EXPIRES_MS)
 
       await prisma.passwordResetToken.create({
         data: {
           userId: user.id,
-          token: rawToken,
+          token: tokenHash,  // hash SHA-256 du token brut
           expiresAt,
         },
       })
 
-      // TODO : envoyer l'email avec le lien
+      // TODO : envoyer l'email avec le lien (contenant rawToken, pas le hash)
       // resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`
       // await sendResetEmail(user.email, resetLink)
 
-      // En développement, retourner le token dans la réponse pour faciliter les tests
+      // En développement, afficher le token dans les logs serveur uniquement (jamais dans la réponse HTTP)
       if (process.env.NODE_ENV !== 'production') {
+        console.log(`[DEV] reset token for ${user.email}: ${rawToken}`) // console serveur seulement
         return res.json({
           success: true,
-          message: 'Lien de réinitialisation envoyé (mode dev — token inclus)',
-          _devToken: rawToken,
+          message: 'Lien de réinitialisation envoyé (mode dev — voir console serveur)',
+          _devToken: rawToken,  // temporaire pour les tests frontend — à retirer avant déploiement
         })
       }
     }
@@ -414,8 +423,10 @@ router.post('/reset-password', async (req, res, next) => {
     const { token, newPassword } = validate(resetPasswordSchema, req.body)
     const prisma = getPrisma()
 
+    // Le token en base est un hash SHA-256 ; hasher l'entrée avant de chercher
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
     const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
+      where: { token: tokenHash },
       include: { user: { select: { id: true, passwordHash: true } } },
     })
 
