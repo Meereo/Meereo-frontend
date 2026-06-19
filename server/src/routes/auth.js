@@ -439,6 +439,18 @@ router.delete('/account', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const userId = req.user.id
+    const { password } = req.body || {}
+
+    if (!password) {
+      return res.status(400).json({ error: 'Mot de passe requis pour confirmer la suppression' })
+    }
+
+    // Re-verify password server-side before deleting
+    const stored = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } })
+    const valid = stored && await comparePassword(password, stored.passwordHash)
+    if (!valid) {
+      return res.status(401).json({ error: 'Mot de passe incorrect' })
+    }
 
     await prisma.user.update({
       where: { id: userId },

@@ -62,7 +62,7 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
     setIsDeleting(true)
 
     // 1. Purge backend (PostgreSQL + MinIO)
-    api.auth.deleteAccount().catch(e => console.warn('[DELETE] Backend purge:', e.message))
+    api.auth.deleteAccount(password).catch(e => console.warn('[DELETE] Backend purge:', e.message))
 
     // 2. NUKE localStorage SYNCHRONOUSLY with an empty store
     // This is the ONLY reliable way to ensure no data survives

@@ -219,8 +219,8 @@ const auth = {
   /**
    * Suppression de compte (soft-delete).
    */
-  deleteAccount: async () => {
-    return apiFetch('/auth/account', 'DELETE', null, true)
+  deleteAccount: async (password) => {
+    return apiFetch('/auth/account', 'DELETE', { password }, true)
   },
 
   /**
