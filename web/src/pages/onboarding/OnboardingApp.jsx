@@ -88,21 +88,18 @@ const PRO_SUBS = [
   'Votre page publique professionnelle est créée et indexée. Partagez-la pour recevoir des demandes directes.',
 ]
 const PRO_SECTEURS = [
-  'Architecture & Design','Gros Œuvre & Génie Civil','Second Œuvre & Finitions',
-  'Électricité & Courants faibles','Plomberie & Sanitaires','CVC & Climatisation',
-  "Bureau d'études Structure","Bureau d'études Fluides",'Fournisseur matériaux','Mobilier & Décoration'
+  'Architecte & Design',
+  "Bureau d'étude fluides",
+  "Bureau d'étude de structure",
+  'Construction gros oeuvre',
+  'Construction second oeuvre',
 ]
 const PRO_SVC_MAP = {
-  'Architecture & Design':['Aménagement intérieur','Rénovation & réhabilitation','Architecture commerciale','Architecture d\'intérieur','Plans & permis de construire','Maîtrise d\'œuvre'],
-  'Gros Œuvre & Génie Civil':['Fondations & terrassement','Béton armé & structure','Maçonnerie','Charpente & toiture','Dallage & plancher','VRD & assainissement'],
-  'Second Œuvre & Finitions':['Peinture & revêtements','Carrelage & faïence','Faux plafond','Menuiserie intérieure','Isolation thermique','Enduits & crépis'],
-  'Électricité & Courants faibles':['Installations électriques','Courants faibles','Panneaux solaires','Éclairage','Domotique','Groupes électrogènes'],
-  'Plomberie & Sanitaires':['Plomberie générale','Sanitaires','Adduction d\'eau','Évacuation','Chauffe-eau solaire','Piscine & spa'],
-  'CVC & Climatisation':['Climatisation split','Climatisation centrale','Ventilation','Chambre froide','Gainable','Maintenance CVC'],
-  "Bureau d'études Structure":['Études béton armé','Calculs de structure','Notes de calcul','Plans d\'exécution','Études sismiques','Expertise structure'],
-  "Bureau d'études Fluides":['Études thermiques','Études acoustiques','Études électriques','Études CVC','Audit énergétique','Diagnostic technique'],
-  'Fournisseur matériaux':['Ciment & béton','Acier & fer','Bois','Carrelage','Sanitaire','Peinture'],
-  'Mobilier & Décoration':['Mobilier sur mesure','Décoration intérieure','Agencement','Rideaux & stores','Éclairage décoratif','Art mural'],
+  'Architecte & Design':['Aménagement intérieur','Rénovation & réhabilitation','Architecture commerciale','Architecture d\'intérieur','Plans & permis de construire','Maîtrise d\'œuvre'],
+  "Bureau d'étude fluides":['Études thermiques','Études acoustiques','Études électriques','Études CVC','Audit énergétique','Diagnostic technique'],
+  "Bureau d'étude de structure":['Études béton armé','Calculs de structure','Notes de calcul','Plans d\'exécution','Études sismiques','Expertise structure'],
+  'Construction gros oeuvre':['Fondations & terrassement','Béton armé & structure','Maçonnerie','Charpente & toiture','Dallage & plancher','VRD & assainissement'],
+  'Construction second oeuvre':['Peinture & revêtements','Carrelage & faïence','Faux plafond','Menuiserie intérieure','Isolation thermique','Enduits & crépis'],
 }
 const LOGO_COLORS = [
   {hex:'#1D1D1F',label:'Noir profond'},{hex:'#1D4ED8',label:'Bleu marine'},{hex:'#0891B2',label:'Bleu acier'},
@@ -1260,7 +1257,7 @@ export default function OnboardingApp() {
                             <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{m.name}</div><div style={{fontSize:11,color:'var(--t3)'}}>{m.role}{m.email && <span style={{marginLeft:6,color:'var(--t4)'}}>{m.email}</span>}</div></div>
                             {m.registered && <span style={{fontSize:9,fontWeight:700,background:'rgba(52,199,89,.12)',color:'#16a34a',padding:'2px 7px',borderRadius:100,flexShrink:0}}>Inscrit</span>}
                             {m.pending && <span style={{fontSize:9,fontWeight:700,background:'rgba(251,191,36,.12)',color:'#b45309',padding:'2px 7px',borderRadius:100,flexShrink:0}}>Invité</span>}
-                            <button className="ob-btn-out" style={{padding:'4px 10px',fontSize:11}} onClick={()=>set('team',form.team.filter((_,j)=>j!==i))}>×</button>
+                            <button type="button" onClick={()=>set('team',form.team.filter((_,j)=>j!==i))} style={{flexShrink:0,width:26,height:26,borderRadius:8,border:'1px solid rgba(186,26,26,.2)',background:'rgba(186,26,26,.06)',color:'#ba1a1a',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,lineHeight:1,fontFamily:'var(--f)'}}>×</button>
                           </div>
                         ))}
                       </div>
