@@ -998,7 +998,7 @@ export default function OnboardingApp() {
                       {form.passwordConfirm && form.password !== form.passwordConfirm && <div style={{fontSize:10,color:'#ba1a1a',marginTop:4}}>Les mots de passe ne correspondent pas</div>}
                     </Field>
                   </>)}
-                  {/* Client: basic fields with section dividers */}}
+                  {/* Client: basic fields with section dividers */}
                   {userType==='client' && (<>
                     <div className="wiz-section-divider"><span className="wiz-section-label">Coordonnées</span></div>
                     <Field label="Email" required><input className="ob-input-v2" type="email" placeholder="jean@email.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
