@@ -91,25 +91,47 @@ router.post('/', requireAuth, async (req, res, next) => {
       }
 
       // Créer la conversation
-      const conv = await prisma.conversation.create({
-        data: {
-          isGroup: false,
-          aoId: aoId || null,
-          offerId: offerId || null,
-          participants: {
-            create: [
-              { userId: myId },
-              { userId: participantId },
-            ],
+      let conv
+      try {
+        conv = await prisma.conversation.create({
+          data: {
+            isGroup: false,
+            aoId: aoId || null,
+            offerId: offerId || null,
+            participants: {
+              create: [
+                { userId: myId },
+                { userId: participantId },
+              ],
+            },
           },
-        },
-        include: {
-          participants: {
-            include: { user: { select: { id: true, name: true, email: true, type: true } } },
+          include: {
+            participants: {
+              include: { user: { select: { id: true, name: true, email: true, type: true } } },
+            },
+            messages: true,
           },
-          messages: true,
-        },
-      })
+        })
+      } catch (e) {
+        // Race condition: another request created the conversation simultaneously
+        if (e.code === 'P2002') {
+          const race = await prisma.conversation.findFirst({
+            where: {
+              isGroup: false,
+              AND: [
+                { participants: { some: { userId: myId } } },
+                { participants: { some: { userId: participantId } } },
+              ],
+            },
+            include: {
+              participants: { include: { user: { select: { id: true, name: true, email: true, type: true } } } },
+              messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+            },
+          })
+          if (race) return res.json({ conversation: race, created: false })
+        }
+        throw e
+      }
 
       return res.status(201).json({ conversation: conv, created: true })
     }
