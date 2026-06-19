@@ -45,8 +45,22 @@ router.get('/', requireAuth, async (req, res, next) => {
 router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const userId = req.user.id
     const project = await prisma.project.findUnique({ where: { id: req.params.id } })
     if (!project) throw createError('Projet introuvable', 404)
+
+    // Vérifier que l'utilisateur a accès au projet
+    const isOwnerOrClient = project.ownerId === userId || project.clientId === userId
+    if (!isOwnerOrClient) {
+      const isMember = await prisma.projectMember.findFirst({
+        where: { projectId: project.id, userId },
+      })
+      const isSupplier = await prisma.market.findFirst({
+        where: { projectId: project.id, supplierId: userId },
+      })
+      if (!isMember && !isSupplier) throw createError('Accès non autorisé', 403)
+    }
+
     res.json(project)
   } catch (e) { next(e) }
 })

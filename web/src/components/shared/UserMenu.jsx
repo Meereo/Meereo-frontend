@@ -3,11 +3,9 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import useUserIdentity from '../../hooks/useUserIdentity'
-import { disconnectSocket } from '../../services/socket'
-import { api } from '../../services/api/client'
 
 export default function UserMenu({ onNavigate }) {
-  const { store, updateStore } = useMeereo()
+  const { store, updateStore, logoutUser } = useMeereo()
   const navigate = useNavigate()
   const id = useUserIdentity()
   const [open, setOpen] = useState(false)
@@ -24,11 +22,9 @@ export default function UserMenu({ onNavigate }) {
     })
   }, [])
 
-  const handleLogout = () => {
-    disconnectSocket()
-    api.auth.logout()  // supprime le cookie httpOnly côté serveur
-    updateStore(prev => ({ ...prev, user: null, _token: null }))
+  const handleLogout = async () => {
     setOpen(false)
+    await logoutUser()  // vide token mémoire + sessionStorage + localStorage + cookie + socket
     navigate('/onboarding')
   }
 

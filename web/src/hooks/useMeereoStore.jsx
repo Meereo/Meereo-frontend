@@ -110,7 +110,9 @@ const defaultStore = {
 // elle est refetchée depuis l'API au login/montage. En cas de XSS, l'attaquant
 // ne peut récupérer ni les données utilisateurs ni les données de projet.
 const PERSIST_KEYS = new Set([
-  '_token',              // JWT (sera supprimé une fois cookie httpOnly généralisé)
+  // SUPPRIMÉ : '_token' — le JWT n'est plus persisté dans localStorage.
+  // Il vit dans sessionStorage (écrit par setInMemoryToken) + cookie httpOnly.
+  // Un XSS ne peut pas l'extraire via localStorage.
   '_hydrated',           // flag de session — évite un double-fetch au montage
   '_onboardingByUser',   // wizard avant création compte (userId temp → data) — nécessaire car pas encore en BD
   // Acceptations légales
@@ -1903,6 +1905,20 @@ export function MeereoProvider({ children }) {
     updateStore({ ...defaultStore })
   }, [updateStore])
 
+  // Logout complet : appel API, vide le store, clear le token en mémoire + sessionStorage
+  const logoutUser = useCallback(async () => {
+    // 1. Appel API pour invalider le cookie httpOnly côté serveur
+    await api.auth.logout().catch(() => {})
+    // 2. Vider le token JWT en mémoire et sessionStorage
+    setInMemoryToken(null)
+    // 3. Déconnecter le socket
+    disconnectSocket()
+    // 4. Réinitialiser le store et localStorage
+    const next = { ...defaultStore, _hydrated: false }
+    saveToStorage(next)
+    updateStore(next)
+  }, [updateStore])
+
   // ═══ SYNCHRONISATION COCKPIT / CLIENT ═══
 
   // Émettre un événement métier (notif + log + badge update)
@@ -2485,6 +2501,7 @@ export function MeereoProvider({ children }) {
     updateCommissionStatus,
     acceptCommissionTerms,
     hasAcceptedCommissionTerms,
+    logoutUser,
   }
 
   return <MeereoContext.Provider value={value}>{children}</MeereoContext.Provider>

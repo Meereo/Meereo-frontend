@@ -28,8 +28,8 @@ router.get('/', requireAuth, async (req, res, next) => {
     const offers = await prisma.offer.findMany({
       where,
       include: {
-        supplier: { select: { id: true, name: true, company: true, type: true, publicId: true, onboardingData: true, proProfile: { select: { entreprise: true } }, fournisseurProfile: { select: { entreprise: true } } } },
-        ao: { select: { id: true, title: true, lot: true, ownerUserId: true, projectId: true, owner: { select: { id: true, name: true, company: true, publicId: true, onboardingData: true } } } },
+        supplier: { select: { id: true, name: true, company: true, type: true, publicId: true, proProfile: { select: { entreprise: true } }, fournisseurProfile: { select: { entreprise: true } } } },
+        ao: { select: { id: true, title: true, lot: true, ownerUserId: true, projectId: true, owner: { select: { id: true, name: true, company: true, publicId: true } } } },
       },
       orderBy: { createdAt: 'desc' },
     })
