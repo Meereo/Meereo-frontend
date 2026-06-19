@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Star } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -9,6 +9,12 @@ import Modal from '../../components/shared/Modal'
 import MeereoLogo from '../../components/shared/MeereoLogo'
 import { api } from '../../services/api/client'
 import './profil.css'
+
+// Services par défaut proposés aux pros si aucun service n'est encore renseigné
+const DEFAULT_SERVICES = [
+  'Maîtrise d\'œuvre', 'Plans & permis', 'Études structure', 'Suivi de chantier',
+  'Réhabilitation', 'Architecture intérieure', 'Conception BIM', 'Bureau de contrôle',
+]
 
 // Dynamic projects from cockpit data
 const getProjects = (projects) => (projects || []).map((p, i) => ({
@@ -76,14 +82,26 @@ export default function ProfilApp() {
 
   const handleBannerUpload = async (e) => {
     const f = e.target.files?.[0]; if (!f) return
+    // Lire le fichier une seule fois — utiliser la base64 comme prévisualisation immédiate
+    // puis remplacer par l'URL MinIO si l'upload réussit
+    const { uploadFile: _uploadFile } = await import('../../utils/upload')
     const reader = new FileReader()
-    reader.onload = () => {
-      updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: reader.result } }))
+    reader.onload = async () => {
+      const base64 = reader.result
+      // Afficher la prévisualisation locale immédiatement
+      updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: base64 } }))
       setEditingBanner(true)
       setTempPos(bannerPos)
+      // Upload vers MinIO en arrière-plan — remplacer la base64 par l'URL persistante
+      try {
+        const url = await _uploadFile(f, 'banners', 'cover')
+        updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: url } }))
+        api.usersApi.updateOnboardingData({ bannerUrl: url }).catch(() => {})
+      } catch {
+        // Garder la base64 locale — pas bloquant
+      }
     }
     reader.readAsDataURL(f)
-    try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'banners', 'cover'); updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: url } })); api.usersApi.updateOnboardingData({ bannerUrl: url }).catch(() => {}) } catch {}
   }
 
   const saveBannerPos = () => {
@@ -158,18 +176,34 @@ export default function ProfilApp() {
   const [editTeamList, setEditTeamList] = useState(() => (rawTeam || []).map(t => ({ ...t })))
   const [newMember, setNewMember] = useState({ name: '', role: '', img: '' })
 
-  const saveEdit = (field, value) => {
+  const saveEdit = useCallback(async (field, value) => {
+    // Optimistic update
     updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), [field]: value } }))
-    api.usersApi.updateOnboardingData({ [field]: value }).catch(() => {})
-    showToast('Profil mis à jour', 'green')
-    setEditModal(null)
-  }
+    try {
+      await api.usersApi.updateOnboardingData({ [field]: value })
+      showToast('Profil mis \u00e0 jour', 'green')
+      setEditModal(null)
+    } catch (e) {
+      // Rollback optimistic update
+      updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), [field]: ob[field] } }))
+      showToast(e?.message || 'Erreur lors de la sauvegarde', 'red')
+    }
+  }, [updateStore, showToast, ob])
 
-  const handleContact = () => {
+  const handleContact = useCallback(async () => {
     if (!contactMsg.trim() || contactSending) return
     setContactSending(true)
-    const convId = 'conv_' + Date.now()
     const motifLabels = { collaboration: 'Demande de collaboration', devis: 'Demande de devis', information: 'Demande d\'information', autre: 'Prise de contact' }
+    const convId = 'conv_' + Date.now()
+    // Persistance backend — notif au pro
+    try {
+      await api.notifications.create({
+        targetUserId: pubData?.id || null,
+        type: 'contact_request',
+        message: `Nouveau message de ${visitorName || 'un visiteur'} — ${motifLabels[contactMotif]}`,
+        link: convId,
+      })
+    } catch { /* non bloquant */ }
     updateStore(prev => ({
       ...prev,
       messages: [...(prev.messages || []), {
@@ -189,23 +223,29 @@ export default function ProfilApp() {
       notifMsg: `Nouveau message de ${visitorName || 'un visiteur'} — ${motifLabels[contactMotif]}`,
       notifType: 'green'
     })
-    setTimeout(() => {
-      setContactSending(false)
-      showToast('Message envoyé ! ' + proName + ' vous recontactera sous 24h', 'green')
-      setShowContactModal(false)
-      setContactMsg('')
-      setContactMotif('collaboration')
-    }, 400)
-  }
+    setContactSending(false)
+    showToast('Message envoyé ! ' + proName + ' vous recontactera sous 24h', 'green')
+    setShowContactModal(false)
+    setContactMsg('')
+    setContactMotif('collaboration')
+  }, [contactMsg, contactSending, contactMotif, proName, visitorName, visitorRole, pubData, updateStore, emitEvent, showToast])
 
-  const handleInvite = () => {
+  const handleInvite = useCallback(async () => {
     if (!inviteProjet || inviteSending) return
     setInviteSending(true)
     const projObj = (store.projects || []).find(p => p.id === inviteProjet)
     const invId = 'inv_' + Date.now()
+    // Persistance backend — notif au pro
+    try {
+      await api.notifications.create({
+        targetUserId: pubData?.id || null,
+        type: 'project_invitation',
+        message: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — rôle : ${inviteRole || proSpecialite}`,
+        link: invId,
+      })
+    } catch { /* non bloquant */ }
     updateStore(prev => ({
       ...prev,
-      // Invitation structurée — retrouvable dans le store
       invitations: [...(prev.invitations || []), {
         id: invId,
         professional: proName,
@@ -232,20 +272,23 @@ export default function ProfilApp() {
       notifMsg: `Invitation envoyée à ${proName} pour ${projObj?.nom}`,
       notifType: 'blue'
     })
-    setTimeout(() => {
-      setInviteSending(false)
-      showToast('Invitation envoyée à ' + proName + ' pour ' + (projObj?.nom || 'le projet'), 'blue')
-      setShowInviteModal(false)
-      setInviteProjet('')
-      setInviteRole('')
-      setInviteMsg('')
-    }, 400)
-  }
+    setInviteSending(false)
+    showToast('Invitation envoyée à ' + proName + ' pour ' + (projObj?.nom || 'le projet'), 'blue')
+    setShowInviteModal(false)
+    setInviteProjet('')
+    setInviteRole('')
+    setInviteMsg('')
+  }, [inviteProjet, inviteSending, inviteRole, inviteMsg, proName, proSpecialite, visitorName, visitorRole, pubData, store.projects, updateStore, emitEvent, showToast])
 
-  const handleContactViaMsg = () => {
+  const handleContactViaMsg = useCallback(() => {
     if (isVisitor || !store.user) { navigate('/onboarding'); return }
-    // Trouver une conversation existante avec ce pro, ou en créer une nouvelle
-    const existing = (store.conversations || []).find(c => !c.isGroup && c.nom === proName)
+    // Chercher par pubData.id (backend ID) en priorité, puis par nom pour les convs locales
+    const existing = (store.conversations || []).find(c =>
+      !c.isGroup && !c._deleted && (
+        (pubData?.id && c.participantId === pubData.id) ||
+        c.nom === proName
+      )
+    )
     let convId
     if (existing) {
       convId = existing.id
@@ -254,6 +297,7 @@ export default function ProfilApp() {
       const newConv = {
         id: convId,
         nom: proName,
+        participantId: pubData?.id || null,
         type: pubData?.id ? 'entreprise' : 'demande',
         avatar: proInitials?.[0] || proName[0] || '?',
         color: ob.logoColor || '#191c1d',
@@ -271,7 +315,10 @@ export default function ProfilApp() {
     sessionStorage.setItem('meereo_open_conv', convId)
     sessionStorage.setItem('meereo_nav_page', 'messages')
     navigate(isClient ? '/client' : '/cockpit')
-  }
+  }, [isVisitor, store.user, store.conversations, proName, proInitials, pubData, ob.logoColor, isClient, navigate, updateStore])
+
+  // Mémorisé pour éviter le double calcul dans le JSX
+  const displayProjects = useMemo(() => getProjects(store.projects), [store.projects])
 
   return (
     <div className="pp-page">
@@ -484,7 +531,7 @@ export default function ProfilApp() {
           <div className="pp-card pp-services">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p className="pp-section-label" style={{ marginBottom: 0 }}>Compétences &amp; services</p>
-              {isOwner && <button className="pp-see-all" style={{ fontSize: 11 }} onClick={() => { setEditServices(proServices.length > 0 ? [...proServices] : [...SERVICES]); setEditModal('services') }}>Modifier</button>}
+              {isOwner && <button className="pp-see-all" style={{ fontSize: 11 }} onClick={() => { setEditServices(proServices.length > 0 ? [...proServices] : [...DEFAULT_SERVICES]); setEditModal('services') }}>Modifier</button>}
             </div>
             <div className="pp-services-grid" style={{ marginTop: 12 }}>
               {proServices.length > 0 ? proServices.map(s => <span key={s} className="pp-service-tag">{s}</span>) : (
@@ -592,8 +639,15 @@ export default function ProfilApp() {
                     <div className="pp-team-role">{t.role}</div>
                     {(t.email || t.linkedinUrl) && (
                       <div className="pp-team-links">
-                        {t.linkedinUrl && <button className="pp-team-link" title="LinkedIn" onClick={() => window.open(t.linkedinUrl, '_blank')}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></button>}
-                        {t.email && <button className="pp-team-link" title="Email" onClick={() => window.open('mailto:' + t.email)}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></button>}
+                        {t.linkedinUrl && (() => {
+                          // Valider l'URL avant d'ouvrir (protection XSS)
+                          let safeUrl = null
+                          try { const u = new URL(t.linkedinUrl); if (u.protocol === 'https:') safeUrl = u.href } catch {}
+                          return safeUrl ? <a className="pp-team-link" href={safeUrl} target="_blank" rel="noopener noreferrer" title="LinkedIn"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a> : null
+                        })()}
+                        {t.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email) && (
+                          <a className="pp-team-link" href={'mailto:' + t.email} title="Email"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></a>
+                        )}
                       </div>
                     )}
                   </div>
@@ -610,9 +664,9 @@ export default function ProfilApp() {
             <h2 className="pp-section-title">Projets actifs · Cockpit</h2>
             <button className="pp-see-all" onClick={() => navigate(isClient ? '/client' : '/cockpit')}>Accéder au suivi →</button>
           </div>
-          {getProjects(store.projects).length > 0 ? (
+          {displayProjects.length > 0 ? (
             <div className="pp-card pp-project-list">
-              {getProjects(store.projects).map((p, i) => (
+              {displayProjects.map((p, i) => (
                 <div key={i} className="pp-project-row">
                   <span className="pp-project-num">{p.num}</span>
                   {p.img && <img src={p.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
@@ -623,7 +677,6 @@ export default function ProfilApp() {
                     </div>
                     <div className="pp-project-progress-track"><div className="pp-project-progress-fill" style={{ width: p.progress + '%' }} /></div>
                   </div>
-                  <span className="pp-project-budget">{formatBudgetDisplay(p.budget)}</span>
                   <span className={`pp-project-status pp-status-${p.cls}`}>{p.status}</span>
                 </div>
               ))}

@@ -329,6 +329,7 @@ export default function OnboardingApp() {
   const [wizStep, setWizStep] = useState(savedWiz.current?.wizStep || 1)
   const [teamName, setTeamName] = useState('')
   const [teamRole, setTeamRole] = useState('')
+  const [teamEmail, setTeamEmail] = useState('')
   const [teamPhoto, setTeamPhoto] = useState(null)
   const [svcCustom, setSvcCustom] = useState('')
   const [prodName, setProdName] = useState('')
@@ -458,7 +459,8 @@ export default function OnboardingApp() {
     delete fullData.photo       // File object
     delete fullData.logoFile    // File object
     delete fullData.coverFile   // File object
-    // Keep only URL strings for images
+    delete fullData.password        // ne pas stocker le mot de passe en clair dans onboardingData
+    delete fullData.passwordConfirm // idem
     // fullData.photoUrl, fullData.logoFileUrl, fullData.coverUrl are already strings (base64 or MinIO URL)
     try {
       // email/name/type APRÈS fullData pour ne pas être écrasés par form.email='' (pro/fournisseur utilisent emailPro)
@@ -512,7 +514,14 @@ export default function OnboardingApp() {
       }
     }
 
-    // 5. Redirect — navigate() via React Router (évite le rechargement complet de page)
+    // 6. Send invitation emails for pending team members (non-blocking)
+    if (userType === 'pro' && form.team.length > 0) {
+      form.team.filter(m => m.pending && m.email).forEach(m => {
+        api.auth.sendVerification(m.email).catch(() => {})
+      })
+    }
+
+    // 8. Redirect — navigate() via React Router (évite le rechargement complet de page)
     setTimeout(() => {
       if (overrideDest) { navigate(overrideDest); return }
       if(userType==='client') navigate('/client')
@@ -1248,7 +1257,9 @@ export default function OnboardingApp() {
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                               </div>
                             </div>
-                            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{m.name}</div><div style={{fontSize:11,color:'var(--t3)'}}>{m.role}</div></div>
+                            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700}}>{m.name}</div><div style={{fontSize:11,color:'var(--t3)'}}>{m.role}{m.email && <span style={{marginLeft:6,color:'var(--t4)'}}>{m.email}</span>}</div></div>
+                            {m.registered && <span style={{fontSize:9,fontWeight:700,background:'rgba(52,199,89,.12)',color:'#16a34a',padding:'2px 7px',borderRadius:100,flexShrink:0}}>Inscrit</span>}
+                            {m.pending && <span style={{fontSize:9,fontWeight:700,background:'rgba(251,191,36,.12)',color:'#b45309',padding:'2px 7px',borderRadius:100,flexShrink:0}}>Invité</span>}
                             <button className="ob-btn-out" style={{padding:'4px 10px',fontSize:11}} onClick={()=>set('team',form.team.filter((_,j)=>j!==i))}>×</button>
                           </div>
                         ))}
@@ -1259,6 +1270,7 @@ export default function OnboardingApp() {
                         <div className="ob-field"><label className="ob-label-v2">Nom complet</label><input className="ob-input-v2" placeholder="Nom du membre" value={teamName} onChange={e=>setTeamName(e.target.value)} /></div>
                         <div className="ob-field"><label className="ob-label-v2">Rôle / Poste</label><input className="ob-input-v2" placeholder="Architecte DPLG" value={teamRole} onChange={e=>setTeamRole(e.target.value)} /></div>
                       </div>
+                      <div className="ob-field" style={{marginBottom:10}}><label className="ob-label-v2">Email (pour invitation)</label><input className="ob-input-v2" type="email" placeholder="membre@exemple.com" value={teamEmail} onChange={e=>setTeamEmail(e.target.value)} /></div>
                       <div style={{display:'flex',alignItems:'center',gap:10}}>
                         <div className="wiz-team-add-photo" onClick={()=>document.getElementById('team-new-photo').click()}>
                           <input id="team-new-photo" type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f,300,0.75);setTeamPhoto(c)}}} />
@@ -1268,7 +1280,18 @@ export default function OnboardingApp() {
                           }
                         </div>
                         <span style={{fontSize:11,color:'var(--t3)',flex:1}}>Photo (optionnel)</span>
-                        <button type="button" className="ob-btn-out" style={{padding:'10px 16px',flexShrink:0}} onClick={()=>{if(teamName.trim()&&teamRole.trim()){const initials=teamName.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);set('team',[...form.team,{name:teamName.trim(),role:teamRole.trim(),photoUrl:teamPhoto||null,initials}]);setTeamName('');setTeamRole('');setTeamPhoto(null);showToast('Membre ajouté','green')}else{showToast('Remplissez le nom et le rôle','orange')}}}>+ Ajouter</button>
+                        <button type="button" className="ob-btn-out" style={{padding:'10px 16px',flexShrink:0}} onClick={()=>{
+                          if(!teamName.trim()||!teamRole.trim()){showToast('Remplissez le nom et le rôle','orange');return}
+                          const initials=teamName.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+                          const emailNorm=(teamEmail||'').trim().toLowerCase()
+                          const existingUser=emailNorm?(store.users||[]).find(u=>u&&(u.email||'').toLowerCase()===emailNorm):null
+                          const member={name:teamName.trim(),role:teamRole.trim(),email:emailNorm||null,photoUrl:teamPhoto||null,initials,registered:!!existingUser,userId:existingUser?.id||null,pending:!existingUser&&!!emailNorm}
+                          set('team',[...form.team,member])
+                          setTeamName('');setTeamRole('');setTeamEmail('');setTeamPhoto(null)
+                          if(existingUser){showToast(`${existingUser.name||teamName.trim()} est déjà sur Meereo — il sera notifié`,'blue')}
+                          else if(emailNorm){showToast('Membre ajouté — une invitation lui sera envoyée','green')}
+                          else{showToast('Membre ajouté','green')}
+                        }}>+ Ajouter</button>
                       </div>
                     </div>
                   </Field>

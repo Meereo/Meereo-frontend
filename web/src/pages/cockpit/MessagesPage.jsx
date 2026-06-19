@@ -278,7 +278,21 @@ export default function MessagesPage({ showToast }) {
     const q = search.toLowerCase()
     return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
   })
-  const active = activeId ? visibleConversations.find(c => c.id === activeId) : null
+  const _activeRaw = activeId ? visibleConversations.find(c => c.id === activeId) : null
+  // Résoudre dynamiquement l'état `invited` : si le contact est inscrit sur Meereo,
+  // on écrase `invited: false` même si l'ancienne donnée en store dit `true`.
+  const active = useMemo(() => {
+    if (!_activeRaw || _activeRaw.isGroup) return _activeRaw
+    if (!_activeRaw.invited) return _activeRaw
+    const users = store.users || []
+    const nom = (_activeRaw.nom || '').toLowerCase()
+    const email = (_activeRaw.email || '').toLowerCase()
+    const found = users.some(u =>
+      u && u.status !== 'deleted' &&
+      ((u.name || '').toLowerCase() === nom || (email && (u.email || '').toLowerCase() === email))
+    )
+    return found ? { ..._activeRaw, invited: false } : _activeRaw
+  }, [_activeRaw, store.users])
   const nonLus = visibleConversations.filter(c => !c._archived).reduce((s, c) => s + (c.unread || 0), 0)
   const archivedCount = visibleConversations.filter(c => c._archived).length
 

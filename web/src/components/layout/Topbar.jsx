@@ -52,14 +52,22 @@ export default function Topbar({ activePage, onOpenSidebar }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Debounced server search — fires 300ms after user stops typing
+  // Debounced search — loads all pros then filters client-side (avoids backend query param issues)
   const runSearch = useCallback((q, metier) => {
     clearTimeout(debounceRef.current)
     if (!q || q.trim().length < 2) { setSearchResults([]); return }
     debounceRef.current = setTimeout(async () => {
       try {
-        const results = await api.professionals.search(q.trim(), metier || undefined)
-        const mapped = (results || []).map(u => ({ id: u.id, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false })).filter(p => p.nom)
+        const all = await api.professionals.getAll()
+        const qLow = q.trim().toLowerCase()
+        const filtered = (all || []).filter(u => {
+          const name = (u.company || u.name || '').toLowerCase()
+          const mtr = (u.metier || '').toLowerCase()
+          const vil = (u.ville || '').toLowerCase()
+          const metierOk = !metier || u.metier === metier
+          return metierOk && (name.includes(qLow) || mtr.includes(qLow) || vil.includes(qLow))
+        })
+        const mapped = filtered.map(u => ({ id: u.id, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false })).filter(p => p.nom)
         setSearchResults(mapped)
       } catch {
         setSearchResults([])

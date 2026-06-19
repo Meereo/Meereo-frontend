@@ -1514,9 +1514,12 @@ export function MeereoProvider({ children }) {
       if (!projectId) {
         const pId = 'proj_' + Date.now()
         projectId = pId
+        // Nettoyer le titre de l'AO des préfixes auto-générés ("Recherche architecte ·", "Mission complète ·")
+        const cleanTitle = (aoObj?.title || '').replace(/^(Recherche\s+\w+\s*[·•]\s*|Mission\s+compl[eè]te\s*[·•]\s*)/i, '').trim()
+        const projNom = cleanTitle || aoObj?.lot || offer.entreprise || 'Nouveau projet'
         autoProject = {
           id: pId,
-          nom: aoObj?.title || 'Projet ' + (aoObj?.lot || 'nouveau'),
+          nom: projNom,
           type: aoObj?.lot || 'Mission',
           phase: 'ATTRIBUTION_MARCHES',
           budget: offer.price ? String(offer.price) : offer.montant ? String(offer.montant) : aoObj?.budget || '',
@@ -1614,7 +1617,10 @@ export function MeereoProvider({ children }) {
       const closedAos = (prev.aos || []).map(a =>
         a.id === offer.aoId ? { ...a, status: 'attributed', closedAt: new Date().toISOString() } : a
       )
-      const nextProjects = autoProject ? [...prev.projects, autoProject] : prev.projects
+      const nextProjects = autoProject ? [...prev.projects, autoProject] : prev.projects.map(p =>
+        // Mettre à jour la phase du projet existant quand une offre est acceptée
+        p.id === projectId ? { ...p, phase: p.phase === 'ATTRIBUTION_MARCHES' || p.phase === 'CONSULTATION_ENTREPRISES' ? 'SUIVI_CHANTIER' : p.phase, status: 'active', avancement: Math.max(p.avancement || 0, 5) } : p
+      )
       // Auto-create conversation between client and pro after market signing
       const autoConv = {
         id: 'conv_' + Date.now(),
@@ -1639,7 +1645,7 @@ export function MeereoProvider({ children }) {
           try {
             const autoProj = storeRef.current.projects?.find(p => p.id === market.projectId)
             const backendProject = await api.projects.create({
-              nom: market.titre || 'Projet', type: market.lot || 'Mission',
+              nom: autoProject?.nom || market.titre || 'Projet', type: market.lot || 'Mission',
               phase: 'ATTRIBUTION_MARCHES', budget: String(market.amount || market.budget || ''),
               description: market.description || '', status: 'active',
               ownerId: store.user?.id || 'local', clientId: store.user?.id || null,

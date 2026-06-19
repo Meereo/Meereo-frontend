@@ -14,21 +14,31 @@ const API_BASE =
     ? import.meta.env.VITE_API_URL
     : '/api'  // fallback proxy (Vite dev server)
 
-// Token JWT gardé en mémoire uniquement (plus en localStorage).
-// Il est restauré depuis la réponse de GET /auth/me à chaque hydration.
+// Token JWT gardé en mémoire + sessionStorage pour survivre aux rafraîchissements de page.
+// sessionStorage est vidé à la fermeture de l'onglet (pas de persistance entre sessions).
 let _inMemoryToken = null
+
+const SESSION_TOKEN_KEY = 'meereo_session_token'
 
 /** Appelé par useMeereoStore après login/hydration pour mettre le token en mémoire. */
 export function setInMemoryToken(token) {
   _inMemoryToken = token || null
+  try {
+    if (token) {
+      sessionStorage.setItem(SESSION_TOKEN_KEY, token)
+    } else {
+      sessionStorage.removeItem(SESSION_TOKEN_KEY)
+    }
+  } catch { /* sessionStorage non disponible */ }
 }
 
 /**
- * Retourne le JWT courant (uniquement depuis la mémoire).
+ * Retourne le JWT courant — mémoire en priorité, puis sessionStorage (après refresh).
  * @returns {string|null}
  */
 function getStoredToken() {
-  return _inMemoryToken
+  if (_inMemoryToken) return _inMemoryToken
+  try { return sessionStorage.getItem(SESSION_TOKEN_KEY) || null } catch { return null }
 }
 
 /**
@@ -397,6 +407,7 @@ const tasks = {
     const qs = new URLSearchParams(params).toString()
     return apiFetch(`/tasks${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
+  getByProject: (projectId)  => apiFetch(`/tasks?projectId=${encodeURIComponent(projectId)}`, 'GET', null, true),
   getById:      (id)          => apiFetch(`/tasks/${id}`, 'GET', null, true),
   create:       (data)        => apiFetch('/tasks', 'POST', data, true),
   update:       (id, data)    => apiFetch(`/tasks/${id}`, 'PATCH', data, true),

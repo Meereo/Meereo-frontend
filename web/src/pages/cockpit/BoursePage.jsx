@@ -206,7 +206,7 @@ export default function BoursePage({ showToast, onNavigate }) {
       montant: reponse.montant,
       delai: reponse.delai || '',
       message: reponse.message || '',
-      entreprise: store.onboardingData?.entreprise || 'Mon entreprise',
+      entreprise: store.onboardingData?.entreprise || store.user?.company || store.user?.name || '',
     })
     if (!result) return // Permission denied — toast already shown by store
     setShowRepondre(null)
