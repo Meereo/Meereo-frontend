@@ -27,6 +27,10 @@ router.post('/', requireAuth, async (req, res, next) => {
     const { projectId, userId, role, userName, userEmail } = req.body
     if (!projectId || !userId) throw createError('projectId et userId requis', 400)
 
+    // Verify the project exists before upserting — frontend may send local-only IDs
+    const projectExists = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } })
+    if (!projectExists) return res.status(404).json({ error: 'Projet introuvable' })
+
     const member = await prisma.projectMember.upsert({
       where: { projectId_userId: { projectId, userId } },
       update: { role: role || 'MEMBER', userName: userName || '', userEmail: userEmail || '' },
