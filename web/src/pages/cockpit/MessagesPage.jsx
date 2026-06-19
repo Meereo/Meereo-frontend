@@ -213,6 +213,10 @@ export default function MessagesPage({ showToast }) {
   const [confirmAction, setConfirmAction] = useState(null)
   const [ctxMenu, setCtxMenu] = useState(null)
   const ctxRef = useRef(null)
+  // Pro — suggestion de prix/délai dans la conversation
+  const [showSuggestPanel, setShowSuggestPanel] = useState(false)
+  const [suggestMontant, setSuggestMontant] = useState('')
+  const [suggestDelai, setSuggestDelai] = useState('')
 
   // ── Real-time state ──────────────────────────────────────────────────────────
   // messages: Map<conversationId, Message[]> — loaded per-conversation from API
@@ -516,7 +520,7 @@ export default function MessagesPage({ showToast }) {
     const convId = active.id
     const myId = store.user?.id
     const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    const dernier = type === 'image' ? 'Photo' : type === 'file' ? 'Fichier' : msgText
+    const dernier = type === 'image' ? 'Photo' : type === 'file' ? 'Fichier' : type === 'devis' ? 'Proposition commerciale' : msgText
 
     // Optimistic insert
     const optimistic = {
@@ -863,7 +867,33 @@ export default function MessagesPage({ showToast }) {
                                       {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
                                     </div>
                                   </div>
-                                ) : (
+                                ) : m.type === 'devis' ? (() => {
+                                  let d = {}
+                                  try { d = JSON.parse(m.text) } catch { d = { montant: m.text } }
+                                  const isOut = m.side === 'out'
+                                  return (
+                                    <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
+                                      <div style={{ padding: '8px 14px 6px', background: isOut ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                                        <span style={{ fontSize: 12 }}>📋</span>
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
+                                      </div>
+                                      <div style={{ padding: '10px 14px 12px', background: isOut ? 'rgba(0,0,0,.6)' : 'var(--surface-1)', display: 'flex', gap: 24 }}>
+                                        {d.montant && (
+                                          <div>
+                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Montant</div>
+                                            <div style={{ fontSize: 15, fontWeight: 800, color: isOut ? '#fff' : 'var(--tx)', letterSpacing: '-.4px' }}>{Number(d.montant.toString().replace(/\D/g, '')).toLocaleString('fr-FR')} <span style={{ fontSize: 11, fontWeight: 500 }}>FCFA</span></div>
+                                          </div>
+                                        )}
+                                        {d.delai && (
+                                          <div>
+                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Délai</div>
+                                            <div style={{ fontSize: 14, fontWeight: 700, color: isOut ? '#fff' : 'var(--tx)' }}>{d.delai}</div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })() : (
                                   <div style={{
                                     maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
                                     ...(m.side === 'out'
@@ -948,7 +978,54 @@ export default function MessagesPage({ showToast }) {
                 </div>
               ) : (
                 /* ─── Utilisateur inscrit — messagerie normale ─── */
-                <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, flexShrink: 0, alignItems: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                  {/* ── Bannière suggestion prix/délai — visible uniquement pour le PRO dans une conversation 1-1 ── */}
+                  {store.user?.type === 'pro' && active && !active.isGroup && !active.pending && !active.invited && (
+                    showSuggestPanel ? (
+                      <div style={{ padding: '10px 20px 6px', background: 'var(--s2)', borderBottom: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>📋 Proposition commerciale</span>
+                          <button onClick={() => { setShowSuggestPanel(false); setSuggestMontant(''); setSuggestDelai('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t4)', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            value={suggestMontant}
+                            onChange={e => setSuggestMontant(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Montant (FCFA)"
+                            style={{ flex: 2, padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--surface-1)', outline: 'none', color: 'var(--tx)' }}
+                          />
+                          <input
+                            value={suggestDelai}
+                            onChange={e => setSuggestDelai(e.target.value)}
+                            placeholder="Délai (ex: 6 mois)"
+                            style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--surface-1)', outline: 'none', color: 'var(--tx)' }}
+                          />
+                          <button
+                            disabled={!suggestMontant && !suggestDelai}
+                            onClick={() => {
+                              if (!suggestMontant && !suggestDelai) return
+                              sendMsg(JSON.stringify({ montant: suggestMontant, delai: suggestDelai }), 'devis')
+                              setShowSuggestPanel(false)
+                              setSuggestMontant('')
+                              setSuggestDelai('')
+                            }}
+                            style={{ padding: '8px 16px', borderRadius: 10, background: suggestMontant || suggestDelai ? 'var(--tx)' : 'var(--s3)', color: suggestMontant || suggestDelai ? '#fff' : 'var(--t4)', border: 'none', fontSize: 12.5, fontWeight: 600, fontFamily: 'var(--f)', cursor: suggestMontant || suggestDelai ? 'pointer' : 'default', transition: 'all .15s', flexShrink: 0 }}
+                          >Envoyer</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: '6px 20px 0', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => setShowSuggestPanel(true)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--t3)', fontFamily: 'var(--f)', transition: 'all .15s' }}
+                          title="Suggérer un prix et un délai au client"
+                        >
+                          <span>📋</span> Suggérer un prix
+                        </button>
+                      </div>
+                    )
+                  )}
+                  <div style={{ padding: '10px 20px', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                   <button onClick={handleFileAttach} style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Joindre un fichier">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                   </button>
@@ -981,7 +1058,8 @@ export default function MessagesPage({ showToast }) {
                   <button onClick={() => sendMsg()} style={{ width: 40, height: 40, borderRadius: 12, background: input.trim() ? 'var(--tx)' : 'var(--s3)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: input.trim() ? '#fff' : 'var(--t4)', transition: 'all .15s' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                   </button>
-                </div>
+                  </div>{/* inner input row */}
+                </div>{/* outer input+banner wrapper */}
               )}
             </>
           )}

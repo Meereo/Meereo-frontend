@@ -198,7 +198,6 @@ export default function BoursePage({ showToast, onNavigate }) {
 
   const submitReponse = () => {
     setReponseSubmitted(true)
-    if (!reponse.montant.trim()) return
     const ao = showRepondre
     // Use store.submitOffer with permission guards instead of raw updateStore
     const result = storeSubmitOffer({
@@ -779,17 +778,6 @@ export default function BoursePage({ showToast, onNavigate }) {
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Offre financiere */}
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Offre financiere</div>
-              <div className="modal-row">
-                <div>
-                  <label className="form-label">Montant proposé (FCFA) *</label>
-                  <MoneyInput value={reponse.montant} onChange={v => setReponse(p => ({ ...p, montant: v }))} placeholder="1 200 000 000" />
-                  {reponseSubmitted && !reponse.montant.trim() && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
-                </div>
-                <div><label className="form-label">Delai d'execution</label><input className="form-input" value={reponse.delai} onChange={e => setReponse(p => ({ ...p, delai: e.target.value }))} placeholder="ex: 18 mois" /></div>
-              </div>
-
               {/* Note technique */}
               <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Dossier technique</div>
               <div><label className="form-label">Memoire technique</label><textarea className="form-input" rows="4" value={reponse.technique} onChange={e => setReponse(p => ({ ...p, technique: e.target.value }))} placeholder="Methodologie, organisation, moyens humains et materiels, planning previsionnel, references similaires..." /></div>

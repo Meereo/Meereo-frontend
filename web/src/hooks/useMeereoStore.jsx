@@ -579,16 +579,41 @@ export function MeereoProvider({ children }) {
     // Register on backend to get a JWT token (blocking — must complete before redirect)
     // Use the actual password entered by user in onboarding form, fallback to user.id for legacy
     const userPassword = data.password || user.id
+    // Champs texte/tableau sûrs à envoyer (pas d'images volumineuses)
+    const safeImgUrl = (v) => (v && typeof v === 'string' && !v.startsWith('data:')) ? v : undefined
     try {
       const res = await api.auth.register({
         email: user.email || 'user_' + user.id + '@meereo.ci',
         password: userPassword,
         name: user.name,
         type: user.type,
-        ...(user.company ? { company: user.company } : {}),
-        ...(user.phone ? { phone: user.phone } : {}),
-        ...(data.metier || data.secteurs?.[0] ? { metier: data.metier || data.secteurs?.[0] } : {}),
-        ...(data.ville ? { ville: data.ville } : {}),
+        // Champs de base
+        ...(user.company    ? { company: user.company }    : {}),
+        ...(user.phone      ? { phone: user.phone }        : {}),
+        ...(data.ville      ? { ville: data.ville }        : {}),
+        ...(data.pays       ? { pays: data.pays }          : {}),
+        // Profil étendu — texte + tableaux (envoyés pour initialiser proProfile ET onboardingData)
+        ...(data.metier     ? { metier: data.metier }      : data.secteurs?.[0] ? { metier: data.secteurs[0] } : {}),
+        ...(obData.entreprise ? { entreprise: obData.entreprise } : {}),
+        ...(obData.rccm       ? { rccm: obData.rccm }             : {}),
+        ...(obData.ncc        ? { ncc: obData.ncc }               : {}),
+        ...(obData.annee      ? { annee: obData.annee }           : {}),
+        ...(obData.slogan     ? { slogan: obData.slogan }         : {}),
+        ...(obData.bio        ? { bio: obData.bio }               : {}),
+        ...(obData.projetsN   ? { projetsN: obData.projetsN }     : {}),
+        ...(obData.effectif   ? { effectif: obData.effectif }     : {}),
+        ...(obData.tel || obData.telPro ? { tel: obData.tel || obData.telPro } : {}),
+        ...(obData.logoColor  ? { logoColor: obData.logoColor }   : {}),
+        ...(obData.logoShape  ? { logoShape: obData.logoShape }   : {}),
+        ...(obData.logoTypo   ? { logoTypo: obData.logoTypo }     : {}),
+        ...(obData.secteurs?.length   ? { secteurs: obData.secteurs }   : {}),
+        ...(obData.services?.length   ? { services: obData.services }   : {}),
+        ...(obData.zones?.length      ? { zones: obData.zones }         : {}),
+        ...(obData.categories?.length ? { categories: obData.categories } : {}),
+        // Images : uniquement les URLs MinIO (pas de base64 > quelques Ko dans register)
+        ...(safeImgUrl(obData.logoFileUrl)  ? { logoFileUrl: obData.logoFileUrl }   : {}),
+        ...(safeImgUrl(obData.photoUrl)     ? { photoUrl: obData.photoUrl }         : {}),
+        ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
       })
       if (res?.token) {
         // Store token + hydrate shared business data from PostgreSQL

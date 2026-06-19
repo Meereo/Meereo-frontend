@@ -174,7 +174,31 @@ router.post('/register', async (req, res, next) => {
       }
     })
 
-    // 6. Répondre avec le user public + token JWT
+    // 6. Persister les données d'onboarding (champs wizard) dans onboardingData
+    //    pour que GET /users/me/onboarding retourne les données complètes dès la
+    //    première hydration, sans dépendre d'un second appel PATCH.
+    const { password: _pw, ...registrationFields } = req.body
+    const initialOd = {}
+    for (const [k, v] of Object.entries(registrationFields)) {
+      if (v === null || v === undefined) continue
+      if (typeof v === 'string') {
+        if (v.trim() === '') continue
+        if (v.startsWith('data:') && v.length > 5_000_000) continue // image trop volumineuse
+        initialOd[k] = v
+      } else if (Array.isArray(v)) {
+        if (v.length > 0) initialOd[k] = v
+      } else {
+        initialOd[k] = v
+      }
+    }
+    if (Object.keys(initialOd).length > 0) {
+      await getPrisma().user.update({
+        where: { id: user.id },
+        data: { onboardingData: initialOd },
+      }).catch(e => console.warn('[AUTH] onboardingData initial save failed:', e.message))
+    }
+
+    // 7. Répondre avec le user public + token JWT
     const resp = authResponse(user)
     setAuthCookie(res, resp.token)
     return res.status(201).json(resp)

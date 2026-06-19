@@ -191,15 +191,99 @@ function sanitizeOnboardingData(raw) {
 /**
  * GET /api/users/me/onboarding
  * Retourne les données d'onboarding de l'utilisateur connecté.
+ * Fusionne proProfile (source de vérité à la création) avec onboardingData
+ * (mises à jour wizard/profil). onboardingData prend toujours le dessus.
  */
 router.get('/me/onboarding', requireAuth, async (req, res) => {
   const prisma = getPrisma()
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { onboardingData: true },
+      select: {
+        onboardingData: true,
+        type: true,
+        proProfile: true,
+        fournisseurProfile: true,
+        clientProfile: true,
+      },
     })
-    res.json(user?.onboardingData || {})
+    const od = (user?.onboardingData && typeof user.onboardingData === 'object')
+      ? user.onboardingData
+      : {}
+
+    // Fusionner le profil structuré (créé à l'inscription) comme fallback
+    // afin que les champs renseignés lors de l'onboarding soient toujours accessibles,
+    // même si onboardingData n'a jamais été écrit (ex: bannerUrl seul).
+    let base = {}
+    if (req.user.type === 'pro' && user?.proProfile) {
+      const p = user.proProfile
+      base = {
+        entreprise:   p.entreprise  || '',
+        ville:        p.ville       || '',
+        pays:         p.pays        || '',
+        tel:          p.tel         || '',
+        annee:        p.annee       || '',
+        rccm:         p.rccm        || '',
+        ncc:          p.ncc         || '',
+        secteurs:     p.secteurs    || [],
+        services:     p.services    || [],
+        logoColor:    p.logoColor   || '#1D1D1F',
+        logoShape:    p.logoShape   || 'Hexagone',
+        logoTypo:     p.logoTypo    || 'Gras',
+        logoFileUrl:  p.logoFileUrl || '',
+        slogan:       p.slogan      || '',
+        bio:          p.bio         || '',
+        projetsN:     p.projetsN    || '',
+        effectif:     p.effectif    || '',
+        cockpitTeam:  p.cockpitTeam || [],
+        portfolio:    p.portfolioFiles || [],
+        coverUrl:     p.coverUrl    || '',
+      }
+    } else if (req.user.type === 'fournisseur' && user?.fournisseurProfile) {
+      const p = user.fournisseurProfile
+      base = {
+        entreprise:  p.entreprise  || '',
+        ville:       p.ville       || '',
+        pays:        p.pays        || '',
+        tel:         p.tel         || '',
+        rccm:        p.rccm        || '',
+        ncc:         p.ncc         || '',
+        categories:  p.categories  || [],
+        zones:       p.zones       || [],
+        logoColor:   p.logoColor   || '#1D1D1F',
+        logoShape:   p.logoShape   || 'Hexagone',
+        logoFileUrl: p.logoFileUrl || '',
+        delaiLivraison: p.delaiLivraison || '',
+      }
+    } else if (req.user.type === 'client' && user?.clientProfile) {
+      const p = user.clientProfile
+      base = {
+        prenom:      p.prenom      || '',
+        nom:         p.nom         || '',
+        civilite:    p.civilite    || '',
+        tel:         p.tel         || '',
+        ville:       p.ville       || '',
+        pays:        p.pays        || '',
+        projectType: p.projectType || '',
+        location:    p.location    || '',
+        surface:     p.surface     || '',
+        budget:      p.budget      || '',
+        description: p.description || '',
+        situation:   p.situation   || '',
+        architecteEmail: p.architecteEmail || '',
+      }
+    }
+
+    // od prend le dessus sur base pour chaque champ présent (valeur non vide)
+    const merged = { ...base }
+    for (const [k, v] of Object.entries(od)) {
+      if (v === null || v === undefined) continue
+      if (typeof v === 'string' && v.trim() === '') continue
+      if (Array.isArray(v) && v.length === 0) continue
+      merged[k] = v
+    }
+
+    res.json(merged)
   } catch (e) {
     console.error('[USERS] GET /me/onboarding', e)
     res.status(500).json({ error: 'Erreur serveur' })
