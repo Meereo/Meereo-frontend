@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 // projectsRepository: selectors only — no seed
 import { ROLES, isAllowed, getProjectRole } from '../domain/permissions'
 import { computePhaseProgress } from '../domain/projectAggregates'
-import { api } from '../services/api/client'
+import { api, setInMemoryToken } from '../services/api/client'
 import { getSocket, disconnectSocket, onConversationUpdated, offConversationUpdated } from '../services/socket'
 
 // Palette de couleurs projet — sobres, premium, variées
@@ -150,23 +150,10 @@ function saveToStorage(store) {
     for (const key of PERSIST_KEYS) {
       if (store[key] !== undefined) toSave[key] = store[key]
     }
-    // Tronquer les images base64 volumineuses dans onboardingData
-    if (toSave.onboardingData) {
-      const safeOb = { ...toSave.onboardingData }
-      for (const k of ['photoUrl', 'logoFileUrl', 'coverUrl', 'bannerUrl']) {
-        if (typeof safeOb[k] === 'string' && safeOb[k].startsWith('data:') && safeOb[k].length > 500000) {
-          safeOb[k] = safeOb[k].slice(0, 200) + '...[truncated]'
-        }
-      }
-      toSave.onboardingData = safeOb
-    }
     localStorage.setItem(STORE_KEY, JSON.stringify(toSave))
   } catch (e) {
     console.error('[MEEREO] saveToStorage CRASHED:', e.message)
-    // Minimal fallback — au moins le token pour garder la session
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ _token: store._token }))
-    } catch { /* rien à faire */ }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ _onboardingByUser: store._onboardingByUser || {} })) } catch { /* rien à faire */ }
   }
 }
 
@@ -224,24 +211,20 @@ export function MeereoProvider({ children }) {
   const hydrationDone = useRef(false)
 
   // ═══ BOOT HYDRATION — PostgreSQL is the source of truth ═══
-  // On app load: verify session via /auth/me, then load all business data from API.
-  // localStorage serves only as a fast cache for immediate render.
+  // On app load: always verify session via /auth/me (cookie httpOnly),
+  // then load all business data from API.
   useEffect(() => {
     if (hydrationDone.current) return
     hydrationDone.current = true
 
-    const token = store._token
-    if (!token) {
-      // No token → no session → mark as hydrated (empty state)
-      setStore(prev => { const next = { ...prev, _hydrated: true }; saveToStorage(next); return next })
-      return
-    }
-
     ;(async () => {
       try {
-        // 1. Verify session — is the token still valid?
+        // 1. Verify session via cookie — token is refreshed from the response
         const me = await api.auth.me()
         if (!me || !me.id) throw new Error('Invalid session')
+
+        // Restaurer le token en mémoire (utilisé par Bearer pour WS/API)
+        if (me.token) setInMemoryToken(me.token)
 
         const user = {
           id: me.id, email: me.email, name: me.name, type: me.type,
@@ -292,6 +275,12 @@ export function MeereoProvider({ children }) {
             ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
             // Préférences utilisateur
             clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
+            // Acceptations CGV commission — depuis les préférences en DB
+            commissionAcceptances: Array.isArray(apiPrefs?.commissionAcceptances)
+              ? apiPrefs.commissionAcceptances
+              : (prev.commissionAcceptances || []),
+            // Token en mémoire (utilisé pour Bearer/Socket — pas en localStorage)
+            _token: me.token || prev._token,
             // Données d'onboarding — BD prioritaire, localStorage en fallback si BD vide
             onboardingData: Object.keys(apiOnboarding || {}).length > 0
               ? apiOnboarding
@@ -303,7 +292,8 @@ export function MeereoProvider({ children }) {
         console.log('[MEEREO] Hydration complete — user:', me.email, '— AOs:', apiAos.length, '— projects:', apiProjects.length)
       } catch (e) {
         console.warn('[MEEREO] Session expired or backend down:', e.message)
-        // Token invalid → clear session but keep business data
+        // Cookie invalid / réseau down → vider la session
+        setInMemoryToken(null)
         setStore(prev => { const next = { ...prev, _hydrated: true, user: null, _token: null }; saveToStorage(next); return next })
       }
     })()
@@ -379,7 +369,7 @@ export function MeereoProvider({ children }) {
   useEffect(() => {
     const interval = setInterval(async () => {
       const currentStore = storeRef.current
-      if (!currentStore._token || !currentStore.user) return
+      if (!currentStore.user) return
       try {
         const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers] = await Promise.all([
           api.aos.getAll().catch(() => null),
@@ -616,15 +606,8 @@ export function MeereoProvider({ children }) {
           type: res.user?.type || user.type,
           company: res.user?.company || user.company,
         }
-        // Écriture synchrone du token — React batchant les setState,
-        // saveToStorage n'aurait pas encore tourné quand addProduct est appelé
-        try {
-          const _raw = localStorage.getItem('meereo_store_v2')
-          const _st = JSON.parse(_raw || '{}')
-          _st._token = res.token
-          localStorage.setItem('meereo_store_v2', JSON.stringify(_st))
-        } catch (_) {}
-        // Mise à jour immédiate de storeRef (useEffect ne l'a pas encore fait)
+        // Écriture synchrone du token en mémoire
+        setInMemoryToken(res.token)
         storeRef.current = { ...storeRef.current, user: realUser, _token: res.token }
         updateStore(prev => {
           // Re-key _onboardingByUser from temp ID to real backend ID
@@ -671,13 +654,8 @@ export function MeereoProvider({ children }) {
             api.projects.getAll().catch(() => []),
             api.markets.getAll().catch(() => []),
           ])
-          // Écriture synchrone du token (login fallback)
-          try {
-            const _raw = localStorage.getItem('meereo_store_v2')
-            const _st = JSON.parse(_raw || '{}')
-            _st._token = loginRes.token
-            localStorage.setItem('meereo_store_v2', JSON.stringify(_st))
-          } catch (_) {}
+          // Écriture synchrone du token en mémoire (login fallback)
+          setInMemoryToken(loginRes.token)
           storeRef.current = { ...storeRef.current, user: realUser, _token: loginRes.token }
           updateStore(prev => {
             // Re-key _onboardingByUser from temp ID to real backend ID
@@ -978,6 +956,19 @@ export function MeereoProvider({ children }) {
     })
     sync(api.projectMembers.create({ projectId, userId, role: role || ROLES.PRO_MEMBER, userName: meta.userName || '', userEmail: meta.userEmail || '' }))
     log('PROJECT_MEMBER_ADDED', { projectId, userId, role })
+    // Ajouter le nouveau membre au groupe de discussion du projet (si existant)
+    const memberName = meta.userName || userId
+    if (memberName) {
+      updateStore(prev => ({
+        ...prev,
+        conversations: (prev.conversations || []).map(c => {
+          if (c.projectId === projectId && c.isGroup && !c.participants?.includes(memberName)) {
+            return { ...c, participants: [...(c.participants || []), memberName], dernier: memberName + ' a rejoint le groupe', time: 'Maintenant' }
+          }
+          return c
+        }),
+      }))
+    }
   }, [updateStore, log])
 
   const removeProjectMember = useCallback((projectId, userId) => {
@@ -1048,6 +1039,27 @@ export function MeereoProvider({ children }) {
     // Auto-membership: enregistrer le créateur comme membre du projet
     const creatorRole = currentUser?.type === 'client' ? ROLES.CLIENT : ROLES.PRO_ADMIN
     addProjectMember(p.id, currentUser?.id, creatorRole, { userName: currentUser?.name, userEmail: currentUser?.email })
+    // Créer automatiquement le groupe de discussion du projet
+    const groupConvId = 'conv_grp_' + p.id
+    const groupConv = {
+      id: groupConvId,
+      nom: p.name,
+      type: 'equipe',
+      avatar: (p.name || '?')[0].toUpperCase(),
+      color: p.color || '#191c1d',
+      isGroup: true,
+      projectId: p.id,
+      participants: [currentUser?.name || 'Vous'],
+      invited: false,
+      dernier: 'Groupe créé',
+      time: 'Maintenant',
+      unread: 0,
+      msgs: [],
+    }
+    updateStore(prev => ({
+      ...prev,
+      conversations: [groupConv, ...(prev.conversations || []).filter(c => c.id !== groupConvId)],
+    }))
     // Auto-invite si email client fourni
     if (data.clientEmail) {
       addNotif('Invitation envoyée à ' + data.clientEmail + ' pour le projet « ' + p.name + ' »', 'blue', null, 'projets')
@@ -2359,10 +2371,13 @@ export function MeereoProvider({ children }) {
   const acceptCommissionTerms = useCallback(() => {
     const userId = storeRef.current.user?.id
     if (!userId) return
+    const updated = [...(storeRef.current.commissionAcceptances || []), { userId, acceptedAt: new Date().toISOString() }]
     updateStore(prev => ({
       ...prev,
-      commissionAcceptances: [...(prev.commissionAcceptances || []), { userId, acceptedAt: new Date().toISOString() }],
+      commissionAcceptances: updated,
     }))
+    // Persister en DB dans les préférences utilisateur
+    api.usersApi.updatePrefs({ commissionAcceptances: updated }).catch(() => {})
     log('COMMISSION_TERMS_ACCEPTED', { userId })
     showToast('Conditions de mise en relation acceptées', 'green')
   }, [updateStore, log, showToast])

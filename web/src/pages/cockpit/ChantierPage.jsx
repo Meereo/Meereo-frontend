@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { HardHat, Ruler, ClipboardList, Wrench, Package, Sofa, CheckCircle2, Check, Play, Circle, Star } from 'lucide-react'
 import { CHANTIER_PHASES, ANNUAIRE_PLATEFORME } from '../../data/chantier'
 import { getUserProjects } from '../../domain/projectsRepository'
@@ -57,6 +57,64 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
 
   const proj = allChantierProjets.find(p => p.id === selProjId)
 
+  // ═══ TÂCHES RÉELLES DU PROJET (backend) ═══
+  const [projTasks, setProjTasks] = useState([])
+
+  // Recharger les tâches dès que le projet change
+  useEffect(() => {
+    if (!selProjId) { setProjTasks([]); return }
+    api.tasks.getByProject(selProjId).then(t => setProjTasks(Array.isArray(t) ? t : [])).catch(() => {})
+  }, [selProjId])
+
+  // Fusionner tâches backend + tâches locales (créées optimistiquement via acceptOffer)
+  const allProjTasks = useMemo(() => {
+    const fromStore = (store.tasks || []).filter(t => t.projectId === selProjId)
+    const backendIds = new Set(projTasks.map(t => t.id))
+    const localOnly = fromStore.filter(t => !backendIds.has(t.id))
+    return [...projTasks, ...localOnly]
+  }, [projTasks, store.tasks, selProjId])
+
+  // Marchés liés au projet sélectionné
+  const projMarkets = useMemo(() =>
+    (store.markets || []).filter(m => m.projectId === selProjId),
+  [store.markets, selProjId])
+
+  // Tâches groupées par marché
+  const tasksByMarket = useMemo(() => {
+    if (allProjTasks.length === 0) return []
+    const marketMap = {}
+    projMarkets.forEach(m => { marketMap[m.id] = { market: m, tasks: [] } })
+    const unassigned = { market: null, tasks: [] }
+    allProjTasks.forEach(t => {
+      if (t.marketId && marketMap[t.marketId]) marketMap[t.marketId].tasks.push(t)
+      else unassigned.tasks.push(t)
+    })
+    const result = Object.values(marketMap).filter(g => g.tasks.length > 0)
+    if (unassigned.tasks.length > 0) result.push(unassigned)
+    return result
+  }, [allProjTasks, projMarkets])
+
+  // Mise à jour statut d'une tâche réelle — optimiste + sync API
+  const cycleRealTask = useCallback((task) => {
+    const cycle = { todo: 'in_progress', in_progress: 'done', done: 'todo', pending: 'in_progress', active: 'done' }
+    const newStatus = cycle[task.status] || 'in_progress'
+    const optimistic = t => t.id === task.id ? { ...t, status: newStatus } : t
+    setProjTasks(prev => prev.map(optimistic))
+    updateStore(prev => ({ ...prev, tasks: (prev.tasks || []).map(optimistic) }))
+    api.tasks.update(task.id, { status: newStatus }).catch(() => {})
+    // Recalculer l'avancement du projet
+    const updated = allProjTasks.map(optimistic)
+    const done = updated.filter(t => t.status === 'done' || t.status === 'completed').length
+    const pct = updated.length ? Math.round(done / updated.length * 100) : 0
+    if (proj?.id && pct !== (proj.avancement || 0)) {
+      updateStore(prev => ({
+        ...prev,
+        projects: (prev.projects || []).map(pr => pr.id === proj.id ? { ...pr, avancement: pct } : pr)
+      }))
+      api.projects.update(proj.id, { avancement: pct }).catch(() => {})
+    }
+  }, [allProjTasks, proj, updateStore])
+
   // Task states per project — initialized from defaults + store
   const [taskStates, setTaskStates] = useState(() => {
     const init = {}
@@ -110,12 +168,16 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
 
   const togglePhase = (i) => setOpenPhases(prev => ({ ...prev, [i]: !prev[i] }))
 
-  // Counts — synced with project avancement
-  const totalTasks = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.length, 0)
-  const doneTasks = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getTaskState(t.id) === 'done').length, 0)
-  const activeTasks = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getTaskState(t.id) === 'active').length, 0)
+  // KPI counts — prioritise les tâches réelles backend si disponibles
+  const totalTasks = allProjTasks.length > 0 ? allProjTasks.length : CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.length, 0)
+  const doneTasks = allProjTasks.length > 0
+    ? allProjTasks.filter(t => t.status === 'done' || t.status === 'completed').length
+    : CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getTaskState(t.id) === 'done').length, 0)
+  const activeTasks = allProjTasks.length > 0
+    ? allProjTasks.filter(t => t.status === 'in_progress' || t.status === 'active').length
+    : CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getTaskState(t.id) === 'active').length, 0)
   const blockedTasks = 0
-  const globalPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0
+  const globalPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : (proj?.avancement || 0)
 
   // Sync stored avancement on mount / project change if task states already exist
   useEffect(() => {
@@ -353,6 +415,59 @@ export default function ChantierPage({ openModal, showToast, onNavigate }) {
                   </div>
                 )
               })()}
+
+              {/* TÂCHES CONTRACTUELLES (depuis le backend) */}
+              {tasksByMarket.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 10 }}>Tâches contractuelles</div>
+                  {tasksByMarket.map((group, gi) => {
+                    const mkt = group.market
+                    const mktDone = group.tasks.filter(t => t.status === 'done' || t.status === 'completed').length
+                    const mktPct = group.tasks.length ? Math.round(mktDone / group.tasks.length * 100) : 0
+                    return (
+                      <div key={gi} className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
+                        {/* En-tête marché */}
+                        {mkt && (
+                          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--s2)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <HardHat size={14} color="#fff" />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.lot || mkt.titre || 'Marché'}</div>
+                              <div style={{ fontSize: 10.5, color: 'var(--t3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.entreprise || ''}</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div className="prog-track" style={{ width: 60, height: 5 }}>
+                                <div className="prog-fill" style={{ width: mktPct + '%' }} />
+                              </div>
+                              <span style={{ fontSize: 11, fontWeight: 700 }}>{mktPct}%</span>
+                            </div>
+                          </div>
+                        )}
+                        {/* Liste de tâches */}
+                        {group.tasks.map((t, ti) => {
+                          const isDone = t.status === 'done' || t.status === 'completed'
+                          const isActive = t.status === 'in_progress' || t.status === 'active'
+                          const stBg = isDone ? 'var(--tx)' : isActive ? 'var(--tx)' : 'rgba(0,0,0,.04)'
+                          const stColor = isDone || isActive ? '#fff' : 'var(--t4)'
+                          return (
+                            <div key={t.id || ti} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: ti < group.tasks.length - 1 ? '1px solid var(--border)' : 'none', borderLeft: isActive ? '3px solid var(--tx)' : '3px solid transparent', background: isActive ? 'rgba(0,0,0,.02)' : undefined }}>
+                              <button onClick={() => cycleRealTask(t)} style={{ width: 28, height: 28, borderRadius: 8, background: stBg, color: stColor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s' }}>
+                                {isDone ? <Check size={11}/> : isActive ? <Play size={11}/> : <Circle size={11}/>}
+                              </button>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12.5, fontWeight: isDone ? 400 : 600, color: isDone ? 'var(--t3)' : 'var(--tx)', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                                {t.description && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description}</div>}
+                              </div>
+                              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: stBg, color: stColor, flexShrink: 0 }}>{isDone ? 'Terminé' : isActive ? 'En cours' : 'À faire'}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
               {/* Phase progress bars */}
               <div className="card" style={{ padding: 18, marginBottom: 20 }}>

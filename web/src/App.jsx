@@ -16,7 +16,7 @@ import { useMeereo } from './hooks/useMeereoStore'
 // Hydration gate: wait for API session check before routing
 function HydrationGate({ children }) {
   const { store } = useMeereo()
-  if (!store._hydrated && store._token) {
+  if (!store._hydrated) {
     return <LoadingSpinner />
   }
   return children
@@ -35,8 +35,8 @@ const LoadingSpinner = () => (
 function RoleGuard({ allowedRole, children }) {
   const { store } = useMeereo()
   const user = store.user
-  // Token présent mais user pas encore chargé — hydration en cours, attendre
-  if (!user && store._token) return <LoadingSpinner />
+  // Hydration pas encore terminée — attendre avant de rediriger
+  if (!user && !store._hydrated) return <LoadingSpinner />
   if (!user) return <Navigate to="/onboarding" replace />
   if (user.type !== allowedRole) {
     const dest = user.type === 'pro' ? '/cockpit' : user.type === 'client' ? '/client' : user.type === 'fournisseur' ? '/fournisseur' : '/onboarding'
@@ -49,8 +49,8 @@ function RoleGuard({ allowedRole, children }) {
 function OnboardingGuard({ children }) {
   const { store } = useMeereo()
   const user = store.user
-  // Token présent mais user pas encore chargé — attendre l'hydration avant de rediriger
-  if (!user && store._token) return <LoadingSpinner />
+  // Hydration pas encore terminée — attendre avant de rediriger
+  if (!user && !store._hydrated) return <LoadingSpinner />
   if (user) {
     const dest = user.type === 'pro' ? '/cockpit' : user.type === 'client' ? '/client' : user.type === 'fournisseur' ? '/fournisseur' : '/cockpit'
     return <Navigate to={dest} replace />

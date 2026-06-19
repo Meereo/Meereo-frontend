@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
-import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive } from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Lock, Building2, Send, User } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -85,16 +85,20 @@ export default function OffresPage({ showToast, openModal, onNavigate }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ flexShrink: 0 }}>
-        <DSPageHeader title="Offres & Contrats" subtitle={`${total} offres · ${attente} en attente · ${acceptees} contrats`}>
+        <DSPageHeader
+          title={isClient ? 'Offres reçues & Contrats' : 'Offres envoyées & Contrats'}
+          subtitle={isClient
+            ? `${total} offres · ${attente} en attente · ${acceptees} contrats`
+            : `${total} offres envoyées · ${attente} en attente · ${acceptees} acceptées`}>
           <button className="btn btn-sm" onClick={() => { exportCSV(allOffres.map(o => ({ entreprise: o.entreprise, lot: o.lot, montant: o.montant, statut: o.statut, delai: o.delai, soumis: o.soumis })), 'offres_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
-          <button className="btn btn-primary btn-sm" onClick={() => openModal('newOffre')}>+ Nouvelle offre</button>
+          {isClient && <button className="btn btn-primary btn-sm" onClick={() => openModal('newOffre')}>+ Nouvelle offre</button>}
         </DSPageHeader>
 
         {/* Onglets principaux */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 0 }}>
           {[
-            { key: 'offres', label: 'Offres reçues', icon: <ClipboardList size={13}/>, count: total },
-            { key: 'contrats', label: 'Contrats Validés', icon: <FileText size={13}/>, count: acceptees },
+            { key: 'offres', label: isClient ? 'Offres reçues' : 'Offres envoyées', icon: isClient ? <ClipboardList size={13}/> : <Send size={13}/>, count: total },
+            { key: 'contrats', label: isClient ? 'Contrats validés' : 'Contrats obtenus', icon: <FileText size={13}/>, count: acceptees },
           ].map(t => (
             <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, fontWeight: mainTab === t.key ? 700 : 500, color: mainTab === t.key ? 'var(--tx)' : 'var(--t3)', borderBottom: mainTab === t.key ? '2px solid var(--tx)' : '2px solid transparent', marginBottom: -1, transition: 'all .15s' }}>
               {t.icon} {t.label}
@@ -313,58 +317,101 @@ export default function OffresPage({ showToast, openModal, onNavigate }) {
                 )}
               </div>
 
-              {/* Profil du professionnel */}
-              {(() => {
-                const inter = INTERVENANTS_DATA.find(i => i.nom === selected.entreprise)
-                const ob = store.onboardingData || {}
-                // Try to find supplier in store.users
-                const supplierUser = (store.users || []).find(u => u.id === (selected.userId || selected.supplierId))
-                const ville = inter?.ville || supplierUser?.ville || ''
-                const metier = selected.lot || inter?.role || ''
-                return (
+              {/* Profil du prestataire — masqué si l'offre est en attente et que je suis le client (AO owner) */}
+              {isClient ? (
+                selected.statut === OFFER_STATUS.PENDING ? (
+                  // Profil masqué : le client ne voit que le nom de l'entreprise avant acceptation
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du professionnel</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Entreprise candidate</div>
                     <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{selected.entreprise}</div>
-                            {metier && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{metier}{ville ? ' · ' + ville : ''}</div>}
-                          </div>
-                          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Building2 size={18} color="var(--t4)" />
                         </div>
-                        <div className="rg-3" style={{ gap: 8 }}>
-                          <div style={{ padding: '8px 10px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800 }}>{inter?.projets || selected.nbRef || 0}</div>
-                            <div style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600 }}>Projets</div>
-                          </div>
-                          <div style={{ padding: '8px 10px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800 }}>{inter?.note ? inter.note + '/5' : '—'}</div>
-                            <div style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600 }}>Note</div>
-                          </div>
-                          <div style={{ padding: '8px 10px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800 }}>{inter?.nbAvis || 0}</div>
-                            <div style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600 }}>Avis</div>
-                          </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700 }}>{selected.entreprise}</div>
+                          {selected.supplierRole && <span style={getRoleBadgeStyle(selected.supplierRole)}>{getRoleLabel(selected.supplierRole)}</span>}
                         </div>
-                        {(selected.certifs?.length > 0 || inter?.specialite) && (
-                          <div style={{ fontSize: 11, color: 'var(--t3)' }}>
-                            {inter?.specialite && <span>{inter.specialite}</span>}
-                            {selected.certifs?.length > 0 && <span> · {selected.certifs.join(', ')}</span>}
-                          </div>
-                        )}
-                        <button className="btn btn-sm" style={{ alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }} onClick={() => {
-                          // Navigate to pro profile if available
-                          if (selected.userId || selected.supplierId) {
-                            window.dispatchEvent(new CustomEvent('meereo-navigate', { detail: 'fournisseurs' }))
-                          }
-                          showToast && showToast('Ouverture du profil...')
-                        }}>Voir le profil professionnel →</button>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(0,0,0,.03)', borderRadius: 8, border: '1px dashed var(--border-card)' }}>
+                        <Lock size={13} color="var(--t4)" />
+                        <span style={{ fontSize: 12, color: 'var(--t3)' }}>Le profil complet du prestataire sera révélé après acceptation de l'offre</span>
                       </div>
                     </div>
                   </div>
+                ) : (
+                  // Profil complet — offre acceptée ou refusée
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du prestataire</div>
+                    <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
+                      {(() => {
+                        const s = selected.supplier
+                        const ob = s?.onboardingData || {}
+                        const ville = ob.ville || s?.company || ''
+                        const metier = selected.lot || ob.secteurs?.[0] || ''
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{ob.entreprise || s?.company || selected.entreprise}</div>
+                                {metier && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{metier}{ville ? ' · ' + ville : ''}</div>}
+                              </div>
+                              {ob.rccm && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+                            </div>
+                            {ob.bio && <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6 }}>{ob.bio}</div>}
+                            {ob.services?.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                {ob.services.slice(0, 4).map((sv, i) => <span key={i} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t3)' }}>{sv}</span>)}
+                              </div>
+                            )}
+                            {(ob.email || ob.tel) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>📧 {ob.email}</div>}
+                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>📱 {ob.tel}</div>}
+                              </div>
+                            )}
+                            {s?.publicId && (
+                              <button className="btn btn-sm" style={{ alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }}
+                                onClick={() => window.open('/pro?uuid=' + s.publicId, '_blank')}>Voir le profil →</button>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
                 )
-              })()}
+              ) : (
+                // Vue pro : affiche les infos du client si l'offre est acceptée
+                selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Informations du client</div>
+                    <div style={{ padding: '16px 18px', background: 'rgba(52,199,89,.04)', borderRadius: 12, border: '1px solid rgba(52,199,89,.15)' }}>
+                      {(() => {
+                        const owner = selected.aoOwner
+                        const ob = owner?.onboardingData || {}
+                        const initials = (ob.prenom || owner.name || '?')[0].toUpperCase()
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                              <div>
+                                <div style={{ fontSize: 13, fontWeight: 700 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
+                                {ob.ville && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ob.ville}</div>}
+                              </div>
+                            </div>
+                            {(ob.email || ob.tel) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>📧 {ob.email}</div>}
+                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>📱 {ob.tel}</div>}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                ) : null
+              )}
 
               {/* Appel d'offres lié */}
               {selected.aoId && (() => {
@@ -398,21 +445,29 @@ export default function OffresPage({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* Boutons décision */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                {selected.statut === OFFER_STATUS.PENDING && (
-                  <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => decide(selected.id, 'refusee')}>Refuser</button>
-                )}
-                {selected.statut === OFFER_STATUS.PENDING && selected.supplierId !== store.user?.id && (
-                  <button className="btn" style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--t2)', border: '1px solid var(--border-card)', fontWeight: 500, fontSize: 12 }} onClick={() => {
-                    setInfoModal(selected)
-                    setInfoMessage('')
-                  }}>Demander info</button>
-                )}
-                {selected.statut !== OFFER_STATUS.ACCEPTED && (
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontWeight: 700, fontSize: 13 }} onClick={() => decide(selected.id, 'acceptee')}>Accepter l'offre</button>
-                )}
-              </div>
+              {/* Boutons décision — uniquement pour le propriétaire de l'AO (client/pro qui a publié) */}
+              {isClient ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {selected.statut === OFFER_STATUS.PENDING && (
+                    <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => decide(selected.id, 'refusee')}>Refuser</button>
+                  )}
+                  {selected.statut === OFFER_STATUS.PENDING && (
+                    <button className="btn" style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--t2)', border: '1px solid var(--border-card)', fontWeight: 500, fontSize: 12 }} onClick={() => { setInfoModal(selected); setInfoMessage('') }}>Demander info</button>
+                  )}
+                  {selected.statut !== OFFER_STATUS.ACCEPTED && (
+                    <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontWeight: 700, fontSize: 13 }} onClick={() => decide(selected.id, 'acceptee')}>Accepter l'offre</button>
+                  )}
+                </div>
+              ) : (
+                // Vue pro — statut de l'offre envoyée
+                <div style={{ padding: '14px 18px', borderRadius: 12, background: selected.statut === OFFER_STATUS.ACCEPTED ? 'rgba(52,199,89,.06)' : selected.statut === OFFER_STATUS.REJECTED ? 'rgba(220,38,38,.05)' : 'rgba(0,0,0,.03)', border: '1px solid', borderColor: selected.statut === OFFER_STATUS.ACCEPTED ? 'rgba(52,199,89,.15)' : selected.statut === OFFER_STATUS.REJECTED ? 'rgba(220,38,38,.1)' : 'var(--border-card)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {selected.statut === OFFER_STATUS.ACCEPTED
+                    ? <><CheckCircle2 size={16} color="var(--ok)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Offre acceptée — vous avez obtenu ce marché !</span></>
+                    : selected.statut === OFFER_STATUS.REJECTED
+                    ? <><XCircle size={16} color="var(--err)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--err)' }}>Offre non retenue</span></>
+                    : <><Clock size={16} color="var(--t4)" /><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>En attente de décision du client</span></>}
+                </div>
+              )}
             </div>
           )}
         </div>

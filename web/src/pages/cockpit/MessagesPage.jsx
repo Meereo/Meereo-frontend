@@ -194,6 +194,12 @@ export default function MessagesPage({ showToast }) {
   const [input, setInput] = useState('')
   const [search, setSearch] = useState('')
 
+  // Deep-link depuis ProfilApp : ouvrir directement la bonne conversation
+  useEffect(() => {
+    const convId = sessionStorage.getItem('meereo_open_conv')
+    if (convId) { sessionStorage.removeItem('meereo_open_conv'); setActiveId(convId) }
+  }, [])
+
   const [showNewConv, setShowNewConv] = useState(false)
   const [newConvSearch, setNewConvSearch] = useState('')
   const [showNewGroup, setShowNewGroup] = useState(false)

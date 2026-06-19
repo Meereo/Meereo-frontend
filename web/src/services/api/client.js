@@ -14,18 +14,21 @@ const API_BASE =
     ? import.meta.env.VITE_API_URL
     : '/api'  // fallback proxy (Vite dev server)
 
+// Token JWT gardé en mémoire uniquement (plus en localStorage).
+// Il est restauré depuis la réponse de GET /auth/me à chaque hydration.
+let _inMemoryToken = null
+
+/** Appelé par useMeereoStore après login/hydration pour mettre le token en mémoire. */
+export function setInMemoryToken(token) {
+  _inMemoryToken = token || null
+}
+
 /**
- * Lit le JWT stocké dans le store Meereo (localStorage).
+ * Retourne le JWT courant (uniquement depuis la mémoire).
  * @returns {string|null}
  */
 function getStoredToken() {
-  try {
-    const raw = localStorage.getItem('meereo_store_v2')
-    if (!raw) return null
-    return JSON.parse(raw)?._token || null
-  } catch {
-    return null
-  }
+  return _inMemoryToken
 }
 
 /**

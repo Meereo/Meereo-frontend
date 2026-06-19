@@ -163,6 +163,15 @@ export default function CockpitApp() {
     return () => window.removeEventListener('meereo-navigate', handler)
   }, [])
 
+  // Deep-link depuis ProfilApp : sessionStorage meereo_nav_page
+  useEffect(() => {
+    const page = sessionStorage.getItem('meereo_nav_page')
+    if (page && PAGES[page]) {
+      sessionStorage.removeItem('meereo_nav_page')
+      setActivePage(page)
+    }
+  }, [])
+
   const PageComponent = PAGES[activePage] || Dashboard
 
   return (

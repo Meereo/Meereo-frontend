@@ -40,7 +40,12 @@ export function useMergedData() {
       supplierRole: o.supplierRole || null,
       soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
       lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: [],
-      message: o.message || o.note || '', technique: '', note: o.note || ''
+      message: o.message || o.note || '', technique: '', note: o.note || '',
+      // Données réelles du prestataire (depuis le backend)
+      supplier: o.supplier || null,
+      // Données du propriétaire de l'AO (visible après acceptation)
+      aoOwner: o.ao?.owner || null,
+      aoOwnerUserId: o.ao?.ownerUserId || null,
     }))
   }, [store.offerStatuts, store.offers])
 

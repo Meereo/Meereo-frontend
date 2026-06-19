@@ -88,10 +88,11 @@ const ProAvatar = ({ nom, size }) => {
 // ═══ Composants Paramètres Client (state contrôlé, persistance réelle) ═══
 
 function ClientProfileForm({ ob, store, updateStore, showToast }) {
-  const [prenom, setPrenom] = useState(ob.prenom || '')
-  const [nom, setNom] = useState(ob.nom || '')
+  const _nameParts = (store.user?.name || '').trim().split(' ').filter(Boolean)
+  const [prenom, setPrenom] = useState(ob.prenom || _nameParts[0] || '')
+  const [nom, setNom] = useState(ob.nom || _nameParts.slice(1).join(' ') || '')
   const [email, setEmail] = useState(ob.email || store.user?.email || '')
-  const [tel, setTel] = useState(ob.tel || '')
+  const [tel, setTel] = useState(ob.tel || store.user?.phone || '')
   const [ville, setVille] = useState(ob.ville || 'Abidjan')
   const [saved, setSaved] = useState(false)
 
@@ -227,6 +228,12 @@ export default function ClientApp() {
     return () => window.removeEventListener('meereo-navigate', handler)
   }, [])
 
+  // Deep-link depuis ProfilApp : sessionStorage meereo_nav_page
+  useEffect(() => {
+    const pg = sessionStorage.getItem('meereo_nav_page')
+    if (pg) { sessionStorage.removeItem('meereo_nav_page'); setPage(pg) }
+  }, [])
+
   // Refresh projects / markets / members on mount so the client sees projects
   // that were auto-created from an accepted offer (possibly by the pro or by them)
   useEffect(() => {
@@ -299,13 +306,13 @@ export default function ClientApp() {
   // All client projects — filtered by ownership (client sees only their own)
   const clientProjects = useMemo(() => {
     const userId = store.user?.id
-    const userEmail = store.user?.email || ob.email
+    const userEmail = (store.user?.email || ob.email || '').toLowerCase().trim()
     return (store.projects || [])
       .filter(p => {
         // Client sees projects where they are owner, clientId, or clientEmail matches
         if (p.ownerId === userId) return true
         if (p.clientId === userId) return true
-        if (userEmail && p.clientEmail === userEmail) return true
+        if (userEmail && (p.clientEmail || '').toLowerCase().trim() === userEmail) return true
         // Also show projects from accepted markets (auto-created)
         if (p.sourceAoId) {
           const ao = (store.aos || []).find(a => a.id === p.sourceAoId)

@@ -654,7 +654,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
       {/* ═══ PROACTIVE SUGGESTION BUBBLE ═══ */}
       {!kaiOpen && proactiveSuggestion && (
         <div className="kai-suggestion" style={{
-          position: 'fixed', bottom: 80, right: 20, zIndex: 9998,
+          position: 'fixed', bottom: 80, right: 20, zIndex: 1300,
           maxWidth: 340, background: '#fff', borderRadius: 16,
           boxShadow: '0 8px 40px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06)',
           border: '1px solid rgba(0,0,0,.06)',

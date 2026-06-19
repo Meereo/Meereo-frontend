@@ -68,6 +68,7 @@ const SITUATIONS = [
   {icon:<Search size={18}/>,bg:'rgba(234,88,12,.07)',title:"Je n'ai pas encore d'architecte",desc:"La plateforme va m'aider à trouver un architecte via un appel d'offres."},
   {icon:<CheckCircle2 size={18}/>,bg:'rgba(22,163,74,.07)',title:"J'ai déjà un architecte",desc:"Mon architecte est sur Meereo ou je peux l'inviter. Nous allons directement créer l'équipe de mission."},
   {icon:<Trophy size={18}/>,bg:'rgba(37,99,235,.07)',title:"Je veux une solution clé en main",desc:"Meereo coordonne l'ensemble — architecte, ingénieurs, constructeurs — je valide et suis l'avancement."},
+  {icon:<Eye size={18}/>,bg:'rgba(99,102,241,.07)',title:"Je souhaite seulement découvrir la plateforme",desc:"Explorez les fonctionnalités de Meereo sans engagement. Vous pourrez créer un projet quand vous le souhaitez."},
 ]
 const CLIENT_PROC = [
   {num:'1',color:'#EA580C',title:"Publiez votre Appel d'Offres",desc:"Votre AO est diffusé sur la Bourse Meereo. Architectes, ingénieurs et constructeurs qualifiés répondent."},
@@ -115,12 +116,14 @@ function logoShapeStyle(shape) {
     case 'Cercle': return { borderRadius: '50%' }
     case 'Carré': return { borderRadius: '4px' }
     case 'Diamant': return { borderRadius: '6px', transform: 'rotate(45deg)' }
-    case 'Triangle': return { borderRadius: '4px' }
+    case 'Triangle': return { clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', borderRadius: 0 }
     case 'Hexagone': default: return { borderRadius: '12px' }
   }
 }
 function logoContentStyle(shape) {
-  return shape === 'Diamant' ? { transform: 'rotate(-45deg)', display: 'block' } : {}
+  if (shape === 'Diamant') return { transform: 'rotate(-45deg)', display: 'block' }
+  if (shape === 'Triangle') return { display: 'block', transform: 'translateY(30%)' }
+  return {}
 }
 const LOGO_TYPOS = ['Gras','Serif','Léger']
 
@@ -182,6 +185,40 @@ const FRN_ZONE_SECTIONS = [
 ]
 
 const PAYS = ["Côte d'Ivoire","Sénégal","Mali","Burkina Faso","Guinée","Cameroun","Bénin","Togo","Niger","France","Autre"]
+
+const VILLES_CI = [
+  'Abidjan','Plateau','Cocody','Marcory','Yopougon','Treichville','Abobo','Adjamé',
+  'Koumassi','Port-Bouët','Bingerville','Anyama','Songon',
+  'Bouaké','Yamoussoukro','Daloa','San-Pédro','Korhogo','Man','Gagnoa','Divo',
+  'Abengourou','Grand-Bassam','Dabou','Jacqueville','Tiassalé','Agboville',
+  'Adzopé','Aboisso','Bonoua','Toumodi','Dimbokro','Bondoukou','Katiola',
+  'Ferkessédougou','Odienné','Séguéla','Mankono','Soubré','Sassandra','Tabou',
+  'Guiglo','Duékoué','Danané','Issia',
+]
+
+const PHONE_PREFIXES = [
+  { code: '+225', flag: '🇨🇮', country: "Côte d'Ivoire" },
+  { code: '+221', flag: '🇸🇳', country: 'Sénégal' },
+  { code: '+223', flag: '🇲🇱', country: 'Mali' },
+  { code: '+226', flag: '🇧🇫', country: 'Burkina Faso' },
+  { code: '+224', flag: '🇬🇳', country: 'Guinée' },
+  { code: '+237', flag: '🇨🇲', country: 'Cameroun' },
+  { code: '+229', flag: '🇧🇯', country: 'Bénin' },
+  { code: '+228', flag: '🇹🇬', country: 'Togo' },
+  { code: '+227', flag: '🇳🇪', country: 'Niger' },
+  { code: '+234', flag: '🇳🇬', country: 'Nigéria' },
+  { code: '+233', flag: '🇬🇭', country: 'Ghana' },
+  { code: '+212', flag: '🇲🇦', country: 'Maroc' },
+  { code: '+216', flag: '🇹🇳', country: 'Tunisie' },
+  { code: '+213', flag: '🇩🇿', country: 'Algérie' },
+  { code: '+20',  flag: '🇪🇬', country: 'Égypte' },
+  { code: '+243', flag: '🇨🇩', country: 'Congo RDC' },
+  { code: '+33',  flag: '🇫🇷', country: 'France' },
+  { code: '+32',  flag: '🇧🇪', country: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', country: 'Suisse' },
+  { code: '+1',   flag: '🇺🇸', country: 'USA / Canada' },
+  { code: '+44',  flag: '🇬🇧', country: 'Royaume-Uni' },
+]
 
 /* ══════════════════════════════════════════════════════════
    SVG Components
@@ -307,7 +344,7 @@ export default function OnboardingApp() {
 
   const defaultForm = {
     photo:null, photoUrl:null,
-    prenom:'', nom:'', email:'', tel:'', ville:'Abidjan', pays:"Côte d'Ivoire", password:'',
+    prenom:'', nom:'', email:'', tel:'', telPrefix:'+225', ville:'Abidjan', pays:"Côte d'Ivoire", password:'', passwordConfirm:'',
     // Client
     projectType:null, location:'', surface:'', budget:'', description:'',
     situation:null, architecteEmail:'',
@@ -404,11 +441,15 @@ export default function OnboardingApp() {
     if (!form.password || form.password.length < 8) {
       showToast('Le mot de passe doit contenir au moins 8 caractères', 'red'); return
     }
+    if (form.passwordConfirm && form.password !== form.passwordConfirm) {
+      showToast('Les mots de passe ne correspondent pas', 'red'); return
+    }
 
     // 1. Create user + save ALL onboarding data in ONE atomic updateStore
     // IMPORTANT: strip File objects — they can't be JSON.stringify'd and would crash saveToStorage
     const fullData = {
       ...form,
+      tel: ((form.telPrefix || '+225').trim() + ' ' + (form.tel || '').trim()).trim(),
       userType,
       cockpitTeam: form.team || [],
       portfolio: (form.portfolioFiles || []).map((url, i) => ({ img: url, cap: form.portfolio?.[i]?.cap || 'Réalisation ' + (i+1), feat: i === 0 })),
@@ -844,9 +885,15 @@ export default function OnboardingApp() {
                     <div className="wiz-section-divider"><span className="wiz-section-label">Votre structure</span></div>
                     <Field label="Nom de la structure" required><input className="ob-input-v2" placeholder="Ex: Traoré Architecture & Design" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} /></Field>
                     <div className="ob-inp-row">
-                      <Field label="Ville" required><input className="ob-input-v2" placeholder="Abidjan" value={form.ville} onChange={e=>set('ville',e.target.value)} /></Field>
+                      <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>{set('pays',e.target.value);set('ville','')}}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
                       <Field label="Fondée en"><input className="ob-input-v2" type="number" placeholder="2018" min="1950" max="2026" value={form.annee} onChange={e=>set('annee',e.target.value)} /></Field>
                     </div>
+                    <Field label="Ville" required>
+                      {form.pays === "Côte d'Ivoire"
+                        ? <select className="ob-input-v2 ob-select" value={form.ville} onChange={e=>set('ville',e.target.value)}><option value="">— Choisir une ville —</option>{VILLES_CI.map(v=><option key={v}>{v}</option>)}</select>
+                        : <input className="ob-input-v2" placeholder="Votre ville" value={form.ville} onChange={e=>set('ville',e.target.value)} />
+                      }
+                    </Field>
 
                     {/* Section: Activité */}
                     <div className="wiz-section-divider"><span className="wiz-section-label">Activité</span></div>
@@ -874,31 +921,40 @@ export default function OnboardingApp() {
                       </Field>
                     </div>
                     <div className="wiz-info-card">
-                      <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.65}}>Le RCCM et le N° Contribuable permettent de vérifier votre structure. Données chiffrées et conformes RGPD.</div>
+                      <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.65}}>Le RCCM et le N° Contribuable sont uniques par entreprise et liés à un seul compte Meereo. Données chiffrées et conformes RGPD.</div>
                     </div>
 
                     {/* Section: Contact */}
                     <div className="wiz-section-divider"><span className="wiz-section-label">Coordonnées</span></div>
-                    <div className="ob-inp-row">
-                      <Field label="Email professionnel" required><input className="ob-input-v2" type="email" placeholder="contact@structure.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
-                      <Field label="Téléphone" required><input className="ob-input-v2" type="tel" placeholder="+225 07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} /></Field>
-                    </div>
+                    <Field label="Email professionnel" required><input className="ob-input-v2" type="email" placeholder="contact@structure.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
+                    <Field label="Téléphone" required>
+                      <div style={{display:'flex',gap:6}}>
+                        <select className="ob-input-v2 ob-select" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:116,flexShrink:0,padding:'0 6px',fontSize:12}}>
+                          {PHONE_PREFIXES.map(p=><option key={p.code} value={p.code}>{p.flag} {p.code} — {p.country}</option>)}
+                        </select>
+                        <input className="ob-input-v2" type="tel" placeholder="07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} />
+                      </div>
+                    </Field>
 
                     {/* Section: Sécurité */}
                     <div className="wiz-section-divider"><span className="wiz-section-label">Sécurité</span></div>
-                    <div className="ob-inp-row">
-                      <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>set('pays',e.target.value)}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
-                      <Field label="Mot de passe" required><input className="ob-input-v2" type="password" placeholder="8 caractères minimum" value={form.password} onChange={e=>set('password',e.target.value)} /></Field>
-                    </div>
+                    <Field label="Mot de passe" required><input className="ob-input-v2" type="password" placeholder="8 caractères minimum" value={form.password} onChange={e=>set('password',e.target.value)} /></Field>
+                    <Field label="Confirmer le mot de passe" required>
+                      <input className="ob-input-v2" type="password" placeholder="Répéter le mot de passe" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} style={form.passwordConfirm && form.password !== form.passwordConfirm ? {borderColor:'#ba1a1a'} : undefined} />
+                      {form.passwordConfirm && form.password !== form.passwordConfirm && <div style={{fontSize:10,color:'#ba1a1a',marginTop:4}}>Les mots de passe ne correspondent pas</div>}
+                    </Field>
                   </>)}
                   {/* Fournisseur: structure with section dividers */}
                   {userType==='fournisseur' && (<>
                     <div className="wiz-section-divider"><span className="wiz-section-label">Votre entreprise</span></div>
                     <Field label="Nom de l'entreprise" required><input className="ob-input-v2" placeholder="Ex: Matériaux Pro CI" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} /></Field>
-                    <div className="ob-inp-row">
-                      <Field label="Ville" required><input className="ob-input-v2" placeholder="Abidjan" value={form.ville} onChange={e=>set('ville',e.target.value)} /></Field>
-                      <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>set('pays',e.target.value)}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
-                    </div>
+                    <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>{set('pays',e.target.value);set('ville','')}}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
+                    <Field label="Ville" required>
+                      {form.pays === "Côte d'Ivoire"
+                        ? <select className="ob-input-v2 ob-select" value={form.ville} onChange={e=>set('ville',e.target.value)}><option value="">— Choisir une ville —</option>{VILLES_CI.map(v=><option key={v}>{v}</option>)}</select>
+                        : <input className="ob-input-v2" placeholder="Votre ville" value={form.ville} onChange={e=>set('ville',e.target.value)} />
+                      }
+                    </Field>
 
                     <div className="wiz-section-divider"><span className="wiz-section-label">Informations légales</span></div>
                     <div className="ob-inp-row">
@@ -912,31 +968,52 @@ export default function OnboardingApp() {
                       </Field>
                     </div>
                     <div className="wiz-info-card">
-                      <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.65}}>Le RCCM et le N° Contribuable permettent de vérifier votre structure. Données chiffrées et conformes RGPD.</div>
+                      <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.65}}>Le RCCM et le N° Contribuable sont uniques par entreprise et liés à un seul compte Meereo. Données chiffrées et conformes RGPD.</div>
                     </div>
 
                     <div className="wiz-section-divider"><span className="wiz-section-label">Coordonnées</span></div>
-                    <div className="ob-inp-row">
-                      <Field label="Email professionnel" required><input className="ob-input-v2" type="email" placeholder="contact@entreprise.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
-                      <Field label="Téléphone" required><input className="ob-input-v2" type="tel" placeholder="+225 07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} /></Field>
-                    </div>
+                    <Field label="Email professionnel" required><input className="ob-input-v2" type="email" placeholder="contact@entreprise.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
+                    <Field label="Téléphone" required>
+                      <div style={{display:'flex',gap:6}}>
+                        <select className="ob-input-v2 ob-select" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:116,flexShrink:0,padding:'0 6px',fontSize:12}}>
+                          {PHONE_PREFIXES.map(p=><option key={p.code} value={p.code}>{p.flag} {p.code} — {p.country}</option>)}
+                        </select>
+                        <input className="ob-input-v2" type="tel" placeholder="07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} />
+                      </div>
+                    </Field>
 
                     <div className="wiz-section-divider"><span className="wiz-section-label">Sécurité</span></div>
                     <Field label="Mot de passe" required><input className="ob-input-v2" type="password" placeholder="8 caractères minimum" value={form.password} onChange={e=>set('password',e.target.value)} /></Field>
+                    <Field label="Confirmer le mot de passe" required>
+                      <input className="ob-input-v2" type="password" placeholder="Répéter le mot de passe" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} style={form.passwordConfirm && form.password !== form.passwordConfirm ? {borderColor:'#ba1a1a'} : undefined} />
+                      {form.passwordConfirm && form.password !== form.passwordConfirm && <div style={{fontSize:10,color:'#ba1a1a',marginTop:4}}>Les mots de passe ne correspondent pas</div>}
+                    </Field>
                   </>)}
-                  {/* Client: basic fields with section dividers */}
+                  {/* Client: basic fields with section dividers */}}
                   {userType==='client' && (<>
                     <div className="wiz-section-divider"><span className="wiz-section-label">Coordonnées</span></div>
-                    <div className="ob-inp-row">
-                      <Field label="Email" required><input className="ob-input-v2" type="email" placeholder="jean@email.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
-                      <Field label="Téléphone" required><input className="ob-input-v2" type="tel" placeholder="+225 07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} /></Field>
-                    </div>
-                    <div className="ob-inp-row">
-                      <Field label="Ville"><input className="ob-input-v2" placeholder="Abidjan" value={form.ville} onChange={e=>set('ville',e.target.value)} /></Field>
-                      <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>set('pays',e.target.value)}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
-                    </div>
+                    <Field label="Email" required><input className="ob-input-v2" type="email" placeholder="jean@email.com" value={form.email} onChange={e=>set('email',e.target.value)} /></Field>
+                    <Field label="Téléphone" required>
+                      <div style={{display:'flex',gap:6}}>
+                        <select className="ob-input-v2 ob-select" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:116,flexShrink:0,padding:'0 6px',fontSize:12}}>
+                          {PHONE_PREFIXES.map(p=><option key={p.code} value={p.code}>{p.flag} {p.code} — {p.country}</option>)}
+                        </select>
+                        <input className="ob-input-v2" type="tel" placeholder="07 00 00 00 00" value={form.tel} onChange={e=>set('tel',e.target.value)} />
+                      </div>
+                    </Field>
+                    <Field label="Pays"><select className="ob-input-v2 ob-select" value={form.pays} onChange={e=>{set('pays',e.target.value);set('ville','')}}>{PAYS.map(p=><option key={p}>{p}</option>)}</select></Field>
+                    <Field label="Ville">
+                      {form.pays === "Côte d'Ivoire"
+                        ? <select className="ob-input-v2 ob-select" value={form.ville} onChange={e=>set('ville',e.target.value)}><option value="">— Choisir une ville —</option>{VILLES_CI.map(v=><option key={v}>{v}</option>)}</select>
+                        : <input className="ob-input-v2" placeholder="Votre ville" value={form.ville} onChange={e=>set('ville',e.target.value)} />
+                      }
+                    </Field>
                     <div className="wiz-section-divider"><span className="wiz-section-label">Sécurité</span></div>
                     <Field label="Mot de passe" required><input className="ob-input-v2" type="password" placeholder="8 caractères minimum" value={form.password} onChange={e=>set('password',e.target.value)} /></Field>
+                    <Field label="Confirmer le mot de passe" required>
+                      <input className="ob-input-v2" type="password" placeholder="Répéter le mot de passe" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} style={form.passwordConfirm && form.password !== form.passwordConfirm ? {borderColor:'#ba1a1a'} : undefined} />
+                      {form.passwordConfirm && form.password !== form.passwordConfirm && <div style={{fontSize:10,color:'#ba1a1a',marginTop:4}}>Les mots de passe ne correspondent pas</div>}
+                    </Field>
                   </>)}
                 </>)}
 

@@ -55,6 +55,7 @@ async function requireAuth(req, res, next) {
   }
 
   req.user = user
+  req.authToken = token  // expose le token validé pour les routes qui en ont besoin (ex: /auth/me)
   next()
 }
 

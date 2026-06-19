@@ -10,8 +10,6 @@ import MeereoLogo from '../../components/shared/MeereoLogo'
 import { api } from '../../services/api/client'
 import './profil.css'
 
-const PORTFOLIO = []
-// TEAM constant supprimée — l'équipe vient désormais UNIQUEMENT de store.onboardingData.cockpitTeam
 // Dynamic projects from cockpit data
 const getProjects = (projects) => (projects || []).map((p, i) => ({
   num: String(i + 1).padStart(2, '0'),
@@ -23,8 +21,6 @@ const getProjects = (projects) => (projects || []).map((p, i) => ({
   img: p.img,
   progress: p.avancement || 0,
 }))
-const REVIEWS = []
-const SERVICES = []
 
 
 export default function ProfilApp() {
@@ -98,19 +94,18 @@ export default function ProfilApp() {
     showToast('Bannière ajustée')
   }
   const proBio = ob.bio || ''
-  const proServices = ob.services?.length > 0 ? ob.services : SERVICES
+  const proServices = ob.services || []
   const proSlogan = ob.slogan || ''
   const visitorName = store.user?.name || (ob.prenom ? `${ob.prenom} ${ob.nom || ''}`.trim() : '')
   const visitorRole = isClient ? 'client' : isOwner ? 'pro_owner' : 'pro_visitor'
 
   // Projets filtrés selon le rôle du visiteur
   const visitorProjects = isClient
-    ? (store.projects || []) // En production: filtrer par clientId
-    : (store.projects || []).filter(p => p.avancement < 100) // Pro: projets actifs
+    ? (store.projects || []).filter(p => !p.clientId || p.clientId === store.user?.id)
+    : (store.projects || []).filter(p => p.avancement < 100)
 
   // Données dynamiques depuis store (portfolio, equipe)
-  const storePortfolio = store.onboardingData?.portfolio || null
-  const displayPortfolio = storePortfolio && storePortfolio.length > 0 ? storePortfolio : PORTFOLIO.map(p => ({ img: p.img, cap: p.cap, feat: p.feat }))
+  const displayPortfolio = store.onboardingData?.portfolio || []
   // Team: UNIQUE source = store.onboardingData.cockpitTeam
   // Même source que le cockpit Parametres > Equipe
   const cockpitTeam = store.onboardingData?.cockpitTeam || null
@@ -150,9 +145,12 @@ export default function ProfilApp() {
   const [epTel, setEpTel] = useState(ob.tel || ob.telPro || '')
   const [epRccm, setEpRccm] = useState(ob.rccm || '')
   const [editSecteurs, setEditSecteurs] = useState(ob.secteurs || [])
-  const [editServices, setEditServices] = useState(ob.services?.length > 0 ? [...ob.services] : [...SERVICES])
+  const [editServices, setEditServices] = useState(ob.services ? [...ob.services] : [])
   const [editNewService, setEditNewService] = useState('')
   const [editLogoColor, setEditLogoColor] = useState(ob.logoColor || '#1D1D1F')
+  const [epNewSecteur, setEpNewSecteur] = useState('')
+  const [epLogoUploading, setEpLogoUploading] = useState(false)
+  const logoInputRef = useRef(null)
   // Portfolio edit
   const [editPortfolio, setEditPortfolio] = useState(displayPortfolio.map(p => ({ ...p })))
   const [newPortfolio, setNewPortfolio] = useState({ cap: '', img: '', feat: false })
@@ -244,6 +242,37 @@ export default function ProfilApp() {
     }, 400)
   }
 
+  const handleContactViaMsg = () => {
+    if (isVisitor || !store.user) { navigate('/onboarding'); return }
+    // Trouver une conversation existante avec ce pro, ou en créer une nouvelle
+    const existing = (store.conversations || []).find(c => !c.isGroup && c.nom === proName)
+    let convId
+    if (existing) {
+      convId = existing.id
+    } else {
+      convId = 'conv_' + Date.now()
+      const newConv = {
+        id: convId,
+        nom: proName,
+        type: pubData?.id ? 'entreprise' : 'demande',
+        avatar: proInitials?.[0] || proName[0] || '?',
+        color: ob.logoColor || '#191c1d',
+        isGroup: false,
+        participants: [proName],
+        pending: !pubData?.id,
+        invited: !pubData?.id,
+        dernier: pubData?.id ? '' : 'Demande envoyée',
+        time: 'Maintenant',
+        unread: 0,
+        msgs: pubData?.id ? [] : [{ side: 'out', text: 'Bonjour, je souhaiterais échanger avec vous.', time: 'Maintenant', read: false }],
+      }
+      updateStore(prev => ({ ...prev, conversations: [newConv, ...(prev.conversations || [])] }))
+    }
+    sessionStorage.setItem('meereo_open_conv', convId)
+    sessionStorage.setItem('meereo_nav_page', 'messages')
+    navigate(isClient ? '/client' : '/cockpit')
+  }
+
   return (
     <div className="pp-page">
 
@@ -281,6 +310,7 @@ export default function ProfilApp() {
           ) : (
             <>
               <button className="pp-btn-ghost" onClick={() => navigate(isClient ? '/client' : '/cockpit')}>Mon espace</button>
+              <button className="pp-btn-ghost" onClick={handleContactViaMsg}>Messagerie</button>
               <button className="pp-btn-primary" onClick={() => setShowContactModal(true)}>Contacter</button>
             </>
           )}
@@ -368,10 +398,17 @@ export default function ProfilApp() {
         <div className="pp-hero-actions">
           <button className="pp-btn-white" onClick={() => document.getElementById('pp-portfolio')?.scrollIntoView({behavior:'smooth'})}>Voir portfolio</button>
           {isOwner ? (
-            <button className="pp-btn-white" onClick={() => { setEpEntreprise(ob.entreprise || ''); setEpBio(ob.bio || ''); setEditModal('profil') }}>Gerer mon profil</button>
+            <button className="pp-btn-white" onClick={() => {
+              setEpEntreprise(ob.entreprise || ''); setEpBio(ob.bio || ''); setEpSlogan(ob.slogan || '')
+              setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "Côte d'Ivoire")
+              setEpEmail(ob.email || ob.emailPro || ''); setEpTel(ob.tel || ob.telPro || ''); setEpRccm(ob.rccm || '')
+              setEditSecteurs(ob.secteurs || []); setEditLogoColor(ob.logoColor || '#1D1D1F')
+              setEditModal('profil')
+            }}>Gerer mon profil</button>
           ) : (
             <>
               <button className="pp-btn-white" onClick={() => setShowInviteModal(true)}>Inviter sur un projet</button>
+              {!isVisitor && <button className="pp-btn-white" onClick={handleContactViaMsg}>Messagerie</button>}
               <button className="pp-btn-white-solid" onClick={() => setShowContactModal(true)}>Contacter</button>
             </>
           )}
@@ -383,7 +420,7 @@ export default function ProfilApp() {
 
         {/* METRICS — toujours visibles, contextualisés */}
         {(() => {
-          const allReviews = [...REVIEWS, ...(store.reviews || [])]
+          const allReviews = store.reviews || []
           // Si profil public chargé depuis backend → utilise les stats agregees
           const projTotal      = remoteStats ? remoteStats.projectsCount     : (store.projects || []).length
           const livres         = remoteStats ? remoteStats.projectsCompleted  : (store.projects || []).filter(p => p.avancement >= 100).length
@@ -426,7 +463,13 @@ export default function ProfilApp() {
             ) : (
               <div style={{ padding: '16px 0', color: 'var(--t4)', fontSize: 13 }}>
                 <p>Présentation non encore renseignée.</p>
-                {isOwner && <button className="pp-see-all" style={{ marginTop: 8 }} onClick={() => { setEpBio(''); setEditModal('profil') }}>Ajouter une présentation →</button>}
+                {isOwner && <button className="pp-see-all" style={{ marginTop: 8 }} onClick={() => {
+                  setEpEntreprise(ob.entreprise || ''); setEpBio(ob.bio || ''); setEpSlogan(ob.slogan || '')
+                  setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "Côte d'Ivoire")
+                  setEpEmail(ob.email || ob.emailPro || ''); setEpTel(ob.tel || ob.telPro || ''); setEpRccm(ob.rccm || '')
+                  setEditSecteurs(ob.secteurs || []); setEditLogoColor(ob.logoColor || '#1D1D1F')
+                  setEditModal('profil')
+                }}>Ajouter une présentation →</button>}
               </div>
             )}
             {/* Infos clés — effectif, année, projets */}
@@ -623,9 +666,9 @@ export default function ProfilApp() {
           <div className="pp-section-hdr">
             <h2 className="pp-section-title">Avis &amp; crédibilité</h2>
           </div>
-          {[...REVIEWS, ...(store.reviews || [])].length > 0 ? (
+          {(store.reviews || []).length > 0 ? (
             <div className="pp-three-col">
-              {[...REVIEWS, ...(store.reviews || [])].map((r, i) => (
+              {(store.reviews || []).map((r, i) => (
                 <div key={i} className="pp-card pp-review-card">
                   <span className="pp-review-quote">"</span>
                   <div className="pp-review-stars">{Array.from({length: r.stars}, (_, idx) => <Star key={idx} size={12} fill="#F59E0B" strokeWidth={0}/>)}</div>
@@ -659,6 +702,7 @@ export default function ProfilApp() {
         ) : (
           <>
             <button className="pp-sticky-ghost" onClick={() => setShowInviteModal(true)}>Inviter sur un projet</button>
+            {!isVisitor && <button className="pp-sticky-ghost" onClick={handleContactViaMsg}>Messagerie</button>}
             <button className="pp-sticky-btn" onClick={() => setShowContactModal(true)}>Contacter →</button>
           </>
         )}
@@ -668,21 +712,69 @@ export default function ProfilApp() {
 
       {/* Modal Profil Complet */}
       <Modal isOpen={editModal === 'profil'} onClose={() => setEditModal(null)} title="Gerer mon profil" wide footer={
-        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => {
+        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={async () => {
+          const updates = { entreprise: epEntreprise, bio: epBio, slogan: epSlogan, ville: epVille, pays: epPays, email: epEmail, tel: epTel, rccm: epRccm, secteurs: editSecteurs, logoColor: editLogoColor }
           updateStore(prev => ({
             ...prev,
-            onboardingData: { ...(prev.onboardingData || {}), entreprise: epEntreprise, bio: epBio, slogan: epSlogan, ville: epVille, pays: epPays, email: epEmail, tel: epTel, rccm: epRccm },
+            onboardingData: { ...(prev.onboardingData || {}), ...updates },
             user: prev.user ? { ...prev.user, name: epEntreprise || prev.user.name, email: epEmail || prev.user.email } : prev.user,
           }))
+          await api.usersApi.updateOnboardingData(updates).catch(() => {})
           showToast('Profil mis à jour', 'green')
           setEditModal(null)
         }}>Enregistrer</button></>
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em' }}>Identite</div>
+          {/* Logo / Photo */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em' }}>Logo / Photo</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 12, background: editLogoColor, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {ob.logoFileUrl
+                ? <img src={ob.logoFileUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : ob.photoUrl
+                  ? <img src={ob.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{(epEntreprise || '?')[0]}</span>}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                const f = e.target.files?.[0]; if (!f) return
+                setEpLogoUploading(true)
+                try {
+                  const { uploadFile } = await import('../../utils/upload')
+                  const url = await uploadFile(f, 'logos', 'logo')
+                  updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), logoFileUrl: url } }))
+                  await api.usersApi.updateOnboardingData({ logoFileUrl: url }).catch(() => {})
+                  showToast('Logo mis à jour', 'green')
+                } catch { showToast('Erreur upload logo', 'red') } finally { setEpLogoUploading(false) }
+              }} />
+              <button className="btn btn-sm" disabled={epLogoUploading} onClick={() => logoInputRef.current?.click()}>{epLogoUploading ? 'Upload…' : 'Changer le logo'}</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 11, color: '#9a9a9a' }}>Couleur fond :</span>
+                <input type="color" value={editLogoColor} onChange={e => setEditLogoColor(e.target.value)} style={{ width: 28, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer', padding: 0, background: 'none' }} />
+              </div>
+            </div>
+          </div>
+          {/* Identite */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Identite</div>
           <div><label className="form-label">Nom de la structure</label><input className="form-input" value={epEntreprise} onChange={e => setEpEntreprise(e.target.value)} placeholder="Nom de votre structure" /></div>
           <div><label className="form-label">Slogan / accroche</label><input className="form-input" value={epSlogan} onChange={e => setEpSlogan(e.target.value)} placeholder="Une architecture ancree dans la duree" /></div>
           <div><label className="form-label">Bio / presentation</label><textarea className="form-input" value={epBio} onChange={e => setEpBio(e.target.value)} placeholder="Presentez votre structure..." /></div>
+          {/* Secteurs */}
+          <div><label className="form-label">Secteurs d'activité</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+              {editSecteurs.map((s, i) => (
+                <span key={i} style={{ padding: '4px 10px', borderRadius: 100, background: '#f3f4f5', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {s}
+                  <button onClick={() => setEditSecteurs(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a9a9a', fontSize: 14, lineHeight: 1 }}>×</button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input className="form-input" value={epNewSecteur} onChange={e => setEpNewSecteur(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && epNewSecteur.trim()) { setEditSecteurs(prev => [...prev, epNewSecteur.trim()]); setEpNewSecteur('') } }} placeholder="Ex: Génie Civil, BTP, Architecture…" />
+              <button className="btn btn-sm" disabled={!epNewSecteur.trim()} onClick={() => { if (epNewSecteur.trim()) { setEditSecteurs(prev => [...prev, epNewSecteur.trim()]); setEpNewSecteur('') } }}>+</button>
+            </div>
+          </div>
+          {/* Coordonnees */}
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9a9a', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 8 }}>Coordonnees</div>
           <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Email</label><input className="form-input" type="email" value={epEmail} onChange={e => setEpEmail(e.target.value)} /></div>

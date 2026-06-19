@@ -47,7 +47,16 @@ export default function BoursePage({ showToast, onNavigate }) {
       return found ? { ...tpl, ...found } : { ...tpl, status: 'missing' }
     })
   }, [store.entrepriseDocs])
-  const availableDocs = entrepriseDocs.filter(d => d.status === 'uploaded' || d.status === 'generated')
+  // Aussi inclure les vrais documents importés dans le Dossier Entreprise (DocumentsPage)
+  const uploadedEnterpriseDocs = useMemo(() =>
+    (store.documents || []).filter(d => !d._deleted && (d.isEntreprise || d.category === 'entreprise'))
+      .map(d => ({ id: d.id, nom: d.nom || d.name, type: d.cat || d.type || 'Document', status: 'uploaded', uploadedAt: d.createdAt || d.date })),
+  [store.documents])
+  const availableDocs = [
+    ...entrepriseDocs.filter(d => d.status === 'uploaded' || d.status === 'generated'),
+    // Dédupliquer si même id
+    ...uploadedEnterpriseDocs.filter(d => !entrepriseDocs.some(t => t.id === d.id)),
+  ]
   const [reponse, setReponse] = useState({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: [] })
   const [showDocsIntro, setShowDocsIntro] = useState(true)
   const [showInviteModal, setShowInviteModal] = useState(null) // AO object

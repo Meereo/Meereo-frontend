@@ -82,6 +82,7 @@ export default function DocumentsPage({ showToast }) {
   const [importModal, setImportModal] = useState(false)
   const [importFiles, setImportFiles] = useState([])
   const [importProjet, setImportProjet] = useState('')
+  const [importAttempted, setImportAttempted] = useState(false)
   const [uploading, setUploading] = useState(false)
   // Document actions
   const [docMenu, setDocMenu] = useState(null) // { id, x, y }
@@ -153,9 +154,12 @@ export default function DocumentsPage({ showToast }) {
     }
   }
 
+  const isEntrepriseMode = importProjet === '__entreprise__'
   const filtered = allDocs.filter(d => {
     const tOk = typeFilter === 'all' || d.type === typeFilter
-    const pOk = projetFilter === 'all' || d.projet === projetFilter
+    const pOk = projetFilter === 'all' || projetFilter === '__entreprise__'
+      ? (projetFilter === '__entreprise__' ? (d.isEntreprise || d.category === 'entreprise') : true)
+      : d.projet === projetFilter
     const mOk = marcheFilter === 'all' || d.marketId === marcheFilter
     const q = search.toLowerCase()
     const sOk = !q || ((d.nom || '') + (d.projet || '') + (d.auteur || '') + (d.cat || '')).toLowerCase().includes(q)
@@ -177,7 +181,7 @@ export default function DocumentsPage({ showToast }) {
             <button key={v} className={`filter-pill ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => { setImportModal(true); setImportFiles([]); setImportProjet(projetFilter !== 'all' ? projetFilter : '') }}>+ Importer</button>
+        <button className="btn btn-primary btn-sm" onClick={() => { setImportModal(true); setImportFiles([]); setImportAttempted(false); setImportProjet(projetFilter !== 'all' ? projetFilter : '') }}>+ Importer</button>
       </DSPageHeader>
 
       <div>
@@ -187,6 +191,7 @@ export default function DocumentsPage({ showToast }) {
           {/* Projet dropdown */}
           <select value={projetFilter} onChange={e => setProjetFilter(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', color: projetFilter === 'all' ? 'var(--t3)' : 'var(--tx)', fontWeight: projetFilter === 'all' ? 400 : 600, cursor: 'pointer', outline: 'none' }}>
             <option value="all">Tous les projets ({allProjets.length})</option>
+            <option value="__entreprise__">🏢 Dossier Entreprise</option>
             {allProjets.map(p => {
               const count = allDocs.filter(d => d.projet === p).length
               return <option key={p} value={p}>{p} ({count})</option>
@@ -328,9 +333,13 @@ export default function DocumentsPage({ showToast }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Projet */}
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>Projet associé {!importProjet && <span style={{ color: 'var(--err)', fontWeight: 400 }}>— sélectionnez un projet</span>}</label>
-                <select value={importProjet} onChange={e => setImportProjet(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid ' + (importProjet ? 'var(--border-card)' : 'var(--err)'), borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
-                  <option value="">— Choisir un projet —</option>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>
+                  Destination
+                  {importAttempted && !importProjet && <span style={{ color: 'var(--err)', fontWeight: 400, marginLeft: 4 }}>— requis</span>}
+                </label>
+                <select value={importProjet} onChange={e => setImportProjet(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid ' + (importAttempted && !importProjet ? 'var(--err)' : 'var(--border-card)'), borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
+                  <option value="">— Choisir —</option>
+                  <option value="__entreprise__">🏢 Dossier Entreprise (RCCM, attestations...)</option>
                   {(store.projects || []).map(p => <option key={p.id} value={p.nom}>{p.nom}</option>)}
                 </select>
               </div>
@@ -392,7 +401,9 @@ export default function DocumentsPage({ showToast }) {
                   className="btn btn-primary btn-sm"
                   disabled={importFiles.length === 0 || !importProjet || uploading}
                   onClick={async () => {
-                    const projObj = (store.projects || []).find(p => p.nom === importProjet)
+                    if (!importProjet) { setImportAttempted(true); return }
+                    const isEntreprise = importProjet === '__entreprise__'
+                    const projObj = isEntreprise ? null : (store.projects || []).find(p => p.nom === importProjet)
                     const projectId = projObj?.id || null
                     setUploading(true)
                     const uploaded = []
@@ -404,8 +415,7 @@ export default function DocumentsPage({ showToast }) {
                           type: f.docType,
                           projectId,
                         })
-                        // Merge display-only fields onto the returned doc
-                        uploaded.push({ ...doc, nom: doc.name, projet: importProjet, cat: f.cat, taille: f.size, isNew: true })
+                        uploaded.push({ ...doc, nom: doc.name, projet: isEntreprise ? 'Dossier Entreprise' : importProjet, cat: f.cat, taille: f.size, isNew: true, isEntreprise, category: isEntreprise ? 'entreprise' : undefined })
                       } catch (err) {
                         console.warn('[DocumentsPage] upload error:', err.message)
                         showToast && showToast(`Échec : ${f.name}`, 'red')

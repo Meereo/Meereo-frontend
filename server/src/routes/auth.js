@@ -226,7 +226,9 @@ router.post('/login', async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/me', requireAuth, (req, res) => {
-  res.json(req.user)
+  // Retourner aussi le token pour que le frontend puisse le garder en mémoire
+  // (nécessaire pour le Bearer sur les WS et la compatibilité Bearer)
+  res.json({ ...req.user, token: req.authToken })
 })
 
 // ─── POST /auth/change-password ───────────────────────────────────────────────
