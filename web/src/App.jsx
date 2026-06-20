@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import CockpitApp from './pages/cockpit/CockpitApp'
-import OnboardingApp from './pages/onboarding/OnboardingApp'
-import FournisseurApp from './pages/fournisseur/FournisseurApp'
-import ClientApp from './pages/client/ClientApp'
-import ProfilApp from './pages/profil/ProfilApp'
-import LandingPage from './pages/landing/LandingPage'
-import ConditionsPage from './pages/legal/ConditionsPage'
-import ConfidentialitePage from './pages/legal/ConfidentialitePage'
-import ValidationPage from './pages/legal/ValidationPage'
+import Cockpit from './pages/cockpit/Cockpit'
+import Onboarding from './pages/Onboarding'
+import Supplier from './pages/supplier/Supplier'
+import Client from './pages/client/Client'
+import Profile from './pages/cockpit/profile/Profile'
+import Landing from './pages/Landing'
+import Conditions from './pages/Conditions'
+import Privacy from './pages/Privacy'
+import Validation from './pages/Validation'
 import GlobalNav from './components/shared/GlobalNav'
 import Toast from './components/shared/Toast'
 import NotifPanel from './components/shared/NotifPanel'
@@ -62,18 +62,18 @@ export default function App() {
   return (
     <HydrationGate>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/onboarding/*" element={<OnboardingGuard><OnboardingApp /></OnboardingGuard>} />
-        <Route path="/cockpit/*" element={<RoleGuard allowedRole="pro"><CockpitApp /></RoleGuard>} />
-        <Route path="/fournisseur/*" element={<RoleGuard allowedRole="fournisseur"><FournisseurApp /></RoleGuard>} />
-        <Route path="/client/*" element={<RoleGuard allowedRole="client"><ClientApp /></RoleGuard>} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/onboarding/*" element={<OnboardingGuard><Onboarding /></OnboardingGuard>} />
+        <Route path="/cockpit/*" element={<RoleGuard allowedRole="pro"><Cockpit /></RoleGuard>} />
+        <Route path="/fournisseur/*" element={<RoleGuard allowedRole="fournisseur"><Supplier /></RoleGuard>} />
+        <Route path="/client/*" element={<RoleGuard allowedRole="client"><Client /></RoleGuard>} />
         {/* Route publique — /pro?uuid=XXXX — profil public d'un professionnel */}
-        <Route path="/pro" element={<ProfilApp />} />
+        <Route path="/pro" element={<Profile />} />
         {/* Alias rétrocompat /profil → redirige vers /pro avec l'uuid du user connecté si pro */}
-        <Route path="/profil/*" element={<ProfilApp />} />
-        <Route path="/conditions" element={<ConditionsPage />} />
-        <Route path="/confidentialite" element={<ConfidentialitePage />} />
-        <Route path="/validation" element={<ValidationPage />} />
+        <Route path="/profil/*" element={<Profile />} />
+        <Route path="/conditions" element={<Conditions />} />
+        <Route path="/confidentialite" element={<Privacy />} />
+        <Route path="/validation" element={<Validation />} />
       </Routes>
       <GlobalNav />
       <Toast />

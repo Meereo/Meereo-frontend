@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin } from 'lucide-react'
 // RECENT_ACTIVITY mock removed — store.activities is source of truth
 import { useDevise } from '../../hooks/useDevise'
@@ -67,6 +67,8 @@ export default function Dashboard({ onNavigate, openModal }) {
   const ob = store.onboardingData || {}
   // Pro: use company name. Client: use first name.
   const userFirstName = uid.company || uid.displayName || uid.firstName || ''
+
+  const [actTab, setActTab] = useState('all')
 
   const allProjetsRaw = useMemo(() => getUserActiveProjects(store, store.user?.id), [store.projects, store.user, store.projectMembers])
   // Enrich each project with computed avancement (phase + étapes + stored)
@@ -297,34 +299,123 @@ export default function Dashboard({ onNavigate, openModal }) {
         </div>
       )}
 
-      {/* Activité récente — compact */}
-      <div>
-        <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)', marginBottom: 12 }}>Activité récente</div>
-        <div style={{ background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', overflow: 'hidden' }}>
-          {(() => {
-            const storeActs = (store.activities || []).slice(0, 6).map(a => {
-              const label = translateAction(a.action)
-              const detail = a.data?.name || a.data?.title || a.data?.label || ''
-              return {
-                icon: a.action?.includes('PAYMENT') ? <Wallet size={12}/> : a.action?.includes('PROJECT') ? <BarChart2 size={12}/> : a.action?.includes('OFFER') ? <ClipboardList size={12}/> : a.action?.includes('DECISION') ? <CheckCircle2 size={12}/> : a.action?.includes('MESSAGE') ? <MessageSquare size={12}/> : a.action?.includes('USER') ? <User size={12}/> : a.action?.includes('DOCUMENT') ? <FileText size={12}/> : a.action?.includes('AO') ? <Radio size={12}/> : <Pin size={12}/> ,
-                text: detail ? `${label} — ${detail}` : label,
-                time: a.ts ? new Date(a.ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '',
-              }
-            })
-            const all = storeActs.slice(0, 5)
-            if (all.length === 0) return (
-              <div style={{ textAlign: 'center', padding: '20px 16px', color: 'var(--t4)', fontSize: 12 }}>Aucune activité récente</div>
-            )
-            return all.map((a, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: i < all.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                <span style={{ fontSize: 12, flexShrink: 0 }}>{a.icon}</span>
-                <span style={{ fontSize: 11.5, color: 'var(--tx)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</span>
-                <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0 }}>{a.time}</span>
-              </div>
-            ))
-          })()}
-        </div>
-      </div>
+      {/* Activité récente — feed unifié avec filtres catégoriels */}
+      {(() => {
+        const ACT_TABS = [
+          { id: 'all',         label: 'Tout' },
+          { id: 'projets',     label: 'Projets' },
+          { id: 'offres',      label: 'Offres' },
+          { id: 'messages',    label: 'Messages' },
+          { id: 'marketplace', label: 'Marketplace' },
+        ]
+        const CAT_COLOR = { projets: '#3B82F6', offres: '#F59E0B', messages: '#8B5CF6', marketplace: '#10B981' }
+        const CAT_NAV   = { projets: 'projets', offres: 'offres', messages: 'messages', marketplace: 'marketplace' }
+
+        const getCat = (item) => {
+          if (item._src === 'notif') {
+            const p = item.page || ''
+            if (p === 'marketplace' || p === 'commandes') return 'marketplace'
+            if (p === 'messages') return 'messages'
+            if (p === 'offres' || p === 'bourse') return 'offres'
+            return 'projets'
+          }
+          const a = item.action || ''
+          if (a.includes('MESSAGE')) return 'messages'
+          if (a.includes('OFFER') || a.includes('AO') || a.includes('MARKET')) return 'offres'
+          if (a.includes('COMMANDE') || a.includes('PRODUCT') || a.includes('ORDER')) return 'marketplace'
+          return 'projets'
+        }
+
+        const getIcon = (item, cat) => {
+          if (item._src === 'notif') {
+            if (cat === 'messages')    return <MessageSquare size={11} />
+            if (cat === 'offres')      return <ClipboardList size={11} />
+            if (cat === 'marketplace') return <Package size={11} />
+            return <BarChart2 size={11} />
+          }
+          const a = item.action || ''
+          if (a.includes('PAYMENT'))  return <Wallet size={11} />
+          if (a.includes('OFFER') || a.includes('AO')) return <ClipboardList size={11} />
+          if (a.includes('MESSAGE'))  return <MessageSquare size={11} />
+          if (a.includes('DOCUMENT')) return <FileText size={11} />
+          if (a.includes('USER'))     return <User size={11} />
+          if (a.includes('DECISION')) return <CheckCircle2 size={11} />
+          return <BarChart2 size={11} />
+        }
+
+        const relTime = (ts) => {
+          if (!ts) return ''
+          const diff = Date.now() - new Date(ts).getTime()
+          const m = Math.floor(diff / 60000)
+          if (m < 1)  return 'À l\'instant'
+          if (m < 60) return `${m}min`
+          const h = Math.floor(m / 60)
+          if (h < 24) return `${h}h`
+          return `${Math.floor(h / 24)}j`
+        }
+
+        // Activities feed
+        const actItems = (store.activities || []).map(a => ({
+          _src: 'activity', id: 'act_' + a.id,
+          text: (() => { const l = translateAction(a.action); const d = a.data?.name || a.data?.title || a.data?.label || ''; return d ? `${l} — ${d}` : l })(),
+          ts: a.ts, read: true, action: a.action,
+        }))
+
+        // Notifications feed
+        const notifItems = (store.notifications || []).map(n => ({
+          _src: 'notif', id: 'notif_' + n.id,
+          text: n.msg || '', ts: n.ts, read: n.read ?? true, page: n.page, type: n.type,
+        }))
+
+        const merged = [...actItems, ...notifItems]
+          .filter(x => x.text)
+          .sort((a, b) => new Date(b.ts) - new Date(a.ts))
+          .slice(0, 30)
+          .map(x => ({ ...x, cat: getCat(x) }))
+
+        const filtered = actTab === 'all' ? merged : merged.filter(x => x.cat === actTab)
+
+        return (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)' }}>Activité récente</div>
+              <span style={{ fontSize: 10, color: 'var(--t4)' }}>{merged.length} entrées</span>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 5, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
+              {ACT_TABS.map(t => {
+                const active = actTab === t.id
+                const col = t.id === 'all' ? '#6B7280' : CAT_COLOR[t.id]
+                const count = t.id === 'all' ? merged.length : merged.filter(x => x.cat === t.id).length
+                return (
+                  <button key={t.id} onClick={() => setActTab(t.id)} style={{ flexShrink: 0, fontSize: 10.5, fontWeight: active ? 700 : 500, padding: '4px 10px', borderRadius: 20, border: active ? `1.5px solid ${col}` : '1px solid var(--border-card)', background: active ? col + '18' : 'var(--surface-1)', color: active ? col : 'var(--t3)', cursor: 'pointer', transition: 'all .12s', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {t.label}
+                    {count > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: active ? col + '30' : 'var(--border-card)', color: active ? col : 'var(--t4)', borderRadius: 10, padding: '1px 5px' }}>{count}</span>}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Feed list */}
+            <div style={{ background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', overflow: 'hidden' }}>
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--t4)', fontSize: 12 }}>Aucune activité dans cette catégorie</div>
+              ) : filtered.slice(0, 8).map((item, i, arr) => (
+                <div key={item.id} onClick={() => onNavigate(CAT_NAV[item.cat])} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid var(--border-subtle)' : 'none', cursor: 'pointer', position: 'relative' }}>
+                  {!item.read && <div style={{ position: 'absolute', left: 5, top: '50%', transform: 'translateY(-50%)', width: 4, height: 4, borderRadius: '50%', background: CAT_COLOR[item.cat] }} />}
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: CAT_COLOR[item.cat] + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', color: CAT_COLOR[item.cat], flexShrink: 0 }}>
+                    {getIcon(item, item.cat)}
+                  </div>
+                  <span style={{ fontSize: 11.5, color: 'var(--tx)', fontWeight: item.read ? 400 : 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: CAT_COLOR[item.cat] + '15', color: CAT_COLOR[item.cat], flexShrink: 0, textTransform: 'uppercase', letterSpacing: '.04em' }}>{item.cat}</span>
+                  <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0, minWidth: 38, textAlign: 'right' }}>{relTime(item.ts)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
