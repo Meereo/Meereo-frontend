@@ -115,13 +115,13 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', cursor: isPro ? 'pointer' : 'default' }} onClick={() => isPro && navigate('/pro')}>{active.nom}</span>
-          {isPro && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate('/pro')}>â†’ profil</span>}
+          {isPro && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate('/pro')}>�†’ profil</span>}
         </div>
         <div style={{ fontSize: 11, color: 'var(--t3)', cursor: active.isGroup ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 3 }} onClick={() => active.isGroup && setShowParticipants(true)}>
           {active.pending ? <><Lock size={10}/> En attente d{'’'}acceptation</>
-            : active.invited ? <><MailOpen size={10}/> Invité — en attente d{'’'}inscription</>
+            : active.invited ? <><MailOpen size={10}/> Invit� — en attente d{'’'}inscription</>
             : active.isGroup ? (active.participants || []).length + ' participants'
-            : 'â— En ligne'}
+            : '�—� En ligne'}
         </div>
       </div>
       {!active.pending && (
@@ -140,7 +140,7 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
           <button onClick={() => { setShowInvite(true); setInviteSearch('') }} style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Ajouter">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
           </button>
-          {/* â”€â”€â”€ Menu actions â”€â”€â”€ */}
+          {/* �”€�”€�”€ Menu actions �”€�”€�”€ */}
           <div style={{ position: 'relative' }} ref={menuRef}>
             <button onClick={() => setMenuOpen(v => !v)} style={{ width: 36, height: 36, borderRadius: 10, background: menuOpen ? 'var(--s3)' : 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }} title="Plus d'actions">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
@@ -214,12 +214,12 @@ export default function Messages({ showToast }) {
   const [confirmAction, setConfirmAction] = useState(null)
   const [ctxMenu, setCtxMenu] = useState(null)
   const ctxRef = useRef(null)
-  // Pro — suggestion de prix/délai dans la conversation
+  // Pro — suggestion de prix/d�lai dans la conversation
   const [showSuggestPanel, setShowSuggestPanel] = useState(false)
   const [suggestMontant, setSuggestMontant] = useState('')
   const [suggestDelai, setSuggestDelai] = useState('')
 
-  // â”€â”€ Real-time state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Real-time state �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   // messages: Map<conversationId, Message[]> — loaded per-conversation from API
   const [messagesMap, setMessagesMap] = useState({})
   const [loadingMessages, setLoadingMessages] = useState(false)
@@ -229,7 +229,7 @@ export default function Messages({ showToast }) {
   const typingRef = useRef(false) // whether WE are currently "typing"
   const messagesEndRef = useRef(null)
 
-  // â”€â”€ Conversations from store (hydrated by socket useEffect in useMeereoStore) â”€
+  // �”€�”€ Conversations from store (hydrated by socket useEffect in useMeereoStore) �”€
   const allConversations = useMemo(() => {
     const storeConvs = store.conversations || []
     // Normalize backend conversations to the UI shape expected by existing components
@@ -284,8 +284,8 @@ export default function Messages({ showToast }) {
     return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
   })
   const _activeRaw = activeId ? visibleConversations.find(c => c.id === activeId) : null
-  // Résoudre dynamiquement l'état `invited` : si le contact est inscrit sur Meereo,
-  // on écrase `invited: false` mÃªme si l'ancienne donnée en store dit `true`.
+  // R�soudre dynamiquement l'�tat `invited` : si le contact est inscrit sur Meereo,
+  // on �crase `invited: false` même si l'ancienne donn�e en store dit `true`.
   const active = useMemo(() => {
     if (!_activeRaw || _activeRaw.isGroup) return _activeRaw
     if (!_activeRaw.invited) return _activeRaw
@@ -309,7 +309,7 @@ export default function Messages({ showToast }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [ctxMenu])
 
-  // â”€â”€ Load messages when active conversation changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Load messages when active conversation changes �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   useEffect(() => {
     if (!activeId) return
     const convId = activeId
@@ -356,7 +356,7 @@ export default function Messages({ showToast }) {
     }
   }, [activeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // â”€â”€ Real-time: subscribe to new messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Real-time: subscribe to new messages �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   useEffect(() => {
     const token = store._token
     if (!token) return
@@ -407,7 +407,7 @@ export default function Messages({ showToast }) {
     return () => { socket.off('message:new', handleNewMessage) }
   }, [store._token, store.user?.id, activeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // â”€â”€ Typing indicators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Typing indicators �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   useEffect(() => {
     if (!activeId || !store._token) return
     const socket = getSocket(store._token)
@@ -434,7 +434,7 @@ export default function Messages({ showToast }) {
     }
   }, [activeId, store._token])
 
-  // â”€â”€ Auto-scroll to bottom when messages arrive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Auto-scroll to bottom when messages arrive �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messagesMap, activeId])
@@ -445,13 +445,13 @@ export default function Messages({ showToast }) {
     if (!conv) return
     if (type === 'unread') {
       updateConv(convId, c => ({ ...c, unread: 1 }))
-      showToast && showToast('Conversation marquée non lue')
+      showToast && showToast('Conversation marqu�e non lue')
       return
     }
     if (type === 'unarchive') {
       // Direct unarchive (no confirm needed, it's non-destructive)
       updateConv(convId, c => ({ ...c, _archived: false }))
-      showToast && showToast('Conversation restaurée')
+      showToast && showToast('Conversation restaur�e')
       return
     }
     // Actions that require confirmation
@@ -472,10 +472,10 @@ export default function Messages({ showToast }) {
         if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _archived: true }] }))
       }
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Conversation archivée')
+      showToast && showToast('Conversation archiv�e')
     } else if (type === 'unarchive') {
       updateConv(convId, c => ({ ...c, _archived: false }))
-      showToast && showToast('Conversation restaurée')
+      showToast && showToast('Conversation restaur�e')
     } else if (type === 'delete') {
       if (isStoreConv) {
         updateConv(convId, c => ({ ...c, _deleted: true }))
@@ -484,15 +484,15 @@ export default function Messages({ showToast }) {
         if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _deleted: true }] }))
       }
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Conversation supprimée')
+      showToast && showToast('Conversation supprim�e')
     } else if (type === 'quit') {
       updateConv(convId, c => ({
         ...c,
         _deleted: true,
-        msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: 'Vous avez quitté le groupe', time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }) }]
+        msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: 'Vous avez quitt� le groupe', time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }) }]
       }))
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Vous avez quitté le groupe')
+      showToast && showToast('Vous avez quitt� le groupe')
     }
     setConfirmAction(null)
   }
@@ -620,7 +620,7 @@ export default function Messages({ showToast }) {
           msg.size = f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' Mo' : Math.round(f.size / 1024) + ' Ko'
         }
 
-        const dernier = isImg ? 'Photo' : isVid ? 'Vidéo' : f.name
+        const dernier = isImg ? 'Photo' : isVid ? 'Vid�o' : f.name
         // For local conversations: update msgs array in store
         // For backend conversations: send via socket (file support future)
         const convId = active.id
@@ -670,10 +670,10 @@ export default function Messages({ showToast }) {
     const id = 'conv_' + Date.now()
     let newConv
     if (!c.direct) {
-      newConv = { id, nom: c.nom, type: 'demande', avatar: c.nom[0], color: '#F59E0B', isGroup: false, participants: [c.nom], pending: true, invited: true, dernier: 'Demande envoyée', time: 'Maintenant', unread: 0, msgs: [{ side: 'out', text: 'Bonjour, je souhaiterais échanger avec vous.', time: 'Maintenant', read: false }] }
-      showToast && showToast('Demande envoyée — en attente d\'acceptation')
+      newConv = { id, nom: c.nom, type: 'demande', avatar: c.nom[0], color: '#F59E0B', isGroup: false, participants: [c.nom], pending: true, invited: true, dernier: 'Demande envoy�e', time: 'Maintenant', unread: 0, msgs: [{ side: 'out', text: 'Bonjour, je souhaiterais �changer avec vous.', time: 'Maintenant', read: false }] }
+      showToast && showToast('Demande envoy�e — en attente d\'acceptation')
     } else if (!c.registered) {
-      newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: true, email: c.email || '', role: c.role, dernier: 'Invitation envoyée', time: 'Maintenant', unread: 0, msgs: [] }
+      newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: true, email: c.email || '', role: c.role, dernier: 'Invitation envoy�e', time: 'Maintenant', unread: 0, msgs: [] }
     } else {
       newConv = { id, nom: c.nom, type: c.source === 'client' ? 'client' : c.source === 'equipe' ? 'equipe' : 'entreprise', avatar: c.nom[0], color: srcColor(c.source), isGroup: false, participants: [c.nom], invited: false, dernier: '', time: 'Maintenant', unread: 0, msgs: [] }
     }
@@ -690,11 +690,11 @@ export default function Messages({ showToast }) {
         <div style={{ width: 36, height: 36, borderRadius: 18, background: !c.direct ? 'rgba(255,149,0,.1)' : isInvited ? 'rgba(107,114,128,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: !c.direct ? '#F59E0B' : isInvited ? '#9CA3AF' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
-          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}{c.ville ? ' · ' + c.ville : ''}</div>
+          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}{c.ville ? ' � ' + c.ville : ''}</div>
         </div>
         <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: srcColor(c.source) + '14', color: srcColor(c.source) }}>{srcLabel(c.source)}</span>
         {!c.direct && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: '#F59E0B' }}>Demande</span>}
-        {isInvited && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF' }}>Invité</span>}
+        {isInvited && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF' }}>Invit�</span>}
       </div>
     )
   }
@@ -712,7 +712,7 @@ export default function Messages({ showToast }) {
                 {nonLus > 0 && <span style={{ padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{nonLus}</span>}
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
-                <button onClick={() => { setShowNewGroup(true); setGroupName(''); setGroupMembers([]); setGroupSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Créer un groupe">
+                <button onClick={() => { setShowNewGroup(true); setGroupName(''); setGroupMembers([]); setGroupSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Cr�er un groupe">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx)" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                 </button>
                 <button onClick={() => { setShowNewConv(true); setNewConvSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Nouvelle conversation">
@@ -727,7 +727,7 @@ export default function Messages({ showToast }) {
               <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
             </div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {[['all', 'Tout'], ['equipe', 'Equipe'], ['client', 'Clients'], ['entreprise', 'Prestataires'], ['groupe', 'Groupes'], ['demande', 'Demandes'], ['archives', 'Archivés']].map(([k, l]) => (
+              {[['all', 'Tout'], ['equipe', 'Equipe'], ['client', 'Clients'], ['entreprise', 'Prestataires'], ['groupe', 'Groupes'], ['demande', 'Demandes'], ['archives', 'Archiv�s']].map(([k, l]) => (
                 <button key={k} className={`filter-pill ${msgTab === k ? 'active' : ''}`} onClick={() => setMsgTab(k)} style={{ fontSize: 10.5 }}>{l}{k === 'archives' && archivedCount > 0 ? ` (${archivedCount})` : ''}</button>
               ))}
             </div>
@@ -741,8 +741,8 @@ export default function Messages({ showToast }) {
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>
                   {msgTab === 'archives'
-                    ? 'Les conversations archivées apparaîtront ici. Utilisez le menu ··· ou le clic droit pour archiver.'
-                    : 'Vos échanges apparaîtront ici.'}
+                    ? 'Les conversations archiv�es appara�tront ici. Utilisez le menu ��� ou le clic droit pour archiver.'
+                    : 'Vos �changes appara�tront ici.'}
                 </div>
               </div>
             )}
@@ -768,7 +768,7 @@ export default function Messages({ showToast }) {
                   </div>
                 </div>
                 {c.pending && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: 'var(--wrn)', flexShrink: 0 }}>ATTENTE</span>}
-                {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVITÉ</span>}
+                {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVIT�</span>}
                 {c.unread > 0 && !c.pending && !c.invited && <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>{c.unread}</div>}
               </div>
             )})}
@@ -794,7 +794,7 @@ export default function Messages({ showToast }) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: 'rgba(107,114,128,.04)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 13 }}><Package size={13}/></span>
-                    <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>Cette conversation est archivée</span>
+                    <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>Cette conversation est archiv�e</span>
                   </div>
                   <button onClick={() => handleConvAction('unarchive', active.id)} style={{ padding: '6px 14px', borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 11.5, fontWeight: 600, color: '#fff', transition: 'opacity .12s' }} onMouseOver={e => e.currentTarget.style.opacity = '.85'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>Restaurer</button>
                 </div>
@@ -814,7 +814,7 @@ export default function Messages({ showToast }) {
                           </div>
                           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)' }}>{active.nom}</div>
                           <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
-                            Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour démarrer la conversation.
+                            Ce contact n'a pas encore cr�� son compte sur MEEREO. Invitez-le � rejoindre la plateforme pour d�marrer la conversation.
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
@@ -856,7 +856,7 @@ export default function Messages({ showToast }) {
                                   <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
                                     <span style={{ fontSize: 14 }}><Video size={14}/></span>
                                     <div>
-                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidéo'}</div>
+                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vid�o'}</div>
                                       {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
                                     </div>
                                   </div>
@@ -875,7 +875,7 @@ export default function Messages({ showToast }) {
                                   return (
                                     <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
                                       <div style={{ padding: '8px 14px 6px', background: isOut ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', gap: 7 }}>
-                                        <span style={{ fontSize: 12 }}>ðŸ“‹</span>
+                                        <span style={{ fontSize: 12 }}>�Ÿ“‹</span>
                                         <span style={{ fontSize: 10, fontWeight: 700, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
                                       </div>
                                       <div style={{ padding: '10px 14px 12px', background: isOut ? 'rgba(0,0,0,.6)' : 'var(--surface-1)', display: 'flex', gap: 24 }}>
@@ -887,7 +887,7 @@ export default function Messages({ showToast }) {
                                         )}
                                         {d.delai && (
                                           <div>
-                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Délai</div>
+                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>D�lai</div>
                                             <div style={{ fontSize: 14, fontWeight: 700, color: isOut ? '#fff' : 'var(--tx)' }}>{d.delai}</div>
                                           </div>
                                         )}
@@ -933,12 +933,12 @@ export default function Messages({ showToast }) {
                 <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, background: 'rgba(255,149,0,.03)' }}>
                   <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><Lock size={12}/> En attente d’acceptation par <strong>{active.nom}</strong></div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <button className="btn btn-sm" onClick={() => { updateStore(prev => ({ ...prev, conversations: (prev.conversations || []).filter(c => c.id !== active.id) })); setActiveId(null); showToast && showToast('Demande annulée') }}>Annuler</button>
-                    <button className="btn btn-primary btn-sm" onClick={() => { updateConv(active.id, c => ({ ...c, pending: false, invited: false, type: 'entreprise', avatar: active.nom ? active.nom[0] : '?', color: '#16A34A', msgs: [...(c.msgs || []), { side: 'in', text: 'Bonjour, je suis disponible. Comment puis-je vous aider ?', time: 'Maintenant', read: true }], dernier: 'Demande acceptée' })); setActiveId(null); setTimeout(() => setActiveId(active.id), 0); showToast && showToast(active.nom + ' a accepté') }}>Simuler l'acceptation</button>
+                    <button className="btn btn-sm" onClick={() => { updateStore(prev => ({ ...prev, conversations: (prev.conversations || []).filter(c => c.id !== active.id) })); setActiveId(null); showToast && showToast('Demande annul�e') }}>Annuler</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => { updateConv(active.id, c => ({ ...c, pending: false, invited: false, type: 'entreprise', avatar: active.nom ? active.nom[0] : '?', color: '#16A34A', msgs: [...(c.msgs || []), { side: 'in', text: 'Bonjour, je suis disponible. Comment puis-je vous aider ?', time: 'Maintenant', read: true }], dernier: 'Demande accept�e' })); setActiveId(null); setTimeout(() => setActiveId(active.id), 0); showToast && showToast(active.nom + ' a accept�') }}>Simuler l'acceptation</button>
                   </div>
                 </div>
               ) : active.invited ? (
-                /* â”€â”€â”€ Contact invité — pas encore inscrit sur MEEREO â”€â”€â”€ */
+                /* �”€�”€�”€ Contact invit� — pas encore inscrit sur MEEREO �”€�”€�”€ */
                 <div style={{ padding: '18px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, background: 'rgba(107,114,128,.02)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -946,16 +946,16 @@ export default function Messages({ showToast }) {
                     </div>
                     <div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)' }}>{active.nom} n'est pas encore sur MEEREO</div>
-                      <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 1 }}>La messagerie sera disponible après son inscription.</div>
+                      <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 1 }}>La messagerie sera disponible apr�s son inscription.</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button className="btn btn-primary btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
                       const email = active.email
                       if (email) {
-                        showToast && showToast('Invitation envoyée à ' + email)
+                        showToast && showToast('Invitation envoy�e � ' + email)
                       } else {
-                        showToast && showToast('Invitation envoyée')
+                        showToast && showToast('Invitation envoy�e')
                       }
                     }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: -1 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -964,13 +964,13 @@ export default function Messages({ showToast }) {
                     <button className="btn btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
                       const link = window.location.origin + '/inscription?ref=' + (store.user?.id || 'meereo')
                       navigator.clipboard?.writeText(link)
-                      showToast && showToast('Lien d\'invitation copié')
+                      showToast && showToast('Lien d\'invitation copi�')
                     }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: -1 }}><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                       Copier le lien
                     </button>
                     <button className="btn btn-sm" style={{ fontSize: 11.5, padding: '8px 16px' }} onClick={() => {
-                      showToast && showToast('Invitation relancée')
+                      showToast && showToast('Invitation relanc�e')
                     }}>
                       Relancer
                     </button>
@@ -978,15 +978,15 @@ export default function Messages({ showToast }) {
                   {active.email && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 10 }}>Email : {active.email}</div>}
                 </div>
               ) : (
-                /* â”€â”€â”€ Utilisateur inscrit — messagerie normale â”€â”€â”€ */
+                /* �”€�”€�”€ Utilisateur inscrit — messagerie normale �”€�”€�”€ */
                 <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-                  {/* â”€â”€ Bannière suggestion prix/délai — visible uniquement pour le PRO dans une conversation 1-1 â”€â”€ */}
+                  {/* �”€�”€ Banni�re suggestion prix/d�lai — visible uniquement pour le PRO dans une conversation 1-1 �”€�”€ */}
                   {store.user?.type === 'pro' && active && !active.isGroup && !active.pending && !active.invited && (
                     showSuggestPanel ? (
                       <div style={{ padding: '10px 20px 6px', background: 'var(--s2)', borderBottom: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>ðŸ“‹ Proposition commerciale</span>
-                          <button onClick={() => { setShowSuggestPanel(false); setSuggestMontant(''); setSuggestDelai('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t4)', fontSize: 16, lineHeight: 1, padding: 0 }}>À</button>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>�Ÿ“‹ Proposition commerciale</span>
+                          <button onClick={() => { setShowSuggestPanel(false); setSuggestMontant(''); setSuggestDelai('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t4)', fontSize: 16, lineHeight: 1, padding: 0 }}>�</button>
                         </div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <input
@@ -998,7 +998,7 @@ export default function Messages({ showToast }) {
                           <input
                             value={suggestDelai}
                             onChange={e => setSuggestDelai(e.target.value)}
-                            placeholder="Délai (ex: 6 mois)"
+                            placeholder="D�lai (ex: 6 mois)"
                             style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--surface-1)', outline: 'none', color: 'var(--tx)' }}
                           />
                           <button
@@ -1019,9 +1019,9 @@ export default function Messages({ showToast }) {
                         <button
                           onClick={() => setShowSuggestPanel(true)}
                           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--t3)', fontFamily: 'var(--f)', transition: 'all .15s' }}
-                          title="Suggérer un prix et un délai au client"
+                          title="Sugg�rer un prix et un d�lai au client"
                         >
-                          <span>ðŸ“‹</span> Suggérer un prix
+                          <span>�Ÿ“‹</span> Sugg�rer un prix
                         </button>
                       </div>
                     )
@@ -1053,7 +1053,7 @@ export default function Messages({ showToast }) {
                         sendMsg()
                       }
                     }}
-                    placeholder="Écrire un message..."
+                    placeholder="�crire un message..."
                     style={{ flex: 1, padding: '11px 16px', border: '1px solid var(--border-card)', borderRadius: 14, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }}
                   />
                   <button onClick={() => sendMsg()} style={{ width: 40, height: 40, borderRadius: 12, background: input.trim() ? 'var(--tx)' : 'var(--s3)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: input.trim() ? '#fff' : 'var(--t4)', transition: 'all .15s' }}>
@@ -1067,14 +1067,14 @@ export default function Messages({ showToast }) {
         </div>
       </div>
 
-      {/* â•â•â• MODAL: Nouvelle conversation â•â•â• */}
+      {/* �•��•��•� MODAL: Nouvelle conversation �•��•��•� */}
       {showNewConv && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowNewConv(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, maxHeight: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 16, fontWeight: 800 }}>Nouvelle conversation</div>
-                <button onClick={() => setShowNewConv(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setShowNewConv(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
               <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1090,13 +1090,13 @@ export default function Messages({ showToast }) {
         </div>
       , document.body)}
 
-      {/* â•â•â• MODAL: Inviter â•â•â• */}
+      {/* �•��•��•� MODAL: Inviter �•��•��•� */}
       {showInvite && active && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowInvite(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 440, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 22px 12px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 700 }}>Ajouter a la conversation</div>
-              <button onClick={() => setShowInvite(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>À</button>
+              <button onClick={() => setShowInvite(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
             </div>
             <div style={{ padding: '0 22px 12px' }}>
               <input placeholder="Rechercher..." value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} style={{ width: '100%', padding: '8px 14px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} autoFocus />
@@ -1110,35 +1110,35 @@ export default function Messages({ showToast }) {
         </div>
       , document.body)}
 
-      {/* â•â•â• MODAL: Groupe â•â•â• */}
+      {/* �•��•��•� MODAL: Groupe �•��•��•� */}
       {showNewGroup && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowNewGroup(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un groupe</div>
-                <button onClick={() => setShowNewGroup(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Cr�er un groupe</div>
+                <button onClick={() => setShowNewGroup(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
               <input placeholder="Nom du groupe..." value={groupName} onChange={e => setGroupName(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)', marginBottom: 10 }} autoFocus />
-              {groupMembers.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>{groupMembers.map(m => <span key={m} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>{m} <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setGroupMembers(p => p.filter(x => x !== m))}>À</span></span>)}</div>}
+              {groupMembers.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>{groupMembers.map(m => <span key={m} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>{m} <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setGroupMembers(p => p.filter(x => x !== m))}>�</span></span>)}</div>}
               <input placeholder="Ajouter des participants..." value={groupSearch} onChange={e => setGroupSearch(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} />
             </div>
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>{groupFiltered.map((c, i) => <ContactRow key={i} c={c} onClick={() => { setGroupMembers(p => [...p, c.nom]); setGroupSearch('') }} />)}</div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
               <button className="btn btn-sm" onClick={() => setShowNewGroup(false)}>Annuler</button>
-              <button className="btn btn-primary btn-sm" disabled={!groupName.trim() || !groupMembers.length} onClick={() => { const id = 'conv_g_' + Date.now(); const grp = { id, nom: groupName, type: 'groupe', avatar: groupName ? groupName[0].toUpperCase() : 'G', color: '#191c1d', isGroup: true, participants: [...groupMembers], dernier: 'Groupe créé', time: 'Maintenant', unread: 0, msgs: [{ side: 'in', from: 'Système', text: 'Groupe créé avec ' + groupMembers.length + ' participants', time: 'Maintenant' }] }; updateStore(prev => ({ ...prev, conversations: [grp, ...(prev.conversations || [])] })); setShowNewGroup(false); setActiveId(id); showToast && showToast('Groupe créé') }}>Créer le groupe</button>
+              <button className="btn btn-primary btn-sm" disabled={!groupName.trim() || !groupMembers.length} onClick={() => { const id = 'conv_g_' + Date.now(); const grp = { id, nom: groupName, type: 'groupe', avatar: groupName ? groupName[0].toUpperCase() : 'G', color: '#191c1d', isGroup: true, participants: [...groupMembers], dernier: 'Groupe cr��', time: 'Maintenant', unread: 0, msgs: [{ side: 'in', from: 'Syst�me', text: 'Groupe cr�� avec ' + groupMembers.length + ' participants', time: 'Maintenant' }] }; updateStore(prev => ({ ...prev, conversations: [grp, ...(prev.conversations || [])] })); setShowNewGroup(false); setActiveId(id); showToast && showToast('Groupe cr��') }}>Cr�er le groupe</button>
             </div>
           </div>
         </div>
       , document.body)}
 
-      {/* â•â•â• MODAL: Participants â•â•â• */}
+      {/* �•��•��•� MODAL: Participants �•��•��•� */}
       {showParticipants && active && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowParticipants(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 380, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 700 }}>Participants ({(active.participants || []).length})</div>
-              <button onClick={() => setShowParticipants(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>À</button>
+              <button onClick={() => setShowParticipants(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
             </div>
             <div style={{ padding: '8px 0' }}>
               {(active.participants || []).map((p, i) => (
@@ -1157,7 +1157,7 @@ export default function Messages({ showToast }) {
         </div>
       , document.body)}
 
-      {/* â•â•â• CONTEXT MENU (right-click on sidebar) â•â•â• */}
+      {/* �•��•��•� CONTEXT MENU (right-click on sidebar) �•��•��•� */}
       {ctxMenu && (() => {
         const conv = allConversations.find(c => c.id === ctxMenu.convId)
         if (!conv) return null
@@ -1193,7 +1193,7 @@ export default function Messages({ showToast }) {
         , document.body)
       })()}
 
-      {/* â•â•â• CONFIRM MODAL â•â•â• */}
+      {/* �•��•��•� CONFIRM MODAL �•��•��•� */}
       {confirmAction && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setConfirmAction(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 380, padding: '28px 24px 22px', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
@@ -1213,9 +1213,9 @@ export default function Messages({ showToast }) {
             </div>
             {/* Description */}
             <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>
-              {confirmAction.type === 'delete' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera supprimée de votre liste. Les autres participants conserveront la leur.</>}
-              {confirmAction.type === 'archive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera déplacée dans vos archives. Vous pourrez la restaurer à tout moment.</>}
-              {confirmAction.type === 'unarchive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera restaurée dans votre liste principale.</>}
+              {confirmAction.type === 'delete' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera supprim�e de votre liste. Les autres participants conserveront la leur.</>}
+              {confirmAction.type === 'archive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera d�plac�e dans vos archives. Vous pourrez la restaurer � tout moment.</>}
+              {confirmAction.type === 'unarchive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera restaur�e dans votre liste principale.</>}
               {confirmAction.type === 'quit' && <>Vous quitterez le groupe <strong>{confirmAction.convName}</strong>. Vous ne recevrez plus de messages de ce groupe.</>}
             </div>
             {/* Buttons */}

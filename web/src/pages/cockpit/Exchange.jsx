@@ -1,9 +1,10 @@
 ﻿import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
 import AoGear, { getMetierColor } from '../../components/shared/AoGear'
 import ShareMenu from '../../components/shared/ShareMenu'
-import { METIERS_AO } from '../../data/ao'
+import { METIERS_AO, CLIENT_METIERS_AO } from '../../data/ao'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { api } from '../../services/api/client'
 import { useMergedData } from '../../hooks/useMergedData'
@@ -21,9 +22,9 @@ const DOCS_ENTREPRISE_TEMPLATE = [
   { id: 'de1', nom: 'RCCM', type: 'Juridique' },
   { id: 'de2', nom: 'Attestation fiscale 2025', type: 'Fiscal' },
   { id: 'de3', nom: 'Attestation CNPS', type: 'Social' },
-  { id: 'de4', nom: 'Assurance décennale', type: 'Assurance' },
-  { id: 'de5', nom: 'Références projets (portfolio)', type: 'Référence' },
-  { id: 'de6', nom: 'Organigramme équipe', type: 'RH' },
+  { id: 'de4', nom: 'Assurance d�cennale', type: 'Assurance' },
+  { id: 'de5', nom: 'R�f�rences projets (portfolio)', type: 'R�f�rence' },
+  { id: 'de6', nom: 'Organigramme �quipe', type: 'RH' },
   { id: 'de7', nom: 'Certificat de qualification', type: 'Qualification' },
   { id: 'de8', nom: 'Bilan financier 2024', type: 'Financier' },
 ]
@@ -39,6 +40,8 @@ export default function Exchange({ showToast, onNavigate }) {
   const [showCreateAO, setShowCreateAO] = useState(false)
   const [newAO, setNewAO] = useState({ titre: '', metier: '', projet: '', budget: '', deadline: '', desc: '', prive: false, listeRestreinte: [] })
   const [aoInviteSearch, setAoInviteSearch] = useState('')
+  const [dirPros, setDirPros] = useState([])
+  const [dirLoading, setDirLoading] = useState(false)
   const [showRepondre, setShowRepondre] = useState(null)
   // Documents entreprise : lus depuis le store (seuls les uploaded/generated sont joinables)
   const entrepriseDocs = useMemo(() => {
@@ -48,14 +51,14 @@ export default function Exchange({ showToast, onNavigate }) {
       return found ? { ...tpl, ...found } : { ...tpl, status: 'missing' }
     })
   }, [store.entrepriseDocs])
-  // Aussi inclure les vrais documents importés dans le Dossier Entreprise (DocumentsPage)
+  // Aussi inclure les vrais documents import�s dans le Dossier Entreprise (DocumentsPage)
   const uploadedEnterpriseDocs = useMemo(() =>
     (store.documents || []).filter(d => !d._deleted && (d.isEntreprise || d.category === 'entreprise'))
       .map(d => ({ id: d.id, nom: d.nom || d.name, type: d.cat || d.type || 'Document', status: 'uploaded', uploadedAt: d.createdAt || d.date })),
   [store.documents])
   const availableDocs = [
     ...entrepriseDocs.filter(d => d.status === 'uploaded' || d.status === 'generated'),
-    // Dédupliquer si mÃªme id
+    // D�dupliquer si même id
     ...uploadedEnterpriseDocs.filter(d => !entrepriseDocs.some(t => t.id === d.id)),
   ]
   const [reponse, setReponse] = useState({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: [] })
@@ -74,8 +77,18 @@ export default function Exchange({ showToast, onNavigate }) {
   const userType = store.user?.type || 'pro'
   const isClient = userType === 'client'
 
-  // Secteurs de l'utilisateur — depuis onboarding uniquement (pas de fallback codé en dur)
-  // Si vide â†’ mesSecteurs.length === 0 â†’ le filtre trade_only ne s'applique pas
+  // Secteurs de l'utilisateur — depuis onboarding uniquement (pas de fallback cod� en dur)
+  // Si vide �†’ mesSecteurs.length === 0 �†’ le filtre trade_only ne s'applique pas
+  // Charger l'annuaire des pros quand l'AO privé est activé
+  useEffect(() => {
+    if (!showCreateAO || !newAO.prive || dirPros.length > 0 || dirLoading) return
+    setDirLoading(true)
+    api.professionals.getAll()
+      .then(data => setDirPros((data || []).map(u => ({ id: u.id, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '' }))))
+      .catch(() => setDirPros([]))
+      .finally(() => setDirLoading(false))
+  }, [showCreateAO, newAO.prive]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const mesSecteurs = useMemo(() => {
     const ob = store.onboardingData || {}
     return ob.services || ob.secteurs || []
@@ -90,8 +103,14 @@ export default function Exchange({ showToast, onNavigate }) {
       .filter(a => {
         // Les clients ne voient pas les AOs des autres clients
         if (uType === 'client' && a.ownerUserId && a.ownerUserId !== userId) return false
-        // trade_only : filtrer par métier SEULEMENT si le pro a des secteurs renseignés
-        // â†’ un nouveau compte sans secteurs voit quand mÃªme tous les AOs publics
+        // AO privé : seuls les invités (listeRestreinte) peuvent le voir
+        if (a.prive && a.ownerUserId !== userId) {
+          const liste = a.listeRestreinte || []
+          const isInvited = liste.some(inv => inv && (inv.id === userId || inv === userId))
+          if (!isInvited) return false
+        }
+        // trade_only : filtrer par m�tier SEULEMENT si le pro a des secteurs renseign�s
+        // �†’ un nouveau compte sans secteurs voit quand même tous les AOs publics
         if (a.visibilityScope === 'trade_only' && a.requestedTrade && uType === 'pro' && mesSecteurs.length > 0) {
           return mesSecteurs.some(s =>
             s.toLowerCase() === (a.requestedTrade || '').toLowerCase() ||
@@ -108,7 +127,7 @@ export default function Exchange({ showToast, onNavigate }) {
       }))
   }, [store.aos, store.user, mesSecteurs])
 
-  // Filtrage unique utilisé par stats ET liste
+  // Filtrage unique utilis� par stats ET liste
   const marcheFiltered = allPublicAO.filter(a => {
     const statOk = filter === 'all' || (filter === 'ouvert' && a.statut === 'ouvert') || (filter === 'suivi' && suivis.includes(a.id)) || (filter === 'secteur' && mesSecteurs.some(s => (a.metier || '').toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes((a.metier || '').toLowerCase())))
     const metierOk = metierFilter.length === 0 || metierFilter.includes(a.metier)
@@ -124,13 +143,13 @@ export default function Exchange({ showToast, onNavigate }) {
       return !a.createdByClient
     }).map(a => ({
       id: a.id, ref: 'AO-' + String(a.id).slice(-5), titre: a.title || a.titre, projet: '', metier: a.lot || a.requestedTrade || '',
-      budget: a.budget || '—', deadline: '—', statut: a.status === 'closed' ? 'clos' : a.status === 'attributed' ? 'attribué' : a.status === 'cancelled_by_owner' ? 'annulé' : a.status === 'archived' ? 'archivé' : 'ouvert', rawStatus: a.status, desc: a.description || '',
+      budget: a.budget || '—', deadline: a.deadline ? new Date(a.deadline).toLocaleDateString('fr-FR') : '—', statut: a.status === 'closed' ? 'clos' : a.status === 'attributed' ? 'attribué' : a.status === 'cancelled_by_owner' ? 'annulé' : a.status === 'archived' ? 'archivé' : 'ouvert', rawStatus: a.status, desc: a.description || '',
       reponses: (store.offers || []).filter(o => o.aoId === a.id).length,
       publie: a.createdAt ? new Date(a.createdAt).toLocaleDateString('fr-FR') : "Aujourd'hui",
     }))
   }, [store.aos, store.offers, store.user, isClient])
 
-  // Offres reçues par le client — filtrées par ownership des AOs
+  // Offres re�ues par le client — filtr�es par ownership des AOs
   const clientReceivedOffers = useMemo(() => {
     if (!isClient) return []
     const userId = store.user?.id
@@ -139,7 +158,7 @@ export default function Exchange({ showToast, onNavigate }) {
       id: o.id, titre: o.titre || o.entreprise || '', entreprise: o.entreprise || '',
       montant: o.montant || '', delai: o.delai || '', statut: o.statut || o.status || 'pending',
       aoId: o.aoId, userId: o.userId || o.supplierId || '',
-      soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+      soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'R�cent',
     }))
   }, [isClient, store.aos, store.offers, store.user])
 
@@ -153,7 +172,7 @@ export default function Exchange({ showToast, onNavigate }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [tradeDropdownOpen])
 
-  // Rafraîchir les AOs + offres — appelé au montage et via le bouton Actualiser
+  // Rafra�chir les AOs + offres — appel� au montage et via le bouton Actualiser
   const doRefresh = useCallback(() => {
     setRefreshing(true)
     Promise.all([
@@ -182,17 +201,18 @@ export default function Exchange({ showToast, onNavigate }) {
   const selectedMarche = tab === 'marche' ? (selectedId ? allPublicAO.find(a => a.id === selectedId) : marcheFiltered[0]) : null
   const selectedMesAO = tab === 'mesao' ? (selectedId ? allMesAO.find(a => a.id === selectedId) : allMesAO[0]) : null
 
-  // Vérifier si le pro a déjà postulé à un AO donné
+  // V�rifier si le pro a d�j� postul� � un AO donn�
   const myOfferForAO = (aoId) => (store.offers || []).find(o => o.aoId === aoId && (o.supplierId === store.user?.id || o.userId === store.user?.id))
   const alreadyApplied = (aoId) => !!myOfferForAO(aoId)
 
   const createAO = () => {
     setAoSubmitted(true)
     if (!newAO.titre.trim() || !newAO.metier) return
-    storeCreateAO({ title: newAO.titre, description: newAO.desc, budget: newAO.budget, lot: newAO.metier, projectId: newAO.projet || null })
+    storeCreateAO({ title: newAO.titre, description: newAO.desc, budget: newAO.budget, lot: newAO.metier, projectId: newAO.projet || null, deadline: newAO.deadline || '', prive: newAO.prive || false, listeRestreinte: newAO.listeRestreinte || [], visibilityScope: newAO.prive ? 'private' : 'public' })
     setShowCreateAO(false)
     setAoSubmitted(false)
-    setNewAO({ titre: '', metier: '', projet: '', budget: '', deadline: '', desc: '' })
+    setNewAO({ titre: '', metier: '', projet: '', budget: '', deadline: '', desc: '', prive: false, listeRestreinte: [] })
+    setDirPros([])
     refresh(n => n + 1)
     showToast && showToast('AO publie — visible par les ' + newAO.metier + 's')
   }
@@ -211,19 +231,19 @@ export default function Exchange({ showToast, onNavigate }) {
     if (!result) return // Permission denied — toast already shown by store
     setShowRepondre(null)
     setReponseSubmitted(false)
-    showToast && showToast('Offre soumise avec ' + reponse.docsEntreprise.length + ' documents entreprise + ' + reponse.docsJoints.length + ' pièces jointes')
+    showToast && showToast('Offre soumise avec ' + reponse.docsEntreprise.length + ' documents entreprise + ' + reponse.docsJoints.length + ' pi�ces jointes')
   }
 
   return (
     <div>
       <DSPageHeader
-        title={tab === 'marche' ? "Bourse des appels d'offres" : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}
-        subtitle={tab === 'marche' ? `${marcheFiltered.length} disponibles sur le marché` : tab === 'mesao' ? `${allMesAO.length} publiés par vous` : `${clientReceivedOffers.length} offre${clientReceivedOffers.length > 1 ? 's' : ''} reçue${clientReceivedOffers.length > 1 ? 's' : ''}`}
+        title={tab === 'marche' ? "Bourse des appels d'offres" : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres re�ues'}
+        subtitle={tab === 'marche' ? `${marcheFiltered.length} disponibles sur le march�` : tab === 'mesao' ? `${allMesAO.length} publi�s par vous` : `${clientReceivedOffers.length} offre${clientReceivedOffers.length > 1 ? 's' : ''} re�ue${clientReceivedOffers.length > 1 ? 's' : ''}`}
       >
         <DSFilterBar
           filters={(isClient
-            ? [['marche', 'Bourse'], ['mesao', 'Mes AO'], ['offres', 'Offres reçues']]
-            : [['marche', 'Marché'], ['mesao', 'Mes AO'], ['docs', 'Mes documents']]
+            ? [['marche', 'Bourse'], ['mesao', 'Mes AO'], ['offres', 'Offres re�ues']]
+            : [['marche', 'March�'], ['mesao', 'Mes AO'], ['docs', 'Mes documents']]
           ).map(([k, l]) => ({ key: k, label: l }))}
           active={tab}
           onChange={k => { setTab(k); setSelectedId(null) }}
@@ -235,12 +255,12 @@ export default function Exchange({ showToast, onNavigate }) {
           title="Actualiser les appels d'offres"
           style={{ opacity: refreshing ? .5 : 1, transition: 'opacity .2s' }}
         >
-          {refreshing ? 'â³' : 'ðŸ”„'}
+          {refreshing ? '⏳' : '�Ÿ”„'}
         </button>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowCreateAO(true)}>+ Créer un AO</button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowCreateAO(true)}>+ Cr�er un AO</button>
       </DSPageHeader>
 
-      {/* â•â•â• TAB: Documents entreprise â•â•â• */}
+      {/* �•��•��•� TAB: Documents entreprise �•��•��•� */}
       {tab === 'docs' && (
         <div>
           {/* Intro popup — first time */}
@@ -256,9 +276,9 @@ export default function Exchange({ showToast, onNavigate }) {
                 </div>
                 <div style={{ padding: '0 28px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { icon: <Zap size={18}/>, title: 'Réponse automatique', desc: 'KAI joint vos documents quand vous répondez à un AO' },
-                    { icon: <Lock size={18}/>, title: 'Sécurisé', desc: 'Vos documents ne sont partagés qu\'avec votre accord' },
-                    { icon: <RefreshCcw size={18}/>, title: 'Toujours à jour', desc: 'Mettez à jour un document et il sera actualisé partout' },
+                    { icon: <Zap size={18}/>, title: 'R�ponse automatique', desc: 'KAI joint vos documents quand vous r�pondez � un AO' },
+                    { icon: <Lock size={18}/>, title: 'S�curis�', desc: 'Vos documents ne sont partag�s qu\'avec votre accord' },
+                    { icon: <RefreshCcw size={18}/>, title: 'Toujours � jour', desc: 'Mettez � jour un document et il sera actualis� partout' },
                   ].map((f, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10 }}>
                       <span style={{ flexShrink: 0, display: 'flex' }}>{f.icon}</span>
@@ -280,10 +300,10 @@ export default function Exchange({ showToast, onNavigate }) {
               <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>K</span></div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>Documents entreprise</div>
-                <div style={{ fontSize: 11, color: 'var(--t3)' }}>Ajoutez vos documents pour les joindre à vos réponses aux appels d'offres.</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>Ajoutez vos documents pour les joindre � vos r�ponses aux appels d'offres.</div>
               </div>
             </div>
-            {availableDocs.length === 0 && <div style={{ fontSize: 11, color: 'var(--wrn)', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={12}/> Aucun document entreprise ajouté</div>}
+            {availableDocs.length === 0 && <div style={{ fontSize: 11, color: 'var(--wrn)', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={12}/> Aucun document entreprise ajout�</div>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {entrepriseDocs.map(d => (
@@ -294,10 +314,10 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>{d.type}</div>
                 </div>
                 {d.status === 'missing' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(186,26,26,.06)', color: 'var(--err)' }}>Non fourni</span>}
-                {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajouté</span>}
-                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAI</span>}
+                {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajout�</span>}
+                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>G�n�r� par KAI</span>}
                 {d.status === 'missing' ? (
-                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { updateStore(prev => ({ ...prev, entrepriseDocs: [...(prev.entrepriseDocs || []), { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }] })); showToast && showToast('Document ajouté') }}>Ajouter</button>
+                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { updateStore(prev => ({ ...prev, entrepriseDocs: [...(prev.entrepriseDocs || []), { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }] })); showToast && showToast('Document ajout�') }}>Ajouter</button>
                 ) : (
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Remplacer le document...')}>Remplacer</button>
                 )}
@@ -312,26 +332,26 @@ export default function Exchange({ showToast, onNavigate }) {
         </div>
       )}
 
-      {/* â•â•â• TAB: Marché & Mes AO â•â•â• */}
+      {/* �•��•��•� TAB: March� & Mes AO �•��•��•� */}
       {tab !== 'docs' && (
         <>
           {/* KPI */}
           <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
             <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{tab === 'marche' ? 'Bourse des AO' : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{tab === 'marche' ? 'Bourse des AO' : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres re�ues'}</div>
               <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{tab === 'marche' ? marcheFiltered.length : tab === 'mesao' ? allMesAO.length : clientReceivedOffers.length}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>{tab === 'marche' ? 'disponibles sur le marché' : tab === 'mesao' ? 'publiés par vous' : 'propositions de professionnels'}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>{tab === 'marche' ? 'disponibles sur le march�' : tab === 'mesao' ? 'publi�s par vous' : 'propositions de professionnels'}</div>
             </div>
             <div className="rg-2" style={{ gap: 12 }}>
               {(tab === 'offres'
-                ? [{ v: clientReceivedOffers.filter(o => o.statut === 'pending').length, l: 'En attente' }, { v: clientReceivedOffers.filter(o => o.statut === 'accepted').length, l: 'Acceptées' }, { v: new Set(clientReceivedOffers.map(o => o.aoId)).size, l: 'AO concernés' }, { v: clientReceivedOffers.length, l: 'Total' }]
+                ? [{ v: clientReceivedOffers.filter(o => o.statut === 'pending').length, l: 'En attente' }, { v: clientReceivedOffers.filter(o => o.statut === 'accepted').length, l: 'Accept�es' }, { v: new Set(clientReceivedOffers.map(o => o.aoId)).size, l: 'AO concern�s' }, { v: clientReceivedOffers.length, l: 'Total' }]
                 : tab === 'marche'
                 ? isClient
                   ? [{ v: allPublicAO.filter(a => a.statut === 'ouvert').length, l: 'Ouverts' }, { v: suivis.length, l: 'Suivis' }, { v: (store.aoInvitations || []).filter(i => i.senderUserId === store.user?.id).length, l: 'Invitations' }, { v: allPublicAO.length, l: 'Total' }]
                   : [{ v: allPublicAO.filter(a => a.statut === 'ouvert').length, l: 'Ouverts' }, { v: suivis.length, l: 'Suivis' }, { v: mesSecteurs.length, l: 'Mes secteurs' }, { v: allPublicAO.length, l: 'Total' }]
                 : isClient
-                  ? [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'AO ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'Offres reçues' }, { v: (store.aoInvitations || []).filter(i => i.senderUserId === store.user?.id).length, l: 'Invitations' }, { v: allMesAO.length, l: 'Total' }]
-                  : [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'Ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'Réponses' }, { v: [...new Set(allMesAO.map(a => a.metier))].length, l: 'Métiers' }, { v: allMesAO.length, l: 'Total' }]
+                  ? [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'AO ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'Offres re�ues' }, { v: (store.aoInvitations || []).filter(i => i.senderUserId === store.user?.id).length, l: 'Invitations' }, { v: allMesAO.length, l: 'Total' }]
+                  : [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'Ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'R�ponses' }, { v: [...new Set(allMesAO.map(a => a.metier))].length, l: 'M�tiers' }, { v: allMesAO.length, l: 'Total' }]
               ).map((k, i) => (
                 <div key={i} className="card" style={{ padding: 16, background: '#fff', border: '1px solid #EAEAEA', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
               ))}
@@ -350,7 +370,7 @@ export default function Exchange({ showToast, onNavigate }) {
                         <button key={k} className={`filter-pill ${filter === k ? 'active' : ''}`} onClick={() => setFilter(k)}>{l}</button>
                       ))}
                     </div>
-                    {/* Niveau 2 — Métier */}
+                    {/* Niveau 2 — M�tier */}
                     {isClient ? (
                       <div ref={tradeComboRef} style={{ position: 'relative' }}>
                         <div
@@ -373,12 +393,12 @@ export default function Exchange({ showToast, onNavigate }) {
                                 if (e.key === 'Escape') { setTradeDropdownOpen(false); setTradeSearch('') }
                                 if (e.key === 'Enter' && filteredTrades.length === 1) { setMetierFilter(filteredTrades[0]); setTradeDropdownOpen(false); setTradeSearch('') }
                               }}
-                              placeholder="Rechercher un métier..."
+                              placeholder="Rechercher un m�tier..."
                               style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12, fontFamily: 'var(--f)', color: 'var(--tx)', flex: 1, minWidth: 0, padding: 0 }}
                             />
                           ) : (
                             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: metierFilter.length > 0 ? 600 : 400, color: metierFilter.length > 0 ? 'var(--tx)' : 'var(--t3)' }}>
-                              {metierFilter.length === 0 ? 'Type de professionnel recherché' : metierFilter.join(', ')}
+                              {metierFilter.length === 0 ? 'Type de professionnel recherch�' : metierFilter.join(', ')}
                             </span>
                           )}
                           {metierFilter.length > 0 && !tradeDropdownOpen && (
@@ -407,7 +427,7 @@ export default function Exchange({ showToast, onNavigate }) {
                               onMouseOut={e => { if (metierFilter.length > 0) e.currentTarget.style.background = '' }}
                             >
                               <span style={{ width: 6, height: 6, borderRadius: '50%', background: metierFilter.length === 0 ? 'var(--tx)' : 'transparent', flexShrink: 0 }} />
-                              Tous les métiers
+                              Tous les m�tiers
                             </div>
                             {filteredTrades.map(m => {
                               const isActive = metierFilter.includes(m)
@@ -432,14 +452,14 @@ export default function Exchange({ showToast, onNavigate }) {
                               )
                             })}
                             {filteredTrades.length === 0 && (
-                              <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun métier trouvé</div>
+                              <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun m�tier trouv�</div>
                             )}
                           </div>
                         )}
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <button className={`filter-pill ${metierFilter.length === 0 ? 'active' : ''}`} onClick={() => setMetierFilter([])} style={{ fontSize: 10 }}>Tous métiers</button>
+                        <button className={`filter-pill ${metierFilter.length === 0 ? 'active' : ''}`} onClick={() => setMetierFilter([])} style={{ fontSize: 10 }}>Tous m�tiers</button>
                         {METIERS_AO.map(m => {
                           const active = metierFilter.includes(m)
                           const mc = getMetierColor(m)
@@ -454,14 +474,14 @@ export default function Exchange({ showToast, onNavigate }) {
               </div>
               {tab === 'marche' && isClient && marcheFiltered.length > 0 && (
                 <div style={{ padding: '8px 14px', margin: '0 0 4px', fontSize: 11, color: 'var(--t4)', background: 'rgba(0,122,255,.04)', borderRadius: 8, lineHeight: 1.5 }}>
-                  Vous consultez les appels d'offres. Seuls les professionnels peuvent y répondre. Vous pouvez inviter ou partager un AO.
+                  Vous consultez les appels d'offres. Seuls les professionnels peuvent y r�pondre. Vous pouvez inviter ou partager un AO.
                 </div>
               )}
               {tab === 'marche' && marcheFiltered.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '48px 24px' }}>
                   <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><ClipboardList size={32}/></div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun appel d'offres disponible</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Les appels d'offres publiés sur la plateforme apparaîtront ici.</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Les appels d'offres publi�s sur la plateforme appara�tront ici.</div>
                 </div>
               )}
               {tab === 'marche' && marcheFiltered.map(ao => {
@@ -470,7 +490,7 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div key={ao.id} className="list-item" style={{ background: selectedMarche?.id === ao.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(ao.id)}>
                     <div className="list-item-body">
                       <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}</div>
-                      <div className="list-item-sub">{ao.maoa} · {ao.lieu}</div>
+                      <div className="list-item-sub">{ao.maoa} � {ao.lieu}</div>
                     </div>
                     <div className="list-item-right">
                       <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: mc + '12', color: mc }}>{ao.metier}</span>
@@ -482,7 +502,7 @@ export default function Exchange({ showToast, onNavigate }) {
               {tab === 'mesao' && allMesAO.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '48px 24px' }}>
                   <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><Radio size={32}/></div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Vous n'avez encore publié aucun appel d'offres</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Vous n'avez encore publi� aucun appel d'offres</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>Publiez un AO pour recevoir des propositions.</div>
                 </div>
               )}
@@ -492,31 +512,31 @@ export default function Exchange({ showToast, onNavigate }) {
                 <div key={ao.id} className="list-item" style={{ background: selectedMesAO?.id === ao.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(ao.id)}>
                   <div className="list-item-body">
                     <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}</div>
-                    <div className="list-item-sub">{ao.projet} · {ao.metier}</div>
+                    <div className="list-item-sub">{ao.projet} � {ao.metier}</div>
                   </div>
                   <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{ao.reponses > 0 ? ao.reponses + ' r�p.' : 'En attente'}</span>
                     <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
                   </div>
                 </div>
                 )
               })}
-              {/* â•â•â• Offres reçues — liste â•â•â• */}
+              {/* �•��•��•� Offres re�ues — liste �•��•��•� */}
               {tab === 'offres' && clientReceivedOffers.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '48px 24px' }}>
                   <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><Inbox size={32}/></div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Vous n'avez encore reçu aucune offre</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>Les offres des professionnels apparaîtront ici.</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Vous n'avez encore re�u aucune offre</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>Les offres des professionnels appara�tront ici.</div>
                 </div>
               )}
               {tab === 'offres' && clientReceivedOffers.map(o => (
                 <div key={o.id} className="list-item" style={{ background: selectedOffer?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
                   <div className="list-item-body">
                     <div className="list-item-title">{o.entreprise}</div>
-                    <div className="list-item-sub">{formatBudgetDisplay(o.montant)} · {o.delai}</div>
+                    <div className="list-item-sub">{formatBudgetDisplay(o.montant)} � {o.delai}</div>
                   </div>
                   <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: o.statut === 'accepted' ? 'rgba(52,199,89,.08)' : o.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: o.statut === 'accepted' ? 'var(--ok)' : o.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{o.statut === 'accepted' ? 'Acceptée' : o.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: o.statut === 'accepted' ? 'rgba(52,199,89,.08)' : o.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: o.statut === 'accepted' ? 'var(--ok)' : o.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{o.statut === 'accepted' ? 'Accept�e' : o.statut === 'rejected' ? 'Refus�e' : 'En attente'}</span>
                     <div className="list-item-date">{o.soumis}</div>
                   </div>
                 </div>
@@ -524,7 +544,7 @@ export default function Exchange({ showToast, onNavigate }) {
             </div>
 
             <div className="split-right">
-              {/* Marché detail */}
+              {/* March� detail */}
               {tab === 'marche' && !selectedMarche && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}><div style={{ opacity: .4 }}><ClipboardList size={28}/></div><div style={{ fontSize: 14, fontWeight: 600 }}>Selectionnez un AO</div></div>}
               {tab === 'marche' && selectedMarche && (() => {
                 const mc = getMetierColor(selectedMarche.metier)
@@ -536,7 +556,7 @@ export default function Exchange({ showToast, onNavigate }) {
                       {/* Eyebrow */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                         <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>Appel d'offres</span>
-                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>·</span>
+                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>�</span>
                         <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>{selectedMarche.ref}</span>
                         <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.15)', color: '#34c759' }}>Ouvert</span>
                       </div>
@@ -545,7 +565,7 @@ export default function Exchange({ showToast, onNavigate }) {
                       {/* Meta */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: mc + '22', color: mc }}>{selectedMarche.metier}</span>
-                        <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)' }}>{selectedMarche.maoa}{selectedMarche.lieu ? ' · ' + selectedMarche.lieu : ''}</span>
+                        <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)' }}>{selectedMarche.maoa}{selectedMarche.lieu ? ' � ' + selectedMarche.lieu : ''}</span>
                         {selectedMarche.matching && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,255,255,.1)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={10}/> {selectedMarche.matching}%</span>}
                       </div>
                     </div>
@@ -574,15 +594,15 @@ export default function Exchange({ showToast, onNavigate }) {
                       onClick={() => { setSuivis(prev => prev.includes(selectedMarche.id) ? prev.filter(x => x !== selectedMarche.id) : [...prev, selectedMarche.id]) }}>
                       {suivis.includes(selectedMarche.id) ? <><Star size={13} fill="currentColor"/> Suivi</> : <><Star size={13}/> Suivre</>}
                     </button>
-                    <ShareMenu url={window.location.origin + '/ao/' + selectedMarche.id} text={'Appel d\'offres : ' + (selectedMarche.titre || '')} onCopied={() => showToast && showToast('Lien copié')} />
+                    <ShareMenu url={window.location.origin + '/ao/' + selectedMarche.id} text={'Appel d\'offres : ' + (selectedMarche.titre || '')} onCopied={() => showToast && showToast('Lien copi�')} />
                     {isClient ? (
-                      <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => setShowInviteModal(selectedMarche)}>Inviter un professionnel â†’</button>
+                      <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => setShowInviteModal(selectedMarche)}>Inviter un professionnel �†’</button>
                     ) : alreadyApplied(selectedMarche.id) ? (
                       <div style={{ flex: 2, padding: 11, borderRadius: 9, background: 'rgba(52,199,89,.08)', border: '1px solid rgba(52,199,89,.3)', fontSize: 12.5, fontWeight: 600, color: '#16a34a', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <Check size={14}/> Offre soumise — {myOfferForAO(selectedMarche.id)?.montant || ''} FCFA
                       </div>
                     ) : (
-                      <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => { setShowRepondre(selectedMarche); setReponse({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: availableDocs.map(d => d.id) }) }}>Répondre à l'appel d'offres â†’</button>
+                      <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => { setShowRepondre(selectedMarche); setReponse({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: availableDocs.map(d => d.id) }) }}>R�pondre � l'appel d'offres �†’</button>
                     )}
                   </div>
                 </div>
@@ -591,8 +611,8 @@ export default function Exchange({ showToast, onNavigate }) {
 
               {/* Mes AO detail */}
               {tab === 'mesao' && !selectedMesAO && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}><div style={{ opacity: .4 }}><ClipboardList size={28}/></div><div style={{ fontSize: 14, fontWeight: 600 }}>Selectionnez un de vos AO</div></div>}
-              {/* Offres reçues detail */}
-              {tab === 'offres' && !selectedOffer && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}><div style={{ opacity: .4 }}><Inbox size={28}/></div><div style={{ fontSize: 14, fontWeight: 600 }}>Sélectionnez une offre</div></div>}
+              {/* Offres re�ues detail */}
+              {tab === 'offres' && !selectedOffer && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}><div style={{ opacity: .4 }}><Inbox size={28}/></div><div style={{ fontSize: 14, fontWeight: 600 }}>S�lectionnez une offre</div></div>}
               {tab === 'offres' && selectedOffer && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -601,17 +621,17 @@ export default function Exchange({ showToast, onNavigate }) {
                       <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 3 }}>{selectedOffer.entreprise}</div>
                       <div style={{ fontSize: 12, color: 'var(--t3)' }}>Soumis le {selectedOffer.soumis}</div>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.08)' : selectedOffer.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: selectedOffer.statut === 'accepted' ? 'var(--ok)' : selectedOffer.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{selectedOffer.statut === 'accepted' ? 'Acceptée' : selectedOffer.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.08)' : selectedOffer.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: selectedOffer.statut === 'accepted' ? 'var(--ok)' : selectedOffer.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{selectedOffer.statut === 'accepted' ? 'Accept�e' : selectedOffer.statut === 'rejected' ? 'Refus�e' : 'En attente'}</span>
                   </div>
                   <div style={{ padding: '18px 20px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', borderRadius: 14, color: '#fff', marginBottom: 20 }}>
-                    <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant proposé</div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant propos�</div>
                     <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatBudgetDisplay(selectedOffer.montant)}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selectedOffer.delai || '—'}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>D�lai : {selectedOffer.delai || '—'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {selectedOffer.statut === 'pending' && <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => { storeRejectOffer(selectedOffer.id) }}>Refuser</button>}
                     {selectedOffer.statut === 'pending' && <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, fontWeight: 700, fontSize: 13 }} onClick={() => { storeAcceptOffer(selectedOffer.id) }}>Accepter l'offre</button>}
-                    {selectedOffer.statut !== 'pending' && <div style={{ padding: '12px 16px', borderRadius: 10, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.06)' : 'rgba(220,38,38,.05)', border: `1px solid ${selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.12)' : 'rgba(220,38,38,.1)'}`, fontSize: 13, fontWeight: 600, flex: 1, textAlign: 'center' }}>Offre {selectedOffer.statut === 'accepted' ? 'acceptée' : 'refusée'}</div>}
+                    {selectedOffer.statut !== 'pending' && <div style={{ padding: '12px 16px', borderRadius: 10, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.06)' : 'rgba(220,38,38,.05)', border: `1px solid ${selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.12)' : 'rgba(220,38,38,.1)'}`, fontSize: 13, fontWeight: 600, flex: 1, textAlign: 'center' }}>Offre {selectedOffer.statut === 'accepted' ? 'accept�e' : 'refus�e'}</div>}
                   </div>
                 </div>
               )}
@@ -626,9 +646,9 @@ export default function Exchange({ showToast, onNavigate }) {
                       {/* Eyebrow */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                         <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>Mon appel d'offres</span>
-                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>·</span>
+                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>�</span>
                         <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>{selectedMesAO.ref}</span>
-                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: selectedMesAO.reponses > 0 ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: selectedMesAO.reponses > 0 ? '#34c759' : '#F59E0B' }}>{selectedMesAO.reponses > 0 ? selectedMesAO.reponses + ' réponse' + (selectedMesAO.reponses > 1 ? 's' : '') : 'En attente'}</span>
+                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: selectedMesAO.reponses > 0 ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: selectedMesAO.reponses > 0 ? '#34c759' : '#F59E0B' }}>{selectedMesAO.reponses > 0 ? selectedMesAO.reponses + ' r�ponse' + (selectedMesAO.reponses > 1 ? 's' : '') : 'En attente'}</span>
                       </div>
                       {/* Titre */}
                       <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.25 }}><AoGear size={16} color={mc} />{selectedMesAO.titre}</div>
@@ -648,7 +668,7 @@ export default function Exchange({ showToast, onNavigate }) {
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 10 }}>Description</div>
                     <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.75 }}>{selectedMesAO.desc}</div>
                   </div>
-                  <div style={{ padding: '12px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 20, fontSize: 12, color: 'var(--t2)' }}>Publie le {selectedMesAO.publie} · Visible par les <strong>{selectedMesAO.metier}</strong></div>
+                  <div style={{ padding: '12px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 20, fontSize: 12, color: 'var(--t2)' }}>Publie le {selectedMesAO.publie} � Visible par les <strong>{selectedMesAO.metier}</strong></div>
                   <div style={{ display: 'flex', gap: 10 }}>
                     {selectedMesAO.rawStatus === 'open' && (
                       <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => {
@@ -658,8 +678,8 @@ export default function Exchange({ showToast, onNavigate }) {
                         api.aos.update(selectedMesAO.id, { status: 'closed' }).catch(() => {})
                         setSelectedId(null)
                         refresh(n => n + 1)
-                        showToast && showToast('AO clôturé')
-                      }}>Clôturer</button>
+                        showToast && showToast('AO cl�tur�')
+                      }}>Cl�turer</button>
                     )}
                     <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => { onNavigate && onNavigate('offres') }}>Voir les offres ({selectedMesAO.reponses})</button>
                     {selectedMesAO.rawStatus !== 'attributed' && selectedMesAO.rawStatus !== 'archived' && (
@@ -675,13 +695,13 @@ export default function Exchange({ showToast, onNavigate }) {
         </>
       )}
 
-      {/* â•â•â• MODAL: Créer AO â•â•â• */}
+      {/* �•��•��•� MODAL: Cr�er AO �•��•��•� */}
       {showCreateAO && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowCreateAO(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un appel d'offres</div>
-              <button onClick={() => setShowCreateAO(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>Cr�er un appel d'offres</div>
+              <button onClick={() => setShowCreateAO(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
@@ -690,10 +710,10 @@ export default function Exchange({ showToast, onNavigate }) {
                 {aoSubmitted && !newAO.titre.trim() && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
               </div>
               <div>
-                <label className="form-label">Métier recherché *</label>
+                <label className="form-label">M�tier recherch� *</label>
                 <select className="form-input" value={newAO.metier} onChange={e => setNewAO(p => ({ ...p, metier: e.target.value }))}>
                   <option value="">Choisir un metier</option>
-                  {METIERS_AO.map(m => <option key={m} value={m}>{m}</option>)}
+                  {(isClient ? CLIENT_METIERS_AO : METIERS_AO).map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
                 {aoSubmitted && !newAO.metier && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
                 <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4 }}>Seuls les professionnels de ce metier verront votre AO</div>
@@ -724,39 +744,72 @@ export default function Exchange({ showToast, onNavigate }) {
                   </div>
                 </div>
 
-                {/* Liste restreinte */}
+                {/* Liste restreinte — sélection depuis l'annuaire des professionnels */}
                 {newAO.prive && (
-                  <div>
+                  <div style={{ marginTop: 4 }}>
                     {newAO.listeRestreinte.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                        {newAO.listeRestreinte.map(nom => (
-                          <span key={nom} style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {nom} <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setNewAO(p => ({ ...p, listeRestreinte: p.listeRestreinte.filter(x => x !== nom) }))}>À</span>
+                        {newAO.listeRestreinte.map(inv => (
+                          <span key={inv.id} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {inv.nom}
+                            {inv.metier && <span style={{ fontSize: 9, opacity: .65, fontWeight: 400 }}> · {inv.metier}</span>}
+                            <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setNewAO(p => ({ ...p, listeRestreinte: p.listeRestreinte.filter(x => x.id !== inv.id) }))}>×</span>
                           </span>
                         ))}
                       </div>
                     )}
-                    <input value={aoInviteSearch} onChange={e => setAoInviteSearch(e.target.value)} placeholder="Rechercher une entreprise a inviter..." className="form-input" />
-                    {aoInviteSearch && (
-                      <div style={{ marginTop: 6, border: '1px solid var(--border-card)', borderRadius: 8, maxHeight: 150, overflowY: 'auto' }}>
-                        {[...new Set([
-                          ...INTERVENANTS_DATA.filter(i => i.entreprise).map(i => i.nom),
-                          ...ANNUAIRE_PLATEFORME.map(p => p.nom)
-                        ])].filter(n => n.toLowerCase().includes(aoInviteSearch.toLowerCase()) && !newAO.listeRestreinte.includes(n)).map(n => (
-                          <div key={n} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }} onClick={() => { setNewAO(p => ({ ...p, listeRestreinte: [...p.listeRestreinte, n] })); setAoInviteSearch('') }}
-                            onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>{n}</div>
+                    <div style={{ position: 'relative', marginBottom: 6 }}>
+                      <input
+                        value={aoInviteSearch}
+                        onChange={e => setAoInviteSearch(e.target.value)}
+                        placeholder="Rechercher une entreprise dans l’annuaire…"
+                        className="form-input"
+                        style={{ paddingLeft: 32 }}
+                      />
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"
+                        style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                    </div>
+                    {dirLoading && (
+                      <div style={{ fontSize: 11, color: 'var(--t4)', padding: '6px 0' }}>Chargement de l’annuaire…</div>
+                    )}
+                    {!dirLoading && dirPros.filter(p => !newAO.listeRestreinte.some(x => x.id === p.id) && (!aoInviteSearch || (p.nom + p.metier + p.ville).toLowerCase().includes(aoInviteSearch.toLowerCase()))).length > 0 && (
+                      <div style={{ border: '1px solid var(--border-card)', borderRadius: 10, maxHeight: 200, overflowY: 'auto' }}>
+                        {dirPros.filter(p => !newAO.listeRestreinte.some(x => x.id === p.id) && (!aoInviteSearch || (p.nom + p.metier + p.ville).toLowerCase().includes(aoInviteSearch.toLowerCase()))).map(p => (
+                          <div key={p.id}
+                            style={{ padding: '9px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}
+                            onClick={() => { setNewAO(prev => ({ ...prev, listeRestreinte: [...prev.listeRestreinte, p] })); setAoInviteSearch('') }}
+                            onMouseOver={e => { e.currentTarget.style.background = 'var(--s2)' }}
+                            onMouseOut={e => { e.currentTarget.style.background = '' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
+                              {(p.nom || '?').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
+                              <div style={{ fontSize: 10, color: 'var(--t4)' }}>{p.metier}{p.ville ? ' · ' + p.ville : ''}</div>
+                            </div>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.5">
+                              <line x1="12" y1="5" x2="12" y2="19"/>
+                              <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                          </div>
                         ))}
                       </div>
                     )}
-                    {newAO.listeRestreinte.length === 0 && !aoInviteSearch && (
-                      <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 6 }}>Ajoutez les entreprises autorisees a voir et repondre a cet AO</div>
+                    {!dirLoading && aoInviteSearch && dirPros.filter(p => !newAO.listeRestreinte.some(x => x.id === p.id) && (p.nom + p.metier + p.ville).toLowerCase().includes(aoInviteSearch.toLowerCase())).length === 0 && (
+                      <div style={{ fontSize: 11, color: 'var(--t4)', padding: '8px 10px', border: '1px solid var(--border-card)', borderRadius: 8 }}>Aucun professionnel trouvé pour « {aoInviteSearch} »</div>
+                    )}
+                    {newAO.listeRestreinte.length === 0 && !aoInviteSearch && !dirLoading && (
+                      <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>Recherchez et ajoutez les entreprises autorisées à voir et répondre à cet AO</div>
                     )}
                   </div>
                 )}
               </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 4 }}>{newAO.prive ? <><Lock size={11}/> Prive · {newAO.listeRestreinte.length} invité{newAO.listeRestreinte.length > 1 ? 's' : ''}</> : <><Globe size={11}/> Public</>}</span>
+              <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 4 }}>{newAO.prive ? <><Lock size={11}/> Prive � {newAO.listeRestreinte.length} invit�{newAO.listeRestreinte.length > 1 ? 's' : ''}</> : <><Globe size={11}/> Public</>}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-sm" onClick={() => setShowCreateAO(false)}>Annuler</button>
                 <button className="btn btn-primary btn-sm" disabled={newAO.prive && newAO.listeRestreinte.length === 0} onClick={createAO}>Publier</button>
@@ -767,7 +820,7 @@ export default function Exchange({ showToast, onNavigate }) {
         document.body
       )}
 
-      {/* â•â•â• MODAL: Repondre a un AO â•â•â• */}
+      {/* �•��•��•� MODAL: Repondre a un AO �•��•��•� */}
       {showRepondre && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowRepondre(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -775,9 +828,9 @@ export default function Exchange({ showToast, onNavigate }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800 }}>Repondre a l'appel d'offres</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{showRepondre.ref} · {showRepondre.titre}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{showRepondre.ref} � {showRepondre.titre}</div>
                 </div>
-                <button onClick={() => setShowRepondre(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setShowRepondre(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -786,8 +839,8 @@ export default function Exchange({ showToast, onNavigate }) {
               <div><label className="form-label">Memoire technique</label><textarea className="form-input" rows="4" value={reponse.technique} onChange={e => setReponse(p => ({ ...p, technique: e.target.value }))} placeholder="Methodologie, organisation, moyens humains et materiels, planning previsionnel, references similaires..." /></div>
               <div><label className="form-label">Message au maitre d'ouvrage</label><textarea className="form-input" rows="2" value={reponse.message} onChange={e => setReponse(p => ({ ...p, message: e.target.value }))} placeholder="Motivation, points forts de votre offre..." /></div>
 
-              {/* Pièces jointes — vrai file picker */}
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Pièces jointes supplémentaires</div>
+              {/* Pi�ces jointes — vrai file picker */}
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Pi�ces jointes suppl�mentaires</div>
               <div
                 style={{ padding: '18px 14px', border: '1.5px dashed var(--border-subtle)', borderRadius: 10, textAlign: 'center', cursor: 'pointer', background: 'var(--s2)', transition: 'border-color .15s, background .15s' }}
                 onClick={() => document.getElementById('ao-file-picker')?.click()}
@@ -802,11 +855,11 @@ export default function Exchange({ showToast, onNavigate }) {
                 <input id="ao-file-picker" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" style={{ display: 'none' }} onChange={e => {
                   const files = Array.from(e.target.files || []).map(f => ({ name: f.name, size: f.size, type: f.type }))
                   if (files.length) setReponse(p => ({ ...p, docsJoints: [...p.docsJoints, ...files] }))
-                  e.target.value = '' // reset pour permettre re-sélection du mÃªme fichier
+                  e.target.value = '' // reset pour permettre re-s�lection du même fichier
                 }} />
                 <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center', opacity: .4 }}><Paperclip size={16}/></div>
                 <div style={{ fontSize: 12, fontWeight: 600 }}>Ajouter des fichiers</div>
-                <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Plans, devis détaillé, planning, références…</div>
+                <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Plans, devis d�taill�, planning, r�f�rences…</div>
               </div>
               {reponse.docsJoints.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -815,7 +868,7 @@ export default function Exchange({ showToast, onNavigate }) {
                       <FileText size={14} color="var(--t3)"/>
                       <span style={{ flex: 1, fontWeight: 500 }}>{d.name || d}</span>
                       {d.size && <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0 }}>{d.size > 1e6 ? (d.size / 1e6).toFixed(1) + ' MB' : Math.round(d.size / 1024) + ' KB'}</span>}
-                      <button onClick={() => setReponse(p => ({ ...p, docsJoints: p.docsJoints.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: 'var(--err)', cursor: 'pointer', fontSize: 14, fontWeight: 700, lineHeight: 1, padding: 0 }}>À</button>
+                      <button onClick={() => setReponse(p => ({ ...p, docsJoints: p.docsJoints.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: 'var(--err)', cursor: 'pointer', fontSize: 14, fontWeight: 700, lineHeight: 1, padding: 0 }}>�</button>
                     </div>
                   ))}
                 </div>
@@ -827,7 +880,7 @@ export default function Exchange({ showToast, onNavigate }) {
               </div>
               {availableDocs.length === 0 ? (
                 <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,.06)', borderRadius: 10, border: '1px solid rgba(245,158,11,.15)', fontSize: 12, color: 'var(--wrn)', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }}/> Aucun document entreprise ajouté. Rendez-vous dans la section Documents pour ajouter vos pièces administratives.
+                  <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 2 }}/> Aucun document entreprise ajout�. Rendez-vous dans la section Documents pour ajouter vos pi�ces administratives.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -841,7 +894,7 @@ export default function Exchange({ showToast, onNavigate }) {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, fontWeight: 600 }}>{d.nom}</div>
-                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.type} · {d.status === 'generated' ? 'Généré par KAI' : 'Ajouté'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.type} � {d.status === 'generated' ? 'G�n�r� par KAI' : 'Ajout�'}</div>
                         </div>
                       </div>
                     )
@@ -851,7 +904,7 @@ export default function Exchange({ showToast, onNavigate }) {
             </div>
 
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'space-between', flexShrink: 0 }}>
-              <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center' }}>{reponse.docsEntreprise.length} doc{reponse.docsEntreprise.length > 1 ? 's' : ''} entreprise · {reponse.docsJoints.length} pièce{reponse.docsJoints.length > 1 ? 's' : ''} jointe{reponse.docsJoints.length > 1 ? 's' : ''}</span>
+              <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center' }}>{reponse.docsEntreprise.length} doc{reponse.docsEntreprise.length > 1 ? 's' : ''} entreprise � {reponse.docsJoints.length} pi�ce{reponse.docsJoints.length > 1 ? 's' : ''} jointe{reponse.docsJoints.length > 1 ? 's' : ''}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-sm" onClick={() => setShowRepondre(null)}>Annuler</button>
                 <button className="btn btn-primary btn-sm" onClick={submitReponse}>Soumettre l'offre</button>
@@ -881,10 +934,10 @@ export default function Exchange({ showToast, onNavigate }) {
                 </div>
                 <div style={{ fontSize: 13, color: '#888', lineHeight: 1.55 }}>
                   {hasMarket
-                    ? 'Cet appel d\u2019offres a déjà donné lieu à une attribution ou à un marché. Vous pouvez uniquement l\u2019archiver.'
+                    ? 'Cet appel d\u2019offres a d�j� donn� lieu � une attribution ou � un march�. Vous pouvez uniquement l\u2019archiver.'
                     : hasResponses
-                      ? 'Cet appel d\u2019offres a déjà reçu des réponses. Il ne sera plus visible dans la bourse, mais son historique restera conservé.'
-                      : 'Cette action retirera définitivement cet appel d\u2019offres de la plateforme.'
+                      ? 'Cet appel d\u2019offres a d�j� re�u des r�ponses. Il ne sera plus visible dans la bourse, mais son historique restera conserv�.'
+                      : 'Cette action retirera d�finitivement cet appel d\u2019offres de la plateforme.'
                   }
                 </div>
               </div>

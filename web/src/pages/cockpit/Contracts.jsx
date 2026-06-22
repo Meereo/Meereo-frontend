@@ -23,9 +23,9 @@ const RAIL_ICONS = {
 
 const FILTERS = [
   { key: 'all', label: 'Tous' },
-  { key: MARKET_STATUS.SIGNED, label: 'Signés' },
+  { key: MARKET_STATUS.SIGNED, label: 'Sign�s' },
   { key: MARKET_STATUS.IN_PROGRESS, label: 'En cours' },
-  { key: MARKET_STATUS.COMPLETED, label: 'Livrés' },
+  { key: MARKET_STATUS.COMPLETED, label: 'Livr�s' },
 ]
 
 const getProjetImg = (nom, store) => { const p = (store.projects || []).find(x => x.nom === nom); return p?.img || null }
@@ -43,14 +43,14 @@ function ContractModal({ isOpen, onClose, showToast }) {
     setSubmitted(true)
     if (!f.objet.trim()) return
     updateStore(prev => ({ ...prev, markets: [...(prev.markets || []), { id: 'mkt_' + Date.now(), objet: f.objet, entreprise: f.entreprise, montant: parseFloat(f.montant) || 0, lot: f.lot, projectId: f.projet, statut: 'en_cours', createdAt: new Date().toISOString() }] }))
-    emitEvent('market_signed', { company: f.entreprise }, { notifMsg: `Marché signé avec ${f.entreprise}`, notifType: 'green' })
-    showToast('Marché créé')
+    emitEvent('market_signed', { company: f.entreprise }, { notifMsg: `March� sign� avec ${f.entreprise}`, notifType: 'green' })
+    showToast('March� cr��')
     setF({ objet: '', entreprise: '', montant: '', lot: '', projet: '' }); setSubmitted(false); onClose()
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau marché" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau march�" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div><label className="form-label">Objet du marché *</label><input className="form-input" placeholder="Titre..." value={f.objet} onChange={e => setF(p => ({ ...p, objet: e.target.value }))} /><ErrMsg show={submitted && !f.objet.trim()} /></div>
+        <div><label className="form-label">Objet du march� *</label><input className="form-input" placeholder="Titre..." value={f.objet} onChange={e => setF(p => ({ ...p, objet: e.target.value }))} /><ErrMsg show={submitted && !f.objet.trim()} /></div>
         <div><label className="form-label">Entreprise attributaire</label><input className="form-input" placeholder="Nom..." value={f.entreprise} onChange={e => setF(p => ({ ...p, entreprise: e.target.value }))} /></div>
         <div className="form-row">
           <div><label className="form-label">Montant (FCFA)</label><MoneyInput value={f.montant} onChange={v => setF(p => ({ ...p, montant: v }))} placeholder="45 000 000" /></div>
@@ -70,8 +70,8 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
   const [detail, setDetail] = useState(null)
   const [showCreateContract, setShowCreateContract] = useState(false)
 
-  // Rafraîchir les marchés au montage (permet au pro de voir un marché
-  // créé par le client depuis l'acceptation d'une offre)
+  // Rafra�chir les march�s au montage (permet au pro de voir un march�
+  // cr�� par le client depuis l'acceptation d'une offre)
   useEffect(() => {
     api.markets.getAll()
       .then(markets => {
@@ -140,27 +140,27 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
   return (
     <div>
-      <DSPageHeader title="Marchés" subtitle={`${total} contrats · Pipeline des missions`}>
+      <DSPageHeader title="March�s" subtitle={`${total} contrats � Pipeline des missions`}>
         <DSFilterBar filters={FILTERS} active={filter} onChange={setFilter} />
-        <button className="btn btn-sm" onClick={() => { exportCSV(allMarches.map(m => ({ entreprise: m.entreprise, lot: m.lot, montant: m.montant, statut: m.statut, delai: m.delai, avancement: m.avancement })), 'marches_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowCreateContract(true)}>+ Nouveau marché</button>
+        <button className="btn btn-sm" onClick={() => { exportCSV(allMarches.map(m => ({ entreprise: m.entreprise, lot: m.lot, montant: m.montant, statut: m.statut, delai: m.delai, avancement: m.avancement })), 'marches_meereo'); showToast && showToast('Export t�l�charg�') }}>Exporter</button>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowCreateContract(true)}>+ Nouveau march�</button>
       </DSPageHeader>
 
       {/* Pipeline KPI */}
       <DSKpiStrip hero items={[
         { value: total, label: 'Total', sub: 'contrats' },
-        { value: signes, label: 'Signés', sub: 'À démarrer' },
+        { value: signes, label: 'Sign�s', sub: '� d�marrer' },
         { value: enCours, label: 'En cours', sub: 'Missions actives', color: '#F59E0B' },
-        { value: livres, label: 'Livrés', sub: 'Terminés', color: 'var(--ok)' },
+        { value: livres, label: 'Livr�s', sub: 'Termin�s', color: 'var(--ok)' },
       ]} />
 
       {/* Pipeline columns */}
       {filter === 'all' ? (
         <div className="rg-3" style={{ gap: 16 }}>
           {[
-            { key: MARKET_STATUS.SIGNED, label: 'Signés', color: 'var(--tx)', data: pipeline[MARKET_STATUS.SIGNED] },
+            { key: MARKET_STATUS.SIGNED, label: 'Sign�s', color: 'var(--tx)', data: pipeline[MARKET_STATUS.SIGNED] },
             { key: MARKET_STATUS.IN_PROGRESS, label: 'En cours', color: '#F59E0B', data: pipeline[MARKET_STATUS.IN_PROGRESS] },
-            { key: MARKET_STATUS.COMPLETED, label: 'Livrés', color: 'var(--ok)', data: pipeline[MARKET_STATUS.COMPLETED] },
+            { key: MARKET_STATUS.COMPLETED, label: 'Livr�s', color: 'var(--ok)', data: pipeline[MARKET_STATUS.COMPLETED] },
           ].map(col => (
             <div key={col.key}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, paddingBottom: 8, borderBottom: '2px solid ' + col.color }}>
@@ -170,7 +170,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {col.data.map(m => <MarcheCard key={m.id} m={m} />)}
-                {col.data.length === 0 && <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 11.5, color: 'var(--t4)' }}>Aucun marché dans cette colonne</div>}
+                {col.data.length === 0 && <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 11.5, color: 'var(--t4)' }}>Aucun march� dans cette colonne</div>}
               </div>
             </div>
           ))}
@@ -200,10 +200,10 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                   )})()}
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2 }}>{detail.entreprise}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot} · {getStatusLabel(detail.statut)}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot} � {getStatusLabel(detail.statut)}</div>
                   </div>
                 </div>
-                <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>À</button>
+                <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>�</button>
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant))}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
@@ -220,7 +220,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.3px' }}>{detail.titre}</div>
 
               <div className="rg-3" style={{ gap: 8 }}>
-                {[['Signature', formatDateFR(detail.dateSig)], ['Délai', detail.delai], ['Échéance', formatDateFR(detail.dateFin)]].map(([l, v]) => (
+                {[['Signature', formatDateFR(detail.dateSig)], ['D�lai', detail.delai], ['�ch�ance', formatDateFR(detail.dateFin)]].map(([l, v]) => (
                   <div key={l} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>{l}</div>
                     <div style={{ fontSize: 13, fontWeight: 700 }}>{v}</div>
@@ -233,9 +233,9 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                   {proj.img && <img src={proj.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{proj.nom}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{proj.client} · {PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{proj.client} � {PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase}</div>
                   </div>
-                  <span style={{ fontSize: 10, color: 'var(--t4)' }}>Projet â†’</span>
+                  <span style={{ fontSize: 10, color: 'var(--t4)' }}>Projet �†’</span>
                 </div>
               )}
 
@@ -244,9 +244,9 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{inter.nom}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{inter.role} · {inter.note > 0 ? <><Star size={10} fill="#F59E0B" strokeWidth={0}/> {inter.note}/5</> : 'Pas de note'}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{inter.role} � {inter.note > 0 ? <><Star size={10} fill="#F59E0B" strokeWidth={0}/> {inter.note}/5</> : 'Pas de note'}</div>
                   </div>
-                  <span style={{ fontSize: 10, color: 'var(--t4)' }}>Profil â†’</span>
+                  <span style={{ fontSize: 10, color: 'var(--t4)' }}>Profil �†’</span>
                 </div>
               )}
 
@@ -267,39 +267,39 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               const commission = calculateCommission('services', amount)
               return (
                 <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiement & sécurisation</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiement & s�curisation</div>
                   {po ? (
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                         <PaymentBadge status={po.status} />
-                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>Réf. {po.id.slice(-8)}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>R�f. {po.id.slice(-8)}</span>
                       </div>
                       {po.status === PAY_STATUS.CONFIRMED && (
-                        <button className="btn btn-sm" style={{ width: '100%', marginTop: 4 }} onClick={() => { updatePaymentStatus(po.id, PAY_STATUS.HELD); showToast && showToast('Fonds sécurisés pour ce marché') }}>Cantonner pour milestone</button>
+                        <button className="btn btn-sm" style={{ width: '100%', marginTop: 4 }} onClick={() => { updatePaymentStatus(po.id, PAY_STATUS.HELD); showToast && showToast('Fonds s�curis�s pour ce march�') }}>Cantonner pour milestone</button>
                       )}
                       {po.status === PAY_STATUS.HELD && (
                         <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
                           <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => {
                             const proofs = (store.proofDocuments || []).filter(p => p.payoutRequestId === po.id)
-                            if (proofs.length === 0) { showToast && showToast('Déposez une preuve avant de demander la libération'); return }
-                            updatePaymentStatus(po.id, PAY_STATUS.PAYOUT_REQ); showToast && showToast('Demande de libération envoyée')
-                          }}>Demander la libération</button>
+                            if (proofs.length === 0) { showToast && showToast('D�posez une preuve avant de demander la lib�ration'); return }
+                            updatePaymentStatus(po.id, PAY_STATUS.PAYOUT_REQ); showToast && showToast('Demande de lib�ration envoy�e')
+                          }}>Demander la lib�ration</button>
                           <button className="btn btn-sm" style={{ fontSize: 10 }} onClick={() => {
                             const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,.pdf'
-                            input.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'proofs', f.name); uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: url }); showToast && showToast('Preuve déposée') } catch(err) { const reader = new FileReader(); reader.onload = () => { uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: reader.result }); showToast && showToast('Preuve déposée') }; reader.readAsDataURL(f) } }
+                            input.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'proofs', f.name); uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: url }); showToast && showToast('Preuve d�pos�e') } catch(err) { const reader = new FileReader(); reader.onload = () => { uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: reader.result }); showToast && showToast('Preuve d�pos�e') }; reader.readAsDataURL(f) } }
                             input.click()
                           }}>Preuve</button>
                         </div>
                       )}
                       {po.status === PAY_STATUS.PAYOUT_REQ && (
                         <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                          <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { updatePaymentStatus(po.id, 'PAYOUT_DONE'); showToast && showToast('Versement effectué') }}>Simuler le versement</button>
-                          <button className="btn btn-danger btn-sm" style={{ fontSize: 10 }} onClick={() => { openDispute(po.id, 'Contestation sur le marché ' + (detail.titre || '')); showToast && showToast('Litige ouvert') }}>Signaler un litige</button>
+                          <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { updatePaymentStatus(po.id, 'PAYOUT_DONE'); showToast && showToast('Versement effectu�') }}>Simuler le versement</button>
+                          <button className="btn btn-danger btn-sm" style={{ fontSize: 10 }} onClick={() => { openDispute(po.id, 'Contestation sur le march� ' + (detail.titre || '')); showToast && showToast('Litige ouvert') }}>Signaler un litige</button>
                         </div>
                       )}
-                      {po.status === 'PAYOUT_DONE' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--ok)', marginTop: 4 }}>Fonds transférés au bénéficiaire</div>}
-                      {po.status === 'DISPUTE_OPEN' && <div style={{ padding: '8px 12px', background: 'rgba(220,38,38,.04)', borderRadius: 8, border: '1px solid rgba(220,38,38,.1)', marginTop: 4, fontSize: 11, color: 'var(--err)', fontWeight: 600 }}>Litige en cours — libérations gelées</div>}
-                      {po.status === 'REVERSED' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t3)', marginTop: 4 }}>Fonds remboursés au payeur</div>}
+                      {po.status === 'PAYOUT_DONE' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--ok)', marginTop: 4 }}>Fonds transf�r�s au b�n�ficiaire</div>}
+                      {po.status === 'DISPUTE_OPEN' && <div style={{ padding: '8px 12px', background: 'rgba(220,38,38,.04)', borderRadius: 8, border: '1px solid rgba(220,38,38,.1)', marginTop: 4, fontSize: 11, color: 'var(--err)', fontWeight: 600 }}>Litige en cours — lib�rations gel�es</div>}
+                      {po.status === 'REVERSED' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t3)', marginTop: 4 }}>Fonds rembours�s au payeur</div>}
                     </div>
                   ) : (
                     <div>
@@ -317,11 +317,11 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                         </div>
                       )}
                       <button className="btn btn-primary btn-sm" style={{ width: '100%' }} onClick={() => {
-                        const order = createPaymentOrder({ type: 'marche', marketId: detail.id, projectId: detail.projectId, amount, commission, beneficiaryId: detail.entreprise, railRecommended: rec.rail, label: detail.titre || 'Marché' })
+                        const order = createPaymentOrder({ type: 'marche', marketId: detail.id, projectId: detail.projectId, amount, commission, beneficiaryId: detail.entreprise, railRecommended: rec.rail, label: detail.titre || 'March�' })
                         setTimeout(() => updatePaymentStatus(order.id, PAY_STATUS.PENDING), 500)
-                        setTimeout(() => { updatePaymentStatus(order.id, PAY_STATUS.CONFIRMED); showToast && showToast('Fonds confirmés — marché sécurisé') }, 2000)
+                        setTimeout(() => { updatePaymentStatus(order.id, PAY_STATUS.CONFIRMED); showToast && showToast('Fonds confirm�s — march� s�curis�') }, 2000)
                         setDetail({ ...detail })
-                      }}>Sécuriser le paiement</button>
+                      }}>S�curiser le paiement</button>
                     </div>
                   )}
                 </div>
@@ -330,23 +330,23 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
             {/* Historique */}
             <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Historique du marché</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Historique du march�</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', flexShrink: 0 }} />
-                  <span style={{ color: 'var(--t2)' }}>Marché créé</span>
+                  <span style={{ color: 'var(--t2)' }}>March� cr��</span>
                   <span style={{ marginLeft: 'auto', color: 'var(--t4)', fontSize: 10 }}>{formatDateFR(detail.createdAt)}</span>
                 </div>
                 {(detail.statut === MARKET_STATUS.IN_PROGRESS || detail.statut === MARKET_STATUS.COMPLETED) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--wrn)', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--t2)' }}>Mission démarrée</span>
+                    <span style={{ color: 'var(--t2)' }}>Mission d�marr�e</span>
                   </div>
                 )}
                 {detail.statut === MARKET_STATUS.COMPLETED && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--t2)' }}>Livraison validée</span>
+                    <span style={{ color: 'var(--t2)' }}>Livraison valid�e</span>
                   </div>
                 )}
                 {(detail.validations || []).map((v, i) => (
@@ -377,28 +377,28 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                   isOwner ? (
                     <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={async () => {
                       await updateMarketStatus(MARKET_STATUS.IN_PROGRESS)
-                      showToast && showToast('Mission démarrée — ' + detail.entreprise)
-                    }}>Démarrer la mission</button>
+                      showToast && showToast('Mission d�marr�e — ' + detail.entreprise)
+                    }}>D�marrer la mission</button>
                   ) : (
                     <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.12)', textAlign: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wrn)' }}>â³ En attente du démarrage par le maître d'ouvrage</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wrn)' }}>⏳ En attente du d�marrage par le ma�tre d'ouvrage</span>
                     </div>
                   )
                 )
                 if (detail.statut === MARKET_STATUS.IN_PROGRESS) return (
                   <>
-                    <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setDetail(null); onNavigate && onNavigate('chantier') }}>Suivi chantier â†’</button>
+                    <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setDetail(null); onNavigate && onNavigate('chantier') }}>Suivi chantier �†’</button>
                     {isOwner && (
                       <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={async () => {
                         await updateMarketStatus(MARKET_STATUS.COMPLETED, { avancement: 100 })
-                        showToast && showToast('Marché clôturé')
-                      }}>Clôturer</button>
+                        showToast && showToast('March� cl�tur�')
+                      }}>Cl�turer</button>
                     )}
                   </>
                 )
                 if (detail.statut === MARKET_STATUS.COMPLETED) return (
                   <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)', textAlign: 'center' }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Marché livré</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>March� livr�</span>
                   </div>
                 )
                 return null

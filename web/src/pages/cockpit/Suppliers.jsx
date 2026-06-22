@@ -8,14 +8,14 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader, DSKpiStrip, DSFilterBar, DSSearchBar , DSEmptyState } from '../../design/components'
 
-const stars = n => <>{Array.from({length: Math.floor(n)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}{n % 1 >= .5 ? 'Â½' : ''}</>
+const stars = n => <>{Array.from({length: Math.floor(n)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}{n % 1 >= .5 ? '½' : ''}</>
 
 const VERIF_DOCS = [
   { id: 'rccm', label: 'RCCM / Registre de commerce', required: true },
   { id: 'fiscal', label: 'Attestation fiscale', required: true },
-  { id: 'ncc', label: 'NCC (Numéro de contribuable)', required: true },
+  { id: 'ncc', label: 'NCC (Num�ro de contribuable)', required: true },
   { id: 'cnps', label: 'Attestation CNPS', required: false },
-  { id: 'photos', label: 'Photos entreprise / entrepôt', required: true },
+  { id: 'photos', label: 'Photos entreprise / entrep�t', required: true },
   { id: 'catalogue', label: 'Catalogue produits', required: false },
 ]
 
@@ -32,17 +32,17 @@ function SupplierModal({ isOpen, onClose, showToast }) {
     setSubmitted(true)
     if (!f.raison.trim()) return
     updateStore(prev => ({ ...prev, fournisseurs: [...(prev.fournisseurs || []), { id: 'fou_' + Date.now(), nom: f.raison, specialite: f.specialite, ville: f.ville, tel: f.tel, email: f.email, createdAt: new Date().toISOString() }] }))
-    showToast('Fournisseur ajouté')
+    showToast('Fournisseur ajout�')
     setF({ raison: '', specialite: '', ville: '', tel: '', email: '' }); setSubmitted(false); onClose()
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouveau fournisseur" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div><label className="form-label">Raison sociale *</label><input className="form-input" placeholder="Nom de l'entreprise..." value={f.raison} onChange={e => setF(p => ({ ...p, raison: e.target.value }))} /><ErrMsg show={submitted && !f.raison.trim()} /></div>
-        <div><label className="form-label">Spécialité</label><input className="form-input" placeholder="Gros oeuvre, Électricité..." value={f.specialite} onChange={e => setF(p => ({ ...p, specialite: e.target.value }))} /></div>
+        <div><label className="form-label">Sp�cialit�</label><input className="form-input" placeholder="Gros oeuvre, �lectricit�..." value={f.specialite} onChange={e => setF(p => ({ ...p, specialite: e.target.value }))} /></div>
         <div className="form-row">
           <div><label className="form-label">Ville</label><input className="form-input" placeholder="Abidjan" value={f.ville} onChange={e => setF(p => ({ ...p, ville: e.target.value }))} /></div>
-          <div><label className="form-label">Téléphone</label><input className="form-input" placeholder="+225..." value={f.tel} onChange={e => setF(p => ({ ...p, tel: e.target.value }))} /></div>
+          <div><label className="form-label">T�l�phone</label><input className="form-input" placeholder="+225..." value={f.tel} onChange={e => setF(p => ({ ...p, tel: e.target.value }))} /></div>
         </div>
         <div><label className="form-label">Email</label><input className="form-input" type="email" placeholder="contact@entreprise.com" value={f.email} onChange={e => setF(p => ({ ...p, email: e.target.value }))} /></div>
       </div>
@@ -67,7 +67,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
 
   const envoyerDevis = () => {
     if (!devis.description.trim()) return
-    showToast && showToast('Demande de devis envoyée à ' + showDevis.nom + ' — le fournisseur vous répondra dans le Marketplace')
+    showToast && showToast('Demande de devis envoy�e � ' + showDevis.nom + ' — le fournisseur vous r�pondra dans le Marketplace')
     setShowDevis(null)
     setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' })
   }
@@ -78,20 +78,20 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
       fournisseurs: (prev.fournisseurs || []).map(x => x.id === f.id ? { ...x, verified: true } : x)
     }))
     setShowVerif(null)
-    showToast && showToast(f.nom + ' vérifié et approuvé')
+    showToast && showToast(f.nom + ' v�rifi� et approuv�')
   }
 
   return (
     <div>
-      <DSPageHeader title="Fournisseurs" subtitle="Catalogue · Évaluations · Vérification">
+      <DSPageHeader title="Fournisseurs" subtitle="Catalogue � �valuations � V�rification">
         <DSFilterBar filters={[{key:'catalogue',label:'Catalogue'},{key:'comparateur',label:'Comparateur'}]} active={viewMode} onChange={setViewMode} />
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateSupplier(true)}>+ Nouveau fournisseur</button>
       </DSPageHeader>
 
       <DSKpiStrip items={[
         { icon: <Store size={18}/>, iconBg: 'var(--s2)', value: total, label: 'Fournisseurs' },
-        { icon: <Check size={18}/>, iconBg: 'var(--s2)', value: verified, label: 'Vérifiés' },
-        { icon: <Package size={18}/>, iconBg: 'var(--s2)', value: [...new Set(allFournisseurs.map(f => f.specialite).filter(Boolean))].length, label: 'Spécialités' },
+        { icon: <Check size={18}/>, iconBg: 'var(--s2)', value: verified, label: 'V�rifi�s' },
+        { icon: <Package size={18}/>, iconBg: 'var(--s2)', value: [...new Set(allFournisseurs.map(f => f.specialite).filter(Boolean))].length, label: 'Sp�cialit�s' },
         { icon: <Clock size={18}/>, iconBg: 'var(--s2)', value: total - verified, label: 'En attente' },
       ]} />
 
@@ -103,7 +103,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
         <div className="three-col">
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1 / -1' }}>
-              <DSEmptyState icon={<Factory size={24}/>} title="Aucun fournisseur référencé" description="Retrouvez ici les fournisseurs avec lesquels vous travaillez." actionLabel="Aller au Marketplace" onAction={() => onNavigate && onNavigate('marketplace')} />
+              <DSEmptyState icon={<Factory size={24}/>} title="Aucun fournisseur r�f�renc�" description="Retrouvez ici les fournisseurs avec lesquels vous travaillez." actionLabel="Aller au Marketplace" onAction={() => onNavigate && onNavigate('marketplace')} />
             </div>
           )}
           {filtered.map((f, idx) => {
@@ -118,9 +118,9 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
                       <span style={{ fontSize: 13, fontWeight: 700 }}>{f.nom}</span>
                       {f.verified ? (
-                        <span style={{ fontSize: 9, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Vérifié</span>
+                        <span style={{ fontSize: 9, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> V�rifi�</span>
                       ) : (
-                        <span style={{ fontSize: 9, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non vérifié</span>
+                        <span style={{ fontSize: 9, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non v�rifi�</span>
                       )}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>{f.specialite}</div>
@@ -148,7 +148,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
       ) : (
         <div className="card">
           <table className="data-table">
-            <thead><tr><th>Fournisseur</th><th>Spécialité</th><th>Ville</th><th>Note</th><th>Vérifié</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Fournisseur</th><th>Sp�cialit�</th><th>Ville</th><th>Note</th><th>V�rifi�</th><th>Actions</th></tr></thead>
             <tbody>
               {filtered.sort((a, b) => b.note - a.note).map((f, i) => (
                 <tr key={i}>
@@ -156,7 +156,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   <td className="muted">{f.specialite}</td>
                   <td className="muted">{f.ville}</td>
                   <td><span style={{ color: '#F59E0B' }}>{stars(f.note)}</span> <strong>{f.note}</strong> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({f.nbAvis || 0})</span></td>
-                  <td>{f.verified ? <span className="status-pill status-done" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Vérifié</span> : <span style={{ fontSize: 10, color: 'var(--wrn)', cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non vérifié</span>}</td>
+                  <td>{f.verified ? <span className="status-pill status-done" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> V�rifi�</span> : <span style={{ fontSize: 10, color: 'var(--wrn)', cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non v�rifi�</span>}</td>
                   <td><div style={{ display: 'flex', gap: 6 }}><button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { setShowDevis(f); setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' }) }}>Devis</button><button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => navigate('/pro')}>Profil</button></div></td>
                 </tr>
               ))}
@@ -165,7 +165,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
         </div>
       )}
 
-      {/* â•â•â• Modal: Demander un devis â•â•â• */}
+      {/* �•��•��•� Modal: Demander un devis �•��•��•� */}
       {showDevis && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowDevis(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -173,18 +173,18 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800 }}>Demander un devis</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{showDevis.nom} · {showDevis.specialite}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{showDevis.nom} � {showDevis.specialite}</div>
                 </div>
-                <button onClick={() => setShowDevis(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setShowDevis(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>
-                Décrivez votre besoin. Le fournisseur vous répondra avec un prix dans le <strong>Marketplace</strong>. Vous pourrez accepter, contre-proposer ou refuser.
+                D�crivez votre besoin. Le fournisseur vous r�pondra avec un prix dans le <strong>Marketplace</strong>. Vous pourrez accepter, contre-proposer ou refuser.
               </div>
               <div><label className="form-label">Description du besoin *</label><textarea className="form-input" value={devis.description} onChange={e => setDevis(p => ({ ...p, description: e.target.value }))} placeholder="Decrivez les materiaux, les specifications, les quantites approximatives..." /></div>
               <div className="modal-row">
-                <div><label className="form-label">Quantite</label><input className="form-input" value={devis.quantite} onChange={e => setDevis(p => ({ ...p, quantite: e.target.value }))} placeholder="ex: 50mÂ², 200 unites, 5 tonnes" /></div>
+                <div><label className="form-label">Quantite</label><input className="form-input" value={devis.quantite} onChange={e => setDevis(p => ({ ...p, quantite: e.target.value }))} placeholder="ex: 50m², 200 unites, 5 tonnes" /></div>
                 <div><label className="form-label">Delai souhaite</label><input className="form-input" value={devis.delai} onChange={e => setDevis(p => ({ ...p, delai: e.target.value }))} placeholder="ex: Sous 2 semaines" /></div>
               </div>
               <div><label className="form-label">Projet associe</label>
@@ -204,7 +204,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
         document.body
       )}
 
-      {/* â•â•â• Modal: Verification fournisseur â•â•â• */}
+      {/* �•��•��•� Modal: Verification fournisseur �•��•��•� */}
       {showVerif && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowVerif(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -214,7 +214,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   <div style={{ fontSize: 16, fontWeight: 800 }}>Verification fournisseur</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{showVerif.nom}</div>
                 </div>
-                <button onClick={() => setShowVerif(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setShowVerif(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px' }}>
@@ -222,7 +222,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               <div style={{ padding: '14px 16px', background: showVerif.verified ? 'rgba(52,199,89,.06)' : 'rgba(255,149,0,.06)', border: '1px solid ' + (showVerif.verified ? 'rgba(52,199,89,.12)' : 'rgba(255,149,0,.12)'), borderRadius: 10, marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }}>{showVerif.verified ? 'Fournisseur vérifié' : 'En attente de vérification'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }}>{showVerif.verified ? 'Fournisseur v�rifi�' : 'En attente de v�rification'}</span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>
                   {showVerif.verified ? 'Ce fournisseur a ete valide par l\'equipe MEEREO. Ses documents sont conformes.' : 'Ce fournisseur n\'a pas encore ete verifie. Les documents requis doivent etre soumis et valides par MEEREO.'}
@@ -251,7 +251,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Informations</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Nom</span><span style={{ fontWeight: 600 }}>{showVerif.nom}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Spécialité</span><span style={{ fontWeight: 600 }}>{showVerif.specialite}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Sp�cialit�</span><span style={{ fontWeight: 600 }}>{showVerif.specialite}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Ville</span><span style={{ fontWeight: 600 }}>{showVerif.ville}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Email</span><span style={{ fontWeight: 600 }}>{showVerif.email}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0' }}><span style={{ color: 'var(--t3)' }}>Telephone</span><span style={{ fontWeight: 600 }}>{showVerif.tel}</span></div>

@@ -1,30 +1,31 @@
 ﻿import { useState, useEffect, useMemo } from 'react'
 import { TrendingUp, Package, Clock, CheckCircle, XCircle, Download, RefreshCw } from 'lucide-react'
+import Modal from '../../components/shared/Modal'
 import { api } from '../../services/api/client'
 import { useDevise } from '../../hooks/useDevise'
 import { formatDateFR } from '../../utils/helpers'
 import { DSPageHeader, DSKpiStrip, DSFilterBar } from '../../design/components'
 
-// â”€â”€ Statuts commande â†’ état paiement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// �”€�”€ Statuts commande �†’ �tat paiement �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
 const PAY_META = {
   pending:    { label: 'En attente',     color: '#E07B00', bg: 'rgba(245,158,11,.08)',  dot: '#E07B00' },
   confirmee:  { label: 'En attente',     color: '#E07B00', bg: 'rgba(245,158,11,.08)',  dot: '#E07B00' },
   accepted:   { label: 'En cours',       color: '#007AFF', bg: 'rgba(0,122,255,.08)',   dot: '#007AFF' },
-  preparing:  { label: 'En préparation', color: '#007AFF', bg: 'rgba(0,122,255,.08)',   dot: '#007AFF' },
-  shipped:    { label: 'Expédié',        color: '#7C3AED', bg: 'rgba(124,58,237,.08)',  dot: '#7C3AED' },
-  delivered:  { label: 'Livré',          color: 'var(--ok)', bg: 'rgba(52,199,89,.08)', dot: 'var(--ok)' },
-  completed:  { label: 'Payé',           color: 'var(--ok)', bg: 'rgba(52,199,89,.08)', dot: 'var(--ok)' },
-  cancelled:  { label: 'Annulé',         color: 'var(--t4)', bg: 'var(--s2)',            dot: 'var(--t4)' },
-  annulee:    { label: 'Annulé',         color: 'var(--t4)', bg: 'var(--s2)',            dot: 'var(--t4)' },
-  rejected:   { label: 'Refusé',         color: 'var(--err)', bg: 'rgba(220,38,38,.07)', dot: 'var(--err)' },
+  preparing:  { label: 'En pr�paration', color: '#007AFF', bg: 'rgba(0,122,255,.08)',   dot: '#007AFF' },
+  shipped:    { label: 'Exp�di�',        color: '#7C3AED', bg: 'rgba(124,58,237,.08)',  dot: '#7C3AED' },
+  delivered:  { label: 'Livr�',          color: 'var(--ok)', bg: 'rgba(52,199,89,.08)', dot: 'var(--ok)' },
+  completed:  { label: 'Pay�',           color: 'var(--ok)', bg: 'rgba(52,199,89,.08)', dot: 'var(--ok)' },
+  cancelled:  { label: 'Annul�',         color: 'var(--t4)', bg: 'var(--s2)',            dot: 'var(--t4)' },
+  annulee:    { label: 'Annul�',         color: 'var(--t4)', bg: 'var(--s2)',            dot: 'var(--t4)' },
+  rejected:   { label: 'Refus�',         color: 'var(--err)', bg: 'rgba(220,38,38,.07)', dot: 'var(--err)' },
 }
 
 const STEP_LABELS = [
-  'Commande reçue',
-  'En préparation',
-  'Expédiée / PrÃªte',
+  'Commande re�ue',
+  'En pr�paration',
+  'Exp�di�e / Prête',
   'En cours de livraison',
-  'Livrée & payée',
+  'Livr�e & pay�e',
 ]
 
 const STATUS_TO_STEP = {
@@ -46,20 +47,20 @@ function Badge({ statut }) {
 
 function PayMethodBadge({ method }) {
   if (!method) return null
-  const icons = { wave: 'ðŸŒŠ', orange_money: 'ðŸŸ ', mtn: 'ðŸŸ¡', mobile_money: 'ðŸ“±', carte: 'ðŸ’³', virement: 'ðŸ¦', especes: 'ðŸ’µ' }
-  const labels = { wave: 'Wave', orange_money: 'Orange Money', mtn: 'MTN MoMo', mobile_money: 'Mobile Money', carte: 'Carte', virement: 'Virement', especes: 'Espèces' }
+  const icons = { wave: '�ŸŒŠ', orange_money: '�ŸŸ�', mtn: '�ŸŸ�', mobile_money: '�Ÿ“�', carte: '�Ÿ’�', virement: '�Ÿ��', especes: '�Ÿ’�' }
+  const labels = { wave: 'Wave', orange_money: 'Orange Money', mtn: 'MTN MoMo', mobile_money: 'Mobile Money', carte: 'Carte', virement: 'Virement', especes: 'Esp�ces' }
   return (
     <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 6, background: 'var(--s2)', color: 'var(--t3)', whiteSpace: 'nowrap' }}>
-      {icons[method] || 'ðŸ’³'} {labels[method] || method}
+      {icons[method] || '�Ÿ’�'} {labels[method] || method}
     </span>
   )
 }
 
 const TABS = [
   { key: 'all',       label: 'Tout' },
-  { key: 'received',  label: 'Payés' },
+  { key: 'received',  label: 'Pay�s' },
   { key: 'pending',   label: 'En cours' },
-  { key: 'cancelled', label: 'Annulés' },
+  { key: 'cancelled', label: 'Annul�s' },
 ]
 
 export default function Payments({ showToast }) {
@@ -98,7 +99,7 @@ export default function Payments({ showToast }) {
 
   useEffect(() => { load() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Derived �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   const received   = useMemo(() => orders.filter(o => o.statut === 'completed' || o.statut === 'delivered'), [orders])
   const inProgress = useMemo(() => orders.filter(o => ['pending','confirmee','accepted','preparing','shipped'].includes(o.statut)), [orders])
   const cancelled  = useMemo(() => orders.filter(o => ['cancelled','annulee','rejected'].includes(o.statut)), [orders])
@@ -117,7 +118,7 @@ export default function Payments({ showToast }) {
   const methodsBreakdown = useMemo(() => {
     const map = {}
     received.forEach(o => {
-      const m = o.paymentMethod || 'non_précisé'
+      const m = o.paymentMethod || 'non_pr�cis�'
       if (!map[m]) map[m] = { method: m, count: 0, total: 0 }
       map[m].count++
       map[m].total += o.total
@@ -125,10 +126,10 @@ export default function Payments({ showToast }) {
     return Object.values(map).sort((a, b) => b.total - a.total)
   }, [received])
 
-  // â”€â”€ Export CSV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // �”€�”€ Export CSV �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
   const exportCSV = () => {
     const rows = [
-      ['Réf', 'Acheteur', 'Produits', 'Montant', 'Méthode', 'Statut', 'Date'],
+      ['R�f', 'Acheteur', 'Produits', 'Montant', 'M�thode', 'Statut', 'Date'],
       ...displayed.map(o => [
         o.ref, o.buyer,
         o.items.map(it => it.name || it.designation || '').join(' + ') || o.designation,
@@ -141,7 +142,7 @@ export default function Payments({ showToast }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a'); a.href = url; a.download = 'paiements_meereo.csv'; a.click()
     URL.revokeObjectURL(url)
-    showToast && showToast('Export téléchargé')
+    showToast && showToast('Export t�l�charg�')
   }
 
   if (loading) return (
@@ -152,7 +153,7 @@ export default function Payments({ showToast }) {
 
   return (
     <div>
-      <DSPageHeader title="Paiements" subtitle={`${orders.length} commande${orders.length > 1 ? 's' : ''} · chiffre d'affaires marketplace`}>
+      <DSPageHeader title="Paiements" subtitle={`${orders.length} commande${orders.length > 1 ? 's' : ''} � chiffre d'affaires marketplace`}>
         <DSFilterBar filters={TABS} active={tab} onChange={setTab} />
         <button
           className="btn btn-sm"
@@ -172,16 +173,16 @@ export default function Payments({ showToast }) {
 
       {/* KPIs */}
       <DSKpiStrip hero items={[
-        { value: formatShort(totalReceived),   label: 'Encaissé',       sub: received.length + ' commandes livrées', color: 'var(--ok)' },
+        { value: formatShort(totalReceived),   label: 'Encaiss�',       sub: received.length + ' commandes livr�es', color: 'var(--ok)' },
         { value: formatShort(totalInProgress), label: 'En attente',     sub: inProgress.length + ' en cours',        color: '#E07B00' },
-        { value: String(orders.length),        label: 'Total commandes', sub: cancelled.length + ' annulées' },
-        { value: String(methodsBreakdown.length || 0), label: 'Méthodes de paiement', sub: methodsBreakdown[0]?.method ? (methodsBreakdown[0].method) : 'Aucune' },
+        { value: String(orders.length),        label: 'Total commandes', sub: cancelled.length + ' annul�es' },
+        { value: String(methodsBreakdown.length || 0), label: 'M�thodes de paiement', sub: methodsBreakdown[0]?.method ? (methodsBreakdown[0].method) : 'Aucune' },
       ]} />
 
-      {/* Breakdown par méthode (si payements reçus) */}
+      {/* Breakdown par m�thode (si payements re�us) */}
       {methodsBreakdown.length > 0 && (
         <div className="card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', flexShrink: 0 }}>Répartition</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', flexShrink: 0 }}>R�partition</span>
           {methodsBreakdown.map(m => (
             <div key={m.method} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <PayMethodBadge method={m.method} />
@@ -199,10 +200,10 @@ export default function Payments({ showToast }) {
             <TrendingUp size={32} />
           </div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>
-            {tab === 'received' ? 'Aucun paiement encaissé' : tab === 'pending' ? 'Aucune commande en cours' : tab === 'cancelled' ? 'Aucune commande annulée' : 'Aucune commande'}
+            {tab === 'received' ? 'Aucun paiement encaiss�' : tab === 'pending' ? 'Aucune commande en cours' : tab === 'cancelled' ? 'Aucune commande annul�e' : 'Aucune commande'}
           </div>
           <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
-            {tab === 'all' ? 'Vos ventes sur la marketplace apparaîtront ici.' : 'Rien dans cette catégorie pour l\'instant.'}
+            {tab === 'all' ? 'Vos ventes sur la marketplace appara�tront ici.' : 'Rien dans cette cat�gorie pour l\'instant.'}
           </div>
         </div>
       ) : (
@@ -210,7 +211,7 @@ export default function Payments({ showToast }) {
           {/* Header table */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 100px 130px 100px', gap: 8, padding: '10px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
             <span>Commande</span>
-            <span>Méthode</span>
+            <span>M�thode</span>
             <span style={{ textAlign: 'right' }}>Montant</span>
             <span style={{ textAlign: 'center' }}>Statut</span>
             <span style={{ textAlign: 'right' }}>Date</span>
@@ -234,10 +235,10 @@ export default function Payments({ showToast }) {
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{o.ref}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', paddingLeft: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.buyer} · {productNames}
+                    {o.buyer} � {productNames}
                   </div>
                 </div>
-                {/* Col 2: Méthode */}
+                {/* Col 2: M�thode */}
                 <div><PayMethodBadge method={o.paymentMethod} /></div>
                 {/* Col 3: Montant */}
                 <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 800, color: (o.statut === 'completed' || o.statut === 'delivered') ? 'var(--ok)' : 'var(--tx)' }}>
@@ -268,7 +269,7 @@ export default function Payments({ showToast }) {
         </div>
       )}
 
-      {/* â”€â”€ Modal Détail commande â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* �”€�”€ Modal D�tail commande �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€ */}
       {detail && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDetail(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 460, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.22)' }} onClick={e => e.stopPropagation()}>
@@ -280,7 +281,7 @@ export default function Payments({ showToast }) {
                   <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.5px' }}>{detail.ref}</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>{detail.buyer}</div>
                 </div>
-                <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>À</button>
+                <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>�</button>
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1.5px' }}>{fmt(detail.total)}</div>
               <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -288,7 +289,7 @@ export default function Payments({ showToast }) {
                 {detail.paymentMethod && <PayMethodBadge method={detail.paymentMethod} />}
                 {detail.livMode && (
                   <span style={{ fontSize: 10, color: 'rgba(255,255,255,.4)' }}>
-                    {detail.livMode === 'livraison' ? 'ðŸšš Livraison' : detail.livMode === 'retrait' ? 'ðŸª Retrait' : detail.livMode}
+                    {detail.livMode === 'livraison' ? '�Ÿšš Livraison' : detail.livMode === 'retrait' ? '�Ÿ�� Retrait' : detail.livMode}
                   </span>
                 )}
               </div>
@@ -299,17 +300,17 @@ export default function Payments({ showToast }) {
               {/* Produits */}
               {detail.items.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits commandés</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits command�s</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {detail.items.map((it, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                         {it.imageUrl && <img src={it.imageUrl} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.name || it.designation || 'Produit'}</div>
-                          {it.unit && <div style={{ fontSize: 10, color: 'var(--t4)' }}>Unité : {it.unit}</div>}
+                          {it.unit && <div style={{ fontSize: 10, color: 'var(--t4)' }}>Unit� : {it.unit}</div>}
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          {it.qty && <div style={{ fontSize: 11, color: 'var(--t3)' }}>À {it.qty}</div>}
+                          {it.qty && <div style={{ fontSize: 11, color: 'var(--t3)' }}>� {it.qty}</div>}
                           {it.price && <div style={{ fontSize: 12, fontWeight: 700 }}>{fmt(parseFloat(it.price) * (it.qty || 1))}</div>}
                         </div>
                       </div>
@@ -339,7 +340,7 @@ export default function Payments({ showToast }) {
                           </div>
                           <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: done ? 'var(--ok)' : active ? 'var(--tx)' : 'var(--t4)' }}>{label}</span>
                           {active && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--t4)' }}>En cours</span>}
-                          {done && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--ok)' }}>âœ“</span>}
+                          {done && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--ok)' }}>�œ“</span>}
                         </div>
                       )
                     })}
@@ -359,13 +360,13 @@ export default function Payments({ showToast }) {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {detail.createdAt && (
                   <div style={{ padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, flex: 1 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Passée le</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Pass�e le</div>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{formatDateFR(detail.createdAt)}</div>
                   </div>
                 )}
                 {detail.updatedAt && detail.updatedAt !== detail.createdAt && (
                   <div style={{ padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, flex: 1 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Mise à jour</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Mise � jour</div>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{formatDateFR(detail.updatedAt)}</div>
                   </div>
                 )}

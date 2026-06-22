@@ -21,18 +21,18 @@ function ContractorModal({ isOpen, onClose, showToast }) {
     try {
       const created = await api.contacts.create({ type: 'intervenant', nom: f.nom, role: f.role || null, email: f.email || null, tel: f.tel || null })
       updateStore(prev => ({ ...prev, contacts: [...(prev.contacts || []), created], intervenants: [...(prev.intervenants || []), created] }))
-      showToast('Intervenant ajouté')
+      showToast('Intervenant ajout�')
       setF({ nom: '', role: '', email: '', tel: '' }); setSubmitted(false); onClose()
     } catch (e) { showToast(e.message || 'Erreur ajout intervenant', 'red') }
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouvel intervenant" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Ajouter</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div><label className="form-label">Nom complet *</label><input className="form-input" placeholder="Prénom Nom" value={f.nom} onChange={e => setF(p => ({ ...p, nom: e.target.value }))} /><ErrMsg show={submitted && !f.nom.trim()} /></div>
-        <div><label className="form-label">Rôle / Spécialité</label><input className="form-input" placeholder="BET Structure, Géomètre..." value={f.role} onChange={e => setF(p => ({ ...p, role: e.target.value }))} /></div>
+        <div><label className="form-label">Nom complet *</label><input className="form-input" placeholder="Pr�nom Nom" value={f.nom} onChange={e => setF(p => ({ ...p, nom: e.target.value }))} /><ErrMsg show={submitted && !f.nom.trim()} /></div>
+        <div><label className="form-label">R�le / Sp�cialit�</label><input className="form-input" placeholder="BET Structure, G�om�tre..." value={f.role} onChange={e => setF(p => ({ ...p, role: e.target.value }))} /></div>
         <div className="form-row">
           <div><label className="form-label">Email</label><input className="form-input" type="email" value={f.email} onChange={e => setF(p => ({ ...p, email: e.target.value }))} /></div>
-          <div><label className="form-label">Téléphone</label><input className="form-input" placeholder="+225 07 00 00 00" value={f.tel} onChange={e => setF(p => ({ ...p, tel: e.target.value }))} /></div>
+          <div><label className="form-label">T�l�phone</label><input className="form-input" placeholder="+225 07 00 00 00" value={f.tel} onChange={e => setF(p => ({ ...p, tel: e.target.value }))} /></div>
         </div>
       </div>
     </Modal>
@@ -60,11 +60,11 @@ export default function Contractors({ showToast, openModal }) {
     return tOk && (!q || (i.nom + i.role + i.email + (i.projets || []).join(' ')).toLowerCase().includes(q))
   })
 
-  const stars = n => <>{Array.from({length: Math.floor(n)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}{n % 1 >= .5 ? 'Â½' : ''}</>
+  const stars = n => <>{Array.from({length: Math.floor(n)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}{n % 1 >= .5 ? '½' : ''}</>
 
   return (
     <div>
-      <DSPageHeader title="Intervenants" subtitle="Prestataires externes assignés à vos projets">
+      <DSPageHeader title="Intervenants" subtitle="Prestataires externes assign�s � vos projets">
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateContractor(true)}>+ Intervenant</button>
       </DSPageHeader>
 
@@ -93,7 +93,7 @@ export default function Contractors({ showToast, openModal }) {
       <div className="three-col">
         {filtered.length === 0 && (
           <div style={{ gridColumn: '1 / -1' }}>
-            <DSEmptyState icon={<HardHat size={24}/>} title="Aucun intervenant référencé" description="Les prestataires assignés à vos projets apparaîtront ici automatiquement." actionLabel="+ Intervenant" onAction={() => setShowCreateContractor(true)} />
+            <DSEmptyState icon={<HardHat size={24}/>} title="Aucun intervenant r�f�renc�" description="Les prestataires assign�s � vos projets appara�tront ici automatiquement." actionLabel="+ Intervenant" onAction={() => setShowCreateContractor(true)} />
           </div>
         )}
         {filtered.map(m => {
@@ -109,7 +109,7 @@ export default function Contractors({ showToast, openModal }) {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{m.nom}</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>{m.role}{m.ville ? ' · ' + m.ville : ''}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>{m.role}{m.ville ? ' � ' + m.ville : ''}</div>
                 </div>
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: m.entreprise ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: m.entreprise ? '#2563EB' : '#7C3AED' }}>{m.entreprise ? 'Entreprise' : 'Independant'}</span>
               </div>
@@ -141,7 +141,7 @@ export default function Contractors({ showToast, openModal }) {
               {/* Actions */}
               <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
                 {m.profilUrl && (
-                  <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => navigate(m.profilUrl)}>Voir profil â†’</button>
+                  <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => navigate(m.profilUrl)}>Voir profil �†’</button>
                 )}
                 <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => {  showToast && showToast('Nouveau message pour ' + m.nom) }}>Contacter</button>
                 <button style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.04)', color: 'var(--err)', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }} onClick={() => {

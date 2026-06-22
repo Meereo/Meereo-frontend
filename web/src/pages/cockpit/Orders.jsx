@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import Modal from '../../components/shared/Modal'
+import MoneyInput from '../../components/shared/MoneyInput'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { api } from '../../services/api/client'
 import { useDevise } from '../../hooks/useDevise'

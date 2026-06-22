@@ -8,6 +8,8 @@ import { BarChart2, Folder, ClipboardList, Package, MessageSquare, Home, CheckCi
 import { useMeereo } from '../../hooks/useMeereoStore'
 import useUserIdentity from '../../hooks/useUserIdentity'
 import { api } from '../../services/api/client'
+import { getKaiQuotaStatus } from '../../domain/fintech'
+import KaiGoldModal from './KaiGoldModal'
 
 // ── Response engine ──
 function getKaiResponse(q, context, store, memory) {
@@ -337,6 +339,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   const [phIdx, setPhIdx] = useState(0)
   const [activeConvId, setActiveConvId] = useState(null)
   const [proactiveSuggestion, setProactiveSuggestion] = useState(null) // contextual suggestion bubble
+  const [showGoldModal, setShowGoldModal] = useState(false)
   const kaiDrag = useRef({ dragging: false, startX: 0, startY: 0, startPosX: 0, startPosY: 0, moved: false })
   const msgEndRef = useRef(null)
   const panelRef = useRef(null)
@@ -349,6 +352,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   const phs = PLACEHOLDERS[context] || PLACEHOLDERS.pro
   const conversations = (store.kaiConversations || []).filter(c => c.context === context)
   const memory = store.kaiMemory || []
+  const kaiQuota = getKaiQuotaStatus(store.kaiEntitlement, context)
 
   const pendingOffers = (store.offers || []).filter(o => o.statut === 'pending' || o.status === 'pending')
   const offersCount = pendingOffers.length
@@ -571,6 +575,11 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   const kaiSend = (text) => {
     const q = (text || kaiInput).trim()
     if (!q) return
+    // ── Quota guard — block if exhausted and not Gold ──
+    if (kaiQuota.isExhausted) {
+      setShowGoldModal(true)
+      return
+    }
     const convId = activeConvId || ('kconv_' + Date.now())
     if (!activeConvId) setActiveConvId(convId)
 
@@ -736,12 +745,23 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 <div className="kai-greet-cta">Que souhaitez-vous faire aujourd'hui ? Demandez-moi !</div>
               </div>
 
-              <div className="kai-input-zone">
-                <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder={phs[phIdx]} autoFocus />
-                <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()}>
+              <div className="kai-input-zone" style={kaiQuota.isExhausted ? { opacity: .55, pointerEvents: 'none' } : {}}>
+                <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder={kaiQuota.isExhausted ? 'Quota épuisé — passez à KAI Pro' : phs[phIdx]} autoFocus disabled={kaiQuota.isExhausted} />
+                <button className={`kai-send${kaiInput.trim() && !kaiQuota.isExhausted ? ' active' : ''}`} onClick={() => kaiSend()} disabled={kaiQuota.isExhausted}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </div>
+
+              {kaiQuota.isExhausted && (
+                <div style={{ margin: '0 16px 12px', padding: '12px 14px', borderRadius: 10, background: 'rgba(186,26,26,.06)', border: '1px solid rgba(186,26,26,.15)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#ba1a1a' }}>Quota mensuel épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour des analyses illimitées.</div>
+                  </div>
+                  <button onClick={() => setShowGoldModal(true)} style={{ padding: '6px 12px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAI Pro</button>
+                </div>
+              )}
 
               <div className="kai-quick">
                 {quick.map(q => (<button key={q} className="kai-pill" onClick={() => kaiSend(q)}>{q}</button>))}
@@ -860,16 +880,29 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 )}
                 <div ref={msgEndRef} />
               </div>
-              <div className="kai-conv-foot">
-                <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder="Écrire à KAI..." />
-                <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
+              <div className="kai-conv-foot" style={kaiQuota.isExhausted ? { flexDirection: 'column', gap: 8, padding: '10px 12px' } : {}}>
+                {kaiQuota.isExhausted ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#ba1a1a' }}>Quota épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses ce mois</div>
+                      <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour continuer sans limite.</div>
+                    </div>
+                    <button onClick={() => setShowGoldModal(true)} style={{ padding: '7px 14px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', flexShrink: 0 }}>KAI Pro →</button>
+                  </div>
+                ) : (
+                  <>
+                    <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder="Écrire à KAI..." />
+                    <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
         </div>
       )}
+      <KaiGoldModal isOpen={showGoldModal} onClose={() => setShowGoldModal(false)} role={context} />
     </>
   )
 }

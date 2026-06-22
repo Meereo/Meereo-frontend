@@ -102,7 +102,8 @@ export function getKaiQuotaStatus(entitlement, role = 'pro') {
   const used = ent.quotaUsed || 0
   const remaining = isGold ? Infinity : Math.max(0, limit - used)
   const pct = isGold ? 0 : Math.round((used / limit) * 100)
-  return { tier: isGold ? 'gold' : 'standard', used, limit, remaining, pct, isGold }
+  const isExhausted = !isGold && used >= limit
+  return { tier: isGold ? 'gold' : 'standard', used, limit, remaining, pct, isGold, isExhausted }
 }
 
 export function shouldSuggestGold(quotaStatus, context = {}) {

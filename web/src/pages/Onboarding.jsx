@@ -1,4 +1,5 @@
 ﻿import { useState, useRef, useEffect, memo } from 'react'
+import Modal from '../components/shared/Modal'
 import {
   Home, HardHat, Store, Hammer, Pencil,
   Search, CheckCircle2, Trophy,

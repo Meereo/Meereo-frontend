@@ -13,13 +13,13 @@ import { PHASE_LABELS, normalizePhase } from '../../domain/status'
 import AoGear from '../../components/shared/AoGear'
 
 const PHASE_ICON_MAP = {
-  'ðŸ“': <Ruler size={14}/>,
-  'ðŸ“‹': <ClipboardList size={14}/>,
-  'ðŸ—ï¸': <HardHat size={14}/>,
-  'ðŸ”§': <Wrench size={14}/>,
-  'ðŸ“¦': <Package size={14}/>,
-  'ðŸ›‹ï¸': <Sofa size={14}/>,
-  'âœ…': <CheckCircle2 size={14}/>,
+  '�Ÿ“�': <Ruler size={14}/>,
+  '�Ÿ“‹': <ClipboardList size={14}/>,
+  '�Ÿ�—️': <HardHat size={14}/>,
+  '�Ÿ”�': <Wrench size={14}/>,
+  '�Ÿ“�': <Package size={14}/>,
+  '�Ÿ›‹️': <Sofa size={14}/>,
+  '�œ…': <CheckCircle2 size={14}/>,
 }
 
 
@@ -32,28 +32,28 @@ function ReportModal({ isOpen, onClose, showToast }) {
   const [f, setF] = useState({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
   const submit = () => {
     updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), { id: 'rap_' + Date.now(), ...f, visibility: 'client_visible', createdAt: new Date().toISOString() }] }))
-    emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
-    showToast('Rapport créé')
+    emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport cr�� : ${f.type}` })
+    showToast('Rapport cr��')
     setF({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' }); onClose()
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouveau rapport" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="form-row">
-          <div><label className="form-label">Type de rapport</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Rapport hebdomadaire</option><option>Rapport de visite</option><option>Compte-rendu réunion</option><option>Rapport technique</option><option>Rapport mensuel</option><option>Rapport de chantier</option><option>PV de réception</option></select></div>
-          <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">Sélectionner</option>{(store.projects || []).map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
+          <div><label className="form-label">Type de rapport</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Rapport hebdomadaire</option><option>Rapport de visite</option><option>Compte-rendu r�union</option><option>Rapport technique</option><option>Rapport mensuel</option><option>Rapport de chantier</option><option>PV de r�ception</option></select></div>
+          <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">S�lectionner</option>{(store.projects || []).map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
         </div>
         <div className="form-row">
           <div><label className="form-label">Date</label><input className="form-input" type="date" value={f.date} onChange={e => setF(p => ({ ...p, date: e.target.value }))} /></div>
           <div><label className="form-label">Heure</label><input className="form-input" type="time" value={f.heure} onChange={e => setF(p => ({ ...p, heure: e.target.value }))} /></div>
         </div>
         <div><label className="form-label">Lieu</label><input className="form-input" placeholder="Bureau de chantier..." value={f.lieu} onChange={e => setF(p => ({ ...p, lieu: e.target.value }))} /></div>
-        <div><label className="form-label">Participants</label><input className="form-input" placeholder="Noms séparés par des virgules" value={f.participants} onChange={e => setF(p => ({ ...p, participants: e.target.value }))} /></div>
+        <div><label className="form-label">Participants</label><input className="form-input" placeholder="Noms s�par�s par des virgules" value={f.participants} onChange={e => setF(p => ({ ...p, participants: e.target.value }))} /></div>
         <div><label className="form-label">Ordre du jour</label><textarea className="form-input" rows="3" placeholder="1. Avancement
 2. Points techniques" value={f.ordre} onChange={e => setF(p => ({ ...p, ordre: e.target.value }))} /></div>
-        <div><label className="form-label">Décisions prises</label><textarea className="form-input" rows="2" placeholder="Décisions et actions..." value={f.decisions} onChange={e => setF(p => ({ ...p, decisions: e.target.value }))} /></div>
+        <div><label className="form-label">D�cisions prises</label><textarea className="form-input" rows="2" placeholder="D�cisions et actions..." value={f.decisions} onChange={e => setF(p => ({ ...p, decisions: e.target.value }))} /></div>
         <div><label className="form-label">Points d'alerte</label><textarea className="form-input" rows="2" placeholder="Retards, blocages..." value={f.alertes} onChange={e => setF(p => ({ ...p, alertes: e.target.value }))} /></div>
-        <div><label className="form-label">Prochaine réunion</label><input className="form-input" type="date" value={f.prochaine} onChange={e => setF(p => ({ ...p, prochaine: e.target.value }))} /></div>
+        <div><label className="form-label">Prochaine r�union</label><input className="form-input" type="date" value={f.prochaine} onChange={e => setF(p => ({ ...p, prochaine: e.target.value }))} /></div>
       </div>
     </Modal>
   )
@@ -68,15 +68,15 @@ function NoteModal({ isOpen, onClose, showToast }) {
     if (f.type === 'Validation' && f.tache) {
       createDecision({ titre: f.tache, desc: f.texte, urgent: f.statut === 'Bloque', projectId: (store.projects || [])[0]?.id || null, sourceType: 'note_chantier', sourceId: noteId, decisionType: 'validation' })
     }
-    showToast('Note enregistrée')
+    showToast('Note enregistr�e')
     setF({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' }); onClose()
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Note de chantier" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="form-row">
-          <div><label className="form-label">Tâche concernée</label><input className="form-input" placeholder="Nom de la tâche..." value={f.tache} onChange={e => setF(p => ({ ...p, tache: e.target.value }))} /></div>
-          <div><label className="form-label">Statut</label><select className="form-input" value={f.statut} onChange={e => setF(p => ({ ...p, statut: e.target.value }))}><option>Terminé</option><option>En cours</option><option>À faire</option><option>Bloqué</option></select></div>
+          <div><label className="form-label">T�che concern�e</label><input className="form-input" placeholder="Nom de la t�che..." value={f.tache} onChange={e => setF(p => ({ ...p, tache: e.target.value }))} /></div>
+          <div><label className="form-label">Statut</label><select className="form-input" value={f.statut} onChange={e => setF(p => ({ ...p, statut: e.target.value }))}><option>Termin�</option><option>En cours</option><option>� faire</option><option>Bloqu�</option></select></div>
         </div>
         <div><label className="form-label">Avancement (%)</label><input className="form-input" type="number" min="0" max="100" placeholder="0-100" value={f.avancement} onChange={e => setF(p => ({ ...p, avancement: e.target.value }))} /></div>
         <div>
@@ -87,7 +87,7 @@ function NoteModal({ isOpen, onClose, showToast }) {
             ))}
           </div>
         </div>
-        <div><label className="form-label">Note / Rapport</label><textarea className="form-input" style={{ resize: 'vertical', minHeight: 80 }} rows="4" placeholder="Avancement constaté, points de vigilance..." value={f.texte} onChange={e => setF(p => ({ ...p, texte: e.target.value }))} /></div>
+        <div><label className="form-label">Note / Rapport</label><textarea className="form-input" style={{ resize: 'vertical', minHeight: 80 }} rows="4" placeholder="Avancement constat�, points de vigilance..." value={f.texte} onChange={e => setF(p => ({ ...p, texte: e.target.value }))} /></div>
       </div>
     </Modal>
   )
@@ -131,16 +131,16 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
   const proj = allChantierProjets.find(p => p.id === selProjId)
 
-  // â•â•â• TÃ‚CHES RÉELLES DU PROJET (backend) â•â•â•
+  // �•��•��•� T�‚CHES R�ELLES DU PROJET (backend) �•��•��•�
   const [projTasks, setProjTasks] = useState([])
 
-  // Recharger les tâches dès que le projet change
+  // Recharger les t�ches d�s que le projet change
   useEffect(() => {
     if (!selProjId) { setProjTasks([]); return }
     api.tasks.getByProject(selProjId).then(t => setProjTasks(Array.isArray(t) ? t : [])).catch(() => {})
   }, [selProjId])
 
-  // Fusionner tâches backend + tâches locales (créées optimistiquement via acceptOffer)
+  // Fusionner t�ches backend + t�ches locales (cr��es optimistiquement via acceptOffer)
   const allProjTasks = useMemo(() => {
     const fromStore = (store.tasks || []).filter(t => t.projectId === selProjId)
     const backendIds = new Set(projTasks.map(t => t.id))
@@ -148,12 +148,12 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     return [...projTasks, ...localOnly]
   }, [projTasks, store.tasks, selProjId])
 
-  // Marchés liés au projet sélectionné
+  // March�s li�s au projet s�lectionn�
   const projMarkets = useMemo(() =>
     (store.markets || []).filter(m => m.projectId === selProjId),
   [store.markets, selProjId])
 
-  // Tâches groupées par marché
+  // T�ches group�es par march�
   const tasksByMarket = useMemo(() => {
     if (allProjTasks.length === 0) return []
     const marketMap = {}
@@ -168,7 +168,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     return result
   }, [allProjTasks, projMarkets])
 
-  // Mise à jour statut d'une tâche réelle — optimiste + sync API
+  // Mise � jour statut d'une t�che r�elle — optimiste + sync API
   const cycleRealTask = useCallback((task) => {
     const cycle = { todo: 'in_progress', in_progress: 'done', done: 'todo', pending: 'in_progress', active: 'done' }
     const newStatus = cycle[task.status] || 'in_progress'
@@ -220,15 +220,15 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       // Sync avancement projet apres changement de tache
       if (proj && proj.id) {
         const getState = (tid) => next[selProjId + '_' + tid] || next['_' + tid] || 'todo'
-        // Task-based avancement — source de vérité unique
+        // Task-based avancement — source de v�rit� unique
         const taskDone = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getState(t.id) === 'done').length, 0)
         const taskTotal = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.length, 0)
         const taskPct = taskTotal ? Math.round(taskDone / taskTotal * 100) : 0
-        // Étapes sync (for phase tracking, if étapes exist)
+        // �tapes sync (for phase tracking, if �tapes exist)
         const sync = (proj.etapes && proj.etapes.length)
           ? syncEtapesFromChantier(proj.etapes, CHANTIER_PHASES, getState)
           : { etapes: proj.etapes || [], phase: proj.phase, avancement: 0 }
-        // Store the MAX of task-based and étapes-based avancement
+        // Store the MAX of task-based and �tapes-based avancement
         const avancement = Math.max(taskPct, sync.avancement)
         updateStore(p => ({
           ...p,
@@ -242,7 +242,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
   const togglePhase = (i) => setOpenPhases(prev => ({ ...prev, [i]: !prev[i] }))
 
-  // KPI counts — prioritise les tâches réelles backend si disponibles
+  // KPI counts — prioritise les t�ches r�elles backend si disponibles
   const totalTasks = allProjTasks.length > 0 ? allProjTasks.length : CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.length, 0)
   const doneTasks = allProjTasks.length > 0
     ? allProjTasks.filter(t => t.status === 'done' || t.status === 'completed').length
@@ -296,7 +296,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         const upd = {}
         ph.tasks.forEach(t => { upd[t.id] = entry })
         setAssignments(prev => ({ ...prev, ...upd }))
-        showToast && showToast(nom + ' assigné à toute la phase ' + ph.name)
+        showToast && showToast(nom + ' assign� � toute la phase ' + ph.name)
       }
     }
     // Auto-add to INTERVENANTS_DATA + store if not already present
@@ -328,7 +328,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
   const doInvite = () => {
     if (!inviteEmail.trim()) return
-    showToast && showToast('Invitation envoyée à ' + inviteEmail)
+    showToast && showToast('Invitation envoy�e � ' + inviteEmail)
     const entry = { type: 'invite', nom: inviteEmail, email: inviteEmail }
     if (assignModal.taskId) {
       setAssignments(prev => ({ ...prev, [assignModal.taskId]: entry }))
@@ -353,7 +353,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         setAssignments(prev => ({ ...prev, ...upd }))
       }
     }
-    showToast && showToast(newInter.nom + ' créé et assigné')
+    showToast && showToast(newInter.nom + ' cr�� et assign�')
     setNewInter({ nom: '', role: '', email: '', tel: '' })
     setAssignModal(null)
   }
@@ -367,8 +367,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         <DSPageHeader title="Suivi chantier" subtitle="Pilotez vos chantiers phase par phase" />
         <div style={{ textAlign: 'center', padding: '48px 24px' }}>
           <div style={{ fontSize: 32, marginBottom: 12, opacity: .3 }}>&#128679;</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun projet à suivre</div>
-          <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Créez un projet pour démarrer le suivi de chantier.</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun projet � suivre</div>
+          <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Cr�ez un projet pour d�marrer le suivi de chantier.</div>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate && onNavigate('projets')}>Aller aux Projets</button>
         </div>
       </div>
@@ -377,7 +377,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
   return (
     <div>
-      <DSPageHeader title="Suivi chantier" subtitle={proj ? `${proj.nom} · ${PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase || 'Esquisse'} · ${globalPct}%` : 'Sélectionnez un projet'}>
+      <DSPageHeader title="Suivi chantier" subtitle={proj ? `${proj.nom} � ${PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase || 'Esquisse'} � ${globalPct}%` : 'S�lectionnez un projet'}>
         <button className="btn btn-sm" onClick={() => setShowCreateReport(true)}>Rapport</button>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateNote(true)}>+ Note de chantier</button>
       </DSPageHeader>
@@ -399,7 +399,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 )}
                 <div className="list-item-body">
                   <div className="list-item-title">{p.nom}</div>
-                  <div className="list-item-sub">{p.client} · {PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</div>
+                  <div className="list-item-sub">{p.client} � {PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</div>
                 </div>
                 <div style={{ width: 40, textAlign: 'right' }}>
                   <div style={{ fontSize: 11, fontWeight: 700 }}>{p.avancement}%</div>
@@ -420,10 +420,10 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               {/* KPI strip */}
               <div className="rg-4" style={{ gap: 10, marginBottom: 16 }}>
                 {[
-                  { v: doneTasks + '/' + totalTasks, l: 'Terminées', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>, iconBg: 'rgba(52,199,89,.08)', iconColor: 'var(--ok)' },
+                  { v: doneTasks + '/' + totalTasks, l: 'Termin�es', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>, iconBg: 'rgba(52,199,89,.08)', iconColor: 'var(--ok)' },
                   { v: activeTasks, l: 'En cours', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>, iconBg: 'rgba(0,122,255,.07)', iconColor: '#007AFF' },
-                  { v: blockedTasks, l: 'Bloquées', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>, iconBg: 'rgba(255,59,48,.07)', iconColor: 'var(--err)' },
-                  { v: Object.keys(assignments).length, l: 'Assignés', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, iconBg: 'rgba(124,58,237,.07)', iconColor: '#7C3AED' },
+                  { v: blockedTasks, l: 'Bloqu�es', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>, iconBg: 'rgba(255,59,48,.07)', iconColor: 'var(--err)' },
+                  { v: Object.keys(assignments).length, l: 'Assign�s', svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, iconBg: 'rgba(124,58,237,.07)', iconColor: '#7C3AED' },
                 ].map((k, i) => (
                   <div key={i} className="card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: k.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: k.iconColor, flexShrink: 0 }}>{k.svg}</div>
@@ -442,7 +442,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div style={{ position: 'absolute', bottom: 14, left: 20, right: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-.2px' }}>{proj.nom}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', marginTop: 2 }}>{proj.client}{proj.adresse ? ' · ' + proj.adresse : ''}{proj.budget ? ' · ' + fmtMoney(Number(String(proj.budget).replace(/\D/g, ''))) : ''}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', marginTop: 2 }}>{proj.client}{proj.adresse ? ' � ' + proj.adresse : ''}{proj.budget ? ' � ' + fmtMoney(Number(String(proj.budget).replace(/\D/g, ''))) : ''}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{globalPct}%</div>
@@ -458,20 +458,20 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 if (cs === 'CLOTURE_VALIDE_EXTERNE' || cs === 'CLOTURE_VALIDE_MEEREO') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.15)', borderRadius: 12 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <div><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ok)' }}>Clôturé — validé par le client</div></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ok)' }}>Cl�tur� — valid� par le client</div></div>
                   </div>
                 )
                 if (cs === 'DEMANDE_CLOTURE_ENVOYEE' || cs === 'EN_ATTENTE_VALIDATION_CLIENT') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(255,149,0,.04)', border: '1px solid rgba(255,149,0,.12)', borderRadius: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF9500', flexShrink: 0 }} />
-                    <div><div style={{ fontSize: 13, fontWeight: 700, color: '#FF9500' }}>Demande envoyée — en attente de validation client</div></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 700, color: '#FF9500' }}>Demande envoy�e — en attente de validation client</div></div>
                   </div>
                 )
                 if (cs === 'CLOTURE_REFUSEE') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(255,59,48,.04)', border: '1px solid rgba(255,59,48,.12)', borderRadius: 12 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--err)' }}>Clôture refusée par le client</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--err)' }}>Cl�ture refus�e par le client</div>
                       <button className="btn btn-sm" style={{ marginTop: 6, fontSize: 11 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client })}>Renvoyer une demande</button>
                     </div>
                   </div>
@@ -480,34 +480,34 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', marginBottom: 16, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>Clôture du projet</div>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>Cl�ture du projet</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Envoyez une demande de validation au client</div>
                     </div>
                     <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, flexShrink: 0 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
-                      Demander la clôture
+                      Demander la cl�ture
                     </button>
                   </div>
                 )
               })()}
 
-              {/* TÃ‚CHES CONTRACTUELLES (depuis le backend) */}
+              {/* T�‚CHES CONTRACTUELLES (depuis le backend) */}
               {tasksByMarket.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 10 }}>Tâches contractuelles</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 10 }}>T�ches contractuelles</div>
                   {tasksByMarket.map((group, gi) => {
                     const mkt = group.market
                     const mktDone = group.tasks.filter(t => t.status === 'done' || t.status === 'completed').length
                     const mktPct = group.tasks.length ? Math.round(mktDone / group.tasks.length * 100) : 0
                     return (
                       <div key={gi} className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
-                        {/* En-tÃªte marché */}
+                        {/* En-tête march� */}
                         {mkt && (
                           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--s2)', display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               <HardHat size={14} color="#fff" />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.lot || mkt.titre || 'Marché'}</div>
+                              <div style={{ fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.lot || mkt.titre || 'March�'}</div>
                               <div style={{ fontSize: 10.5, color: 'var(--t3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.entreprise || ''}</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -518,7 +518,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                             </div>
                           </div>
                         )}
-                        {/* Liste de tâches */}
+                        {/* Liste de t�ches */}
                         {group.tasks.map((t, ti) => {
                           const isDone = t.status === 'done' || t.status === 'completed'
                           const isActive = t.status === 'in_progress' || t.status === 'active'
@@ -533,7 +533,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                                 <div style={{ fontSize: 12.5, fontWeight: isDone ? 400 : 600, color: isDone ? 'var(--t3)' : 'var(--tx)', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
                                 {t.description && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description}</div>}
                               </div>
-                              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: stBg, color: stColor, flexShrink: 0 }}>{isDone ? 'Terminé' : isActive ? 'En cours' : 'À faire'}</span>
+                              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: stBg, color: stColor, flexShrink: 0 }}>{isDone ? 'Termin�' : isActive ? 'En cours' : '� faire'}</span>
                             </div>
                           )
                         })}
@@ -589,7 +589,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                         </div>
                         <div style={{ fontSize: 9, fontWeight: phAllDone || phStarted ? 800 : 500, color: phAllDone || phStarted ? (ph.color || 'var(--tx)') : 'var(--t4)', textAlign: 'center', lineHeight: 1.2, maxWidth: 80 }}>{ph.name.split(' & ')[0]}</div>
                         <div style={{ fontSize: 8, fontWeight: 700, color: phAllDone ? 'var(--ok)' : phStarted ? (ph.color || 'var(--tx)') : 'var(--t4)' }}>
-                          {phAllDone ? <><Check size={8}/> Terminé</> : phStarted ? Math.round(ph.tasks.filter(t => getTaskState(t.id) === 'done').length / ph.tasks.length * 100) + '%' : 'A venir'}
+                          {phAllDone ? <><Check size={8}/> Termin�</> : phStarted ? Math.round(ph.tasks.filter(t => getTaskState(t.id) === 'done').length / ph.tasks.length * 100) + '%' : 'A venir'}
                         </div>
                       </div>
                     )
@@ -627,8 +627,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                         <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{ph.description}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                        {isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Terminé</span>}
-                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>â— En cours</span>}
+                        {isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Termin�</span>}
+                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>�—� En cours</span>}
                         <span style={{ fontSize: 10.5, fontWeight: 700 }}>{phPct}%</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
                       </div>
@@ -654,7 +654,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                                     {st === 'done' && !evalDone.includes(t.id) && (
                                       <button onClick={(e) => { e.stopPropagation(); setEvalPresta({ nom: partner.nom, taskId: t.id, ratings: { stars: 0, qualite: 0, delais: 0, communication: 0, comment: '' } }) }} style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)' }}>Evaluer</button>
                                     )}
-                                    {evalDone.includes(t.id) && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Evalué</span>}
+                                    {evalDone.includes(t.id) && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Evalu�</span>}
                                   </div>
                                 )}
                               </div>
@@ -685,7 +685,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         </div>
       </div>
 
-      {/* â•â•â• MODAL: Assigner un intervenant â•â•â• */}
+      {/* �•��•��•� MODAL: Assigner un intervenant �•��•��•� */}
       {assignModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setAssignModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 580, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
@@ -697,11 +697,11 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   {assignModal.phaseIdx != null && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: 'var(--s3)', marginTop: 6, display: 'inline-block' }}>{CHANTIER_PHASES[assignModal.phaseIdx]?.code} — {CHANTIER_PHASES[assignModal.phaseIdx]?.name}</span>}
                   {assignModal.taskId && <span style={{ fontSize: 10.5, color: 'var(--t3)', marginTop: 4, display: 'block' }}>Tache : {CHANTIER_PHASES[assignModal.phaseIdx]?.tasks.find(t => t.id === assignModal.taskId)?.title}</span>}
                 </div>
-                <button onClick={() => setAssignModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setAssignModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
               {/* 3 tabs */}
               <div style={{ display: 'flex', gap: 4 }}>
-                {[['plateforme', 'Rechercher sur la plateforme'], ['inviter', 'Inviter par email'], ['creer', 'Créer un profil']].map(([k, l]) => (
+                {[['plateforme', 'Rechercher sur la plateforme'], ['inviter', 'Inviter par email'], ['creer', 'Cr�er un profil']].map(([k, l]) => (
                   <button key={k} className={`filter-pill ${assignTab === k ? 'active' : ''}`} style={{ fontSize: 10.5 }} onClick={() => setAssignTab(k)}>{l}</button>
                 ))}
               </div>
@@ -710,7 +710,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
 
-              {/* â”€â”€ Tab: Recherche plateforme â”€â”€ */}
+              {/* �”€�”€ Tab: Recherche plateforme �”€�”€ */}
               {assignTab === 'plateforme' && (
                 <div>
                   <div style={{ padding: '12px 22px' }}>
@@ -734,7 +734,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                             {p.verified && <span style={{ background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 5px', borderRadius: 100, fontWeight: 700 }}><Check size={9}/></span>}
                             <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: p.source === 'annuaire' ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: p.source === 'annuaire' ? '#2563EB' : '#7C3AED', fontWeight: 600 }}>{p.source === 'annuaire' ? 'Annuaire' : 'Equipe'}</span>
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{p.specialite}{p.ville ? ' · ' + p.ville : ''}</div>
+                          <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{p.specialite}{p.ville ? ' � ' + p.ville : ''}</div>
                         </div>
                         {p.note > 0 && <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 2, color: 'var(--wrn)', fontWeight: 600 }}>{Array.from({length: Math.floor(p.note)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)} {p.note}</div>
@@ -743,16 +743,16 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                       </div>
                     )
                   })}
-                  {filteredPartners.length === 0 && <div style={{ padding: '24px 22px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun résultat — essayez l'onglet "Inviter par email"</div>}
+                  {filteredPartners.length === 0 && <div style={{ padding: '24px 22px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun r�sultat — essayez l'onglet "Inviter par email"</div>}
                 </div>
               )}
 
-              {/* â”€â”€ Tab: Inviter par email â”€â”€ */}
+              {/* �”€�”€ Tab: Inviter par email �”€�”€ */}
               {assignTab === 'inviter' && (
                 <div style={{ padding: '22px' }}>
                   <div style={{ background: 'var(--s2)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Inviter un intervenant externe</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>L'intervenant recevra une invitation par email pour rejoindre la plateforme MEEREO et sera automatiquement assigné à cette tâche.</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>L'intervenant recevra une invitation par email pour rejoindre la plateforme MEEREO et sera automatiquement assign� � cette t�che.</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div><label className="form-label">Email de l'intervenant</label><input className="form-input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="prenom.nom@entreprise.com" autoFocus /></div>
@@ -760,25 +760,25 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   </div>
                   <div style={{ marginTop: 20, padding: '14px 16px', background: 'rgba(124,58,237,.04)', borderRadius: 10, border: '1px solid rgba(124,58,237,.1)' }}>
                     <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600, marginBottom: 4 }}>S'il ne souhaite pas rejoindre la plateforme</div>
-                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Vous pouvez créer un profil manuellement dans l'onglet "Créer un profil", avec ou sans email.</div>
+                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Vous pouvez cr�er un profil manuellement dans l'onglet "Cr�er un profil", avec ou sans email.</div>
                   </div>
                 </div>
               )}
 
-              {/* â”€â”€ Tab: Créer un profil â”€â”€ */}
+              {/* �”€�”€ Tab: Cr�er un profil �”€�”€ */}
               {assignTab === 'creer' && (
                 <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ background: 'var(--s2)', borderRadius: 12, padding: 16, marginBottom: 4 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>Créer un profil intervenant</div>
-                    <div style={{ fontSize: 11, color: 'var(--t3)' }}>Ce profil sera ajouté à votre base d'intervenants et pourra Ãªtre réutilisé sur d'autres projets.</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>Cr�er un profil intervenant</div>
+                    <div style={{ fontSize: 11, color: 'var(--t3)' }}>Ce profil sera ajout� � votre base d'intervenants et pourra être r�utilis� sur d'autres projets.</div>
                   </div>
                   <div><label className="form-label">Nom complet *</label><input className="form-input" value={newInter.nom} onChange={e => setNewInter(p => ({ ...p, nom: e.target.value }))} placeholder="Prenom Nom" autoFocus /></div>
-                  <div><label className="form-label">Rôle / Spécialité</label><input className="form-input" value={newInter.role} onChange={e => setNewInter(p => ({ ...p, role: e.target.value }))} placeholder="Electricien, Plombier, Architecte..." /></div>
+                  <div><label className="form-label">R�le / Sp�cialit�</label><input className="form-input" value={newInter.role} onChange={e => setNewInter(p => ({ ...p, role: e.target.value }))} placeholder="Electricien, Plombier, Architecte..." /></div>
                   <div className="modal-row">
                     <div><label className="form-label">Email (optionnel)</label><input className="form-input" type="email" value={newInter.email} onChange={e => setNewInter(p => ({ ...p, email: e.target.value }))} placeholder="email@exemple.com" /></div>
                     <div><label className="form-label">Telephone (optionnel)</label><input className="form-input" value={newInter.tel} onChange={e => setNewInter(p => ({ ...p, tel: e.target.value }))} placeholder="+225 07 00 00 00" /></div>
                   </div>
-                  <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} onClick={doCreateInter} disabled={!newInter.nom.trim()}>Créer et assigner</button>
+                  <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} onClick={doCreateInter} disabled={!newInter.nom.trim()}>Cr�er et assigner</button>
                 </div>
               )}
             </div>
@@ -792,13 +792,13 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         </div>
       )}
 
-      {/* â•â•â• MODAL: Evaluer un prestataire â•â•â• */}
+      {/* �•��•��•� MODAL: Evaluer un prestataire �•��•��•� */}
       {evalPresta && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEvalPresta(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.4px', marginBottom: 4 }}>Evaluer le prestataire</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)' }}>{evalPresta.nom} · Mission terminee</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)' }}>{evalPresta.nom} � Mission terminee</div>
             </div>
             <div style={{ padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 16 }}>
@@ -840,14 +840,14 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 }
                 setEvalDone(prev => [...prev, evalPresta.taskId])
                 setEvalPresta(null)
-                showToast && showToast('Évaluation enregistrée · Note mise à jour pour ' + evalPresta.nom)
+                showToast && showToast('�valuation enregistr�e � Note mise � jour pour ' + evalPresta.nom)
               }}>Envoyer l'evaluation</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* â•â•â• MODAL: Demande de clôture (3 options) â•â•â• */}
+      {/* �•��•��•� MODAL: Demande de cl�ture (3 options) �•��•��•� */}
       {confirmModal && (() => {
         const hasClientAccount = !!confirmModal.clientEmail
         const inputSt = { width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }
@@ -855,13 +855,13 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setConfirmModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px' }}>
-              <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.3px', marginBottom: 4 }}>Clôture du projet</div>
+              <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.3px', marginBottom: 4 }}>Cl�ture du projet</div>
               <div style={{ fontSize: 13, color: 'var(--t3)' }}>{confirmModal.projNom}</div>
               {!hasClientAccount && <div style={{ fontSize: 12, color: 'var(--t4)', marginTop: 8, lineHeight: 1.5 }}>Votre client n'est pas encore sur MEEREO. Choisissez comment finaliser la validation.</div>}
             </div>
 
             <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Option 1 — Lien de validation (recommandée) */}
+              {/* Option 1 — Lien de validation (recommand�e) */}
               <div style={{ padding: '16px 18px', border: '2px solid var(--tx)', borderRadius: 12, cursor: 'pointer', background: 'rgba(0,0,0,.01)' }} onClick={() => {
                 const email = prompt('Email du client pour recevoir le lien :')
                 if (!email || !email.includes('@')) return
@@ -871,21 +871,21 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                   <div style={{ fontSize: 13, fontWeight: 700 }}>Envoyer un lien de validation au client</div>
-                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>RECOMMANDÉ</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>RECOMMAND�</span>
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra un lien simple pour confirmer la réception du projet.</div>
+                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra un lien simple pour confirmer la r�ception du projet.</div>
               </div>
 
               {/* Option 2 — Inviter le client sur MEEREO */}
               <div style={{ padding: '16px 18px', border: '1px solid var(--border-card)', borderRadius: 12, cursor: 'pointer' }} onClick={() => {
-                const email = prompt('Email du client à inviter sur MEEREO :')
+                const email = prompt('Email du client � inviter sur MEEREO :')
                 if (!email || !email.includes('@')) return
                 requestCloture({ projectId: confirmModal.projId, clientEmail: email, validationMode: 'PLATFORM' })
                 setConfirmModal(null)
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>Inviter le client à rejoindre MEEREO</div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>Inviter le client � rejoindre MEEREO</div>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra une invitation et pourra valider depuis son espace.</div>
               </div>
@@ -908,7 +908,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                   <div style={{ fontSize: 13, fontWeight: 700 }}>Valider avec preuve externe</div>
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Vous avez déjà obtenu la validation du client hors plateforme. Joignez une preuve (photo, PDF, message).</div>
+                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Vous avez d�j� obtenu la validation du client hors plateforme. Joignez une preuve (photo, PDF, message).</div>
               </div>
             </div>
 
@@ -920,7 +920,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         )
       })()}
 
-      {/* â•â•â• MODAL: Client note le prestataire â•â•â• */}
+      {/* �•��•��•� MODAL: Client note le prestataire �•��•��•� */}
       {clientRatingModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setClientRatingModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -930,9 +930,9 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Confirmation client</div>
                   <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.4px' }}>Evaluer le prestataire</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{clientRatingModal.projNom} · {clientRatingModal.client}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{clientRatingModal.projNom} � {clientRatingModal.client}</div>
                 </div>
-                <button onClick={() => setClientRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setClientRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
               </div>
             </div>
 
@@ -966,7 +966,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             {/* Footer */}
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
               <button className="btn btn-sm" onClick={() => { setClientRatingModal(null); showToast && showToast('Evaluation ignoree') }}>Plus tard</button>
-              <button className="btn btn-primary btn-sm" onClick={() => { setClientRatingModal(null); showToast && showToast('Merci ! Évaluation enregistrée · Le ranking du prestataire a été mis à jour') }}>Envoyer mon évaluation</button>
+              <button className="btn btn-primary btn-sm" onClick={() => { setClientRatingModal(null); showToast && showToast('Merci ! �valuation enregistr�e � Le ranking du prestataire a �t� mis � jour') }}>Envoyer mon �valuation</button>
             </div>
           </div>
         </div>

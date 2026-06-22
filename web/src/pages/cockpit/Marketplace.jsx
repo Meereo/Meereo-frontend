@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import Modal from '../../components/shared/Modal'
 import { HardHat, Home, Package, Truck, Store, ShoppingCart, Check, Star, MapPin, ClipboardList, Zap, Phone, Banknote, Flame, Building2, CreditCard, Smartphone, Layers, Palette, Droplets, Leaf, Armchair, UtensilsCrossed, TreePine } from 'lucide-react'
 import { MKT_CATS, MKT_ITEMS, MKT_FLASH } from '../../data/marketplace'
 import { api } from '../../services/api/client'

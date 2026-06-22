@@ -14,36 +14,36 @@ export default function Conditions() {
       </nav>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 80px' }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.5px', marginBottom: 8 }}>Conditions d'utilisation</h1>
-        <p style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 32 }}>Dernière mise à jour : avril 2026</p>
+        <p style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 32 }}>Derni�re mise � jour : avril 2026</p>
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>1. Objet</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme MEEREO, éditée par MEEREO SAS, basée à Abidjan, Côte d'Ivoire. MEEREO est une plateforme digitale dédiée au secteur du BTP, de l'immobilier et de la construction, permettant la mise en relation de clients, professionnels et fournisseurs.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Les pr�sentes conditions g�n�rales d'utilisation (CGU) r�gissent l'acc�s et l'utilisation de la plateforme MEEREO, �dit�e par MEEREO SAS, bas�e � Abidjan, C�te d'Ivoire. MEEREO est une plateforme digitale d�di�e au secteur du BTP, de l'immobilier et de la construction, permettant la mise en relation de clients, professionnels et fournisseurs.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>2. Accès à la plateforme</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'accès à MEEREO est réservé aux utilisateurs disposant d'un compte valide. L'inscription est gratuite. L'utilisateur s'engage à fournir des informations exactes et à les maintenir à jour. MEEREO se réserve le droit de suspendre ou supprimer tout compte en cas de violation des présentes conditions.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>2. Acc�s � la plateforme</h2>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'acc�s � MEEREO est r�serv� aux utilisateurs disposant d'un compte valide. L'inscription est gratuite. L'utilisateur s'engage � fournir des informations exactes et � les maintenir � jour. MEEREO se r�serve le droit de suspendre ou supprimer tout compte en cas de violation des pr�sentes conditions.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>3. Services proposés</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO propose des outils de gestion de projets, de coordination entre acteurs du BTP, un marketplace de matériaux, un système d'appels d'offres, un suivi de chantier, une gestion documentaire et un assistant intelligent (KAI). Les fonctionnalités peuvent évoluer sans préavis.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>3. Services propos�s</h2>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO propose des outils de gestion de projets, de coordination entre acteurs du BTP, un marketplace de mat�riaux, un syst�me d'appels d'offres, un suivi de chantier, une gestion documentaire et un assistant intelligent (KAI). Les fonctionnalit�s peuvent �voluer sans pr�avis.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>4. Responsabilités</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO met tout en Å“uvre pour assurer la disponibilité et la fiabilité de la plateforme. Toutefois, MEEREO ne saurait Ãªtre tenue responsable des interruptions, erreurs techniques ou pertes de données. L'utilisateur reste responsable de l'usage qu'il fait de la plateforme et des informations qu'il y publie.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>4. Responsabilit�s</h2>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO met tout en �“uvre pour assurer la disponibilit� et la fiabilit� de la plateforme. Toutefois, MEEREO ne saurait être tenue responsable des interruptions, erreurs techniques ou pertes de donn�es. L'utilisateur reste responsable de l'usage qu'il fait de la plateforme et des informations qu'il y publie.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>5. Propriété intellectuelle</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'ensemble des contenus de la plateforme (textes, visuels, logos, logiciels, base de données) sont la propriété exclusive de MEEREO ou de ses partenaires. Toute reproduction ou utilisation non autorisée est interdite.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>5. Propri�t� intellectuelle</h2>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'ensemble des contenus de la plateforme (textes, visuels, logos, logiciels, base de donn�es) sont la propri�t� exclusive de MEEREO ou de ses partenaires. Toute reproduction ou utilisation non autoris�e est interdite.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>6. Contact</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Pour toute question relative aux présentes conditions, vous pouvez nous contacter à l'adresse : contact@meereo.com</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Pour toute question relative aux pr�sentes conditions, vous pouvez nous contacter � l'adresse : contact@meereo.com</p>
         </section>
       </div>
     </div>

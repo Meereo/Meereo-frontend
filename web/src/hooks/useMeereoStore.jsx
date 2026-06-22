@@ -1022,7 +1022,7 @@ export function MeereoProvider({ children }) {
     // Use storeRef for fresh values — avoids stale closure after createUser (same pattern as createAO)
     const currentUser = storeRef.current.user
     const p = {
-      id: 'proj_' + Date.now(),
+      id: data.id || 'proj_' + Date.now(),
       color: data.color || autoProjectColor(storeRef.current.projects || []),
       name: data.name || data.nom || 'Nouveau projet',
       clientId: data.clientId || currentUser?.id || null,
@@ -1312,7 +1312,7 @@ export function MeereoProvider({ children }) {
     if (!ao) return { success: false, reason: 'AO introuvable' }
 
     // Permission check
-    if (ao.ownerUserId && ao.ownerUserId !== userId) {
+    if (ao.ownerUserId && String(ao.ownerUserId) !== String(userId)) {
       return { success: false, reason: 'Vous n\u2019êtes pas le propriétaire de cet AO' }
     }
 
@@ -1411,6 +1411,9 @@ export function MeereoProvider({ children }) {
       requestedTrade: data.requestedTrade || data.lot || '',
       visibilityScope: data.visibilityScope || 'public',
       createdByClient: data.createdByClient || (currentUser?.type === 'client'),
+      deadline: data.deadline || '',
+      prive: data.prive || false,
+      listeRestreinte: data.listeRestreinte || [],
     }
     // Create on backend FIRST — get the real ID
     let ao

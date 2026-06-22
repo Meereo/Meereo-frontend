@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo, useCallback, useEffect } from 'react'
 import Modal from '../../components/shared/Modal'
+import MoneyInput from '../../components/shared/MoneyInput'
 import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Lock, Building2, Send, User } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
@@ -15,11 +16,11 @@ import { exportCSV } from '../../utils/export'
 const FILTERS = [
   { key: 'all', label: 'Toutes' },
   { key: OFFER_STATUS.PENDING, label: 'En attente' },
-  { key: OFFER_STATUS.ACCEPTED, label: 'Acceptées' },
-  { key: OFFER_STATUS.REJECTED, label: 'Refusées' },
+  { key: OFFER_STATUS.ACCEPTED, label: 'Accept�es' },
+  { key: OFFER_STATUS.REJECTED, label: 'Refus�es' },
 ]
 
-// Délai d'archivage : offre décidée depuis plus de 30 jours
+// D�lai d'archivage : offre d�cid�e depuis plus de 30 jours
 const ARCHIVE_DAYS = 30
 function isArchivable(offer) {
   if (offer.statut === OFFER_STATUS.PENDING) return false
@@ -43,7 +44,7 @@ function OfferModal({ isOpen, onClose, showToast }) {
     if (!f.titre.trim()) return
     updateStore(prev => ({ ...prev, offers: [...(prev.offers || []), { id: 'off_' + Date.now(), ...f, statut: 'en_attente', createdAt: new Date().toISOString() }] }))
     emitEvent('offer_received', { title: f.titre, from: f.entreprise }, { notifMsg: `Nouvelle offre : ${f.titre}`, notifType: 'blue' })
-    showToast('Offre enregistrée')
+    showToast('Offre enregistr�e')
     setF({ titre: '', entreprise: '', projet: '', montant: '', delai: '', note: '' }); setSubmitted(false); onClose()
   }
   return (
@@ -56,7 +57,7 @@ function OfferModal({ isOpen, onClose, showToast }) {
         </div>
         <div className="form-row">
           <div><label className="form-label">Montant (FCFA)</label><MoneyInput value={f.montant} onChange={v => setF(p => ({ ...p, montant: v }))} placeholder="45 000 000" /></div>
-          <div><label className="form-label">Délai</label><input className="form-input" placeholder="4 mois" value={f.delai} onChange={e => setF(p => ({ ...p, delai: e.target.value }))} /></div>
+          <div><label className="form-label">D�lai</label><input className="form-input" placeholder="4 mois" value={f.delai} onChange={e => setF(p => ({ ...p, delai: e.target.value }))} /></div>
         </div>
         <div><label className="form-label">Note d'analyse</label><textarea className="form-input" rows="3" placeholder="Observations..." value={f.note} onChange={e => setF(p => ({ ...p, note: e.target.value }))} /></div>
       </div>
@@ -77,7 +78,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const [infoModal, setInfoModal] = useState(null) // offer object for "Demander info"
   const [infoMessage, setInfoMessage] = useState('')
 
-  // Le backend filtre déjà les offres par utilisateur (offres sur ses AOs pour un client,
+  // Le backend filtre d�j� les offres par utilisateur (offres sur ses AOs pour un client,
   // offres soumises pour un pro). On utilise rawOffres directement.
   const isClient = store.user?.type === 'client'
   const allOffres = useMemo(() => rawOffres, [rawOffres])
@@ -87,7 +88,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const acceptees = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED).length
   const refusees = allOffres.filter(o => o.statut === OFFER_STATUS.REJECTED).length
 
-  // Séparer actives / archivées pour l'onglet offres
+  // S�parer actives / archiv�es pour l'onglet offres
   const activeOffres = allOffres.filter(o => !isArchivable(o))
   const archivedOffres = allOffres.filter(o => isArchivable(o))
 
@@ -101,7 +102,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
     return !q || (o.titre + o.entreprise + o.projet + o.lot).toLowerCase().includes(q)
   })
 
-  // Contrats = offres acceptées (actives + archivées)
+  // Contrats = offres accept�es (actives + archiv�es)
   const contrats = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED)
   const contratsActifs = contrats.filter(o => !isArchivable(o))
   const contratsArchives = contrats.filter(o => isArchivable(o))
@@ -123,19 +124,19 @@ export default function Offers({ showToast, openModal, onNavigate }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ flexShrink: 0 }}>
         <DSPageHeader
-          title={isClient ? 'Offres reçues & Contrats' : 'Offres envoyées & Contrats'}
+          title={isClient ? 'Offres re�ues & Contrats' : 'Offres envoy�es & Contrats'}
           subtitle={isClient
-            ? `${total} offres · ${attente} en attente · ${acceptees} contrats`
-            : `${total} offres envoyées · ${attente} en attente · ${acceptees} acceptées`}>
-          <button className="btn btn-sm" onClick={() => { exportCSV(allOffres.map(o => ({ entreprise: o.entreprise, lot: o.lot, montant: o.montant, statut: o.statut, delai: o.delai, soumis: o.soumis })), 'offres_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
+            ? `${total} offres � ${attente} en attente � ${acceptees} contrats`
+            : `${total} offres envoy�es � ${attente} en attente � ${acceptees} accept�es`}>
+          <button className="btn btn-sm" onClick={() => { exportCSV(allOffres.map(o => ({ entreprise: o.entreprise, lot: o.lot, montant: o.montant, statut: o.statut, delai: o.delai, soumis: o.soumis })), 'offres_meereo'); showToast && showToast('Export t�l�charg�') }}>Exporter</button>
           {isClient && <button className="btn btn-primary btn-sm" onClick={() => setShowCreateOffer(true)}>+ Nouvelle offre</button>}
         </DSPageHeader>
 
         {/* Onglets principaux */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 0 }}>
           {[
-            { key: 'offres', label: isClient ? 'Offres reçues' : 'Offres envoyées', icon: isClient ? <ClipboardList size={13}/> : <Send size={13}/>, count: total },
-            { key: 'contrats', label: isClient ? 'Contrats validés' : 'Contrats obtenus', icon: <FileText size={13}/>, count: acceptees },
+            { key: 'offres', label: isClient ? 'Offres re�ues' : 'Offres envoy�es', icon: isClient ? <ClipboardList size={13}/> : <Send size={13}/>, count: total },
+            { key: 'contrats', label: isClient ? 'Contrats valid�s' : 'Contrats obtenus', icon: <FileText size={13}/>, count: acceptees },
           ].map(t => (
             <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, fontWeight: mainTab === t.key ? 700 : 500, color: mainTab === t.key ? 'var(--tx)' : 'var(--t3)', borderBottom: mainTab === t.key ? '2px solid var(--tx)' : '2px solid transparent', marginBottom: -1, transition: 'all .15s' }}>
               {t.icon} {t.label}
@@ -147,16 +148,16 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         <DSKpiStrip items={[
           { icon: <ClipboardList size={14}/>, iconBg: 'rgba(0,0,0,.04)', value: total, label: 'Total' },
           { icon: <Clock size={14}/>, iconBg: 'rgba(255,149,0,.06)', value: attente, label: 'En attente' },
-          { icon: <CheckCircle2 size={14} color="var(--ok)"/>, iconBg: 'rgba(52,199,89,.06)', value: acceptees, label: 'Acceptées' },
-          { icon: <XCircle size={14} color="var(--err)"/>, iconBg: 'rgba(220,38,38,.05)', value: refusees, label: 'Refusées' },
+          { icon: <CheckCircle2 size={14} color="var(--ok)"/>, iconBg: 'rgba(52,199,89,.06)', value: acceptees, label: 'Accept�es' },
+          { icon: <XCircle size={14} color="var(--err)"/>, iconBg: 'rgba(220,38,38,.05)', value: refusees, label: 'Refus�es' },
         ]} />
       </div>
 
-      {/* â•â•â• VUE CONTRATS VALIDÉS â•â•â• */}
+      {/* �•��•��•� VUE CONTRATS VALID�S �•��•��•� */}
       {mainTab === 'contrats' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {contrats.length === 0 ? (
-            <DSEmptyState icon={<FileText size={24}/>} title="Aucun contrat validé" description="Les offres acceptées apparaîtront ici comme contrats actifs." />
+            <DSEmptyState icon={<FileText size={24}/>} title="Aucun contrat valid�" description="Les offres accept�es appara�tront ici comme contrats actifs." />
           ) : (
             <>
               {contratsActifs.length > 0 && (
@@ -183,7 +184,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         </div>
       )}
 
-      {/* â•â•â• VUE OFFRES REÇUES â•â•â• */}
+      {/* �•��•��•� VUE OFFRES RE�UES �•��•��•� */}
       {mainTab === 'offres' && (
       <div className="split" style={{ marginTop: 0, flex: 1, overflow: 'hidden' }}>
         {/* Liste */}
@@ -202,20 +203,20 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               )})()}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: o.lu === false ? 800 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.2px' }}>{o.entreprise}</div>
-                <div style={{ fontSize: 11, color: o.lu === false ? 'var(--tx)' : 'var(--t3)', fontWeight: o.lu === false ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} · {formatShort(parseBudget(o.montant))}</div>
+                <div style={{ fontSize: 11, color: o.lu === false ? 'var(--tx)' : 'var(--t3)', fontWeight: o.lu === false ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} � {formatShort(parseBudget(o.montant))}</div>
               </div>
               <DSStatusBadge status={o.statut} />
             </div>
           ))}
           {filtered.length === 0 && filteredArchived.length === 0 && (
-            <DSEmptyState icon={<ClipboardList size={24}/>} title="Aucune offre trouvée" description="Modifiez vos filtres ou enregistrez une nouvelle offre." />
+            <DSEmptyState icon={<ClipboardList size={24}/>} title="Aucune offre trouv�e" description="Modifiez vos filtres ou enregistrez une nouvelle offre." />
           )}
           {/* Archives */}
           {filteredArchived.length > 0 && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 14px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--s2)' }}>
                 <Archive size={11} color="var(--t4)" />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Archivées ({filteredArchived.length})</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Archiv�es ({filteredArchived.length})</span>
               </div>
               {filteredArchived.map(o => (
                 <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', opacity: 0.45, background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
@@ -226,7 +227,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                   )})()}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.entreprise}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} · {formatShort(parseBudget(o.montant))}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} � {formatShort(parseBudget(o.montant))}</div>
                   </div>
                   <DSStatusBadge status={o.statut} />
                 </div>
@@ -239,11 +240,11 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         <div className="split-right">
           {!selected ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <DSEmptyState icon={<ClipboardList size={24}/>} title="Sélectionnez une offre" description="Choisissez une offre dans la liste pour voir le détail et décider." />
+              <DSEmptyState icon={<ClipboardList size={24}/>} title="S�lectionnez une offre" description="Choisissez une offre dans la liste pour voir le d�tail et d�cider." />
             </div>
           ) : (
             <div>
-              {/* Bannière statut si décision prise */}
+              {/* Banni�re statut si d�cision prise */}
               {selected.statut !== OFFER_STATUS.PENDING && (
                 <div style={{ padding: '12px 18px', marginBottom: 20, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', ...(selected.statut === OFFER_STATUS.ACCEPTED ? { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)' } : { background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.1)' }) }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -258,14 +259,14 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                       <button className="btn btn-sm" style={{ fontSize: 10, color: 'var(--err)', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.12)' }} onClick={() => {
                         updateStore(prev => ({ ...prev, offers: (prev.offers || []).filter(o => o.id !== selected.id) }))
                         setSelectedId(null)
-                        showToast && showToast('Offre supprimée')
+                        showToast && showToast('Offre supprim�e')
                       }}>Supprimer</button>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* En-tÃªte entreprise */}
+              {/* En-tête entreprise */}
               {(() => { const av = getEntrepriseAvatar(selected.entreprise); return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
@@ -276,7 +277,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>{selected.entreprise}</span>
                     {selected.supplierRole && <span style={getRoleBadgeStyle(selected.supplierRole)}>{getRoleLabel(selected.supplierRole)}</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>{selected.nbRef || 0} projets · {(selected.certifs || []).join(' · ') || 'Aucune certification'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>{selected.nbRef || 0} projets � {(selected.certifs || []).join(' � ') || 'Aucune certification'}</div>
                 </div>
                 {(() => {
                   const inter = INTERVENANTS_DATA.find(i => i.nom === selected.entreprise)
@@ -306,9 +307,9 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 
               {/* Montant */}
               <div style={{ padding: '18px 20px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', borderRadius: 14, color: '#fff', marginBottom: 20 }}>
-                <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant proposé</div>
+                <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant propos�</div>
                 <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatShort(parseBudget(selected.montant))}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selected.delai}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>D�lai : {selected.delai}</div>
               </div>
 
               {/* Message prestataire */}
@@ -319,10 +320,10 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* Mémoire technique / Description détaillée */}
+              {/* M�moire technique / Description d�taill�e */}
               {(selected.technique || selected.description) && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Détails techniques</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>D�tails techniques</div>
                   <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.65, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                     {selected.technique || selected.description}
                   </div>
@@ -342,22 +343,22 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                           {d.size && <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.size}</div>}
                         </div>
                         <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Ouverture...')}>Voir</button>
-                        <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Téléchargement...')}>Télécharger</button>
+                        <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('T�l�chargement...')}>T�l�charger</button>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px dashed var(--border-card)', textAlign: 'center' }}>
                     <div style={{ fontSize: 12, color: 'var(--t4)' }}>Aucun document fourni avec cette offre</div>
-                    <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Vous pouvez demander des pièces complémentaires au prestataire</div>
+                    <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Vous pouvez demander des pi�ces compl�mentaires au prestataire</div>
                   </div>
                 )}
               </div>
 
-              {/* Profil du prestataire — masqué si l'offre est en attente et que je suis le client (AO owner) */}
+              {/* Profil du prestataire — masqu� si l'offre est en attente et que je suis le client (AO owner) */}
               {isClient ? (
                 selected.statut === OFFER_STATUS.PENDING ? (
-                  // Profil masqué : le client ne voit que le nom de l'entreprise avant acceptation
+                  // Profil masqu� : le client ne voit que le nom de l'entreprise avant acceptation
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Entreprise candidate</div>
                     <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
@@ -372,12 +373,12 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(0,0,0,.03)', borderRadius: 8, border: '1px dashed var(--border-card)' }}>
                         <Lock size={13} color="var(--t4)" />
-                        <span style={{ fontSize: 12, color: 'var(--t3)' }}>Le profil complet du prestataire sera révélé après acceptation de l'offre</span>
+                        <span style={{ fontSize: 12, color: 'var(--t3)' }}>Le profil complet du prestataire sera r�v�l� apr�s acceptation de l'offre</span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  // Profil complet — offre acceptée ou refusée
+                  // Profil complet — offre accept�e ou refus�e
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du prestataire</div>
                     <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
@@ -391,9 +392,9 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <div>
                                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{ob.entreprise || s?.company || selected.entreprise}</div>
-                                {metier && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{metier}{ville ? ' · ' + ville : ''}</div>}
+                                {metier && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{metier}{ville ? ' � ' + ville : ''}</div>}
                               </div>
-                              {ob.rccm && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+                              {ob.rccm && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>V�rifi�</span>}
                             </div>
                             {ob.bio && <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6 }}>{ob.bio}</div>}
                             {ob.services?.length > 0 && (
@@ -403,13 +404,13 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                             )}
                             {(ob.email || ob.tel) && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>ðŸ“§ {ob.email}</div>}
-                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>ðŸ“± {ob.tel}</div>}
+                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>�Ÿ“� {ob.email}</div>}
+                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>�Ÿ“� {ob.tel}</div>}
                               </div>
                             )}
                             {s?.publicId && (
                               <button className="btn btn-sm" style={{ alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }}
-                                onClick={() => window.open('/pro?uuid=' + s.publicId, '_blank')}>Voir le profil â†’</button>
+                                onClick={() => window.open('/pro?uuid=' + s.publicId, '_blank')}>Voir le profil �†’</button>
                             )}
                           </div>
                         )
@@ -418,7 +419,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                   </div>
                 )
               ) : (
-                // Vue pro : affiche les infos du client si l'offre est acceptée
+                // Vue pro : affiche les infos du client si l'offre est accept�e
                 selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Informations du client</div>
@@ -438,8 +439,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                             </div>
                             {(ob.email || ob.tel) && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>ðŸ“§ {ob.email}</div>}
-                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>ðŸ“± {ob.tel}</div>}
+                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>�Ÿ“� {ob.email}</div>}
+                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>�Ÿ“� {ob.tel}</div>}
                               </div>
                             )}
                           </div>
@@ -450,22 +451,22 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 ) : null
               )}
 
-              {/* Appel d'offres lié */}
+              {/* Appel d'offres li� */}
               {selected.aoId && (() => {
                 const ao = (store.aos || []).find(a => a.id === selected.aoId)
                 if (!ao) return null
                 return (
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Appel d'offres lié</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Appel d'offres li�</div>
                     <div style={{ padding: '12px 16px', background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border-card)', display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ao.title || ao.titre}</div>
-                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>{ao.lot || ao.requestedTrade || ''}{ao.budget ? ' · ' + ao.budget : ''}</div>
+                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>{ao.lot || ao.requestedTrade || ''}{ao.budget ? ' � ' + ao.budget : ''}</div>
                       </div>
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: ao.status === 'open' ? 'rgba(52,199,89,.08)' : ao.status === 'attributed' ? 'rgba(59,130,246,.08)' : ao.status === 'cancelled_by_owner' ? 'rgba(245,158,11,.08)' : 'rgba(107,114,128,.08)', color: ao.status === 'open' ? 'var(--ok)' : ao.status === 'attributed' ? '#3B82F6' : ao.status === 'cancelled_by_owner' ? 'var(--wrn)' : 'var(--t4)' }}>{ao.status === 'open' ? 'Ouvert' : ao.status === 'attributed' ? 'Attribué' : ao.status === 'cancelled_by_owner' ? 'Annulé' : ao.status === 'archived' ? 'Archivé' : 'Clôturé'}</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: ao.status === 'open' ? 'rgba(52,199,89,.08)' : ao.status === 'attributed' ? 'rgba(59,130,246,.08)' : ao.status === 'cancelled_by_owner' ? 'rgba(245,158,11,.08)' : 'rgba(107,114,128,.08)', color: ao.status === 'open' ? 'var(--ok)' : ao.status === 'attributed' ? '#3B82F6' : ao.status === 'cancelled_by_owner' ? 'var(--wrn)' : 'var(--t4)' }}>{ao.status === 'open' ? 'Ouvert' : ao.status === 'attributed' ? 'Attribu�' : ao.status === 'cancelled_by_owner' ? 'Annul�' : ao.status === 'archived' ? 'Archiv�' : 'Cl�tur�'}</span>
                     </div>
                   </div>
                 )
@@ -482,7 +483,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* Boutons décision — uniquement pour le propriétaire de l'AO (client/pro qui a publié) */}
+              {/* Boutons d�cision — uniquement pour le propri�taire de l'AO (client/pro qui a publi�) */}
               {isClient ? (
                 <div style={{ display: 'flex', gap: 8 }}>
                   {selected.statut === OFFER_STATUS.PENDING && (
@@ -496,13 +497,13 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                   )}
                 </div>
               ) : (
-                // Vue pro — statut de l'offre envoyée
+                // Vue pro — statut de l'offre envoy�e
                 <div style={{ padding: '14px 18px', borderRadius: 12, background: selected.statut === OFFER_STATUS.ACCEPTED ? 'rgba(52,199,89,.06)' : selected.statut === OFFER_STATUS.REJECTED ? 'rgba(220,38,38,.05)' : 'rgba(0,0,0,.03)', border: '1px solid', borderColor: selected.statut === OFFER_STATUS.ACCEPTED ? 'rgba(52,199,89,.15)' : selected.statut === OFFER_STATUS.REJECTED ? 'rgba(220,38,38,.1)' : 'var(--border-card)', display: 'flex', alignItems: 'center', gap: 10 }}>
                   {selected.statut === OFFER_STATUS.ACCEPTED
-                    ? <><CheckCircle2 size={16} color="var(--ok)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Offre acceptée — vous avez obtenu ce marché !</span></>
+                    ? <><CheckCircle2 size={16} color="var(--ok)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Offre accept�e — vous avez obtenu ce march� !</span></>
                     : selected.statut === OFFER_STATUS.REJECTED
                     ? <><XCircle size={16} color="var(--err)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--err)' }}>Offre non retenue</span></>
-                    : <><Clock size={16} color="var(--t4)" /><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>En attente de décision du client</span></>}
+                    : <><Clock size={16} color="var(--t4)" /><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>En attente de d�cision du client</span></>}
                 </div>
               )}
             </div>
@@ -511,22 +512,22 @@ export default function Offers({ showToast, openModal, onNavigate }) {
       </div>
       )} {/* fin mainTab === 'offres' */}
 
-      {/* â•â•â• Modale "Demander plus d'infos" â•â•â• */}      {infoModal && (
+      {/* �•��•��•� Modale "Demander plus d'infos" �•��•��•� */}      {infoModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInfoModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: 16, fontWeight: 700 }}>Demander des informations</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 4 }}>À {infoModal.entreprise} — concernant l'offre {formatShort(parseBudget(infoModal.montant))}</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 4 }}>� {infoModal.entreprise} — concernant l'offre {formatShort(parseBudget(infoModal.montant))}</div>
             </div>
             <div style={{ padding: '18px 22px' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', marginBottom: 6 }}>Votre message</div>
               <textarea
                 value={infoMessage}
                 onChange={e => setInfoMessage(e.target.value)}
-                placeholder="Bonjour, j'aurais besoin de précisions concernant..."
+                placeholder="Bonjour, j'aurais besoin de pr�cisions concernant..."
                 style={{ width: '100%', minHeight: 120, padding: '12px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', resize: 'vertical', outline: 'none', color: 'var(--tx)', background: 'var(--s2)' }}
               />
-              <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>Ce message sera envoyé au professionnel et ouvrira une conversation liée à cette offre.</div>
+              <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>Ce message sera envoy� au professionnel et ouvrira une conversation li�e � cette offre.</div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setInfoModal(null)}>Annuler</button>
@@ -536,7 +537,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 
                 // Guard: cannot send a message to yourself
                 if (supplierId === store.user?.id) {
-                  showToast && showToast('Vous ne pouvez pas vous envoyer un message à vous-mÃªme')
+                  showToast && showToast('Vous ne pouvez pas vous envoyer un message � vous-même')
                   setInfoModal(null)
                   return
                 }
@@ -564,7 +565,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                         if (ack?.error) showToast && showToast('Erreur envoi: ' + ack.error)
                       }
                     )
-                    showToast && showToast('Message envoyé à ' + infoModal.entreprise)
+                    showToast && showToast('Message envoy� � ' + infoModal.entreprise)
                     setInfoModal(null)
                     setInfoMessage('')
                     // Navigate to messaging
@@ -593,8 +594,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 }
                 updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), conv] }))
                 emitEvent('info_requested', { offerId: infoModal.id, company: infoModal.entreprise, message: infoMessage }, {
-                  notifMsg: 'Demande d\'information envoyée à ' + infoModal.entreprise,
-                  toast: 'Message envoyé à ' + infoModal.entreprise,
+                  notifMsg: 'Demande d\'information envoy�e � ' + infoModal.entreprise,
+                  toast: 'Message envoy� � ' + infoModal.entreprise,
                 })
                 setInfoModal(null)
                 setInfoMessage('')
@@ -607,7 +608,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   )
 }
 
-// â”€â”€â”€ Composant carte contrat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// �”€�”€�”€ Composant carte contrat �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
 function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, archived }) {
   const inter = INTERVENANTS_DATA.find(i => i.nom === o.entreprise)
   const av = getEntrepriseAvatar(o.entreprise)
@@ -619,14 +620,14 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>{o.entreprise}</span>
-          {archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>}
+          {archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archiv�</span>}
           {!archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>Contrat actif</span>}
-          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>V�rifi�</span>}
         </div>
         <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 8 }}>
           {o.lot && <span>{o.lot}</span>}
-          {o.projet && <span> · {o.projet}</span>}
-          {o.soumis && <span style={{ color: 'var(--t4)' }}> · Soumis le {o.soumis}</span>}
+          {o.projet && <span> � {o.projet}</span>}
+          {o.soumis && <span style={{ color: 'var(--t4)' }}> � Soumis le {o.soumis}</span>}
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
           <div>
@@ -635,7 +636,7 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
           </div>
           {o.delai && (
             <div>
-              <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Délai</div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>D�lai</div>
               <div style={{ fontSize: 13, fontWeight: 600 }}>{o.delai}</div>
             </div>
           )}

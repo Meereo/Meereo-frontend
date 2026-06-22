@@ -15,6 +15,7 @@ import AoGear from '../../components/shared/AoGear'
 import { computeProjectAvancement } from '../../domain/projectAggregates'
 import { PHASE_LABELS, normalizePhase } from '../../domain/status'
 import { formatDateFR } from '../../utils/helpers'
+import { CHANTIER_PHASES } from '../../data/chantier'
 
 const ACCESS_LEVELS = [
   { id: 'admin', label: 'Complet' },
@@ -42,36 +43,119 @@ const ErrMsg = ({ show }) => show
   : null
 
 function ProjetModal({ isOpen, onClose, showToast }) {
-  const { updateStore, createProject } = useMeereo()
-  const [f, setF] = useState({ nom: '', type: 'Maison / Villa', phase: 'ESQUISSE', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' })
+  const { store, updateStore, createProject } = useMeereo()
+  const isClient = store.user?.type === 'client'
+
+  const blank = { nom: '', type: 'Maison / Villa', phase: 'ESQUISSE', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' }
+  const [f, setF] = useState(blank)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  // Professional invitation (client flow only)
+  const [proMode, setProMode] = useState('email') // 'email' | 'annuaire'
+  const [proEmail, setProEmail] = useState('')
+  const [proName, setProName] = useState('')
+  const [proSearch, setProSearch] = useState('')
+  const [selectedPro, setSelectedPro] = useState(null)
+
+  const registeredPros = (store.users || []).filter(u => u && u.type === 'pro')
+  const annuairePros = INTERVENANTS_DATA.filter(i => i.entreprise)
+  const allPros = [
+    ...registeredPros.map(u => ({ name: u.name || u.email, email: u.email || '', registered: true })),
+    ...annuairePros
+      .filter(i => !registeredPros.some(u => u.email === i.email))
+      .map(i => ({ name: i.nom, email: i.email || '', registered: false })),
+  ]
+  const filteredPros = proSearch.trim()
+    ? allPros.filter(p => p.name.toLowerCase().includes(proSearch.toLowerCase()) || p.email.toLowerCase().includes(proSearch.toLowerCase()))
+    : []
+
+  const reset = () => {
+    setF(blank); setSubmitted(false)
+    setProEmail(''); setProName(''); setProSearch(''); setSelectedPro(null); setProMode('email')
+  }
+
+  const proDesignated = isClient && (selectedPro || (proEmail.trim() && proEmail.includes('@')))
+  const canSubmit = f.nom.trim() && (!isClient || proDesignated)
+
   const submit = () => {
     setSubmitted(true)
-    if (!f.nom.trim() || submitting) return
+    if (!canSubmit || submitting) return
     setSubmitting(true)
-    createProject({ name: f.nom, type: f.type, budget: f.budget, address: f.localisation, phase: f.phase, livraison: f.livraison, priorite: f.priorite, description: f.description, client: f.client, clientEmail: f.clientEmail })
-    if (f.client) {
+
+    const projId = 'proj_' + Date.now()
+    createProject({ id: projId, name: f.nom, type: f.type, budget: f.budget, address: f.localisation, phase: 'ESQUISSE', livraison: f.livraison, priorite: f.priorite, description: f.description, client: f.client, clientEmail: f.clientEmail })
+
+    if (!isClient && f.client) {
       api.contacts.create({ type: 'client', nom: f.client, email: f.clientEmail || null })
         .then(created => updateStore(prev => {
           if ((prev.clients || []).some(c => c.nom === f.client)) return prev
           return { ...prev, contacts: [...(prev.contacts || []), created], clients: [...(prev.clients || []), created] }
         })).catch(() => {})
     }
-    showToast('Projet créé')
-    setF({ nom: '', type: 'Maison / Villa', phase: 'ESQUISSE', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' })
-    setSubmitted(false); onClose(); setSubmitting(false)
+
+    // Invite professional (client flow)
+    if (isClient) {
+      const invEmail = proMode === 'annuaire' && selectedPro ? selectedPro.email : proEmail.trim()
+      const invName  = proMode === 'annuaire' && selectedPro ? selectedPro.name  : proName.trim()
+      if (invEmail && invEmail.includes('@')) {
+        api.projectMembers.create({ projectId: projId, userEmail: invEmail, userName: invName || invEmail, role: 'PRO_ADMIN', invitedByClient: true }).catch(() => {})
+        updateStore(prev => ({
+          ...prev,
+          projectInvitations: [...(prev.projectInvitations || []), {
+            id: 'pinv_pro_' + Date.now(), projectId: projId,
+            clientEmail: invEmail, proName: invName || invEmail,
+            status: 'pending', sentBy: prev.user?.id, sentByName: prev.user?.name || '',
+            direction: 'client_to_pro', createdAt: new Date().toISOString(),
+          }],
+        }))
+        showToast && showToast('Invitation envoyée à ' + (invName || invEmail))
+      }
+    }
+
+    reset(); onClose(); setSubmitting(false)
   }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau projet" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={submitting}>{submitting ? 'Création...' : 'Créer le projet'}</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau projet" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || !canSubmit} style={{ opacity: (submitting || !canSubmit) ? .5 : 1 }}>{submitting ? 'Création...' : 'Créer le projet'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div><label className="form-label">Nom du projet *</label><input className="form-input" placeholder="ex: Mon premier projet" value={f.nom} onChange={e => setF(p => ({ ...p, nom: e.target.value }))} /><ErrMsg show={submitted && !f.nom.trim()} /></div>
-        <div className="form-row">
-          <div><label className="form-label">Type</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Maison / Villa</option><option>Magasin / Activité</option><option>Usage mixte</option><option>Bureaux / Entreprise</option><option>Autre</option></select></div>
-          <div><label className="form-label">Phase du projet</label><select className="form-input" value={f.phase} onChange={e => setF(p => ({ ...p, phase: e.target.value }))}><option value="ESQUISSE">Esquisse</option><option value="AVANT_PROJET">Avant-projet</option><option value="PROJET_DETAILLE">Projet détaillé</option><option value="PLANS_EXECUTION">Plans d'exécution</option><option value="CONSULTATION_ENTREPRISES">Consultation des entreprises</option><option value="ATTRIBUTION_MARCHES">Attribution des marchés</option><option value="SUIVI_CHANTIER">Suivi de chantier</option><option value="RECEPTION">Réception du projet</option></select></div>
+        <div>
+          <label className="form-label">Nom du projet *</label>
+          <input className="form-input" placeholder="ex: Maison familiale R+1" value={f.nom} onChange={e => setF(p => ({ ...p, nom: e.target.value }))} />
+          <ErrMsg show={submitted && !f.nom.trim()} />
         </div>
-        <div><label className="form-label">Client</label><input className="form-input" placeholder="Nom du maître d'ouvrage" value={f.client} onChange={e => setF(p => ({ ...p, client: e.target.value }))} /></div>
-        <div><label className="form-label">Email du client</label><input className="form-input" type="email" placeholder="client@email.com — invitation automatique" value={f.clientEmail} onChange={e => setF(p => ({ ...p, clientEmail: e.target.value }))} /></div>
+
+        <div className="form-row">
+          <div>
+            <label className="form-label">Type</label>
+            <select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}>
+              <option>Maison / Villa</option><option>Magasin / Activité</option><option>Usage mixte</option><option>Bureaux / Entreprise</option><option>Autre</option>
+            </select>
+          </div>
+          {!isClient && (
+            <div>
+              <label className="form-label">Phase du projet</label>
+              <select className="form-input" value={f.phase} onChange={e => setF(p => ({ ...p, phase: e.target.value }))}>
+                <option value="ESQUISSE">Esquisse</option>
+                <option value="AVANT_PROJET">Avant-projet</option>
+                <option value="PROJET_DETAILLE">Projet détaillé</option>
+                <option value="PLANS_EXECUTION">Plans d'exécution</option>
+                <option value="CONSULTATION_ENTREPRISES">Consultation des entreprises</option>
+                <option value="ATTRIBUTION_MARCHES">Attribution des marchés</option>
+                <option value="SUIVI_CHANTIER">Suivi de chantier</option>
+                <option value="RECEPTION">Réception du projet</option>
+              </select>
+            </div>
+          )}
+        </div>
+
+        {!isClient && (
+          <>
+            <div><label className="form-label">Client</label><input className="form-input" placeholder="Nom du maître d'ouvrage" value={f.client} onChange={e => setF(p => ({ ...p, client: e.target.value }))} /></div>
+            <div><label className="form-label">Email du client</label><input className="form-input" type="email" placeholder="client@email.com — invitation automatique" value={f.clientEmail} onChange={e => setF(p => ({ ...p, clientEmail: e.target.value }))} /></div>
+          </>
+        )}
+
         <div className="form-row">
           <div><label className="form-label">Budget estimé (FCFA)</label><MoneyInput value={f.budget} onChange={v => setF(p => ({ ...p, budget: v }))} placeholder="4 800 000" /></div>
           <div><label className="form-label">Livraison prévue</label><input className="form-input" type="date" value={f.livraison} onChange={e => setF(p => ({ ...p, livraison: e.target.value }))} /></div>
@@ -81,6 +165,78 @@ function ProjetModal({ isOpen, onClose, showToast }) {
           <div><label className="form-label">Priorité</label><select className="form-input" value={f.priorite} onChange={e => setF(p => ({ ...p, priorite: e.target.value }))}><option>Normale</option><option>Haute</option><option>Critique</option></select></div>
         </div>
         <div><label className="form-label">Description</label><textarea className="form-input" rows="2" placeholder="Contexte, objectifs..." value={f.description} onChange={e => setF(p => ({ ...p, description: e.target.value }))} /></div>
+
+        {/* ── Section professionnel d'accompagnement (client uniquement) ── */}
+        {isClient && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <label className="form-label" style={{ marginBottom: 4 }}>Professionnel d'accompagnement</label>
+            <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5, marginBottom: 10 }}>
+              Désignez le professionnel qui suivra votre projet et gérera son avancement.
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              {[['email', 'Par email'], ['annuaire', "Depuis l'annuaire"]].map(([k, l]) => (
+                <button key={k} type="button"
+                  onClick={() => { setProMode(k); setSelectedPro(null); setProSearch('') }}
+                  style={{ flex: 1, padding: '7px 10px', borderRadius: 8, border: proMode === k ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: proMode === k ? 'rgba(0,0,0,.03)' : 'var(--surface-1)', fontFamily: 'var(--f)', fontSize: 12, fontWeight: proMode === k ? 700 : 400, cursor: 'pointer', color: 'var(--tx)' }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {proMode === 'email' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input className="form-input" type="email" placeholder="professionnel@email.com" value={proEmail} onChange={e => setProEmail(e.target.value)} />
+                <input className="form-input" placeholder="Nom du professionnel (optionnel)" value={proName} onChange={e => setProName(e.target.value)} />
+              </div>
+            )}
+
+            {proMode === 'annuaire' && (
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="form-input"
+                  placeholder="Rechercher un professionnel..."
+                  value={selectedPro ? selectedPro.name : proSearch}
+                  onChange={e => { setProSearch(e.target.value); setSelectedPro(null) }}
+                />
+                {selectedPro && (
+                  <button type="button" onClick={() => setSelectedPro(null)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--t3)', lineHeight: 1 }}>×</button>
+                )}
+                {!selectedPro && filteredPros.length > 0 && (
+                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50, background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.1)', maxHeight: 180, overflowY: 'auto' }}>
+                    {filteredPros.map((p, i) => (
+                      <div key={i}
+                        onClick={() => { setSelectedPro(p); setProSearch('') }}
+                        style={{ padding: '9px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-subtle)' }}
+                        onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'}
+                        onMouseOut={e => e.currentTarget.style.background = ''}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{(p.name || '?')[0].toUpperCase()}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600 }}>{p.name}</div>
+                          {p.email && <div style={{ fontSize: 10, color: 'var(--t4)' }}>{p.email}</div>}
+                        </div>
+                        {p.registered && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Inscrit</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!selectedPro && proSearch.trim() && filteredPros.length === 0 && (
+                  <div style={{ marginTop: 6, fontSize: 11, color: 'var(--t4)' }}>Aucun résultat — vous pouvez l'inviter par email.</div>
+                )}
+              </div>
+            )}
+
+            {submitted && isClient && !proDesignated && (
+              <p style={{ color: 'var(--err)', fontSize: 11, marginTop: 6, fontWeight: 500 }}>Un professionnel d'accompagnement est requis pour créer un projet.</p>
+            )}
+            {proDesignated && (
+              <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.15)', borderRadius: 10, fontSize: 12, color: 'var(--ok)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Check size={13}/>
+                Une invitation sera envoyée à <strong>{selectedPro ? selectedPro.name : (proName || proEmail)}</strong> dès la création du projet.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   )
@@ -88,6 +244,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
 
 export default function Projects({ onNavigate, openModal, showToast }) {
   const { store, updateStore, deleteProject, archiveProject, unarchiveProject, updateProject } = useMeereo()
+  const isClientUser = store.user?.type === 'client'
   const { format: fmtMoney, parseBudget: parseBgt } = useDevise()
   const [showCreateProject, setShowCreateProject] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -125,7 +282,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
   const userId = store.user?.id
   const allProjetsRaw = useMemo(() => getUserProjects(store, userId), [store.projects, userId, store.projectMembers])
-  // Enrich with computed avancement (phase + étapes + stored)
+  // Enrich with computed avancement (phase + �tapes + stored)
   const allProjets = useMemo(() => allProjetsRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p) })), [allProjetsRaw])
 
   const total = allProjets.length
@@ -145,7 +302,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
   const selected = selectedId ? allProjets.find(p => p.id === selectedId) : filtered[0]
 
-  // â”€â”€ Edit project helpers
+  // �”€�”€ Edit project helpers
   const openEdit = (section) => {
     if (!selected) return
     setEditModal({ ...selected, equipe: [...(selected.equipe || [])].map(e => ({ ...e })) })
@@ -155,11 +312,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
     if (!editModal) return
     updateProject(editModal.id, { nom: editModal.nom, name: editModal.nom, client: editModal.client, phase: editModal.phase, budget: editModal.budget, livraison: editModal.livraison, type: editModal.type, adresse: editModal.adresse, localisation: editModal.adresse, description: editModal.description, avancement: editModal.avancement, priorite: editModal.priorite, equipe: editModal.equipe, notes: editModal.notes, clientEmail: editModal.clientEmail })
     setEditModal(null)
-    showToast && showToast('Projet mis à jour')
+    showToast && showToast('Projet mis � jour')
     setSelectedId(null); setTimeout(() => setSelectedId(editModal.id), 0)
   }
 
-  // â”€â”€ Add member
+  // �”€�”€ Add member
   const addExistingMember = (inter) => {
     if (!editModal) return
     const already = editModal.equipe.some(e => e.nom === inter.nom)
@@ -211,7 +368,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   return (
     <div>
       {/* Header */}
-      <DSPageHeader title="Projets" subtitle={showArchived ? archivedProjets.length + ' projet(s) archivé(s)' : activeProjets.length + ' projet(s) actif(s)'}>
+      <DSPageHeader title="Projets" subtitle={showArchived ? archivedProjets.length + ' projet(s) archiv�(s)' : activeProjets.length + ' projet(s) actif(s)'}>
         <DSFilterBar filters={[{key:'liste',label:'Liste'},{key:'kanban',label:'Kanban'}]} active={viewMode} onChange={setViewMode} />
         <DSFilterBar filters={['all','ESQUISSE','AVANT_PROJET','PROJET_DETAILLE','PLANS_EXECUTION','CONSULTATION_ENTREPRISES','ATTRIBUTION_MARCHES','SUIVI_CHANTIER','RECEPTION'].map(ph => ({key:ph,label:ph==='all'?'Tous':PHASE_LABELS[ph]||ph}))} active={phaseFilter} onChange={setPhaseFilter} />
         {archivedProjets.length > 0 && (
@@ -244,9 +401,9 @@ export default function Projects({ onNavigate, openModal, showToast }) {
       {/* Kanban view */}
       {viewMode === 'kanban' && (() => {
         const COLS = [
-          { key: 'todo',        label: 'À faire',  color: 'var(--t4)' },
+          { key: 'todo',        label: '� faire',  color: 'var(--t4)' },
           { key: 'in_progress', label: 'En cours',  color: 'var(--wrn)' },
-          { key: 'done',        label: 'Terminé',   color: 'var(--ok)' },
+          { key: 'done',        label: 'Termin�',   color: 'var(--ok)' },
         ]
         return (
           <div className="rg-3" style={{ gap: 14, marginTop: 4 }}>
@@ -310,7 +467,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               )}
               <div className="list-item-body">
                 <div className="list-item-title">{p.nom}</div>
-                <div className="list-item-sub">{p.client}{p.type ? ' · ' + p.type : ''}</div>
+                <div className="list-item-sub">{p.client}{p.type ? ' � ' + p.type : ''}</div>
               </div>
               <div className="list-item-right">
                 <span className="status-pill status-active" style={{ fontSize: 10 }}>{PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</span>
@@ -329,12 +486,12 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, opacity: .4 }}><HardHat size={28} /></div>
               <div style={{ fontSize: 15, fontWeight: 700 }}>Votre portefeuille est vide</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)' }}>Créez votre premier projet pour commencer.</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)' }}>Cr�ez votre premier projet pour commencer.</div>
               <NewProjectButton onOpen={() => setShowCreateProject(true)} context="empty-state" style={{ marginTop: 4 }} />
             </div>
           ) : !selected ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <DSEmptyState icon={<HardHat size={24}/>} title="Sélectionnez un projet" description="Choisissez un projet dans la liste pour voir le détail." />
+              <DSEmptyState icon={<HardHat size={24}/>} title="S�lectionnez un projet" description="Choisissez un projet dans la liste pour voir le d�tail." />
             </div>
           ) : (
             <div>
@@ -345,7 +502,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.65))' }} />
                   <div style={{ position: 'absolute', bottom: 16, left: 24, right: 24 }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.4px' }}>{selected.nom}</div>
-                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.75)', marginTop: 3 }}>{selected.type} · {selected.adresse}</div>
+                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.75)', marginTop: 3 }}>{selected.type} � {selected.adresse}</div>
                   </div>
                 </div>
               )}
@@ -353,7 +510,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <button className="btn btn-sm" onClick={() => openEdit('projet')}>Editer</button>
-                <button className="btn btn-sm" onClick={() => onNavigate && onNavigate('chantier')}>Suivi chantier â†’</button>
+                <button className="btn btn-sm" onClick={() => onNavigate && onNavigate('chantier')}>Suivi chantier �†’</button>
                 <button className="btn btn-sm" onClick={() => onNavigate && onNavigate('documents')}>Documents</button>
               </div>
 
@@ -367,33 +524,39 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 ))}
               </div>
 
-              {/* Phases de mission stepper — piloté par l'avancement réel */}
+              {/* Phases de mission stepper — aligné sur CHANTIER_PHASES du suivi de chantier */}
               {(() => {
-                const PHASES = ['ESQUISSE','AVANT_PROJET','PROJET_DETAILLE','PLANS_EXECUTION','CONSULTATION_ENTREPRISES','ATTRIBUTION_MARCHES','SUIVI_CHANTIER','RECEPTION']
-                const PHASE_NAMES = { ESQUISSE:'Esquisse', AVANT_PROJET:'Avant-projet', PROJET_DETAILLE:'Projet détaillé', PLANS_EXECUTION:'Plans d\'exécution', CONSULTATION_ENTREPRISES:'Consultation', ATTRIBUTION_MARCHES:'Attribution', SUIVI_CHANTIER:'Chantier', RECEPTION:'Réception' }
-                // Seuils d'avancement pour chaque phase (alignés avec projectAggregates)
-                const PHASE_THRESHOLDS = { ESQUISSE:0, AVANT_PROJET:12, PROJET_DETAILLE:25, PLANS_EXECUTION:35, CONSULTATION_ENTREPRISES:45, ATTRIBUTION_MARCHES:55, SUIVI_CHANTIER:65, RECEPTION:90 }
-                const avancement = selected.avancement || 0
+                const taskStates = store.taskStates || {}
+                const getState = (taskId) => taskStates[selected.id + '_' + taskId] || taskStates['_' + taskId] || 'todo'
 
-                // Déterminer la phase active depuis l'avancement (pas seulement le code phase)
+                // Calcul du taux de complétion par phase depuis les états réels des tâches
+                const phaseStats = CHANTIER_PHASES.map(ph => {
+                  const done = ph.tasks.filter(t => getState(t.id) === 'done').length
+                  return { name: ph.name, done, total: ph.tasks.length }
+                })
+
+                // Phase active : première phase non terminée ; fallback sur avancement si aucune tâche cochée
+                const hasTaskData = phaseStats.some(ph => ph.done > 0)
                 let activeIdx = 0
-                for (let i = PHASES.length - 1; i >= 0; i--) {
-                  if (avancement >= PHASE_THRESHOLDS[PHASES[i]]) { activeIdx = i; break }
+                if (hasTaskData) {
+                  activeIdx = phaseStats.findIndex(ph => ph.done < ph.total)
+                  if (activeIdx === -1) activeIdx = phaseStats.length - 1
+                } else {
+                  const totalTasks = phaseStats.reduce((s, p) => s + p.total, 0) || 1
+                  let cum = 0
+                  for (let i = 0; i < phaseStats.length; i++) {
+                    cum += phaseStats[i].total
+                    if ((selected.avancement || 0) < (cum / totalTasks) * 100) { activeIdx = i; break }
+                    activeIdx = i
+                  }
                 }
 
-                // Si le code phase est plus avancé que l'avancement, prendre le max
-                const PHASE_COMPAT = { ESQ: 'ESQUISSE', APS: 'AVANT_PROJET', APD: 'AVANT_PROJET', PRO: 'PROJET_DETAILLE', DCE: 'PLANS_EXECUTION', EXE: 'SUIVI_CHANTIER', DET: 'SUIVI_CHANTIER', AOR: 'RECEPTION', REC: 'RECEPTION', IDEE: 'ESQUISSE', ETUDES: 'AVANT_PROJET', CONCEPTION: 'PROJET_DETAILLE', CONSULTATION: 'CONSULTATION_ENTREPRISES', TRAVAUX: 'SUIVI_CHANTIER', FINITIONS: 'SUIVI_CHANTIER', LIVRAISON: 'RECEPTION' }
-                const phaseCode = PHASE_COMPAT[selected.phase] || selected.phase || 'ESQUISSE'
-                const phaseIdx = PHASES.indexOf(phaseCode)
-                const currentIdx = Math.max(activeIdx, phaseIdx >= 0 ? phaseIdx : 0)
-
-                // If the project has detailed étapes, use those
-                const hasEtapes = selected.etapes && selected.etapes.length > 0
-                const steps = hasEtapes
-                  ? selected.etapes.map((e) => ({ label: e.label, done: !!e.done, current: !!e.current }))
-                  : PHASES.map((p, i) => ({ label: PHASE_NAMES[p], done: i < currentIdx, current: i === currentIdx }))
-                // Progress bar uses the real avancement percentage
-                const progressPct = avancement
+                const steps = phaseStats.map((ph, i) => ({
+                  label: ph.name,
+                  done: i < activeIdx || (i === activeIdx && ph.done === ph.total && ph.total > 0),
+                  current: i === activeIdx && !(ph.done === ph.total && ph.total > 0),
+                }))
+                const progressPct = selected.avancement || 0
 
                 return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
@@ -410,74 +573,76 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                             boxShadow: e.current ? '0 0 0 5px rgba(29,29,31,.08)' : 'none',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .3s'
                           }}>
-                            {e.done ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            {e.done
+                              ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
                               : e.current ? <div style={{ width: 8, height: 8, borderRadius: '50%', background: selected.color || 'var(--tx)' }} /> : null}
                           </div>
-                          <div style={{ fontSize: 9.5, fontWeight: e.current ? 800 : e.done ? 700 : 400, color: e.done || e.current ? (selected.color || 'var(--tx)') : 'var(--t4)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>{e.label}</div>
-                          <div style={{ fontSize: 8, fontWeight: 700, color: e.done ? 'var(--ok)' : e.current ? (selected.color || '#F59E0B') : 'var(--t4)' }}>{e.done ? <><Check size={8}/> Terminé</> : e.current ? 'En cours' : 'À venir'}</div>
+                          <div style={{ fontSize: 9, fontWeight: e.current ? 800 : e.done ? 700 : 400, color: e.done || e.current ? (selected.color || 'var(--tx)') : 'var(--t4)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2, maxWidth: 70 }}>{e.label}</div>
+                          <div style={{ fontSize: 8, fontWeight: 700, color: e.done ? 'var(--ok)' : e.current ? (selected.color || '#F59E0B') : 'var(--t4)' }}>
+                            {e.done ? <><Check size={8}/> Terminé</> : e.current ? 'En cours' : 'À venir'}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )
               })()}
-
-              {/* Timeline financière */}
+              {/* Timeline financi�re */}
               {(() => {
                 const projectOrders = (store.paymentOrders || []).filter(o => o.projectId === selected.id)
                 const proofs = (store.proofDocuments || []).filter(d => projectOrders.some(o => o.id === d.payoutRequestId))
                 if (projectOrders.length === 0) return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financière</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financi�re</div>
                     <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Wallet size={18} color="var(--t3)"/></div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun flux financier</div>
-                      <div style={{ fontSize: 11, color: 'var(--t4)', lineHeight: 1.5, maxWidth: 320, margin: '0 auto 14px' }}>La timeline se remplit automatiquement à partir de vos marchés et paiements. Créez un marché pour lancer le suivi financier.</div>
+                      <div style={{ fontSize: 11, color: 'var(--t4)', lineHeight: 1.5, maxWidth: 320, margin: '0 auto 14px' }}>La timeline se remplit automatiquement � partir de vos march�s et paiements. Cr�ez un march� pour lancer le suivi financier.</div>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                         <button className="btn btn-sm" style={{ fontSize: 11 }} onClick={() => onNavigate && onNavigate('finance')}>Voir la finance</button>
                       </div>
                     </div>
                     <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 12, marginTop: 4 }}>
                       <div style={{ fontSize: 10, color: 'var(--t4)', lineHeight: 1.6 }}>
-                        <strong>Comment ça marche :</strong> Acceptez une offre â†’ un marché est créé â†’ les paiements et échéances alimentent cette timeline.
+                        <strong>Comment �a marche :</strong> Acceptez une offre �†’ un march� est cr�� �†’ les paiements et �ch�ances alimentent cette timeline.
                       </div>
                     </div>
                   </div>
                 )
                 return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financière</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financi�re</div>
                     {projectOrders.map(o => (
                       <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                         <PaymentBadge status={o.status} size="small" />
-                        <div style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{o.type === 'marche' ? 'Marché' : o.type === 'milestone' ? 'Milestone' : 'Paiement'}</div>
+                        <div style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{o.type === 'marche' ? 'March�' : o.type === 'milestone' ? 'Milestone' : 'Paiement'}</div>
                         <div style={{ fontSize: 12, fontWeight: 700 }}>{fmtMoney(o.amountGross || 0)}</div>
                       </div>
                     ))}
                     {proofs.length > 0 && (
-                      <div style={{ marginTop: 10, fontSize: 10, color: 'var(--t4)' }}>{proofs.length} preuve(s) déposée(s)</div>
+                      <div style={{ marginTop: 10, fontSize: 10, color: 'var(--t4)' }}>{proofs.length} preuve(s) d�pos�e(s)</div>
                     )}
                   </div>
                 )
               })()}
 
-              {/* Marchés rattachés */}
+              {/* March�s rattach�s */}
               {(() => {
                 const projMarkets = (store.markets || []).filter(m => m.projectId === selected.id)
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700 }}>Marchés ({projMarkets.length})</div>
-                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('marches')}>Voir tout â†’</button>
+                      <div style={{ fontSize: 12, fontWeight: 700 }}>March�s ({projMarkets.length})</div>
+                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('marches')}>Voir tout �†’</button>
                     </div>
                     {projMarkets.length === 0 ? (
-                      <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucun marché — acceptez une offre pour créer un marché</div>
+                      <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucun march� — acceptez une offre pour cr�er un march�</div>
                     ) : projMarkets.slice(0, 3).map(m => (
                       <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.statut === 'livre' ? 'var(--ok)' : m.statut === 'en_cours' ? 'var(--wrn)' : 'var(--tx)', flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600 }}>{m.lot || m.titre || 'Marché'}</div>
-                          <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.entreprise || '—'} · {m.amount ? fmtMoney(m.amount) : '—'}</div>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{m.lot || m.titre || 'March�'}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.entreprise || '—'} � {m.amount ? fmtMoney(m.amount) : '—'}</div>
                         </div>
                         <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: m.statut === 'livre' ? 'rgba(52,199,89,.08)' : 'rgba(255,149,0,.08)', color: m.statut === 'livre' ? 'var(--ok)' : 'var(--wrn)' }}>{m.statut || m.status}</span>
                       </div>
@@ -486,14 +651,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 )
               })()}
 
-              {/* Documents rattachés */}
+              {/* Documents rattach�s */}
               {(() => {
                 const projDocs = (store.documents || []).filter(d => d.projectId === selected.id)
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontSize: 12, fontWeight: 700 }}>Documents ({projDocs.length})</div>
-                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('documents')}>Voir tout â†’</button>
+                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('documents')}>Voir tout �†’</button>
                     </div>
                     {projDocs.length === 0 ? (
                       <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucun document</div>
@@ -514,14 +679,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div className="card">
                   <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="card-title">Equipe ({(selected.equipe || []).length})</div>
-                    <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => openEdit('equipe')}>+ Ajouter</button>
+                    {!isClientUser && <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => openEdit('equipe')}>+ Ajouter</button>}
                   </div>
                   <div className="card-body" style={{ padding: 0 }}>
                     {(selected.equipe || []).length === 0 && (
                       <div style={{ padding: '20px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center', lineHeight: 1.5 }}>
-                        Aucun membre dans l'équipe
+                        Aucun membre dans l'�quipe
                         {!((store.onboardingData?.cockpitTeam?.length > 0) || (store.intervenants?.length > 0)) && (
-                          <div style={{ marginTop: 6, fontSize: 11, color: 'var(--t5)' }}>Complétez les informations de votre entreprise pour structurer votre équipe projet.</div>
+                          <div style={{ marginTop: 6, fontSize: 11, color: 'var(--t5)' }}>Compl�tez les informations de votre entreprise pour structurer votre �quipe projet.</div>
                         )}
                       </div>
                     )}
@@ -561,7 +726,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         </div>
       </div>}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â• MODAL: Editer Projet â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* �•��•��•��•��•��•��•��•��•��•��•� MODAL: Editer Projet �•��•��•��•��•��•��•��•��•��•��•� */}
       {editModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEditModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 620, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -571,7 +736,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>{editSection === 'projet' ? 'Editer le projet' : editSection === 'equipe' ? 'Gestion de l\'equipe' : 'Notes du projet'}</div>
                 <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{editModal.nom}</div>
               </div>
-              <button onClick={() => setEditModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
+              <button onClick={() => setEditModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>�</button>
             </div>
 
             {/* Section tabs */}
@@ -584,24 +749,24 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-              {/* â”€â”€ Section: Projet â”€â”€ */}
+              {/* �”€�”€ Section: Projet �”€�”€ */}
               {editSection === 'projet' && (<>
                 <div><label className="form-label">Nom du projet</label><input className="form-input" value={editModal.nom} onChange={e => setEditModal(p => ({ ...p, nom: e.target.value }))} /></div>
                 <div className="modal-row">
                   <div><label className="form-label">Client</label><input className="form-input" value={editModal.client} onChange={e => setEditModal(p => ({ ...p, client: e.target.value }))} /></div>
                   <div><label className="form-label">Type</label>
                     <select className="form-input" value={editModal.type || ''} onChange={e => setEditModal(p => ({ ...p, type: e.target.value }))}>
-                      {['Maison / Villa', 'Magasin / Activité', 'Usage mixte', 'Bureaux / Entreprise', 'Autre'].map(t => <option key={t} value={t}>{t}</option>)}
+                      {['Maison / Villa', 'Magasin / Activit�', 'Usage mixte', 'Bureaux / Entreprise', 'Autre'].map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="modal-row">
                   <div><label className="form-label">Phase</label>
                     <select className="form-input" value={editModal.phase} onChange={e => setEditModal(p => ({ ...p, phase: e.target.value }))}>
-                      {[['ESQUISSE','Esquisse'],['AVANT_PROJET','Avant-projet'],['PROJET_DETAILLE','Projet détaillé'],['PLANS_EXECUTION','Plans d\'exécution'],['CONSULTATION_ENTREPRISES','Consultation des entreprises'],['ATTRIBUTION_MARCHES','Attribution des marchés'],['SUIVI_CHANTIER','Suivi de chantier'],['RECEPTION','Réception du projet']].map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+                      {[['ESQUISSE','Esquisse'],['AVANT_PROJET','Avant-projet'],['PROJET_DETAILLE','Projet d�taill�'],['PLANS_EXECUTION','Plans d\'ex�cution'],['CONSULTATION_ENTREPRISES','Consultation des entreprises'],['ATTRIBUTION_MARCHES','Attribution des march�s'],['SUIVI_CHANTIER','Suivi de chantier'],['RECEPTION','R�ception du projet']].map(([k,l]) => <option key={k} value={k}>{l}</option>)}
                     </select>
                   </div>
-                  <div><label className="form-label">Priorité</label>
+                  <div><label className="form-label">Priorit�</label>
                     <select className="form-input" value={editModal.priorite || 'Normale'} onChange={e => setEditModal(p => ({ ...p, priorite: e.target.value }))}>
                       {['Haute', 'Normale', 'Basse'].map(pr => <option key={pr}>{pr}</option>)}
                     </select>
@@ -613,7 +778,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 </div>
               </>)}
 
-              {/* â”€â”€ Section: Equipe â”€â”€ */}
+              {/* �”€�”€ Section: Equipe �”€�”€ */}
               {editSection === 'equipe' && (<>
                 {/* Sub-sections: internal team + external */}
                 {(() => {
@@ -631,30 +796,30 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.nom}</div>
-                          <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.role}{m.entreprise ? ' · ' + m.entreprise : ''}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.role}{m.entreprise ? ' � ' + m.entreprise : ''}</div>
                         </div>
                         {m.type === 'externe' && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(37,99,235,.08)', color: '#2563EB' }}>Externe</span>}
                         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut}</span>
                         <button className="btn btn-sm" style={{ fontSize: 9, padding: '2px 7px' }} onClick={() => setEditMember({ idx, member: { ...m } })}>Modifier</button>
-                        <button style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.06)', color: 'var(--err)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }} onClick={() => removeMember(idx)}>À</button>
+                        <button style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.06)', color: 'var(--err)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }} onClick={() => removeMember(idx)}>�</button>
                       </div>
                     )
                   }
                   return (<>
-                    {/* Mon équipe interne */}
+                    {/* Mon �quipe interne */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>Mon équipe</div>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>Mon �quipe</div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{interne.length} membre{interne.length > 1 ? 's' : ''} de ma structure</div>
                       </div>
-                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('existant'); setMemberSearch('') }}>+ Depuis mon équipe</button>
+                      {!isClientUser && <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('existant'); setMemberSearch('') }}>+ Depuis mon équipe</button>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {interne.map((m, idx) => renderMember(m, (editModal.equipe || []).indexOf(m)))}
-                      {interne.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)', padding: '12px 8px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>Aucun membre de votre structure affecté à ce projet</div>}
+                      {interne.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)', padding: '12px 8px', background: 'var(--s2)', borderRadius: 8, textAlign: 'center' }}>Aucun membre de votre structure affect� � ce projet</div>}
                     </div>
 
-                    {/* Séparateur */}
+                    {/* S�parateur */}
                     <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
 
                     {/* Intervenants externes */}
@@ -663,7 +828,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                         <div style={{ fontSize: 13, fontWeight: 700 }}>Intervenants</div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{externe.length} intervenant{externe.length > 1 ? 's' : ''} externe{externe.length > 1 ? 's' : ''}</div>
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('nouveau'); setMemberSearch('') }}>+ Intervenant</button>
+                      {!isClientUser && <button className="btn btn-primary btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('nouveau'); setMemberSearch('') }}>+ Intervenant</button>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {externe.map((m, idx) => renderMember(m, (editModal.equipe || []).indexOf(m)))}
@@ -673,7 +838,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 })()}
               </>)}
 
-              {/* â”€â”€ Section: Notes â”€â”€ */}
+              {/* �”€�”€ Section: Notes �”€�”€ */}
               {editSection === 'notes' && (<>
                 <div><label className="form-label">Notes du projet</label><textarea className="form-input" rows="5" value={editModal.notes || ''} onChange={e => setEditModal(p => ({ ...p, notes: e.target.value }))} placeholder="Contexte, objectifs, points de vigilance..." /></div>
               </>)}
@@ -698,7 +863,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         </div>
       )}
 
-      {/* â•â•â• MODAL: Confirmer suppression â•â•â• */}
+      {/* �•��•��•� MODAL: Confirmer suppression �•��•��•� */}
       {deleteConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setDeleteConfirm(null)}>
           <div style={{ background: '#fff', borderRadius: 16, width: 420, boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -709,11 +874,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Supprimer ce projet ?</div>
               <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>
                 {deleteConfirm.hasData
-                  ? <><strong style={{ color: '#FF3B30' }}>Attention :</strong> Ce projet contient des données (marchés, documents ou paiements). Cette action est définitive.</>
-                  : 'Cette action est définitive. Le projet sera retiré de votre portefeuille.'
+                  ? <><strong style={{ color: '#FF3B30' }}>Attention :</strong> Ce projet contient des donn�es (march�s, documents ou paiements). Cette action est d�finitive.</>
+                  : 'Cette action est d�finitive. Le projet sera retir� de votre portefeuille.'
                 }
               </div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>Â« {deleteConfirm.nom} Â»</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>« {deleteConfirm.nom} »</div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,.06)', display: 'flex', gap: 10 }}>
               <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--t3)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Annuler</button>
@@ -726,7 +891,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         </div>
       )}
 
-      {/* â•â•â• MODAL: Confirmer archivage â•â•â• */}
+      {/* �•��•��•� MODAL: Confirmer archivage �•��•��•� */}
       {archiveConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setArchiveConfirm(null)}>
           <div style={{ background: '#fff', borderRadius: 16, width: 400, boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -735,8 +900,8 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
               </div>
               <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Archiver ce projet ?</div>
-              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>Le projet sera retiré de la liste active et déplacé dans les archives. Vous pourrez le consulter depuis la section Archivés.</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>Â« {archiveConfirm.nom} Â»</div>
+              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>Le projet sera retir� de la liste active et d�plac� dans les archives. Vous pourrez le consulter depuis la section Archiv�s.</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>« {archiveConfirm.nom} »</div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,.06)', display: 'flex', gap: 10 }}>
               <button onClick={() => setArchiveConfirm(null)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--t3)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Annuler</button>
@@ -749,45 +914,45 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         </div>
       )}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â• MODAL: Ajouter un membre â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* �•��•��•��•��•��•��•��•��•��•��•� MODAL: Ajouter un membre �•��•��•��•��•��•��•��•��•��•��•� */}
       {addMemberModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setAddMemberModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 20px 14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>Ajouter un membre</div>
-                <button onClick={() => setAddMemberModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>À</button>
+                <button onClick={() => setAddMemberModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
               </div>
               {/* Tabs */}
               <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
-                {[['existant', 'Mon équipe'], ['nouveau', 'Nouveau membre'], ['externe', 'Intervenant externe']].map(([k, l]) => (
+                {[['existant', 'Mon �quipe'], ['nouveau', 'Nouveau membre'], ['externe', 'Intervenant externe']].map(([k, l]) => (
                   <button key={k} className={`filter-pill ${memberTab === k ? 'active' : ''}`} onClick={() => setMemberTab(k)}>{l}</button>
                 ))}
               </div>
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
-              {/* Tab: Mon équipe — sélectionner depuis toutes les sources de l'environnement */}
+              {/* Tab: Mon �quipe — s�lectionner depuis toutes les sources de l'environnement */}
               {memberTab === 'existant' && (
                 <div>
                   <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Recherchez parmi vos collaborateurs et intervenants déjà enregistrés dans votre environnement MEEREO.</div>
-                    <input placeholder="Rechercher par nom, métier, rôle..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} style={{ ...inputStyle, padding: '8px 12px' }} />
+                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Recherchez parmi vos collaborateurs et intervenants d�j� enregistr�s dans votre environnement MEEREO.</div>
+                    <input placeholder="Rechercher par nom, m�tier, r�le..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} style={{ ...inputStyle, padding: '8px 12px' }} />
                   </div>
                   {(() => {
-                    // Agréger depuis TOUTES les sources de l'environnement
+                    // Agr�ger depuis TOUTES les sources de l'environnement
                     const seen = new Set((editModal.equipe || []).map(e => e.nom))
                     const all = []
 
-                    // 1. Équipe cockpit (onboarding / paramètres)
+                    // 1. �quipe cockpit (onboarding / param�tres)
                     ;(store.onboardingData?.cockpitTeam || []).forEach(t => {
                       if (t.nom && !seen.has(t.nom)) { seen.add(t.nom); all.push({ ...t, source: 'equipe' }) }
                     })
-                    // 2. Intervenants ajoutés via le store (ajouts manuels précédents)
+                    // 2. Intervenants ajout�s via le store (ajouts manuels pr�c�dents)
                     ;(store.intervenants || []).forEach(i => {
                       if (i.nom && !seen.has(i.nom)) { seen.add(i.nom); all.push({ nom: i.nom, role: i.role || i.mission || '', email: i.email || '', tel: i.tel || '', source: 'intervenant' }) }
                     })
-                    // 3. Membres d'autres projets (réutilisation cross-projet)
+                    // 3. Membres d'autres projets (r�utilisation cross-projet)
                     ;(store.projects || []).forEach(p => {
                       if (p.id === editModal?.id) return
                       ;(p.equipe || []).forEach(m => {
@@ -803,10 +968,10 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     const filtered = q ? all.filter(m => ((m.nom || '') + (m.role || '') + (m.email || '') + (m.entreprise || '')).toLowerCase().includes(q)) : all
                     if (filtered.length === 0) return (
                       <div style={{ padding: '28px 20px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun résultat</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--t4)', marginBottom: 14 }}>{memberSearch ? `Aucun membre trouvé pour "${memberSearch}".` : 'Votre équipe est vide.'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun r�sultat</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--t4)', marginBottom: 14 }}>{memberSearch ? `Aucun membre trouv� pour "${memberSearch}".` : 'Votre �quipe est vide.'}</div>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-sm" onClick={() => setMemberTab('nouveau')}>Créer un membre</button>
+                          <button className="btn btn-sm" onClick={() => setMemberTab('nouveau')}>Cr�er un membre</button>
                           <button className="btn btn-primary btn-sm" onClick={() => setMemberTab('externe')}>Ajouter un intervenant</button>
                         </div>
                       </div>
@@ -820,7 +985,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                             <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
                             <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.role || m.poste || ''}</div>
                           </div>
-                          <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : m.source === 'projet' ? 'rgba(22,163,74,.06)' : 'var(--s2)', color: m.source === 'equipe' ? '#7C3AED' : m.source === 'projet' ? '#16A34A' : 'var(--t4)' }}>{m.source === 'equipe' ? 'Équipe' : m.source === 'projet' ? 'Autre projet' : 'Intervenant'}</span>
+                          <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : m.source === 'projet' ? 'rgba(22,163,74,.06)' : 'var(--s2)', color: m.source === 'equipe' ? '#7C3AED' : m.source === 'projet' ? '#16A34A' : 'var(--t4)' }}>{m.source === 'equipe' ? '�quipe' : m.source === 'projet' ? 'Autre projet' : 'Intervenant'}</span>
                         </div>
                       )
                     })
@@ -831,14 +996,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {/* Tab: Nouveau membre interne */}
               {memberTab === 'nouveau' && (
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, lineHeight: 1.5 }}>Ce membre sera ajouté à votre équipe interne et affecté à ce projet.</div>
-                  <div><label className="form-label">Nom complet *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Prénom Nom" /></div>
-                  <div><label className="form-label">Poste / Rôle</label><input className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))} placeholder="Chef de projet, Architecte..." /></div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, lineHeight: 1.5 }}>Ce membre sera ajout� � votre �quipe interne et affect� � ce projet.</div>
+                  <div><label className="form-label">Nom complet *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Pr�nom Nom" /></div>
+                  <div><label className="form-label">Poste / R�le</label><input className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))} placeholder="Chef de projet, Architecte..." /></div>
                   <div className="modal-row">
                     <div><label className="form-label">Email</label><input className="form-input" type="email" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} /></div>
-                    <div><label className="form-label">Téléphone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
+                    <div><label className="form-label">T�l�phone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
                   </div>
-                  <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} disabled={!newMember.nom?.trim()} onClick={addNewMember}>Ajouter à l'équipe</button>
+                  <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} disabled={!newMember.nom?.trim()} onClick={addNewMember}>Ajouter � l'�quipe</button>
                 </div>
               )}
 
@@ -846,19 +1011,19 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {memberTab === 'externe' && (
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'rgba(37,99,235,.04)', borderRadius: 8, lineHeight: 1.5, border: '1px solid rgba(37,99,235,.08)' }}>Les intervenants externes sont des partenaires, prestataires ou structures qui interviennent sur ce projet.</div>
-                  <div><label className="form-label">Nom / Structure *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Ex: BET Sigma, Entreprise Koné..." /></div>
+                  <div><label className="form-label">Nom / Structure *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Ex: BET Sigma, Entreprise Kon�..." /></div>
                   <div className="modal-row">
-                    <div><label className="form-label">Métier / Rôle *</label>
+                    <div><label className="form-label">M�tier / R�le *</label>
                       <select className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))}>
-                        <option value="">Choisir un métier</option>
-                        {['Architecte','BET Structure','BET Fluides','Bureau de contrôle','Entreprise construction','Sous-traitant','Fournisseur','OPC','AMO','Économiste','Géomètre','Paysagiste','Designer intérieur','Autre'].map(m => <option key={m} value={m}>{m}</option>)}
+                        <option value="">Choisir un m�tier</option>
+                        {['Architecte','BET Structure','BET Fluides','Bureau de contr�le','Entreprise construction','Sous-traitant','Fournisseur','OPC','AMO','�conomiste','G�om�tre','Paysagiste','Designer int�rieur','Autre'].map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div><label className="form-label">Personne de contact</label><input className="form-input" value={newMember.contact || ''} onChange={e => setNewMember(p => ({ ...p, contact: e.target.value }))} placeholder="Nom du contact" /></div>
                   </div>
                   <div className="modal-row">
                     <div><label className="form-label">Email</label><input className="form-input" type="email" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} /></div>
-                    <div><label className="form-label">Téléphone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
+                    <div><label className="form-label">T�l�phone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
                   </div>
                   <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} disabled={!newMember.nom?.trim() || !newMember.role} onClick={() => {
                     if (!newMember.nom?.trim() || !newMember.role) return
@@ -873,13 +1038,13 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         </div>
       )}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â• MODAL: Modifier membre â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* �•��•��•��•��•��•��•��•��•��•��•� MODAL: Modifier membre �•��•��•��•��•��•��•��•��•��•��•� */}
       {editMember && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2200, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setEditMember(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)', padding: 22 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ fontSize: 15, fontWeight: 700 }}>Modifier — {editMember.member.nom}</div>
-              <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>À</button>
+              <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div><label className="form-label">Role dans le projet</label><input className="form-input" value={editMember.member.role} onChange={e => setEditMember(p => ({ ...p, member: { ...p.member, role: e.target.value } }))} /></div>

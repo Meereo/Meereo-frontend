@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Modal from './Modal'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { api } from '../../services/api/client'
 
@@ -57,12 +58,20 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
 
   const canConfirm = confirmText === 'SUPPRIMER' && password.length >= 1
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!canConfirm || isDeleting) return
     setIsDeleting(true)
 
-    // 1. Purge backend (PostgreSQL + MinIO)
-    api.auth.deleteAccount(password).catch(e => console.warn('[DELETE] Backend purge:', e.message))
+    // 1. Purge backend — AWAIT the result before doing anything locally
+    try {
+      await api.auth.deleteAccount(password)
+    } catch (e) {
+      // Backend rejected (wrong password, expired token, network error…)
+      setIsDeleting(false)
+      const msg = e?.message || 'Erreur lors de la suppression'
+      showToast(msg, 'red')
+      return
+    }
 
     // 2. NUKE localStorage SYNCHRONOUSLY with an empty store
     // This is the ONLY reliable way to ensure no data survives

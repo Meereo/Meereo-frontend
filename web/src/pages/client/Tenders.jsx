@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import Modal from '../../components/shared/Modal'
 import { Radio } from 'lucide-react'
 import AoGear, { getMetierColor } from '../../components/shared/AoGear'
 import MoneyInput from '../../components/shared/MoneyInput'
