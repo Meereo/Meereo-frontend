@@ -17,7 +17,7 @@ class ErrorBoundary extends React.Component {
         React.createElement('h2', { style: { color: '#dc2626', fontSize: 18, marginBottom: 12 } }, 'Une erreur est survenue'),
         React.createElement('pre', { style: { background: '#f5f5f5', padding: 16, borderRadius: 8, fontSize: 12, whiteSpace: 'pre-wrap', color: '#333', marginBottom: 16 } }, String(this.state.error?.message || this.state.error)),
         React.createElement('button', {
-          onClick: () => { localStorage.removeItem('meereo_store_v2'); window.location.reload() },
+          onClick: () => { try { sessionStorage.clear() } catch {} window.location.reload() },
           style: { padding: '10px 20px', background: '#191c1d', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }
         }, 'Réinitialiser et recharger')
       )

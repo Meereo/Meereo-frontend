@@ -149,13 +149,9 @@ function parseToken(token) {
 }
 
 function getCurrentUserId() {
-  try {
-    const store = JSON.parse(localStorage.getItem('meereo_store_v2') || '{}')
-    const token = store._token
-    if (!token) return null
-    const decoded = parseToken(token)
-    return decoded?.userId || null
-  } catch { return null }
+  // Token is now in-memory only (never stored in localStorage).
+  // This function is kept as a stub for legacy compatibility.
+  return null
 }
 
 function userPublic(u) {

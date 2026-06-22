@@ -15,8 +15,9 @@ router.get('/', requireAuth, async (req, res, next) => {
     let where = {}
 
     if (user.type === 'client') {
-      // Le client voit TOUS ses AOs (open, attributed, closed…)
+      // Le client voit ses AOs actifs (sauf cancelled/supprimés)
       where.ownerUserId = user.id
+      where.status = { not: 'cancelled' }
     } else if (user.type === 'pro') {
       // Pro : uniquement les AOs ouverts
       where.status = 'open'
@@ -96,14 +97,25 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
   }
 })
 
-// DELETE /api/aos/:id — fermer/supprimer un AO
+// DELETE /api/aos/:id — supprimer un AO (hard delete si sans offres, sinon annulation)
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const existing = await prisma.aO.findUnique({ where: { id: req.params.id } })
     if (!existing) throw createError('AO introuvable', 404)
     if (existing.ownerUserId !== req.user.id) throw createError('Non autorisé', 403)
-    await prisma.aO.update({ where: { id: req.params.id }, data: { status: 'cancelled' } })
+
+    // Vérifier s'il existe des offres liées à cet AO
+    const offersCount = await prisma.offer.count({ where: { aoId: req.params.id } })
+
+    if (offersCount === 0) {
+      // Aucune offre — suppression définitive
+      await prisma.aO.delete({ where: { id: req.params.id } })
+    } else {
+      // Des offres existent — annulation douce
+      await prisma.aO.update({ where: { id: req.params.id }, data: { status: 'cancelled' } })
+    }
+
     res.json({ success: true })
   } catch (e) {
     next(e)

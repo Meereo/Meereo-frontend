@@ -32,6 +32,7 @@ function clientLabel(store) {
   return 'Le ou la client(e)'
 }
 
+// STORE_KEY kept for legacy cleanup only — no longer written
 const STORE_KEY = 'meereo_store_v2'
 
 const defaultStore = {
@@ -106,60 +107,39 @@ const defaultStore = {
   _projectsSeeded: false,
 }
 
-// ─── Clés autorisées à être persistées dans localStorage ────────────────────
-// RÈGLE DE SÉCURITÉ : seules ces clés survivent à un rechargement de page.
-// Toute donnée métier (projects, aos, offers, tasks, contacts…) est EXCLUE —
-// elle est refetchée depuis l'API au login/montage. En cas de XSS, l'attaquant
-// ne peut récupérer ni les données utilisateurs ni les données de projet.
-const PERSIST_KEYS = new Set([
-  // SUPPRIMÉ : '_token' — le JWT n'est plus persisté dans localStorage.
-  // Il vit dans sessionStorage (écrit par setInMemoryToken) + cookie httpOnly.
-  // Un XSS ne peut pas l'extraire via localStorage.
-  '_hydrated',           // flag de session — évite un double-fetch au montage
-  '_cachedUser',         // hint minimal { id, type, name } pour éviter le flash de redirection
-  '_onboardingByUser',   // wizard avant création compte (userId temp → data) — nécessaire car pas encore en BD
-  // Acceptations légales
-  'commissionAcceptances',
-  // Note : onboardingData, clientPrefs, KAI sont en PostgreSQL et rechargés à chaque session.
-])
+// ─── Persistance minimale via sessionStorage ─────────────────────────────────
+// Seul _onboardingByUser est conservé (wizard en cours avant création de compte).
+// Tout le reste est refetché depuis l'API à chaque session (cookie httpOnly).
+// sessionStorage est vidé à la fermeture de l'onglet — aucune donnée ne survit
+// entre sessions, ce qui est le comportement voulu.
+const SESSION_OB_KEY = 'meereo_onboarding_by_user'
 
 function loadFromStorage() {
+  // One-time migration: clear old localStorage store key if present
+  try { localStorage.removeItem(STORE_KEY) } catch {}
   try {
-    const raw = localStorage.getItem(STORE_KEY)
+    const raw = sessionStorage.getItem(SESSION_OB_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        console.warn('MEEREO: store corrompu, reset')
-        localStorage.removeItem(STORE_KEY)
-        return { ...defaultStore }
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return { ...defaultStore, _onboardingByUser: parsed }
       }
-      // Sécurité : on ne restaure QUE les clés de la liste blanche (PERSIST_KEYS).
-      // Tout le reste (projets, aos, tasks…) sera refetché depuis l'API à
-      // l'hydratation. Cela évite d'exposer des données métier en cas de XSS.
-      const merged = { ...defaultStore }
-      Object.keys(parsed).forEach(k => {
-        if (PERSIST_KEYS.has(k) && merged.hasOwnProperty(k)) merged[k] = parsed[k]
-      })
-      return merged
     }
   } catch (e) {
-    console.warn('MEEREO loadStore error — reset', e)
-    localStorage.removeItem(STORE_KEY)
+    console.warn('MEEREO loadStore error', e)
   }
   return { ...defaultStore }
 }
 
 function saveToStorage(store) {
   try {
-    const toSave = {}
-    for (const key of PERSIST_KEYS) {
-      if (store[key] !== undefined) toSave[key] = store[key]
+    // Only persist onboarding wizard data — everything else comes from the API
+    if (store._onboardingByUser && Object.keys(store._onboardingByUser).length > 0) {
+      sessionStorage.setItem(SESSION_OB_KEY, JSON.stringify(store._onboardingByUser))
+    } else {
+      sessionStorage.removeItem(SESSION_OB_KEY)
     }
-    localStorage.setItem(STORE_KEY, JSON.stringify(toSave))
-  } catch (e) {
-    console.error('[MEEREO] saveToStorage CRASHED:', e.message)
-    try { localStorage.setItem(STORE_KEY, JSON.stringify({ _onboardingByUser: store._onboardingByUser || {} })) } catch { /* rien à faire */ }
-  }
+  } catch { /* sessionStorage not available (private mode, quota, etc.) */ }
 }
 
 // Merge two arrays by ID — API data (source of truth) overrides local data
@@ -516,261 +496,85 @@ export function MeereoProvider({ children }) {
     })
   }, [updateStore])
 
+  // ═══ REGISTER — Creates account on backend, then logs out immediately.
+  // The caller (Onboarding) redirects to the login page; the user must log in manually.
   const createUser = useCallback(async (data) => {
-    justCreated.current = true // Skip boot hydration for fresh accounts
-    const user = {
-      id: 'u_' + Date.now(),
-      type: data.type || 'pro',
-      name: data.name || data.nom || '',
-      company: data.company || data.entreprise || data.societe || '',
-      email: data.email || '',
-      phone: data.phone || data.tel || '',
-      avatar: data.avatar || '',
-      wallet: 0,
-      createdAt: new Date().toISOString()
-    }
     // Build onboardingData — keep only serializable, reasonably-sized fields
     const obData = {}
-    // Text/number fields — safe to serialize
     const textKeys = ['userType','prenom','nom','civilite','entreprise','metier','ville','annee','rccm','ncc',
       'email','emailPro','tel','telPro','slogan','bio','projetsN','effectif','pays',
       'situation','projectType','location','surface','budget','description','architecteEmail',
       'delaiLivraison','logoColor','logoShape','logoTypo','bannerPosition','emailVerified']
     textKeys.forEach(k => { if (data[k] !== undefined && data[k] !== null) obData[k] = data[k] })
-    // String arrays — safe
     if (Array.isArray(data.secteurs)) obData.secteurs = data.secteurs
     if (Array.isArray(data.services)) obData.services = data.services
     if (Array.isArray(data.zones)) obData.zones = data.zones
     if (Array.isArray(data.categories)) obData.categories = data.categories
-    // Image URLs — keep base64 up to 2MB, always keep MinIO URLs
     const safeImg = (v) => {
       if (!v || typeof v !== 'string') return ''
-      if (!v.startsWith('data:')) return v // MinIO URL — always keep
-      if (v.length < 2500000) return v // base64 up to ~2MB — keep
-      // Too large — attempt to reduce quality by truncating (better than silent discard)
-      console.warn('[MEEREO] Image trop volumineuse (' + Math.round(v.length / 1024) + 'Ko) — conservée avec avertissement')
-      return v.length < 5000000 ? v : '' // Hard limit 5MB, else discard
+      if (!v.startsWith('data:')) return v
+      if (v.length < 2500000) return v
+      console.warn('[MEEREO] Image trop volumineuse (' + Math.round(v.length / 1024) + 'Ko)')
+      return v.length < 5000000 ? v : ''
     }
     obData.photoUrl = safeImg(data.photoUrl)
     obData.logoFileUrl = safeImg(data.logoFileUrl)
     obData.coverUrl = safeImg(data.coverUrl)
     obData.bannerUrl = safeImg(data.bannerUrl)
-    // Team — keep small photos
     if (data.team) obData.cockpitTeam = data.team.map(m => ({ nom: m.nom || m.name || '', role: m.role || '', photoUrl: safeImg(m.photoUrl) }))
     // Portfolio — keep small images
     if (data.portfolio) obData.portfolio = data.portfolio.map(p => ({ img: safeImg(p.img), cap: p.cap || '', feat: p.feat || false })).filter(p => p.img)
     else if (data.portfolioFiles) obData.portfolio = (data.portfolioFiles || []).filter(u => typeof u === 'string').map((url, i) => ({ img: safeImg(url), cap: 'Réalisation ' + (i+1), feat: i === 0 })).filter(p => p.img)
-    // Products — keep small photos
     if (data.products) obData.products = data.products.map(p => ({ name: p.name, price: p.price, unit: p.unit, category: p.category, photoUrl: safeImg(p.photoUrl) }))
 
-    updateStore(prev => {
-      const exists = prev.users.find(u => u && u.email === user.email)
-      // Save previous user's onboardingData before switching
-      const savedObs = { ...(prev._onboardingByUser || {}) }
-      if (prev.user?.id && prev.onboardingData) {
-        savedObs[prev.user.id] = prev.onboardingData
-      }
-      return {
-        ...prev,
-        user,
-        users: exists ? prev.users : [...prev.users, user],
-        // Save onboarding data IN THE SAME atomic update
-        onboardingData: obData,
-        _onboardingByUser: savedObs,
-        // Reset KAI pour un nouveau compte (entitlements créés côté backend à la 1ère requête)
-        ...buildKaiState([], [], []),
-        // Reset user-specific data only (messages, notifications, personal events)
-        notifications: [],
-        activities: [],
-        messages: [],
-        conversations: [],
-        // PRESERVE cross-user shared business data:
-        // aos, offers, markets, projects, tasks, documents, decisions,
-        // transactions, commandes, events, sellerOrders
-        // → These are public/shared entities that must survive user switches
-      }
-    })
-    // Register on backend to get a JWT token (blocking — must complete before redirect)
-    // Use the actual password entered by user in onboarding form, fallback to user.id for legacy
-    const userPassword = data.password || user.id
-    // Champs texte/tableau sûrs à envoyer (pas d'images volumineuses)
+    // Only MinIO URLs (no base64) in the register payload to stay within size limits
     const safeImgUrl = (v) => (v && typeof v === 'string' && !v.startsWith('data:')) ? v : undefined
-    try {
-      const res = await api.auth.register({
-        email: user.email || 'user_' + user.id + '@meereo.ci',
-        password: userPassword,
-        name: user.name,
-        type: user.type,
-        // Champs de base
-        ...(user.company    ? { company: user.company }    : {}),
-        ...(user.phone      ? { phone: user.phone }        : {}),
-        ...(data.ville      ? { ville: data.ville }        : {}),
-        ...(data.pays       ? { pays: data.pays }          : {}),
-        // Profil étendu — texte + tableaux (envoyés pour initialiser proProfile ET onboardingData)
-        ...(data.metier     ? { metier: data.metier }      : data.secteurs?.[0] ? { metier: data.secteurs[0] } : {}),
-        ...(obData.entreprise ? { entreprise: obData.entreprise } : {}),
-        ...(obData.rccm       ? { rccm: obData.rccm }             : {}),
-        ...(obData.ncc        ? { ncc: obData.ncc }               : {}),
-        ...(obData.annee      ? { annee: obData.annee }           : {}),
-        ...(obData.slogan     ? { slogan: obData.slogan }         : {}),
-        ...(obData.bio        ? { bio: obData.bio }               : {}),
-        ...(obData.projetsN   ? { projetsN: obData.projetsN }     : {}),
-        ...(obData.effectif   ? { effectif: obData.effectif }     : {}),
-        ...(obData.tel || obData.telPro ? { tel: obData.tel || obData.telPro } : {}),
-        ...(obData.logoColor  ? { logoColor: obData.logoColor }   : {}),
-        ...(obData.logoShape  ? { logoShape: obData.logoShape }   : {}),
-        ...(obData.logoTypo   ? { logoTypo: obData.logoTypo }     : {}),
-        ...(obData.secteurs?.length   ? { secteurs: obData.secteurs }   : {}),
-        ...(obData.services?.length   ? { services: obData.services }   : {}),
-        ...(obData.zones?.length      ? { zones: obData.zones }         : {}),
-        ...(obData.categories?.length ? { categories: obData.categories } : {}),
-        // Images : uniquement les URLs MinIO (pas de base64 > quelques Ko dans register)
-        ...(safeImgUrl(obData.logoFileUrl)  ? { logoFileUrl: obData.logoFileUrl }   : {}),
-        ...(safeImgUrl(obData.photoUrl)     ? { photoUrl: obData.photoUrl }         : {}),
-        ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
-      })
-      if (res?.token) {
-        // Store token + hydrate ALL shared business data from PostgreSQL (même logique que loginUser)
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
-          api.aos.getAll().catch(() => []),
-          api.offers.getAll().catch(() => []),
-          api.projects.getAll().catch(() => []),
-          api.markets.getAll().catch(() => []),
-          api.projectMembers.getAll().catch(() => []),
-          api.usersApi.getFournisseurs().catch(() => []),
-          api.contacts.getAll().catch(() => []),
-          api.kai.getEntitlements().catch(() => []),
-          api.kai.getConversations().catch(() => []),
-          api.kai.getMemory().catch(() => []),
-          api.usersApi.getPrefs().catch(() => ({})),
-        ])
-        // Update user with real backend ID so _onboardingByUser is keyed correctly
-        const realUser = {
-          ...user,
-          id: res.user?.id || user.id,
-          name: res.user?.name || user.name,
-          type: res.user?.type || user.type,
-          company: res.user?.company || user.company,
-        }
-        // Écriture synchrone du token en mémoire
-        setInMemoryToken(res.token)
-        storeRef.current = { ...storeRef.current, user: realUser, _token: res.token }
-        updateStore(prev => {
-          // Re-key _onboardingByUser from temp ID to real backend ID
-          const updatedObs = { ...(prev._onboardingByUser || {}) }
-          if (res.user?.id && user.id !== res.user.id) {
-            if (prev.onboardingData) updatedObs[res.user.id] = prev.onboardingData
-            delete updatedObs[user.id]
-          }
-          return {
-            ...prev,
-            user: realUser,
-            users: mergeById(prev.users || [], [realUser]),
-            _onboardingByUser: updatedObs,
-            _token: res.token,
-            _hydrated: true,
-            _checking: false,
-            _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
-            aos: apiAos,
-            offers: apiOffers,
-            projects: apiProjects,
-            markets: apiMarkets,
-            projectMembers: apiProjectMembers,
-            fournisseurs: apiFournisseurs,
-            contacts: apiContacts,
-            clients: apiContacts.filter(c => c.type === 'client'),
-            intervenants: apiContacts.filter(c => c.type === 'intervenant'),
-            ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
-            clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
-            // onboardingData : garder ce qui a été saisi dans le wizard (pas encore en BD)
-            onboardingData: prev.onboardingData || obData,
-          }
-        })
-        // Persister onboardingData en BD maintenant que le compte existe
-        if (obData && Object.keys(obData).length > 0) {
-          api.usersApi.updateOnboardingData(obData).catch(() => {})
-        }
+
+    // Register account on backend — throws on error (caller shows toast)
+    const res = await api.auth.register({
+      email: data.email || 'user_' + Date.now() + '@meereo.ci',
+      password: data.password || '',
+      name: data.name || data.nom || '',
+      type: data.type || 'pro',
+      ...(data.company || data.entreprise ? { company: data.company || data.entreprise } : {}),
+      ...(data.phone || obData.tel || obData.telPro ? { phone: data.phone || obData.tel || obData.telPro } : {}),
+      ...(data.ville  ? { ville: data.ville }  : {}),
+      ...(data.pays   ? { pays: data.pays }    : {}),
+      ...(data.metier ? { metier: data.metier } : obData.secteurs?.[0] ? { metier: obData.secteurs[0] } : {}),
+      ...(obData.entreprise ? { entreprise: obData.entreprise } : {}),
+      ...(obData.rccm       ? { rccm: obData.rccm }             : {}),
+      ...(obData.ncc        ? { ncc: obData.ncc }               : {}),
+      ...(obData.annee      ? { annee: obData.annee }           : {}),
+      ...(obData.slogan     ? { slogan: obData.slogan }         : {}),
+      ...(obData.bio        ? { bio: obData.bio }               : {}),
+      ...(obData.projetsN   ? { projetsN: obData.projetsN }     : {}),
+      ...(obData.effectif   ? { effectif: obData.effectif }     : {}),
+      ...(obData.logoColor  ? { logoColor: obData.logoColor }   : {}),
+      ...(obData.logoShape  ? { logoShape: obData.logoShape }   : {}),
+      ...(obData.logoTypo   ? { logoTypo: obData.logoTypo }     : {}),
+      ...(obData.secteurs?.length   ? { secteurs: obData.secteurs }   : {}),
+      ...(obData.services?.length   ? { services: obData.services }   : {}),
+      ...(obData.zones?.length      ? { zones: obData.zones }         : {}),
+      ...(obData.categories?.length ? { categories: obData.categories } : {}),
+      ...(safeImgUrl(obData.logoFileUrl)  ? { logoFileUrl: obData.logoFileUrl }   : {}),
+      ...(safeImgUrl(obData.photoUrl)     ? { photoUrl: obData.photoUrl }         : {}),
+      ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
+    })
+
+    if (res?.token) {
+      // Temporarily activate session to persist full onboarding data to DB
+      setInMemoryToken(res.token)
+      if (obData && Object.keys(obData).length > 0) {
+        await api.usersApi.updateOnboardingData(obData).catch(() => {})
       }
-    } catch (e) {
-      // Register failed (409 = email exists) → try login instead
-      console.warn('[MEEREO] Register failed:', e.message, '— trying login')
-      try {
-        const loginRes = await api.auth.login({ email: user.email, password: userPassword })
-        if (loginRes?.token) {
-          // Update user ID with the real backend ID
-          const realUser = {
-            ...user,
-            id: loginRes.user.id,
-            name: loginRes.user.name || user.name,
-            type: loginRes.user.type || user.type,
-            company: loginRes.user.company || user.company,
-          }
-          const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
-            api.aos.getAll().catch(() => []),
-            api.offers.getAll().catch(() => []),
-            api.projects.getAll().catch(() => []),
-            api.markets.getAll().catch(() => []),
-            api.projectMembers.getAll().catch(() => []),
-            api.usersApi.getFournisseurs().catch(() => []),
-            api.contacts.getAll().catch(() => []),
-            api.kai.getEntitlements().catch(() => []),
-            api.kai.getConversations().catch(() => []),
-            api.kai.getMemory().catch(() => []),
-            api.usersApi.getPrefs().catch(() => ({})),
-          ])
-          // Écriture synchrone du token en mémoire (login fallback)
-          setInMemoryToken(loginRes.token)
-          storeRef.current = { ...storeRef.current, user: realUser, _token: loginRes.token }
-          updateStore(prev => {
-            // Re-key _onboardingByUser from temp ID to real backend ID
-            const updatedObs = { ...(prev._onboardingByUser || {}) }
-            if (loginRes.user?.id && user.id !== loginRes.user.id) {
-              if (prev.onboardingData) updatedObs[loginRes.user.id] = prev.onboardingData
-              delete updatedObs[user.id]
-            }
-            return {
-              ...prev,
-              user: realUser,
-              users: mergeById(prev.users || [], [realUser]),
-              _onboardingByUser: updatedObs,
-              _token: loginRes.token,
-              _hydrated: true,
-              _checking: false,
-              _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
-              aos: apiAos,
-              offers: apiOffers,
-              projects: apiProjects,
-              markets: apiMarkets,
-              projectMembers: apiProjectMembers,
-              fournisseurs: apiFournisseurs,
-              contacts: apiContacts,
-              clients: apiContacts.filter(c => c.type === 'client'),
-              intervenants: apiContacts.filter(c => c.type === 'intervenant'),
-              ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
-              clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
-              onboardingData: prev.onboardingData || obData,
-            }
-          })
-        }
-      } catch (loginErr) {
-        // 409 = email existe avec un autre mot de passe → erreur bloquante
-        if (e.status === 409 && (loginErr.status === 401 || loginErr.status === 422)) {
-          // Retirer l'utilisateur local fantôme qu'on vient d'ajouter
-          updateStore(prev => ({
-            ...prev,
-            user: null,
-            users: (prev.users || []).filter(u => u.id !== user.id),
-            onboardingData: null,
-          }))
-          throw new Error('Un compte existe déjà avec cet email. Connectez-vous ou réinitialisez votre mot de passe.')
-        }
-        console.warn('[MEEREO] Login fallback also failed:', loginErr.message)
-      }
+      setInMemoryToken(null)
     }
-    log('USER_CREATED', { name: user.name, type: user.type })
-    addNotif('Bienvenue sur MEEREO, ' + (user.name || user.company) + '\u00a0!', 'green', null, 'dashboard')
-    return user
-  }, [updateStore, log, addNotif])
+
+    // Immediately log out — user must explicitly log in after registration
+    await api.auth.logout().catch(() => {})
+
+    return { type: data.type || 'pro', email: data.email || '' }
+  }, [])
 
   // ═══ LOGIN — API-first, PostgreSQL is source of truth ═══
   // Returns: { user object } on success, or throws Error with user-facing message
@@ -1956,18 +1760,17 @@ export function MeereoProvider({ children }) {
     updateStore({ ...defaultStore })
   }, [updateStore])
 
-  // Logout complet : appel API, vide le store, clear le token en mémoire + sessionStorage
+  // Logout complet : appel API, vide le store, clear sessionStorage
   const logoutUser = useCallback(async () => {
-    // 1. Appel API pour invalider le cookie httpOnly côté serveur
+    // 1. Invalider le cookie httpOnly côté serveur
     await api.auth.logout().catch(() => {})
-    // 2. Vider le token JWT en mémoire et sessionStorage
+    // 2. Vider le token JWT en mémoire
     setInMemoryToken(null)
     // 3. Déconnecter le socket
     disconnectSocket()
-    // 4. Réinitialiser le store et localStorage
-    const next = { ...defaultStore, _hydrated: false, _checking: false, _cachedUser: null }
-    saveToStorage(next)
-    updateStore(next)
+    // 4. Réinitialiser le store + vider sessionStorage
+    try { sessionStorage.removeItem(SESSION_OB_KEY) } catch {}
+    updateStore({ ...defaultStore })
   }, [updateStore])
 
   // ═══ SYNCHRONISATION COCKPIT / CLIENT ═══

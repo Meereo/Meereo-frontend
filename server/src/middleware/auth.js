@@ -54,6 +54,11 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Utilisateur introuvable' })
   }
 
+  // Refuse access to soft-deleted accounts
+  if (user.email && user.email.startsWith('deleted_')) {
+    return res.status(401).json({ error: 'Ce compte a été supprimé' })
+  }
+
   req.user = user
   req.authToken = token  // expose le token validé pour les routes qui en ont besoin (ex: /auth/me)
   next()

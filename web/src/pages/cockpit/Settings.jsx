@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, User } from 'lucide-react'
 import { useDevise } from '../../hooks/useDevise'
@@ -11,22 +11,22 @@ import { api } from '../../services/api/client'
 
 const TABS = [
   { id: 'profil', label: 'Profil' },
-  { id: 'prefs', label: 'Pr�f�rences' },
+  { id: 'prefs', label: 'Préférences' },
   { id: 'devise', label: 'Devise & Region' },
-  { id: 'securite', label: 'S�curit�' },
+  { id: 'securite', label: 'Sécurité' },
   { id: 'equipe', label: 'Equipe' },
   { id: 'abonnement', label: 'Abonnement' },
-  { id: 'donnees', label: 'Donn�es' },
+  { id: 'donnees', label: 'Données' },
 ]
 
 const PREFS = [
   { key: 'notifEmail',  label: 'Notifications email' },
   { key: 'notifPush',   label: 'Notifications push' },
   { key: 'rappels',     label: 'Rappels planning' },
-  { key: 'resume',      label: 'R�sum� hebdomadaire' },
+  { key: 'resume',      label: 'Résumé hebdomadaire' },
 ]
 const ROLES = [
-  { id: 'admin', label: 'Administrateur', desc: 'Acc�s complet, gestion �quipe et param�tres' },
+  { id: 'admin', label: 'Administrateur', desc: 'Accès complet, gestion équipe et paramètres' },
   { id: 'chef', label: 'Chef de projet', desc: 'Gestion projets, chantier, documents, rapports' },
   { id: 'collaborateur', label: 'Collaborateur', desc: 'Consultation et edition des projets assignes' },
   { id: 'lecteur', label: 'Lecteur', desc: 'Consultation uniquement, pas de modification' },
@@ -40,15 +40,15 @@ function SecurityForm({ showToast }) {
   const [pwd, setPwd] = useState({ current: '', nouveau: '', confirm: '' })
   const handleSave = () => {
     if (!pwd.current || !pwd.nouveau || !pwd.confirm) { showToast && showToast('Tous les champs sont requis'); return }
-    if (pwd.nouveau.length < 8) { showToast && showToast('Le mot de passe doit faire 8 caract�res minimum'); return }
+    if (pwd.nouveau.length < 8) { showToast && showToast('Le mot de passe doit faire 8 caractéres minimum'); return }
     if (pwd.nouveau !== pwd.confirm) { showToast && showToast('Les mots de passe ne correspondent pas'); return }
     setPwd({ current: '', nouveau: '', confirm: '' })
-    showToast && showToast('Mot de passe mis � jour')
+    showToast && showToast('Mot de passe mis à jour')
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div><label style={labelStyleSec}>Mot de passe actuel</label><input type="password" placeholder="••••••••" style={inputStyleSec} value={pwd.current} onChange={e => setPwd(p => ({ ...p, current: e.target.value }))} /></div>
-      <div><label style={labelStyleSec}>Nouveau mot de passe</label><input type="password" placeholder="Minimum 8 caract�res" style={inputStyleSec} value={pwd.nouveau} onChange={e => setPwd(p => ({ ...p, nouveau: e.target.value }))} /></div>
+      <div><label style={labelStyleSec}>Nouveau mot de passe</label><input type="password" placeholder="Minimum 8 caractéres" style={inputStyleSec} value={pwd.nouveau} onChange={e => setPwd(p => ({ ...p, nouveau: e.target.value }))} /></div>
       <div><label style={labelStyleSec}>Confirmer</label><input type="password" placeholder="Confirmer le nouveau" style={inputStyleSec} value={pwd.confirm} onChange={e => setPwd(p => ({ ...p, confirm: e.target.value }))} /></div>
       <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 8 }} onClick={handleSave}>Mettre a jour</button>
     </div>
@@ -74,8 +74,8 @@ export default function Settings({ showToast }) {
   const [newSecteur, setNewSecteur] = useState('')
   const [newService, setNewService] = useState('')
   const [pSaved, setPSaved] = useState(false)
-  // �quipe — source de v�rit� UNIQUE dans store.onboardingData.cockpitTeam
-  // Partag�e avec la page professionnelle
+  // équipe — source de vérité UNIQUE dans store.onboardingData.cockpitTeam
+  // Partagée avec la page professionnelle
   const storedTeam = store.onboardingData?.cockpitTeam
   const initialTeam = []
   const [team, setTeamLocal] = useState(storedTeam && storedTeam.length > 0 ? storedTeam : initialTeam)
@@ -116,27 +116,27 @@ export default function Settings({ showToast }) {
       conversations: [...(prev.conversations || []), {
         id: 'conv_tm_' + Date.now(), nom: newMember.nom, type: 'equipe', avatar: newMember.nom ? newMember.nom[0].toUpperCase() : '?', color: '#7C3AED',
         isGroup: false, participants: [newMember.nom],
-        dernier: 'Invitation envoy�e', time: 'Maintenant', unread: 0,
-        msgs: [{ side: 'out', text: 'Bienvenue dans l\'�quipe ! Vous avez �t� invit� � rejoindre notre espace MEEREO.', time: 'Maintenant' }]
+        dernier: 'Invitation envoyée', time: 'Maintenant', unread: 0,
+        msgs: [{ side: 'out', text: 'Bienvenue dans l\'équipe ! Vous avez été invité à rejoindre notre espace MEEREO.', time: 'Maintenant' }]
       }]
     }))
     setInviteModal(false)
     setInviteEmail(''); setInviteNom(''); setInvitePoste(''); setInviteRole('collaborateur'); setInvitePhoto(null)
-    showToast && showToast('Invitation envoy�e � ' + inviteEmail)
+    showToast && showToast('Invitation envoyée à ' + inviteEmail)
   }
 
   const removeMember = (id) => {
     const m = team.find(t => t.id === id)
     if (m?.role === 'admin') { showToast && showToast('Impossible de supprimer un administrateur'); return }
     setTeam(prev => prev.filter(t => t.id !== id))
-    showToast && showToast('Membre retir� de l\'�quipe')
+    showToast && showToast('Membre retiré de l\'équipe')
   }
 
   const saveEditMember = () => {
     if (!editMember) return
     setTeam(prev => prev.map(t => t.id === editMember.id ? editMember : t))
     setEditMember(null)
-    showToast && showToast('Role mis � jour')
+    showToast && showToast('Role mis à jour')
   }
 
   const roleLabel = r => ROLES.find(x => x.id === r)?.label || r
@@ -154,12 +154,12 @@ export default function Settings({ showToast }) {
               onboardingData: { ...(prev.onboardingData || {}), ...patch },
               user: prev.user ? { ...prev.user, name: pEntreprise || prev.user.name, email: pEmail || prev.user.email, phone: pTel || prev.user.phone } : prev.user,
             }))
-            // Persister c�t� serveur
+            // Persister cété serveur
             api.usersApi.updateOnboardingData(patch).catch(() => {})
             setPSaved(true); setTimeout(() => setPSaved(false), 1500)
           }
-          showToast && showToast('Param�tres enregistr�s')
-        }}>{pSaved ? <><Check size={10}/> Enregistr�</> : 'Enregistrer'}</button></div>
+          showToast && showToast('Paramètres enregistrès')
+        }}>{pSaved ? <><Check size={10}/> Enregistré</> : 'Enregistrer'}</button></div>
       </div>
 
       <div className="param-split">
@@ -200,13 +200,13 @@ export default function Settings({ showToast }) {
                             const { default: compress } = await import('../../utils/compressImage')
                             const url = await compress(file, 400, 0.8)
                             setPLogoUrl(url)
-                            showToast && showToast('Logo mis � jour — pensez � enregistrer')
+                            showToast && showToast('Logo mis à jour — pensez à enregistrer')
                           } catch { showToast && showToast('Erreur lors du chargement') }
                         }
                         inp.click()
                       }}>{pLogoUrl || ob.logoFileUrl ? 'Changer le logo' : 'Ajouter un logo'}</button>
                       {(pLogoUrl || ob.logoFileUrl) && (
-                        <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '5px 12px', color: 'var(--err)' }} onClick={() => { setPLogoUrl(''); showToast && showToast('Logo supprim� — pensez � enregistrer') }}>Supprimer</button>
+                        <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '5px 12px', color: 'var(--err)' }} onClick={() => { setPLogoUrl(''); showToast && showToast('Logo supprimé — pensez à enregistrer') }}>Supprimer</button>
                       )}
                     </div>
                   </div>
@@ -218,14 +218,14 @@ export default function Settings({ showToast }) {
                 <div><label className="form-label">Email</label><input type="email" className="form-input" value={pEmail} onChange={e => setPEmail(e.target.value)} placeholder="contact@entreprise.com" /></div>
                 <div><label className="form-label">Telephone</label><input className="form-input" value={pTel} onChange={e => setPTel(e.target.value)} placeholder="+225 07 00 11 22" /></div>
                 <div><label className="form-label">Ville</label><input className="form-input" value={pVille} onChange={e => setPVille(e.target.value)} placeholder="Abidjan" /></div>
-                {/* Secteurs d'activit� — s�lection depuis m�tiers existants */}
+                {/* Secteurs d'activité — sâlection depuis métiers existants */}
                 <div>
-                  <label className="form-label">Secteurs d'activit�</label>
+                  <label className="form-label">Secteurs d'activité</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                     {pSecteurs.map(s => (
                       <span key={s} style={{ padding: '5px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                         {s}
-                        <button onClick={() => setPSecteurs(prev => prev.filter(x => x !== s))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: 'rgba(255,255,255,.6)', lineHeight: 1, display: 'flex' }}>�</button>
+                        <button onClick={() => setPSecteurs(prev => prev.filter(x => x !== s))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: 'rgba(255,255,255,.6)', lineHeight: 1, display: 'flex' }}>×</button>
                       </span>
                     ))}
                   </div>
@@ -235,20 +235,20 @@ export default function Settings({ showToast }) {
                       <button key={m} onClick={() => setPSecteurs(prev => [...prev, m])} style={{ padding: '4px 10px', borderRadius: 100, border: '1px solid var(--border-card)', background: 'var(--surface-1)', fontSize: 10.5, fontWeight: 500, fontFamily: 'var(--f)', color: 'var(--t2)', cursor: 'pointer', transition: 'all .1s' }} onMouseOver={e => { e.currentTarget.style.background = 'var(--s2)'; e.currentTarget.style.borderColor = 'var(--tx)' }} onMouseOut={e => { e.currentTarget.style.background = 'var(--surface-1)'; e.currentTarget.style.borderColor = 'var(--border-card)' }}>+ {m}</button>
                     ))}
                   </div>
-                  {/* Champ libre pour secteur personnalis� */}
+                  {/* Champ libre pour secteur personnalisé */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                    <input className="form-input" value={newSecteur} onChange={e => setNewSecteur(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newSecteur.trim()) { e.preventDefault(); if (!pSecteurs.includes(newSecteur.trim())) setPSecteurs(prev => [...prev, newSecteur.trim()]); setNewSecteur('') } }} placeholder="Ou saisir un secteur personnalis�..." style={{ flex: 1, fontSize: 12 }} />
+                    <input className="form-input" value={newSecteur} onChange={e => setNewSecteur(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newSecteur.trim()) { e.preventDefault(); if (!pSecteurs.includes(newSecteur.trim())) setPSecteurs(prev => [...prev, newSecteur.trim()]); setNewSecteur('') } }} placeholder="Ou saisir un secteur personnalisé..." style={{ flex: 1, fontSize: 12 }} />
                     <button className="btn btn-sm" style={{ flexShrink: 0 }} onClick={() => { if (newSecteur.trim() && !pSecteurs.includes(newSecteur.trim())) { setPSecteurs(prev => [...prev, newSecteur.trim()]); setNewSecteur('') } }}>+</button>
                   </div>
                 </div>
-                {/* Services — �ditable */}
+                {/* Services — éditable */}
                 <div>
                   <label className="form-label">Services</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {pServices.map(s => (
                       <span key={s} style={{ padding: '4px 10px', borderRadius: 100, background: 'var(--s2)', fontSize: 11, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
                         {s}
-                        <button onClick={() => setPServices(prev => prev.filter(x => x !== s))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: 'var(--t4)', lineHeight: 1, display: 'flex' }}>�</button>
+                        <button onClick={() => setPServices(prev => prev.filter(x => x !== s))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, color: 'var(--t4)', lineHeight: 1, display: 'flex' }}>×</button>
                       </span>
                     ))}
                   </div>
@@ -317,12 +317,12 @@ export default function Settings({ showToast }) {
                         ? <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>KAI Pro est actif jusqu'au {formatDateFR(ent.goldEndDate)}</div>
                         : <div style={{ fontSize: 11, color: 'var(--t3)' }}>Plan Standard — {ent.quotaUsed || 0}/{ent.quotaLimit || 25} analyses ce mois</div>
                       }
-                      <button className="btn btn-sm" style={{ marginTop: 10, fontSize: 11 }} onClick={() => setTab('abonnement')}>G�rer mon abonnement �†’</button>
+                      <button className="btn btn-sm" style={{ marginTop: 10, fontSize: 11 }} onClick={() => setTab('abonnement')}>Gérer mon abonnement →</button>
                     </div>
                   )
                 })()}
 
-                {/* �”€�”€ Commissions MEEREO (visible uniquement si des commissions existent) �”€�”€ */}
+                {/* ── Commissions MEEREO (visible uniquement si des commissions existent) ── */}
                 {(store.commissions || []).length > 0 && (
                   <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -340,12 +340,12 @@ export default function Settings({ showToast }) {
                           <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.status === 'paid' ? 'var(--ok)' : c.status === 'due' || c.status === 'invoiced' ? 'var(--wrn)' : 'var(--t4)', flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{c.structureName || 'Structure'}</div>
-                            <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>Base : {fmtMoney(c.montantBase || 0)} � 5%</div>
+                            <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>Base : {fmtMoney(c.montantBase || 0)} à 5%</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(c.montantCommission || 0)}</div>
                             <div style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 100, background: c.status === 'paid' ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: c.status === 'paid' ? 'var(--ok)' : 'var(--wrn)', display: 'inline-block' }}>
-                              {c.status === 'potential' ? 'Potentielle' : c.status === 'due' ? 'Due' : c.status === 'invoiced' ? 'Factur�e' : c.status === 'paid' ? 'R�gl�e' : c.status === 'overdue' ? 'En retard' : c.status}
+                              {c.status === 'potential' ? 'Potentielle' : c.status === 'due' ? 'Due' : c.status === 'invoiced' ? 'Facturée' : c.status === 'paid' ? 'Réglée' : c.status === 'overdue' ? 'En retard' : c.status}
                             </div>
                           </div>
                         </div>
@@ -355,22 +355,15 @@ export default function Settings({ showToast }) {
                 )}
 
                 <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>R�initialiser toutes les donn�es</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Cette action supprime toutes les donn�es locales : projets, clients, offres, march�s, commandes, messages, documents, �quipe, notifications et param�tres. La plateforme reviendra � son �tat initial vierge.</div>
-                  <button className="btn btn-danger btn-sm" onClick={() => { setResetText(''); setShowResetModal(true) }}>R�initialiser et revenir � l'accueil</button>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Réinitialiser toutes les données</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Cette action supprime toutes les données locales : projets, clients, offres, marchés, commandes, messages, documents, équipe, notifications et paramètres. La plateforme reviendra à son état initial vierge.</div>
+                  <button className="btn btn-danger btn-sm" onClick={() => { setResetText(''); setShowResetModal(true) }}>Réinitialiser et revenir à l'accueil</button>
                 </div>
                 <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Exporter les donnees</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Telechargez un export JSON de toutes vos donnees MEEREO.</div>
                   <button className="btn btn-sm" onClick={() => {
-                    const data = localStorage.getItem('meereo_store_v2')
-                    if (!data) { showToast && showToast('Aucune donnee a exporter'); return }
-                    const blob = new Blob([data], { type: 'application/json' })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url; a.download = 'meereo-export-' + new Date().toISOString().slice(0, 10) + '.json'
-                    a.click(); URL.revokeObjectURL(url)
-                    showToast && showToast('Export telecharge')
+                    showToast && showToast('Export des données non disponible en mode API')
                   }}>Exporter en JSON</button>
                 </div>
                 <DeleteAccountSection profileType="pro" />
@@ -381,7 +374,7 @@ export default function Settings({ showToast }) {
               <div>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, color: 'var(--t3)' }}>{team.length} membres � {team.filter(t => t.online).length} en ligne</div>
+                  <div style={{ fontSize: 13, color: 'var(--t3)' }}>{team.length} membres à {team.filter(t => t.online).length} en ligne</div>
                   <button className="btn btn-primary btn-sm" onClick={() => setInviteModal(true)}>+ Inviter un membre</button>
                 </div>
 
@@ -407,10 +400,10 @@ export default function Settings({ showToast }) {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
-                          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.poste} � {m.email}</div>
+                          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.poste} à {m.email}</div>
                         </div>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)' }}>{roleLabel(m.role)}</span>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut === 'invite' ? '⏳ Invite' : '�—� Actif'}</span>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut === 'invite' ? '⏳ Invite' : 'é—é Actif'}</span>
                         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => setEditMember({ ...m })}>Modifier</button>
                           {m.role !== 'admin' && <button style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.05)', color: 'var(--err)', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }} onClick={() => removeMember(m.id)}>Retirer</button>}
@@ -425,13 +418,13 @@ export default function Settings({ showToast }) {
         </div>
       </div>
 
-      {/* �•��•��•� MODAL: Inviter un membre �•��•��•� */}
+      {/* MODAL: Inviter un membre */}
       {inviteModal && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInviteModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Inviter un collaborateur</div>
-              <button onClick={() => setInviteModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
+              <button onClick={() => setInviteModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: '12px 14px', background: 'var(--s2)', borderRadius: 10, fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
@@ -468,26 +461,26 @@ export default function Settings({ showToast }) {
         </div>
       , document.body)}
 
-      {/* �•��•��•� MODAL: Modifier le role �•��•��•� */}
-      {/* �•��•��•� MODAL: Confirmer la r�initialisation �•��•��•� */}
+      {/* MODAL: Modifier le role */}
+      {/* MODAL: Confirmer la réinitialisation */}
       {showResetModal && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowResetModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--err)' }}>R�initialiser toutes les donn�es ?</div>
-              <button onClick={() => setShowResetModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--err)' }}>Réinitialiser toutes les données ?</div>
+              <button onClick={() => setShowResetModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ padding: '12px 14px', background: '#fff1f0', border: '1px solid #ffc5c0', borderRadius: 10, fontSize: 12, color: '#c0392b', lineHeight: 1.6 }}>
-                �š�️ Cette action est <strong>irr�versible</strong>. Tous les projets, clients, offres, march�s, commandes, messages, documents et param�tres seront d�finitivement supprim�s.
+                éšé️ Cette action est <strong>irréversible</strong>. Tous les projets, clients, offres, marchés, commandes, messages, documents et paramètres seront dûfinitivement supprimés.
               </div>
               <div>
-                <label className="form-label">Pour confirmer, tapez <strong>R�INITIALISER</strong> ci-dessous</label>
+                <label className="form-label">Pour confirmer, tapez <strong>RéINITIALISER</strong> ci-dessous</label>
                 <input
                   className="form-input"
                   value={resetText}
                   onChange={e => setResetText(e.target.value)}
-                  placeholder="R�INITIALISER"
+                  placeholder="RéINITIALISER"
                   autoFocus
                   style={{ fontFamily: 'monospace', letterSpacing: 1 }}
                 />
@@ -497,9 +490,9 @@ export default function Settings({ showToast }) {
               <button className="btn btn-sm" onClick={() => setShowResetModal(false)}>Annuler</button>
               <button
                 className="btn btn-danger btn-sm"
-                disabled={resetText !== 'R�INITIALISER'}
-                onClick={() => { localStorage.removeItem('meereo_store_v2'); window.location.href = '/onboarding' }}
-              >R�initialiser et revenir � l'accueil</button>
+                disabled={resetText !== 'RéINITIALISER'}
+                onClick={() => { try { sessionStorage.removeItem('meereo_onboarding_by_user') } catch {} window.location.href = '/onboarding' }}
+              >Réinitialiser et revenir à l'accueil</button>
             </div>
           </div>
         </div>
@@ -510,7 +503,7 @@ export default function Settings({ showToast }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)', padding: 22 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ fontSize: 15, fontWeight: 700 }}>Modifier — {editMember.nom}</div>
-              <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>�</button>
+              <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>

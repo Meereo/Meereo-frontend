@@ -1,13 +1,13 @@
-﻿import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Star } from 'lucide-react'
 import MeereoLogo from '../components/shared/MeereoLogo'
 
-/* �•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•�
+/* ••
    MEEREO LANDING — SIGNATURE VERSION
-   Multi-acteurs � Cockpit � KAI � Premium � Fid�le au produit
-�•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•��•� */
+   Multi-acteurs à Cockpit à KAI à Premium à Fidûle au produit
+•• */
 
-// �•��•��•� MINI UI �•��•��•�
+//  MINI UI 
 
 function CockpitFull() {
   return (
@@ -18,13 +18,13 @@ function CockpitFull() {
           <span style={{ fontSize:13, fontWeight:600 }}>Cockpit</span>
         </div>
         <div style={{ display:'flex', gap:4 }}>
-          {['Projets','Chantier','Finance','AO','�quipe','Docs'].map((t,i)=>(
+          {['Projets','Chantier','Finance','AO','équipe','Docs'].map((t,i)=>(
             <div key={t} style={{ padding:'4px 10px', borderRadius:100, fontSize:9.5, fontWeight:500, ...(i===0?{background:'#191c1d',color:'#fff'}:{background:'#f3f4f5',color:'#999'}) }}>{t}</div>
           ))}
         </div>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8, marginBottom:14 }}>
-        {[{l:'Projets actifs',v:'3'},{l:'March�s sign�s',v:'7'},{l:'Offres',v:'4'},{l:'Ex�cution',v:'68 %'}].map(k=>(
+        {[{l:'Projets actifs',v:'3'},{l:'Marchés signés',v:'7'},{l:'Offres',v:'4'},{l:'Exécution',v:'68 %'}].map(k=>(
           <div key={k.l} style={{ padding:'13px 14px', borderRadius:12, background:'#f0f0f2', border:'1px solid rgba(0,0,0,.1)' }}>
             <div style={{ fontSize:8, fontWeight:600, color:'#bbb', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:7 }}>{k.l}</div>
             <div style={{ fontSize:22, fontWeight:700, letterSpacing:'-.6px', color:'#191c1d' }}>{k.v}</div>
@@ -34,8 +34,8 @@ function CockpitFull() {
       <div style={{ padding:'14px 16px', borderRadius:14, background:'#f0f0f2', border:'1px solid rgba(0,0,0,.1)', marginBottom:10 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
           <div>
-            <div style={{ fontSize:13, fontWeight:600 }}>R�sidence Les Acacias</div>
-            <div style={{ fontSize:10, color:'#aaa', marginTop:3 }}>Abidjan, Cocody � 250 000 000 FCFA</div>
+            <div style={{ fontSize:13, fontWeight:600 }}>Résidence Les Acacias</div>
+            <div style={{ fontSize:10, color:'#aaa', marginTop:3 }}>Abidjan, Cocody à 250 000 000 FCFA</div>
           </div>
           <div style={{ padding:'3px 9px', borderRadius:100, background:'#191c1d', color:'#fff', fontSize:9, fontWeight:600 }}>Phase APD</div>
         </div>
@@ -55,7 +55,7 @@ function CockpitFull() {
           <span style={{ fontSize:11, fontWeight:700 }}>KAI</span>
           <span style={{ fontSize:8, color:'#16A34A', fontWeight:600, marginLeft:'auto' }}>En ligne</span>
         </div>
-        <p style={{ fontSize:11, lineHeight:1.5, color:'#999', margin:0 }}>2 d�cisions en attente. Budget engag� � 62 %. Prochain jalon : gros-�“uvre le 15 mai.</p>
+        <p style={{ fontSize:11, lineHeight:1.5, color:'#999', margin:0 }}>2 dûcisions en attente. Budget engagé à 62 %. Prochain jalon : gros-é“uvre le 15 mai.</p>
       </div>
     </div>
   )
@@ -65,12 +65,12 @@ function ChantierMini() {
   return (
     <div style={{ background:'#fff', borderRadius:14, overflow:'hidden', fontFamily:'var(--f)' }}>
       <div style={{ display:'flex', gap:4, padding:'12px 16px', borderBottom:'1px solid rgba(0,0,0,.05)' }}>
-        {[{l:'Id�e',d:true},{l:'�tudes',d:true},{l:'Conception',c:true},{l:'Consultation'},{l:'Travaux'},{l:'Livraison'},{l:'Suivi'}].map(p=>(
+        {[{l:'Idûe',d:true},{l:'études',d:true},{l:'Conception',c:true},{l:'Consultation'},{l:'Travaux'},{l:'Livraison'},{l:'Suivi'}].map(p=>(
           <div key={p.l} style={{ padding:'4px 10px', borderRadius:100, fontSize:10, fontWeight:600, ...(p.d?{background:'#191c1d',color:'#fff'}:p.c?{background:'rgba(0,122,255,.07)',color:'#007AFF',border:'1px solid rgba(0,122,255,.15)'}:{background:'#f3f4f5',color:'#ccc'}) }}>{p.l}</div>
         ))}
       </div>
       <div style={{ padding:'4px 12px 8px' }}>
-        {[{n:'Plans architecturaux d�taill�s',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-�“uvre',s:'todo'}].map((t,i)=>(
+        {[{n:'Plans architecturaux dûtaillés',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-é“uvre',s:'todo'}].map((t,i)=>(
           <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 4px', borderBottom:i<3?'1px solid rgba(0,0,0,.03)':'none' }}>
             <div style={{ width:16, height:16, borderRadius:4, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', ...(t.s==='done'?{background:'#16A34A'}:t.s==='active'?{background:'#007AFF'}:{border:'1.5px solid #ddd'}) }}>
               {t.s==='done'&&<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -94,23 +94,23 @@ function KaiMini() {
         </div>
         <div>
           <div style={{ fontSize:14, fontWeight:700 }}>KAI</div>
-          <div style={{ fontSize:10, color:'#16A34A', fontWeight:500 }}>Connect� � vos donn�es</div>
+          <div style={{ fontSize:10, color:'#16A34A', fontWeight:500 }}>Connecté à vos données</div>
         </div>
       </div>
       <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
         <div style={{ alignSelf:'flex-end', maxWidth:'76%', padding:'11px 16px', borderRadius:'16px 16px 4px 16px', background:'#191c1d', color:'#fff', fontSize:13, lineHeight:1.5 }}>Compare les offres du lot CVC</div>
         <div style={{ alignSelf:'flex-start', maxWidth:'88%', padding:'14px 16px', borderRadius:'16px 16px 16px 4px', background:'#f5f5f7', fontSize:13, lineHeight:1.65 }}>
           <div style={{ fontSize:10, fontWeight:700, color:'#7C3AED', letterSpacing:'.04em', marginBottom:8 }}>ANALYSE KAI</div>
-          3 offres re�ues pour le lot CVC.<br/><br/>
-          <strong>Recommandation :</strong> CLIM Pro CI — 14,6 M FCFA, d�lai 45j.<br/>
-          Meilleur ratio qualit�/co�t sur ce lot.
+          3 offres reçues pour le lot CVC.<br/><br/>
+          <strong>Recommandation :</strong> CLIM Pro CI — 14,6 M FCFA, dûlai 45j.<br/>
+          Meilleur ratio qualité/coét sur ce lot.
         </div>
       </div>
       <div style={{ padding:'10px 20px 14px', borderTop:'1px solid rgba(0,0,0,.03)' }}>
-        <div style={{ padding:'10px 14px', borderRadius:10, background:'#f5f5f7', fontSize:12, color:'#bbb' }}>Demandez � KAI. Obtenez une r�ponse claire et exploitable.</div>
+        <div style={{ padding:'10px 14px', borderRadius:10, background:'#f5f5f7', fontSize:12, color:'#bbb' }}>Demandez à KAI. Obtenez une réponse claire et exploitable.</div>
       </div>
       <div style={{ padding:'0 20px 14px', display:'flex', gap:5, flexWrap:'wrap' }}>
-        {['Rapport chantier','V�rifier paiements','Urgences du jour'].map(p=>(
+        {['Rapport chantier','Vérifier paiements','Urgences du jour'].map(p=>(
           <div key={p} style={{ padding:'4px 11px', borderRadius:100, border:'1px solid rgba(0,0,0,.08)', fontSize:10, fontWeight:500, color:'#999' }}>{p}</div>
         ))}
       </div>
@@ -138,11 +138,11 @@ function KaiBar({ size='md', dark }) {
   )
 }
 
-// �•��•��•� LABEL COMPONENT �•��•��•�
+//  LABEL COMPONENT 
 const Label = ({children}) => <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2.5px', color:'#ccc', margin:'0 0 12px' }}>{children}</p>
 const LabelDark = ({children}) => <p style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'3px', color:'rgba(255,255,255,.2)', margin:'0 0 14px' }}>{children}</p>
 
-// �•��•��•� PAGE �•��•��•�
+//  PAGE 
 
 export default function Landing() {
   const nav = useNavigate()
@@ -152,7 +152,7 @@ export default function Landing() {
   return (
     <div style={{ minHeight:'100vh', background:'#fff', color:'#191c1d', fontFamily:'var(--f)' }}>
 
-      {/* �•��•� HEADER �•��•� */}
+      {/* •• HEADER •• */}
       <header style={{ position:'sticky', top:0, zIndex:50, borderBottom:'1px solid rgba(255,255,255,.06)', background:'rgba(10,10,10,.94)', backdropFilter:'blur(24px) saturate(1.8)', WebkitBackdropFilter:'blur(24px) saturate(1.8)' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 28px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:32 }}>
@@ -161,43 +161,43 @@ export default function Landing() {
               <div style={{ display:'flex', flexDirection:'column' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <span style={{ fontSize:14, fontWeight:600, letterSpacing:'-.15px', color:'#fff' }}>MEEREO</span>
-                  <span style={{ fontSize:18, lineHeight:1 }}>�Ÿ‡��Ÿ‡�</span>
+                  <span style={{ fontSize:18, lineHeight:1 }}>‡é‡é</span>
                 </div>
-                <span style={{ fontSize:9, color:'rgba(255,255,255,.4)', fontWeight:500, letterSpacing:'.02em', marginTop:1 }}>C�te-d'Ivoire</span>
+                <span style={{ fontSize:9, color:'rgba(255,255,255,.4)', fontWeight:500, letterSpacing:'.02em', marginTop:1 }}>Côte-d'Ivoire</span>
               </div>
             </div>
             <nav className="lp-n" style={{ display:'flex', gap:20 }}>
-              {[['Syst�me','sys'],['Fonctionnalit�s','feat'],['KAI','kai']].map(([l,id])=>(
+              {[['Système','sys'],['Fonctionnalités','feat'],['KAI','kai']].map(([l,id])=>(
                 <a key={id} onClick={()=>scroll(id)} style={{ fontSize:12.5, color:'rgba(255,255,255,.45)', cursor:'pointer', fontWeight:500, transition:'color .15s', textDecoration:'none' }} onMouseOver={e=>e.target.style.color='#fff'} onMouseOut={e=>e.target.style.color='rgba(255,255,255,.45)'}>{l}</a>
               ))}
             </nav>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:7 }}>
             <button onClick={go} style={{ borderRadius:100, border:'1px solid rgba(255,255,255,.12)', background:'transparent', padding:'7px 14px', fontSize:12, fontWeight:500, color:'rgba(255,255,255,.7)', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='rgba(255,255,255,.05)'} onMouseOut={e=>e.target.style.background='transparent'}>Se connecter</button>
-            <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'7px 16px', fontSize:12, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='#e5e5e5'} onMouseOut={e=>e.target.style.background='#fff'}>Cr�er mon espace</button>
+            <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'7px 16px', fontSize:12, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='#e5e5e5'} onMouseOut={e=>e.target.style.background='#fff'}>Créer mon espace</button>
           </div>
         </div>
       </header>
 
       <main>
 
-        {/* �•��•� S1 — HERO �•��•� */}
+        {/* •• S1 — HERO •• */}
         <section style={{ background:'#0a0a0a', color:'#fff', position:'relative', overflow:'hidden' }}>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'88px 28px 0', textAlign:'center' }}>
             <h1 style={{ fontSize:'clamp(36px,5.5vw,60px)', fontWeight:600, letterSpacing:'-.045em', lineHeight:1.08, color:'#fff', margin:'0 auto', maxWidth:780 }}>
-              Une seule plateforme pour piloter vos projets BTP & Immobilier, quel que soit votre r�le.
+              Une seule plateforme pour piloter vos projets BTP & Immobilier, quel que soit votre rôle.
             </h1>
             {/* Subtitle */}
             <p style={{ marginTop:24, fontSize:16, lineHeight:1.65, color:'rgba(255,255,255,.45)', maxWidth:520, margin:'24px auto 0' }}>
-              Chaque acteur du projet acc�de au même syst�me, avec la bonne visibilit� et le bon niveau de contr�le. D�cidez en temps r�el avec <strong style={{ color:'#7C3AED' }}>KAI</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
+              Chaque acteur du projet accéde au même système, avec la bonne visibilité et le bon niveau de contrôle. Décidez en temps rèel avec <strong style={{ color:'#7C3AED' }}>KAI</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
             </p>
             {/* CTAs */}
             <div style={{ marginTop:36, display:'flex', justifyContent:'center', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-              <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'13px 28px', fontSize:14, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)', boxShadow:'0 2px 12px rgba(255,255,255,.08)' }} onMouseOver={e=>e.target.style.background='#e5e5e5'} onMouseOut={e=>e.target.style.background='#fff'}>Cr�er mon espace</button>
-              <button onClick={()=>scroll('sys')} style={{ borderRadius:100, border:'1px solid rgba(255,255,255,.15)', background:'transparent', padding:'13px 28px', fontSize:14, fontWeight:500, color:'rgba(255,255,255,.7)', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='rgba(255,255,255,.05)'} onMouseOut={e=>e.target.style.background='transparent'}>Voir le syst�me</button>
+              <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'13px 28px', fontSize:14, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)', boxShadow:'0 2px 12px rgba(255,255,255,.08)' }} onMouseOver={e=>e.target.style.background='#e5e5e5'} onMouseOut={e=>e.target.style.background='#fff'}>Créer mon espace</button>
+              <button onClick={()=>scroll('sys')} style={{ borderRadius:100, border:'1px solid rgba(255,255,255,.15)', background:'transparent', padding:'13px 28px', fontSize:14, fontWeight:500, color:'rgba(255,255,255,.7)', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='rgba(255,255,255,.05)'} onMouseOut={e=>e.target.style.background='transparent'}>Voir le système</button>
             </div>
             {/* micro text */}
-            <p style={{ marginTop:28, fontSize:11.5, color:'rgba(255,255,255,.3)', margin:'28px auto 0' }}>Lanc� en C�te d'Ivoire � D�ploiement progressif en Afrique de l'Ouest</p>
+            <p style={{ marginTop:28, fontSize:11.5, color:'rgba(255,255,255,.3)', margin:'28px auto 0' }}>Lancé en Côte d'Ivoire à Déploiement progressif en Afrique de l'Ouest</p>
           </div>
           {/* Cockpit + KAI bar floating */}
           <div style={{ maxWidth:920, margin:'56px auto 0', padding:'0 28px 64px', position:'relative' }}>
@@ -209,23 +209,23 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S2 — VOTRE R�LE �•��•� */}
+        {/* •• S2 — VOTRE RéLE •• */}
         <section id="sys" style={{ background:'#f5f5f7', borderBottom:'1px solid rgba(0,0,0,.1)' }}>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'68px 28px' }}>
             <div style={{ textAlign:'center', maxWidth:580, margin:'0 auto' }}>
-              <Label>Votre r�le, votre acc�s</Label>
+              <Label>Votre rôle, votre accès</Label>
               <h2 style={{ fontSize:'clamp(26px,3.5vw,36px)', fontWeight:600, letterSpacing:'-.025em', color:'#000', margin:0 }}>
-                Et vous, quel r�le jouez-vous dans le projet ?
+                Et vous, quel rôle jouez-vous dans le projet ?
               </h2>
               <p style={{ marginTop:14, fontSize:14, color:'#aaa', lineHeight:1.6 }}>
-                MEEREO vous donne un acc�s adapt� � votre r�le. Chacun agit avec les bonnes informations et le bon niveau de validation.
+                MEEREO vous donne un accès adapté à votre rôle. Chacun agit avec les bonnes informations et le bon niveau de validation.
               </p>
             </div>
             <div style={{ maxWidth:940, margin:'40px auto 0' }} className="lp-act">
               {[
-                {t:'Une visibilit� claire', d:'Les bonnes informations, au bon moment, pour d�cider avec clart�.'},
-                {t:'Une messagerie int�gr�e', d:'�changez, validez et coordonnez depuis un espace d�di� au projet.'},
-                {t:'Un cadre commun', d:'Tous les acteurs avancent dans le même syst�me, avec plus de coh�rence.'},
+                {t:'Une visibilité claire', d:'Les bonnes informations, au bon moment, pour dûcider avec clarté.'},
+                {t:'Une messagerie intégrée', d:'échangez, validez et coordonnez depuis un espace dûdié au projet.'},
+                {t:'Un cadre commun', d:'Tous les acteurs avancent dans le même système, avec plus de cohérence.'},
               ].map(c=>(
                 <div key={c.t} style={{ borderRadius:16, border:'1px solid rgba(0,0,0,.08)', background:'#fff', padding:'28px 24px', transition:'all .2s' }} onMouseOver={e=>{e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,.05)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseOut={e=>{e.currentTarget.style.boxShadow='none';e.currentTarget.style.transform='none'}}>
                   <div style={{ fontSize:15, fontWeight:600, color:'#191c1d', marginBottom:10 }}>{c.t}</div>
@@ -236,23 +236,23 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S3 — COCKPIT (fond noir) �•��•� */}
+        {/* •• S3 — COCKPIT (fond noir) •• */}
         <section style={{ padding:'68px 28px', background:'#0a0b0c', color:'#fff' }}>
           <div style={{ maxWidth:620, margin:'0 auto', textAlign:'center' }}>
             <Label>Votre cockpit</Label>
             <h2 style={{ fontSize:'clamp(24px,3.5vw,32px)', fontWeight:600, letterSpacing:'-.025em', lineHeight:1.2, color:'#fff', margin:0 }}>
-              Le centre de contr�le de tous vos projets
+              Le centre de contrôle de tous vos projets
             </h2>
             <p style={{ marginTop:14, fontSize:14.5, color:'rgba(255,255,255,.45)', lineHeight:1.6, maxWidth:560, margin:'14px auto 0' }}>
-              Centralisez l'avancement des chantiers, les arbitrages, les flux financiers et l'acc�s � de nouvelles opportunit�s. Achetez vos mat�riaux, r�pondez � des appels d'offres et gardez une lecture claire de chaque d�cision.
+              Centralisez l'avancement des chantiers, les arbitrages, les flux financiers et l'accès à de nouvelles opportunités. Achetez vos matériaux, répondez à des appels d'offres et gardez une lecture claire de chaque dûcision.
             </p>
           </div>
           <div style={{ maxWidth:940, margin:'44px auto 0' }} className="lp-zoom-grid">
             {[
-              { label:'Projet actif', val:'APD � 45 %', sub:'Suivez l\u2019avancement de vos projets en temps r�el, o� que vous soyez dans le monde, et gardez une ma�trise claire sur chaque phase.' },
-              { label:'Appels d\u2019offres', val:'2 opportunit�s', sub:'Acc�dez � de nouveaux appels d\u2019offres, r�pondez � des besoins qualifi�s et d�veloppez votre activit� aupr�s de nouveaux clients.' },
-              { label:'Tr�sorerie', val:'62 % engag�', sub:'Visualisez les engagements, suivez les disponibilit�s, validez les paiements et gardez le contr�le sur les flux du projet.' },
-              { label:'Marketplace', val:'4 commandes en cours', sub:'Suivez vos achats de mat�riaux depuis une marketplace centralis�e, avec une vue claire sur les offres disponibles.' },
+              { label:'Projet actif', val:'APD à 45 %', sub:'Suivez l\u2019avancement de vos projets en temps rèel, oé que vous soyez dans le monde, et gardez une maîtrise claire sur chaque phase.' },
+              { label:'Appels d\u2019offres', val:'2 opportunités', sub:'Accédez à de nouveaux appels d\u2019offres, répondez à des besoins qualifiés et dûveloppez votre activité auprès de nouveaux clients.' },
+              { label:'Trésorerie', val:'62 % engagé', sub:'Visualisez les engagements, suivez les disponibilités, validez les paiements et gardez le contrôle sur les flux du projet.' },
+              { label:'Marketplace', val:'4 commandes en cours', sub:'Suivez vos achats de matériaux depuis une marketplace centralisée, avec une vue claire sur les offres disponibles.' },
             ].map(z=>(
               <div key={z.label} style={{ borderRadius:16, border:'1px solid rgba(255,255,255,.08)', background:'rgba(255,255,255,.04)', padding:'26px 24px' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:'rgba(255,255,255,.5)', letterSpacing:'-.02em', marginBottom:12 }}>{z.label}</div>
@@ -263,29 +263,29 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S4 — FONCTIONNALIT�S �•��•� */}
+        {/* •• S4 — FONCTIONNALITéS •• */}
         <section id="feat" style={{ background:'#f5f5f7', borderTop:'1px solid rgba(0,0,0,.1)' }}>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'72px 28px' }}>
             <div style={{ textAlign:'center', maxWidth:600, margin:'0 auto 52px' }}>
-              <Label>Fonctionnalit�s</Label>
+              <Label>Fonctionnalités</Label>
               <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:600, letterSpacing:'-.02em', color:'#000', margin:0 }}>
-                En un seul clic, toutes les fonctionnalit�s de votre projet � port�e de main
+                En un seul clic, toutes les fonctionnalités de votre projet à portée de main
               </h2>
             </div>
             {/* Bloc principal */}
             <div style={{ marginBottom:56 }} className="lp-fr">
               <div style={{ padding:'4px 0' }}>
-                <h3 style={{ fontSize:26, fontWeight:700, letterSpacing:'-.035em', color:'#000', margin:0, lineHeight:1.2 }}>Une ma�trise compl�te de l'avancement du chantier</h3>
-                <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'#888' }}>Visualisez chaque phase du chantier, suivez les �l�ments attendus et validez l'avancement dans un cadre clair, tra�able et ma�tris�.</p>
+                <h3 style={{ fontSize:26, fontWeight:700, letterSpacing:'-.035em', color:'#000', margin:0, lineHeight:1.2 }}>Une maîtrise complète de l'avancement du chantier</h3>
+                <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'#888' }}>Visualisez chaque phase du chantier, suivez les éléments attendus et validez l'avancement dans un cadre clair, traéable et maîtrisé.</p>
               </div>
               <div className="lp-frame"><ChantierMini/></div>
             </div>
             {/* Cartes secondaires */}
             <div className="lp-pills">
               {[
-                {t:'Appels d\u2019offres & march�s', d:'Acc�dez � de nouvelles opportunit�s, r�pondez � des clients qualifi�s et d�veloppez votre activit� � travers un espace con�u pour ouvrir de nouvelles perspectives.', hero:false},
-                {t:'Marketplace', d:'Achetez vos mat�riaux et �quipements depuis un espace centralis�, avec une vue d\u2019ensemble claire sur les offres disponibles sur le march�.', hero:true},
-                {t:'Centre financier', d:'Suivez vos d�penses, vos transactions financi�res, vos engagements et vos disponibilit�s dans un espace clair, con�u pour vous donner plus de contr�le et de tra�abilit�.', hero:false},
+                {t:'Appels d\u2019offres & marchés', d:'Accédez à de nouvelles opportunités, répondez à des clients qualifiés et dûveloppez votre activité à travers un espace conéu pour ouvrir de nouvelles perspectives.', hero:false},
+                {t:'Marketplace', d:'Achetez vos matériaux et équipements depuis un espace centralisé, avec une vue d\u2019ensemble claire sur les offres disponibles sur le marché.', hero:true},
+                {t:'Centre financier', d:'Suivez vos dûpenses, vos transactions financiéres, vos engagements et vos disponibilités dans un espace clair, conéu pour vous donner plus de contrôle et de traéabilité.', hero:false},
               ].map(f=>(
                 <div key={f.t} style={{ borderRadius:18, border:f.hero?'1px solid rgba(255,255,255,.12)':'1px solid rgba(255,255,255,.06)', background:f.hero?'#1a1d1e':'#141516', padding:f.hero?'40px 30px':'28px 24px', transition:'all .2s', boxShadow:f.hero?'0 8px 32px rgba(0,0,0,.4)':'0 2px 8px rgba(0,0,0,.2)', transform:f.hero?'scale(1.08)':'none' }} onMouseOver={e=>{e.currentTarget.style.boxShadow=f.hero?'0 14px 40px rgba(0,0,0,.45)':'0 8px 28px rgba(0,0,0,.3)';e.currentTarget.style.transform=f.hero?'scale(1.10)':'translateY(-2px)'}} onMouseOut={e=>{e.currentTarget.style.boxShadow=f.hero?'0 8px 32px rgba(0,0,0,.4)':'0 2px 8px rgba(0,0,0,.2)';e.currentTarget.style.transform=f.hero?'scale(1.08)':'none'}}>
                   <h3 style={{ fontSize:f.hero?22:17, fontWeight:f.hero?700:600, letterSpacing:'-.02em', color:'#fff', margin:0 }}>{f.t}</h3>
@@ -296,7 +296,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S5 — FINANCE + MARKETPLACE �•��•� */}
+        {/* •• S5 — FINANCE + MARKETPLACE •• */}
         <section style={{ background:'#fff', borderTop:'1px solid rgba(0,0,0,.1)', borderBottom:'1px solid rgba(0,0,0,.1)' }}>
           <div style={{ maxWidth:1000, margin:'0 auto', padding:'68px 28px' }} className="lp-fin">
             {/* Centre financier */}
@@ -307,7 +307,7 @@ export default function Landing() {
               <div style={{ fontSize:12, fontWeight:600, color:'#bbb', marginTop:4, marginBottom:20 }}>FCFA</div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
                 <div style={{ padding:'14px 16px', borderRadius:10, background:'#fff', border:'1px solid rgba(0,0,0,.05)' }}>
-                  <div style={{ fontSize:8.5, fontWeight:700, color:'#ccc', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:5 }}>Engag�</div>
+                  <div style={{ fontSize:8.5, fontWeight:700, color:'#ccc', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:5 }}>Engagé</div>
                   <div style={{ fontSize:17, fontWeight:800, letterSpacing:'-.4px', color:'#191c1d' }}>155 000 000</div>
                 </div>
                 <div style={{ padding:'14px 16px', borderRadius:10, background:'#fff', border:'1px solid rgba(0,0,0,.05)' }}>
@@ -315,7 +315,7 @@ export default function Landing() {
                   <div style={{ fontSize:17, fontWeight:800, letterSpacing:'-.4px', color:'#16A34A' }}>95 000 000</div>
                 </div>
               </div>
-              <p style={{ fontSize:13, lineHeight:1.55, color:'#aaa', margin:0 }}>Visualisez o� va votre budget. Chaque paiement est trac�, valid� et s�curis�.</p>
+              <p style={{ fontSize:13, lineHeight:1.55, color:'#aaa', margin:0 }}>Visualisez oé va votre budget. Chaque paiement est tracé, validû et sécurisé.</p>
             </div>
             {/* Marketplace */}
             <div style={{ borderRadius:18, border:'1px solid rgba(0,0,0,.08)', background:'#fff', overflow:'hidden', display:'flex', flexDirection:'column' }}>
@@ -325,7 +325,7 @@ export default function Landing() {
                   <span style={{ fontSize:12, fontWeight:700, color:'#F59E0B' }}>Shop</span>
                 </div>
                 <div style={{ display:'flex', gap:16 }}>
-                  {[{v:'36',l:'Produits'},{v:'12',l:'Fournisseurs'},{v:'11',l:'Cat�gories'}].map(s=>(
+                  {[{v:'36',l:'Produits'},{v:'12',l:'Fournisseurs'},{v:'11',l:'Catégories'}].map(s=>(
                     <div key={s.l} style={{ textAlign:'center' }}>
                       <div style={{ fontSize:13, fontWeight:800, color:'#fff', lineHeight:1 }}>{s.v}</div>
                       <div style={{ fontSize:7, fontWeight:600, color:'rgba(255,255,255,.35)', textTransform:'uppercase', letterSpacing:'.5px', marginTop:2 }}>{s.l}</div>
@@ -334,13 +334,13 @@ export default function Landing() {
                 </div>
               </div>
               <div style={{ display:'flex', gap:4, padding:'10px 16px', borderBottom:'1px solid rgba(0,0,0,.1)' }}>
-                {['Tout','Gros �’uvre','Structure','Isolation','Menuiseries'].map((c,i)=>(
+                {['Tout','Gros é’uvre','Structure','Isolation','Menuiseries'].map((c,i)=>(
                   <div key={c} style={{ padding:'4px 10px', borderRadius:100, fontSize:9, fontWeight:600, whiteSpace:'nowrap', ...(i===0?{background:'#191c1d',color:'#fff'}:{background:'#f3f4f5',color:'#999'}) }}>{c}</div>
                 ))}
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, padding:'12px 16px' }}>
                 {[
-                  {name:'B�ton Haute Performance XR45',brand:'Lafarge',price:'85 000',unit:'/m³',rating:'4.8'},
+                  {name:'Béton Haute Performance XR45',brand:'Lafarge',price:'85 000',unit:'/m³',rating:'4.8'},
                   {name:'Agglos creux 20x20x50',brand:'BPCI',price:'48 000',unit:'/palette',rating:'4.5'},
                 ].map(p=>(
                   <div key={p.name} style={{ padding:'10px 12px', borderRadius:10, border:'1px solid rgba(0,0,0,.05)', background:'#f5f5f7' }}>
@@ -354,13 +354,13 @@ export default function Landing() {
                 ))}
               </div>
               <div style={{ padding:'10px 16px 16px', marginTop:'auto' }}>
-                <p style={{ fontSize:12, lineHeight:1.5, color:'#aaa', margin:0 }}>Achetez vos mat�riaux depuis un espace centralis�, avec une vue claire sur les offres du march�.</p>
+                <p style={{ fontSize:12, lineHeight:1.5, color:'#aaa', margin:0 }}>Achetez vos matériaux depuis un espace centralisé, avec une vue claire sur les offres du marché.</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* �•��•� S6 — KAI �•��•� */}
+        {/* •• S6 — KAI •• */}
         <section id="kai" style={{ background:'#0a0a0a', color:'#fff', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', top:'20%', left:'50%', transform:'translateX(-50%)', width:'50%', height:'50%', background:'radial-gradient(ellipse,rgba(255,255,255,.025),transparent 65%)', pointerEvents:'none' }}/>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'96px 28px', position:'relative' }}>
@@ -368,20 +368,20 @@ export default function Landing() {
               <div style={{ display:'flex', justifyContent:'center', marginBottom:28 }}>
                 <KaiBar size="md" dark />
               </div>
-              <LabelDark>Intelligence embarqu�e</LabelDark>
+              <LabelDark>Intelligence embarquée</LabelDark>
               <h2 style={{ fontSize:'clamp(28px,4vw,40px)', fontWeight:600, letterSpacing:'-.04em', lineHeight:1.1, margin:0 }}>
                 KAI orchestre votre projet
               </h2>
               <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'rgba(255,255,255,.4)', maxWidth:460, margin:'16px auto 0' }}>
-                Analyse en continu, recommandations actionnables et pilotage autonome de certaines t�ches. KAI vous assiste activement dans chaque d�cision.
+                Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAI vous assiste activement dans chaque dûcision.
               </p>
             </div>
             {/* KAI capabilities cards */}
             <div style={{ maxWidth:600, margin:'0 auto 36px' }} className="lp-kai-caps">
               {[
-                {t:'Rapports chantier',d:'En langage naturel, g�n�r�s depuis vos donn�es.'},
+                {t:'Rapports chantier',d:'En langage naturel, générés depuis vos données.'},
                 {t:'Comparatif d\u2019offres',d:'Analyse, scoring et recommandation automatiques.'},
-                {t:'Alertes proactives',d:'Points critiques identifi�s avant qu\u2019ils ne deviennent des probl�mes.'},
+                {t:'Alertes proactives',d:'Points critiques identifiés avant qu\u2019ils ne deviennent des problèmes.'},
               ].map(c=>(
                 <div key={c.t} style={{ padding:'18px 16px', borderRadius:14, border:'1px solid rgba(255,255,255,.07)', background:'rgba(255,255,255,.03)' }}>
                   <div style={{ fontSize:12.5, fontWeight:600, color:'rgba(255,255,255,.7)', marginBottom:6 }}>{c.t}</div>
@@ -398,19 +398,19 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S7 — DIFF�RENCIATION �•��•� */}
+        {/* •• S7 — DIFFéRENCIATION •• */}
         <section style={{ padding:'76px 28px' }}>
           <div style={{ maxWidth:860, margin:'0 auto' }}>
             <div style={{ textAlign:'center', marginBottom:44 }}>
               <Label>Pourquoi MEEREO</Label>
               <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:600, letterSpacing:'-.02em', color:'#000', margin:0 }}>
-                Passez d'un projet d�sorganis� � un syst�me structur� et ma�tris�.
+                Passez d'un projet dûsorganisé à un système structuré et maîtrisé.
               </h2>
             </div>
             <div className="lp-diff">
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2px', color:'#bbb', marginBottom:4 }}>Avant</div>
-                {['Fichiers Excel �parpill�s','WhatsApp pour coordonner','Aucune visibilit� financi�re','Outils fragment�s par m�tier'].map(t=>(
+                {['Fichiers Excel éparpillés','WhatsApp pour coordonner','Aucune visibilité financiére','Outils fragmentés par métier'].map(t=>(
                   <div key={t} style={{ padding:'16px 20px', borderRadius:12, background:'#f0f0f2', border:'1px solid rgba(0,0,0,.08)', fontSize:14, color:'#999', textDecoration:'line-through', textDecorationColor:'rgba(0,0,0,.2)' }}>{t}</div>
                 ))}
               </div>
@@ -419,7 +419,7 @@ export default function Landing() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2px', color:'#191c1d', marginBottom:4 }}>Avec MEEREO</div>
-                {['Cockpit centralis� par projet','D�cisions trac�es et valid�es','Tr�sorerie temps r�el int�gr�e','Plateforme unique multi-acteurs'].map(t=>(
+                {['Cockpit centralisé par projet','Décisions tracées et validûes','Trésorerie temps rèel intégrée','Plateforme unique multi-acteurs'].map(t=>(
                   <div key={t} style={{ padding:'16px 20px', borderRadius:12, background:'#191c1d', fontSize:14, fontWeight:600, color:'#fff' }}>{t}</div>
                 ))}
               </div>
@@ -427,26 +427,26 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* �•��•� S8 — CTA FINAL �•��•� */}
+        {/* •• S8 — CTA FINAL •• */}
         <section style={{ background:'#f5f5f7', borderTop:'1px solid rgba(0,0,0,.1)' }}>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'68px 28px' }}>
             <div style={{ borderRadius:24, background:'#191c1d', padding:'64px 40px', color:'#fff' }}>
               <div style={{ maxWidth:540, margin:'0 auto', textAlign:'center' }}>
                 <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:600, letterSpacing:'-.02em', margin:0, lineHeight:1.25 }}>
-                  Prenez le contr�le total de vos projets, de vos �quipes et de vos d�cisions
+                  Prenez le contrôle total de vos projets, de vos équipes et de vos dûcisions
                 </h2>
                 <p style={{ marginTop:16, fontSize:15, lineHeight:1.6, color:'rgba(255,255,255,.5)' }}>
-                  MEEREO vous donne la visibilit�, le contr�le et l'intelligence pour piloter vos projets avec pr�cision.
+                  MEEREO vous donne la visibilité, le contrôle et l'intelligence pour piloter vos projets avec précision.
                 </p>
-                <button onClick={go} style={{ marginTop:32, borderRadius:100, background:'#fff', padding:'14px 32px', fontSize:14.5, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='#e8e8e8'} onMouseOut={e=>e.target.style.background='#fff'}>Cr�er mon espace</button>
-                <p style={{ marginTop:18, fontSize:12, color:'rgba(255,255,255,.3)' }}>D�ploy� sur des projets r�els en C�te d'Ivoire �Ÿ‡��Ÿ‡�</p>
+                <button onClick={go} style={{ marginTop:32, borderRadius:100, background:'#fff', padding:'14px 32px', fontSize:14.5, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='#e8e8e8'} onMouseOut={e=>e.target.style.background='#fff'}>Créer mon espace</button>
+                <p style={{ marginTop:18, fontSize:12, color:'rgba(255,255,255,.3)' }}>Déployé sur des projets rèels en Côte d'Ivoire ‡é‡é</p>
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* �•��•� S9 — FOOTER �•��•� */}
+      {/* •• S9 — FOOTER •• */}
       <footer style={{ background:'#0a0a0a', color:'#fff' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', padding:'44px 28px' }} className="lp-ft">
           <div>
@@ -456,23 +456,23 @@ export default function Landing() {
           <div>
             <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>Produit</div>
             <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'rgba(255,255,255,.5)' }}>
-              <span style={{cursor:'pointer'}} onClick={()=>scroll('feat')}>Fonctionnalit�s</span>
+              <span style={{cursor:'pointer'}} onClick={()=>scroll('feat')}>Fonctionnalités</span>
               <span style={{cursor:'pointer'}} onClick={()=>scroll('kai')}>KAI</span>
               <span style={{cursor:'pointer'}} onClick={()=>scroll('sys')}>Multi-acteurs</span>
             </div>
           </div>
           <div>
-            <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>L�gal</div>
+            <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>Légal</div>
             <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'rgba(255,255,255,.5)' }}>
               <span style={{cursor:'pointer'}} onClick={()=>nav('/conditions')}>Conditions d'utilisation</span>
-              <span style={{cursor:'pointer'}} onClick={()=>nav('/confidentialite')}>Confidentialit�</span>
+              <span style={{cursor:'pointer'}} onClick={()=>nav('/confidentialite')}>Confidentialité</span>
             </div>
           </div>
           <div>
             <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>Contact</div>
             <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'rgba(255,255,255,.5)' }}>
               <span>contact@meereo.com</span>
-              <span>�Ÿ‡��Ÿ‡� Abidjan, C�te d'Ivoire</span>
+              <span>‡é‡é Abidjan, Côte d'Ivoire</span>
             </div>
           </div>
         </div>
@@ -481,7 +481,7 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* �•��•� CSS �•��•� */}
+      {/* •• CSS •• */}
       <style>{`
         .lp-frame{border-radius:16px;padding:0;background:transparent;box-shadow:0 8px 32px rgba(0,0,0,.06)}.lp-frame>div{border:1px solid rgba(0,0,0,.12)}
         .lp-frame-kai{border-radius:20px;padding:6px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 64px rgba(0,0,0,.4),0 0 32px rgba(255,255,255,.02)}

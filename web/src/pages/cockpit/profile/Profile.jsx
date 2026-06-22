@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Star } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -11,17 +11,17 @@ import MeereoLogo from '../../../components/shared/MeereoLogo'
 import { api } from '../../../services/api/client'
 import '../../../styles/profile.css'
 
-// Services par d�faut propos�s aux pros si aucun service n'est encore renseign�
+// Services par dûfaut proposés aux pros si aucun service n'est encore renseigné
 const DEFAULT_SERVICES = [
-  'Ma�trise d\'�“uvre', 'Plans & permis', '�tudes structure', 'Suivi de chantier',
-  'R�habilitation', 'Architecture int�rieure', 'Conception BIM', 'Bureau de contr�le',
+  'Maîtrise d\'é“uvre', 'Plans & permis', 'études structure', 'Suivi de chantier',
+  'Réhabilitation', 'Architecture intérieure', 'Conception BIM', 'Bureau de contrôle',
 ]
 
 // Dynamic projects from cockpit data
 const getProjects = (projects) => (projects || []).map((p, i) => ({
   num: String(i + 1).padStart(2, '0'),
   name: p.nom,
-  loc: (p.adresse || 'Abidjan') + ' � Client : ' + p.client,
+  loc: (p.adresse || 'Abidjan') + ' à Client : ' + p.client,
   budget: p.budget,
   status: p.avancement >= 100 ? 'Livre' : p.avancement > 0 ? 'En cours' : 'A lancer',
   cls: p.avancement >= 100 ? 'done' : p.avancement > 0 ? 'active' : 'delivery',
@@ -36,7 +36,7 @@ export default function Profile() {
   const uuid = searchParams.get('uuid')
   const { store, showToast, updateStore, emitEvent } = useMeereo()
 
-  // �”€�”€ Donn�es publiques (charg�es depuis le backend via UUID) �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // é── Données publiques (chargées depuis le backend via UUID) ──────────────
   const [pubData, setPubData]   = useState(null)   // { profile, stats, id, publicId, name, verified }
   const [pubLoading, setPubLoading] = useState(!!uuid)
   const [pubError, setPubError] = useState(null)
@@ -49,7 +49,7 @@ export default function Profile() {
       .catch(e  => { setPubError(e.message || 'Profil introuvable'); setPubLoading(false) })
   }, [uuid])
 
-  // �”€�”€ D�tection r�le : propri�taire = pro connect� dont publicId = uuid �”€�”€
+  // é── Détection rôle : propriétaire = pro connecté dont publicId = uuid ──
   const myPublicId = store.user?.publicId
   const isOwner = store.user?.type === 'pro' && (
     !uuid || uuid === myPublicId   // /pro sans uuid = toujours son propre profil
@@ -57,12 +57,22 @@ export default function Profile() {
   const isClient  = store.user?.type === 'client'
   const isVisitor = !store.user
 
-  // �”€�”€ Source de donn�es : backend si uuid fourni, sinon store local �”€�”€�”€�”€�”€�”€�”€�”€
-  // Pour le propri�taire sans uuid �†’ utilise store. Sinon �†’ pubData.profile
+  // Seuls les comptes professionnels peuvent accéder à leur propre page pro.
+  // (Toute URL avec ?uuid= reste publique pour les visiteurs/clients.)
+  useEffect(() => {
+    if (!uuid && store.user && store.user.type !== 'pro') {
+      // Client ou fournisseur connecté → rediriger vers son propre espace
+      const dest = store.user.type === 'client' ? '/client' : '/fournisseur'
+      navigate(dest, { replace: true })
+    }
+  }, [uuid, store.user, navigate])
+
+  // é── Source de données : backend si uuid fourni, sinon store local ────────
+  // Pour le propriétaire sans uuid → utilise store. Sinon → pubData.profile
   const ob = isOwner && !pubData ? (store.onboardingData || {}) : (pubData?.profile || store.onboardingData || {})
   const remoteStats = pubData?.stats || null
 
-  // Donn�es profil dynamiques — onboarding d'abord, puis user, puis d�faut
+  // Données profil dynamiques — onboarding d'abord, puis user, puis dûfaut
   const proName = ob.entreprise || store.user?.company || store.user?.name || pubData?.name || ''
   const proInitials = proName ? proName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() : ''
   const proSpecialite = ob.secteurs?.[0] || ''
@@ -83,17 +93,17 @@ export default function Profile() {
 
   const handleBannerUpload = async (e) => {
     const f = e.target.files?.[0]; if (!f) return
-    // Lire le fichier une seule fois — utiliser la base64 comme pr�visualisation imm�diate
-    // puis remplacer par l'URL MinIO si l'upload r�ussit
+    // Lire le fichier une seule fois — utiliser la base64 comme prévisualisation immédiate
+    // puis remplacer par l'URL MinIO si l'upload réussit
     const { uploadFile: _uploadFile } = await import('../../../utils/upload')
     const reader = new FileReader()
     reader.onload = async () => {
       const base64 = reader.result
-      // Afficher la pr�visualisation locale imm�diatement
+      // Afficher la prévisualisation locale immédiatement
       updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: base64 } }))
       setEditingBanner(true)
       setTempPos(bannerPos)
-      // Upload vers MinIO en arri�re-plan — remplacer la base64 par l'URL persistante
+      // Upload vers MinIO en arrière-plan — remplacer la base64 par l'URL persistante
       try {
         const url = await _uploadFile(f, 'banners', 'cover')
         updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: url } }))
@@ -110,7 +120,7 @@ export default function Profile() {
     api.usersApi.updateOnboardingData({ bannerPosition: tempPos }).catch(() => {})
     setBannerPos(tempPos)
     setEditingBanner(false)
-    showToast('Banni�re ajust�e')
+    showToast('Banniére ajustée')
   }
   const proBio = ob.bio || ''
   const proServices = ob.services || []
@@ -118,12 +128,12 @@ export default function Profile() {
   const visitorName = store.user?.name || (ob.prenom ? `${ob.prenom} ${ob.nom || ''}`.trim() : '')
   const visitorRole = isClient ? 'client' : isOwner ? 'pro_owner' : 'pro_visitor'
 
-  // Projets filtr�s selon le r�le du visiteur
+  // Projets filtrès selon le rôle du visiteur
   const visitorProjects = isClient
     ? (store.projects || []).filter(p => !p.clientId || p.clientId === store.user?.id)
     : (store.projects || []).filter(p => p.avancement < 100)
 
-  // Donn�es dynamiques depuis store (portfolio, equipe)
+  // Données dynamiques depuis store (portfolio, equipe)
   const displayPortfolio = store.onboardingData?.portfolio || []
   // Team: UNIQUE source = store.onboardingData.cockpitTeam
   // Même source que le cockpit Parametres > Equipe
@@ -136,7 +146,7 @@ export default function Profile() {
     photoUrl: t.photoUrl || t.photo || '',
     isPublic: t.isPublic !== undefined ? t.isPublic : true,
   })
-  // Si cockpitTeam existe dans le store �†’ l'utiliser. Sinon fallback = �quipe cockpit par d�faut (PAS la d�mo TEAM)
+  // Si cockpitTeam existe dans le store → l'utiliser. Sinon fallback = équipe cockpit par dûfaut (PAS la dûmo TEAM)
   const COCKPIT_DEFAULT_TEAM = []
   const rawTeam = (cockpitTeam && cockpitTeam.length > 0 ? cockpitTeam : COCKPIT_DEFAULT_TEAM).map(normalizeTeamMember)
   const displayTeam = rawTeam.filter(t => t.isPublic !== false)
@@ -159,7 +169,7 @@ export default function Profile() {
   const [epBio, setEpBio] = useState(ob.bio || '')
   const [epSlogan, setEpSlogan] = useState(ob.slogan || '')
   const [epVille, setEpVille] = useState(ob.ville || 'Abidjan')
-  const [epPays, setEpPays] = useState(ob.pays || "C�te d'Ivoire")
+  const [epPays, setEpPays] = useState(ob.pays || "Côte d'Ivoire")
   const [epEmail, setEpEmail] = useState(ob.email || ob.emailPro || '')
   const [epTel, setEpTel] = useState(ob.tel || ob.telPro || '')
   const [epRccm, setEpRccm] = useState(ob.rccm || '')
@@ -226,7 +236,7 @@ export default function Profile() {
       notifType: 'green'
     })
     setContactSending(false)
-    showToast('Message envoy� ! ' + proName + ' vous recontactera sous 24h', 'green')
+    showToast('Message envoyé ! ' + proName + ' vous recontactera sous 24h', 'green')
     setShowContactModal(false)
     setContactMsg('')
     setContactMotif('collaboration')
@@ -242,7 +252,7 @@ export default function Profile() {
       await api.notifications.create({
         targetUserId: pubData?.id || null,
         type: 'project_invitation',
-        message: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — r�le : ${inviteRole || proSpecialite}`,
+        message: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — rôle : ${inviteRole || proSpecialite}`,
         link: invId,
       })
     } catch { /* non bloquant */ }
@@ -263,7 +273,7 @@ export default function Profile() {
       }],
       notifications: [...(prev.notifications || []), {
         id: Date.now(),
-        msg: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — r�le : ${inviteRole || proSpecialite}`,
+        msg: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — rôle : ${inviteRole || proSpecialite}`,
         type: 'info',
         read: false,
         link: invId,
@@ -271,11 +281,11 @@ export default function Profile() {
       }],
     }))
     emitEvent('invitation_sent', { to: proName, project: projObj?.nom, invitationId: invId }, {
-      notifMsg: `Invitation envoy�e � ${proName} pour ${projObj?.nom}`,
+      notifMsg: `Invitation envoyée à ${proName} pour ${projObj?.nom}`,
       notifType: 'blue'
     })
     setInviteSending(false)
-    showToast('Invitation envoy�e � ' + proName + ' pour ' + (projObj?.nom || 'le projet'), 'blue')
+    showToast('Invitation envoyée à ' + proName + ' pour ' + (projObj?.nom || 'le projet'), 'blue')
     setShowInviteModal(false)
     setInviteProjet('')
     setInviteRole('')
@@ -284,7 +294,7 @@ export default function Profile() {
 
   const handleContactViaMsg = useCallback(() => {
     if (isVisitor || !store.user) { navigate('/onboarding'); return }
-    // Chercher par pubData.id (backend ID) en priorit�, puis par nom pour les convs locales
+    // Chercher par pubData.id (backend ID) en priorité, puis par nom pour les convs locales
     const existing = (store.conversations || []).find(c =>
       !c.isGroup && !c._deleted && (
         (pubData?.id && c.participantId === pubData.id) ||
@@ -307,10 +317,10 @@ export default function Profile() {
         participants: [proName],
         pending: !pubData?.id,
         invited: !pubData?.id,
-        dernier: pubData?.id ? '' : 'Demande envoy�e',
+        dernier: pubData?.id ? '' : 'Demande envoyée',
         time: 'Maintenant',
         unread: 0,
-        msgs: pubData?.id ? [] : [{ side: 'out', text: 'Bonjour, je souhaiterais �changer avec vous.', time: 'Maintenant', read: false }],
+        msgs: pubData?.id ? [] : [{ side: 'out', text: 'Bonjour, je souhaiterais échanger avec vous.', time: 'Maintenant', read: false }],
       }
       updateStore(prev => ({ ...prev, conversations: [newConv, ...(prev.conversations || [])] }))
     }
@@ -319,7 +329,7 @@ export default function Profile() {
     navigate(isClient ? '/client' : '/cockpit')
   }, [isVisitor, store.user, store.conversations, proName, proInitials, pubData, ob.logoColor, isClient, navigate, updateStore])
 
-  // M�moris� pour �viter le double calcul dans le JSX
+  // Mémorisé pour éviter le double calcul dans le JSX
   const displayProjects = useMemo(() => getProjects(store.projects), [store.projects])
 
   return (
@@ -334,10 +344,10 @@ export default function Profile() {
       )}
       {pubError && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 32, opacity: .3 }}>�Ÿ”�</div>
+          <div style={{ fontSize: 32, opacity: .3 }}>”é</div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>Profil introuvable</div>
           <div style={{ fontSize: 13, color: '#666' }}>{pubError}</div>
-          <button className="pp-btn-primary" onClick={() => navigate('/')}>Retour � l'accueil</button>
+          <button className="pp-btn-primary" onClick={() => navigate('/')}>Retour à l'accueil</button>
         </div>
       )}
       {(pubLoading || pubError) ? null : (<>
@@ -383,8 +393,8 @@ export default function Profile() {
               <button onClick={() => setEditingBanner(false)} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)' }}>Annuler</button>
             </>) : (<>
               {bannerUrl && <button onClick={() => { setTempPos(bannerPos); setEditingBanner(true) }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Ajuster</button>}
-              {bannerUrl && <button onClick={() => { updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: null, bannerPosition: 50 } })); api.usersApi.updateOnboardingData({ bannerUrl: null, bannerPosition: 50 }).catch(() => {}); showToast('Banni�re supprim�e') }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(220,38,38,.3)', color: '#fff', border: '1px solid rgba(220,38,38,.3)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Supprimer</button>}
-              <button onClick={() => bannerInputRef.current?.click()} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>{bannerUrl ? 'Changer' : 'Ajouter une banni�re'}</button>
+              {bannerUrl && <button onClick={() => { updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), bannerUrl: null, bannerPosition: 50 } })); api.usersApi.updateOnboardingData({ bannerUrl: null, bannerPosition: 50 }).catch(() => {}); showToast('Banniére supprimée') }} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(220,38,38,.3)', color: '#fff', border: '1px solid rgba(220,38,38,.3)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>Supprimer</button>}
+              <button onClick={() => bannerInputRef.current?.click()} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.15)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)', backdropFilter: 'blur(8px)', transition: 'background .12s' }}>{bannerUrl ? 'Changer' : 'Ajouter une banniére'}</button>
             </>)}
             <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerUpload} />
           </div>
@@ -419,13 +429,13 @@ export default function Profile() {
             {isVerified && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 100, background: 'rgba(22,163,74,.12)', backdropFilter: 'blur(8px)', marginBottom: 8, position: 'relative', cursor: 'pointer' }} onMouseEnter={() => setShowVerifTooltip(true)} onMouseLeave={() => setShowVerifTooltip(false)}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: '#16A34A', letterSpacing: '.02em' }}>Structure v�rifi�e MEEREO</span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: '#16A34A', letterSpacing: '.02em' }}>Structure vérifiée MEEREO</span>
                 {showVerifTooltip && (
                   <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 8, padding: '12px 16px', background: '#fff', borderRadius: 12, boxShadow: '0 8px 28px rgba(0,0,0,.15)', width: 280, zIndex: 10, textAlign: 'left' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#111', marginBottom: 4 }}>Profil v�rifi� par MEEREO</div>
-                    <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 8 }}>Cette structure a �t� contr�l�e et valid�e par MEEREO. Ses informations, son existence l�gale et sa conformit� ont �t� v�rifi�es.</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#111', marginBottom: 4 }}>Profil vérifié par MEEREO</div>
+                    <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 8 }}>Cette structure a été contrôlée et validûe par MEEREO. Ses informations, son existence légale et sa conformité ont été vérifiées.</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {['Identit� de la structure v�rifi�e', 'Documents l�gaux conformes', 'Crit�res de qualit� MEEREO valid�s'].map(t => (
+                      {['Identité de la structure vérifiée', 'Documents légaux conformes', 'Critéres de qualité MEEREO validûs'].map(t => (
                         <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                           <span style={{ fontSize: 10.5, color: '#444' }}>{t}</span>
@@ -441,7 +451,7 @@ export default function Profile() {
               {proName || 'Profil professionnel'}
               {isVerified && <svg width="22" height="22" viewBox="0 0 24 24" fill="#16A34A" style={{ verticalAlign: 'middle', marginLeft: 8 }}><circle cx="12" cy="12" r="10" fill="#16A34A"/><polyline points="8 12 11 15 16 9" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
             </h1>
-            <p className="pp-hero-meta">{proSpecialite ? <><strong>{proSpecialite}</strong> &nbsp;�&nbsp;</> : null}{proVille || 'Localisation non renseign�e'}</p>
+            <p className="pp-hero-meta">{proSpecialite ? <><strong>{proSpecialite}</strong> &nbsp;é&nbsp;</> : null}{proVille || 'Localisation non renseignée'}</p>
           </div>
         </div>
         <div className="pp-hero-actions">
@@ -449,7 +459,7 @@ export default function Profile() {
           {isOwner ? (
             <button className="pp-btn-white" onClick={() => {
               setEpEntreprise(ob.entreprise || ''); setEpBio(ob.bio || ''); setEpSlogan(ob.slogan || '')
-              setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "C�te d'Ivoire")
+              setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "Côte d'Ivoire")
               setEpEmail(ob.email || ob.emailPro || ''); setEpTel(ob.tel || ob.telPro || ''); setEpRccm(ob.rccm || '')
               setEditSecteurs(ob.secteurs || []); setEditLogoColor(ob.logoColor || '#1D1D1F')
               setEditModal('profil')
@@ -467,10 +477,10 @@ export default function Profile() {
       {/* BODY */}
       <div className="pp-body">
 
-        {/* METRICS — toujours visibles, contextualis�s */}
+        {/* METRICS — toujours visibles, contextualisés */}
         {(() => {
           const allReviews = store.reviews || []
-          // Si profil public charg� depuis backend �†’ utilise les stats agregees
+          // Si profil public chargé depuis backend → utilise les stats agregees
           const projTotal      = remoteStats ? remoteStats.projectsCount     : (store.projects || []).length
           const livres         = remoteStats ? remoteStats.projectsCompleted  : (store.projects || []).filter(p => p.avancement >= 100).length
           const enCours        = remoteStats ? remoteStats.projectsActive     : projTotal - livres
@@ -483,10 +493,10 @@ export default function Profile() {
           const ville = ob?.ville || ''
 
           const metrics = [
-            { label: 'Projets', value: String(projTotal), sub: projTotal > 0 ? livres + ' livres � ' + enCours + ' en cours' : 'Activit� en d�marrage' },
-            { label: 'Missions', value: String(missionsCount), sub: missionsCount > 0 ? missionsCount + ' r�alis�e(s)' : 'Aucune mission pour le moment' },
-            { label: 'Satisfaction', value: allReviews.length > 0 ? satisfaction + '%' : '\u2014', sub: allReviews.length > 0 ? allReviews.length + ' avis v�rifi�s' : 'Pas encore �valu�e' },
-            { label: 'Zone', value: ville || '\u2014', sub: (ob?.zones?.length > 0 ? ob.zones.slice(0, 3).join(', ') : ob?.pays || "C�te d'Ivoire") || 'Non renseign�e', small: true },
+            { label: 'Projets', value: String(projTotal), sub: projTotal > 0 ? livres + ' livres à ' + enCours + ' en cours' : 'Activité en dûmarrage' },
+            { label: 'Missions', value: String(missionsCount), sub: missionsCount > 0 ? missionsCount + ' réalisée(s)' : 'Aucune mission pour le moment' },
+            { label: 'Satisfaction', value: allReviews.length > 0 ? satisfaction + '%' : '\u2014', sub: allReviews.length > 0 ? allReviews.length + ' avis vérifiés' : 'Pas encore évaluée' },
+            { label: 'Zone', value: ville || '\u2014', sub: (ob?.zones?.length > 0 ? ob.zones.slice(0, 3).join(', ') : ob?.pays || "Côte d'Ivoire") || 'Non renseignée', small: true },
           ]
 
           return (
@@ -505,48 +515,48 @@ export default function Profile() {
         {/* ABOUT + SERVICES */}
         <div className="pp-two-col">
           <div className="pp-card pp-about">
-            <p className="pp-section-label">� propos</p>
+            <p className="pp-section-label">à propos</p>
             <h2 className="pp-about-title">{proSlogan}</h2>
             {proBio ? (
               <p className="pp-about-text">{proBio}</p>
             ) : (
               <div style={{ padding: '16px 0', color: 'var(--t4)', fontSize: 13 }}>
-                <p>Pr�sentation non encore renseign�e.</p>
+                <p>Présentation non encore renseignée.</p>
                 {isOwner && <button className="pp-see-all" style={{ marginTop: 8 }} onClick={() => {
                   setEpEntreprise(ob.entreprise || ''); setEpBio(ob.bio || ''); setEpSlogan(ob.slogan || '')
-                  setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "C�te d'Ivoire")
+                  setEpVille(ob.ville || 'Abidjan'); setEpPays(ob.pays || "Côte d'Ivoire")
                   setEpEmail(ob.email || ob.emailPro || ''); setEpTel(ob.tel || ob.telPro || ''); setEpRccm(ob.rccm || '')
                   setEditSecteurs(ob.secteurs || []); setEditLogoColor(ob.logoColor || '#1D1D1F')
                   setEditModal('profil')
-                }}>Ajouter une pr�sentation �†’</button>}
+                }}>Ajouter une prèsentation →</button>}
               </div>
             )}
-            {/* Infos cl�s — effectif, ann�e, projets */}
+            {/* Infos clés — effectif, année, projets */}
             {(ob.effectif || ob.annee || ob.projetsN) && (
               <div style={{ display: 'flex', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap' }}>
-                {ob.annee && <div style={{ fontSize: 11, color: 'var(--t3)' }}>Fond�e en <strong style={{ color: 'var(--tx)' }}>{ob.annee}</strong></div>}
+                {ob.annee && <div style={{ fontSize: 11, color: 'var(--t3)' }}>Fondûe en <strong style={{ color: 'var(--tx)' }}>{ob.annee}</strong></div>}
                 {ob.effectif && <div style={{ fontSize: 11, color: 'var(--t3)' }}>Effectif : <strong style={{ color: 'var(--tx)' }}>{ob.effectif}</strong></div>}
-                {ob.projetsN && <div style={{ fontSize: 11, color: 'var(--t3)' }}><strong style={{ color: 'var(--tx)' }}>{ob.projetsN}</strong> projets r�alis�s</div>}
+                {ob.projetsN && <div style={{ fontSize: 11, color: 'var(--t3)' }}><strong style={{ color: 'var(--tx)' }}>{ob.projetsN}</strong> projets réalisés</div>}
               </div>
             )}
           </div>
           <div className="pp-card pp-services">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p className="pp-section-label" style={{ marginBottom: 0 }}>Comp�tences &amp; services</p>
+              <p className="pp-section-label" style={{ marginBottom: 0 }}>Compétences &amp; services</p>
               {isOwner && <button className="pp-see-all" style={{ fontSize: 11 }} onClick={() => { setEditServices(proServices.length > 0 ? [...proServices] : [...DEFAULT_SERVICES]); setEditModal('services') }}>Modifier</button>}
             </div>
             <div className="pp-services-grid" style={{ marginTop: 12 }}>
               {proServices.length > 0 ? proServices.map(s => <span key={s} className="pp-service-tag">{s}</span>) : (
                 <div style={{ padding: '8px 0', color: 'var(--t4)', fontSize: 12 }}>
-                  Aucun service renseign�.
-                  {isOwner && <button className="pp-see-all" style={{ marginLeft: 8 }} onClick={() => { setEditServices([]); setEditModal('services') }}>Ajouter �†’</button>}
+                  Aucun service renseigné.
+                  {isOwner && <button className="pp-see-all" style={{ marginLeft: 8 }} onClick={() => { setEditServices([]); setEditModal('services') }}>Ajouter →</button>}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* COORDONN�ES */}
+        {/* COORDONNéES */}
         {(proEmail || proTel || ob.rccm) && (
           <div className="pp-section">
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -571,7 +581,7 @@ export default function Profile() {
               {proVille && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span style={{ fontSize: 12, color: 'var(--tx)' }}>{proVille}, {ob.pays || "C�te d'Ivoire"}</span>
+                  <span style={{ fontSize: 12, color: 'var(--tx)' }}>{proVille}, {ob.pays || "Côte d'Ivoire"}</span>
                 </div>
               )}
             </div>
@@ -583,7 +593,7 @@ export default function Profile() {
           <div className="pp-section-hdr">
             <h2 className="pp-section-title">Portfolio</h2>
             <div style={{ display: 'flex', gap: 8 }}>
-              {isOwner && <button className="pp-see-all" onClick={() => { setEditPortfolio(displayPortfolio.map(p => ({ ...p, imgs: p.imgs?.length > 0 ? p.imgs : (p.img ? [p.img] : []) }))); setEditModal('portfolio') }}>Gerer �†’</button>}
+              {isOwner && <button className="pp-see-all" onClick={() => { setEditPortfolio(displayPortfolio.map(p => ({ ...p, imgs: p.imgs?.length > 0 ? p.imgs : (p.img ? [p.img] : []) }))); setEditModal('portfolio') }}>Gerer →</button>}
             </div>
           </div>
           {displayPortfolio.length > 0 ? (
@@ -616,7 +626,7 @@ export default function Profile() {
               <div style={{ fontSize: 24, marginBottom: 8, opacity: .3 }}>&#128247;</div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Portfolio en cours de constitution</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 12 }}>Les realisations seront visibles ici une fois ajoutees.</div>
-              {isOwner && <button className="pp-see-all" onClick={() => { setEditPortfolio([]); setEditModal('portfolio') }}>Ajouter des realisations �†’</button>}
+              {isOwner && <button className="pp-see-all" onClick={() => { setEditPortfolio([]); setEditModal('portfolio') }}>Ajouter des realisations →</button>}
             </div>
           )}
         </div>
@@ -624,21 +634,21 @@ export default function Profile() {
         {/* TEAM */}
         <div className="pp-section">
           <div className="pp-section-hdr">
-            <h2 className="pp-section-title">�quipe dirigeante</h2>
-            {isOwner && <button className="pp-see-all" onClick={() => { setEditTeamList(rawTeam.map(t => ({ ...t }))); setEditModal('equipe') }}>Gerer �†’</button>}
+            <h2 className="pp-section-title">équipe dirigeante</h2>
+            {isOwner && <button className="pp-see-all" onClick={() => { setEditTeamList(rawTeam.map(t => ({ ...t }))); setEditModal('equipe') }}>Gerer →</button>}
           </div>
           {displayTeam.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 24px', background: 'var(--s2)', borderRadius: 12 }}>
               <div style={{ fontSize: 24, marginBottom: 8, opacity: .3 }}>&#128101;</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>�quipe non encore renseign�e</div>
-              <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 12 }}>Les membres de l'�quipe appara�tront ici.</div>
-              {isOwner && <button className="pp-see-all" onClick={() => { setEditTeamList([]); setEditModal('equipe') }}>Ajouter des membres �†’</button>}
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>équipe non encore renseignée</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 12 }}>Les membres de l'équipe apparaîtront ici.</div>
+              {isOwner && <button className="pp-see-all" onClick={() => { setEditTeamList([]); setEditModal('equipe') }}>Ajouter des membres →</button>}
             </div>
           ) : (
           <div className="pp-three-col">
             {displayTeam.map((t, i) => {
               const initials = (t.name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
-              // Photo uniquement si upload�e par l'utilisateur (base64 ou URL r�elle)
+              // Photo uniquement si uploadûe par l'utilisateur (base64 ou URL rèelle)
               const photoUrl = t.photoUrl && t.photoUrl.startsWith('data:') ? t.photoUrl : (t.photoUrl && t.photoUrl.startsWith('http') ? t.photoUrl : null)
               return (
                 <div key={i} className="pp-card pp-team-card">
@@ -674,8 +684,8 @@ export default function Profile() {
         {/* PROJECTS */}
         <div className="pp-section">
           <div className="pp-section-hdr">
-            <h2 className="pp-section-title">Projets actifs � Cockpit</h2>
-            <button className="pp-see-all" onClick={() => navigate(isClient ? '/client' : '/cockpit')}>Acc�der au suivi �†’</button>
+            <h2 className="pp-section-title">Projets actifs à Cockpit</h2>
+            <button className="pp-see-all" onClick={() => navigate(isClient ? '/client' : '/cockpit')}>Accéder au suivi →</button>
           </div>
           {displayProjects.length > 0 ? (
             <div className="pp-card pp-project-list">
@@ -697,12 +707,12 @@ export default function Profile() {
           ) : (
             <div style={{ textAlign: 'center', padding: '32px 24px', background: 'var(--s2)', borderRadius: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>Aucun projet actif pour le moment.</div>
-              {isOwner && <button className="pp-see-all" style={{ marginTop: 8 }} onClick={() => navigate('/cockpit')}>Cr�er un projet �†’</button>}
+              {isOwner && <button className="pp-see-all" style={{ marginTop: 8 }} onClick={() => navigate('/cockpit')}>Créer un projet →</button>}
             </div>
           )}
         </div>
 
-        {/* BADGE VERIFICATION — affich� uniquement si v�rifi� */}
+        {/* BADGE VERIFICATION — affiché uniquement si vérifié */}
         {isVerified && (
           <div className="pp-section">
             <div style={{ background: 'var(--surface-1)', borderRadius: 14, border: '1px solid var(--border-card)', padding: '20px 24px' }}>
@@ -711,10 +721,10 @@ export default function Profile() {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11.5 14.5 15.5 9.5"/></svg>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>Structure v�rifi�e par MEEREO</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 12 }}>Cette structure a �t� contr�l�e et valid�e par MEEREO. Son identit�, ses documents l�gaux et sa conformit� aux crit�res de qualit� ont �t� v�rifi�s.</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>Structure vérifiée par MEEREO</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 12 }}>Cette structure a été contrôlée et validûe par MEEREO. Son identité, ses documents légaux et sa conformité aux critéres de qualité ont été vérifiés.</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {['Identit� v�rifi�e', 'Documents conformes', 'Crit�res MEEREO valid�s', 'Profil actif'].map(t => (
+                    {['Identité vérifiée', 'Documents conformes', 'Critéres MEEREO validûs', 'Profil actif'].map(t => (
                       <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'rgba(22,163,74,.06)', color: '#16A34A' }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                         {t}
@@ -730,7 +740,7 @@ export default function Profile() {
         {/* REVIEWS */}
         <div className="pp-section">
           <div className="pp-section-hdr">
-            <h2 className="pp-section-title">Avis &amp; cr�dibilit�</h2>
+            <h2 className="pp-section-title">Avis &amp; crédibilité</h2>
           </div>
           {(store.reviews || []).length > 0 ? (
             <div className="pp-three-col">
@@ -748,8 +758,8 @@ export default function Profile() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '32px 24px', background: 'var(--s2)', borderRadius: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>Aucun avis v�rifi� pour le moment.</div>
-              <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Les avis des clients et partenaires appara�tront ici.</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>Aucun avis vérifié pour le moment.</div>
+              <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Les avis des clients et partenaires apparaîtront ici.</div>
             </div>
           )}
         </div>
@@ -760,21 +770,21 @@ export default function Profile() {
       <div className="pp-sticky">
         <div className="pp-sticky-info">
           <div className="pp-sticky-name">{proName || 'Profil professionnel'}</div>
-          <div className="pp-sticky-type">{[proSpecialite, proVille].filter(Boolean).join(' � ') || 'Professionnel MEEREO'}</div>
+          <div className="pp-sticky-type">{[proSpecialite, proVille].filter(Boolean).join(' à ') || 'Professionnel MEEREO'}</div>
         </div>
         <div className="pp-sticky-sep" />
         {isOwner ? (
-          <button className="pp-sticky-btn" onClick={() => navigate('/cockpit')}>Mon Cockpit �†’</button>
+          <button className="pp-sticky-btn" onClick={() => navigate('/cockpit')}>Mon Cockpit →</button>
         ) : (
           <>
             <button className="pp-sticky-ghost" onClick={() => setShowInviteModal(true)}>Inviter sur un projet</button>
             {!isVisitor && <button className="pp-sticky-ghost" onClick={handleContactViaMsg}>Messagerie</button>}
-            <button className="pp-sticky-btn" onClick={() => setShowContactModal(true)}>Contacter �†’</button>
+            <button className="pp-sticky-btn" onClick={() => setShowContactModal(true)}>Contacter →</button>
           </>
         )}
       </div>
 
-      {/* �•��•��•� MODALS PROPRI�TAIRE: �dition profil �•��•��•� */}
+      {/* MODALS PROPRIéTAIRE: édition profil */}
 
       {/* Modal Profil Complet */}
       <Modal isOpen={editModal === 'profil'} onClose={() => setEditModal(null)} title="Gerer mon profil" wide footer={
@@ -786,7 +796,7 @@ export default function Profile() {
             user: prev.user ? { ...prev.user, name: epEntreprise || prev.user.name, email: epEmail || prev.user.email } : prev.user,
           }))
           await api.usersApi.updateOnboardingData(updates).catch(() => {})
-          showToast('Profil mis � jour', 'green')
+          showToast('Profil mis à jour', 'green')
           setEditModal(null)
         }}>Enregistrer</button></>
       }>
@@ -810,7 +820,7 @@ export default function Profile() {
                   const url = await uploadFile(f, 'logos', 'logo')
                   updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), logoFileUrl: url } }))
                   await api.usersApi.updateOnboardingData({ logoFileUrl: url }).catch(() => {})
-                  showToast('Logo mis � jour', 'green')
+                  showToast('Logo mis à jour', 'green')
                 } catch { showToast('Erreur upload logo', 'red') } finally { setEpLogoUploading(false) }
               }} />
               <button className="btn btn-sm" disabled={epLogoUploading} onClick={() => logoInputRef.current?.click()}>{epLogoUploading ? 'Upload…' : 'Changer le logo'}</button>
@@ -826,17 +836,17 @@ export default function Profile() {
           <div><label className="form-label">Slogan / accroche</label><input className="form-input" value={epSlogan} onChange={e => setEpSlogan(e.target.value)} placeholder="Une architecture ancree dans la duree" /></div>
           <div><label className="form-label">Bio / presentation</label><textarea className="form-input" value={epBio} onChange={e => setEpBio(e.target.value)} placeholder="Presentez votre structure..." /></div>
           {/* Secteurs */}
-          <div><label className="form-label">Secteurs d'activit�</label>
+          <div><label className="form-label">Secteurs d'activité</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
               {editSecteurs.map((s, i) => (
                 <span key={i} style={{ padding: '4px 10px', borderRadius: 100, background: '#f3f4f5', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
                   {s}
-                  <button onClick={() => setEditSecteurs(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a9a9a', fontSize: 14, lineHeight: 1 }}>�</button>
+                  <button onClick={() => setEditSecteurs(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a9a9a', fontSize: 14, lineHeight: 1 }}>×</button>
                 </span>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input className="form-input" value={epNewSecteur} onChange={e => setEpNewSecteur(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && epNewSecteur.trim()) { setEditSecteurs(prev => [...prev, epNewSecteur.trim()]); setEpNewSecteur('') } }} placeholder="Ex: G�nie Civil, BTP, Architecture…" />
+              <input className="form-input" value={epNewSecteur} onChange={e => setEpNewSecteur(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && epNewSecteur.trim()) { setEditSecteurs(prev => [...prev, epNewSecteur.trim()]); setEpNewSecteur('') } }} placeholder="Ex: Génie Civil, BTP, Architecture…" />
               <button className="btn btn-sm" disabled={!epNewSecteur.trim()} onClick={() => { if (epNewSecteur.trim()) { setEditSecteurs(prev => [...prev, epNewSecteur.trim()]); setEpNewSecteur('') } }}>+</button>
             </div>
           </div>
@@ -864,7 +874,7 @@ export default function Profile() {
             {editServices.map((s, i) => (
               <span key={i} style={{ padding: '5px 12px', borderRadius: 100, background: '#f3f4f5', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
                 {s}
-                <button onClick={() => setEditServices(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a9a9a', fontSize: 14, lineHeight: 1 }}>�</button>
+                <button onClick={() => setEditServices(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a9a9a', fontSize: 14, lineHeight: 1 }}>×</button>
               </span>
             ))}
           </div>
@@ -876,7 +886,7 @@ export default function Profile() {
       </Modal>
 
       {/* Modal Portfolio */}
-      <Modal isOpen={editModal === 'portfolio'} onClose={() => setEditModal(null)} title="G�rer le portfolio" wide footer={
+      <Modal isOpen={editModal === 'portfolio'} onClose={() => setEditModal(null)} title="Gérer le portfolio" wide footer={
         <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => saveEdit('portfolio', editPortfolio)}>Enregistrer</button></>
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -894,9 +904,9 @@ export default function Profile() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <input className="form-input" style={{ flex: 1, fontSize: 13, fontWeight: 600 }} value={p.cap} onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, cap: e.target.value } : x))} placeholder="Titre du projet" />
                   <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--t3)', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                    <input type="checkbox" checked={p.feat || false} onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, feat: e.target.checked } : x))} /> � la une
+                    <input type="checkbox" checked={p.feat || false} onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, feat: e.target.checked } : x))} /> à la une
                   </label>
-                  <button onClick={() => setEditPortfolio(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--err)', fontSize: 16, flexShrink: 0 }} title="Supprimer ce projet">�</button>
+                  <button onClick={() => setEditPortfolio(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--err)', fontSize: 16, flexShrink: 0 }} title="Supprimer ce projet">×</button>
                 </div>
                 {/* Gallery thumbnails + add */}
                 <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, alignItems: 'flex-start' }}>
@@ -904,7 +914,7 @@ export default function Profile() {
                     <div key={k} style={{ position: 'relative', flexShrink: 0, width: 80, height: 80, borderRadius: 8, overflow: 'hidden', border: k === 0 ? '2px solid #3B82F6' : '1.5px solid var(--border-card)' }}>
                       <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       {k === 0 && <div style={{ position: 'absolute', top: 3, left: 3, background: 'rgba(59,130,246,.85)', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, pointerEvents: 'none' }}>Cover</div>}
-                      <button onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: x.imgs.filter((_, m) => m !== k) } : x))} style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(220,38,38,.85)', color: '#fff', border: 'none', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>�</button>
+                      <button onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: x.imgs.filter((_, m) => m !== k) } : x))} style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(220,38,38,.85)', color: '#fff', border: 'none', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
                     </div>
                   ))}
                   {/* Add photos */}
@@ -913,7 +923,7 @@ export default function Profile() {
                     <span style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>Ajouter<br/>photos</span>
                   </div>
                 </div>
-                {imgs.length > 1 && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>{imgs.length} photos � La 1�re est la couverture affich�e</div>}
+                {imgs.length > 1 && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>{imgs.length} photos à La 1ére est la couverture affichée</div>}
                 {imgs.length === 0 && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4 }}>Aucune photo — cliquez « Ajouter photos » pour en ajouter.</div>}
               </div>
             )
@@ -940,7 +950,7 @@ export default function Profile() {
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#474747', flexShrink: 0 }}>{(m.name || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}</div>
                 <input className="form-input" style={{ flex: 1 }} value={m.name || ''} onChange={e => setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Nom" />
                 <input className="form-input" style={{ flex: 1 }} value={m.role || ''} onChange={e => setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} placeholder="Role" />
-                <button onClick={() => setEditTeamList(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ba1a1a', fontSize: 14, flexShrink: 0 }}>�</button>
+                <button onClick={() => setEditTeamList(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ba1a1a', fontSize: 14, flexShrink: 0 }}>×</button>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input className="form-input" style={{ flex: 1, fontSize: 11 }} value={m.email || ''} onChange={e => setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} placeholder="Email (optionnel)" />
@@ -962,7 +972,7 @@ export default function Profile() {
         </div>
       </Modal>
 
-      {/* �•��•��•� MODAL: Contacter le professionnel �•��•��•� */}
+      {/* MODAL: Contacter le professionnel */}
       <Modal isOpen={showContactModal} onClose={() => setShowContactModal(false)} title={'Contacter ' + proName} footer={
         <>
           <button className="btn btn-sm" onClick={() => setShowContactModal(false)}>Annuler</button>
@@ -974,7 +984,7 @@ export default function Profile() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{proInitials}</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700 }}>{proName}</div>
-              <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} � {proVille}</div>
+              <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} à {proVille}</div>
             </div>
           </div>
           <div>
@@ -993,7 +1003,7 @@ export default function Profile() {
         </div>
       </Modal>
 
-      {/* �•��•��•� MODAL: Inviter sur un projet �•��•��•� */}
+      {/* MODAL: Inviter sur un projet */}
       <Modal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} title={'Inviter ' + proName + ' sur un projet'} footer={
         <>
           <button className="btn btn-sm" onClick={() => setShowInviteModal(false)}>Annuler</button>
@@ -1005,18 +1015,18 @@ export default function Profile() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{proInitials}</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700 }}>{proName}</div>
-              <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} � {proVille}</div>
+              <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} à {proVille}</div>
             </div>
           </div>
           <div>
             <label className="form-label">Projet *</label>
             <select className="form-input" value={inviteProjet} onChange={e => setInviteProjet(e.target.value)}>
-              <option value="">S�lectionner un projet</option>
+              <option value="">Sélectionner un projet</option>
               {visitorProjects.map(p => <option key={p.id} value={p.id}>{p.nom} — {p.client}</option>)}
             </select>
           </div>
           <div>
-            <label className="form-label">R�le / mission demand�e</label>
+            <label className="form-label">Rôle / mission demandûe</label>
             <input className="form-input" value={inviteRole} onChange={e => setInviteRole(e.target.value)} placeholder="ex: Maitre d'oeuvre, BET Structure, OPC..." />
           </div>
           <div>
@@ -1026,25 +1036,25 @@ export default function Profile() {
         </div>
       </Modal>
 
-      {/* �•��•��•� PORTFOLIO LIGHTBOX �•��•��•� */}
+      {/* PORTFOLIO LIGHTBOX */}
       {portfolioViewer && createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.93)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setPortfolioViewer(null)}>
           {/* Close */}
-          <button onClick={() => setPortfolioViewer(null)} style={{ position: 'absolute', top: 20, right: 20, width: 42, height: 42, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>�</button>
+          <button onClick={() => setPortfolioViewer(null)} style={{ position: 'absolute', top: 20, right: 20, width: 42, height: 42, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>×</button>
           {/* Counter + caption */}
           <div style={{ position: 'absolute', top: 22, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>
-            {portfolioViewer.cap && <span style={{ marginRight: 8, color: '#fff' }}>{portfolioViewer.cap} �</span>}
+            {portfolioViewer.cap && <span style={{ marginRight: 8, color: '#fff' }}>{portfolioViewer.cap} à</span>}
             {portfolioViewer.idx + 1} / {portfolioViewer.imgs.length}
           </div>
           {/* Prev arrow */}
           {portfolioViewer.imgs.length > 1 && (
-            <button onClick={e => { e.stopPropagation(); setPortfolioViewer(prev => ({ ...prev, idx: (prev.idx - 1 + prev.imgs.length) % prev.imgs.length })) }} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>�€�</button>
+            <button onClick={e => { e.stopPropagation(); setPortfolioViewer(prev => ({ ...prev, idx: (prev.idx - 1 + prev.imgs.length) % prev.imgs.length })) }} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>é</button>
           )}
           {/* Main image */}
           <img src={portfolioViewer.imgs[portfolioViewer.idx]} alt="" onClick={e => e.stopPropagation()} style={{ maxWidth: '88vw', maxHeight: '82vh', objectFit: 'contain', borderRadius: 10, boxShadow: '0 24px 64px rgba(0,0,0,.6)' }} />
           {/* Next arrow */}
           {portfolioViewer.imgs.length > 1 && (
-            <button onClick={e => { e.stopPropagation(); setPortfolioViewer(prev => ({ ...prev, idx: (prev.idx + 1) % prev.imgs.length })) }} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>�€�</button>
+            <button onClick={e => { e.stopPropagation(); setPortfolioViewer(prev => ({ ...prev, idx: (prev.idx + 1) % prev.imgs.length })) }} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: '#fff', border: 'none', fontSize: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>é</button>
           )}
           {/* Thumbnail strip */}
           {portfolioViewer.imgs.length > 1 && (
@@ -1064,7 +1074,7 @@ export default function Profile() {
       <footer className="pp-footer">
         <div className="pp-footer-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><MeereoLogo size={22} /> MEEREO</div>
         <div className="pp-footer-links">
-          <a href="#">Confidentialit�</a><a href="#">Conditions</a><a href="#">Support</a>
+          <a href="#">Confidentialité</a><a href="#">Conditions</a><a href="#">Support</a>
           <span>© 2025 MEEREO SAS</span>
         </div>
       </footer>

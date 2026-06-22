@@ -48,8 +48,9 @@ const PROFILE_TEXTS = {
 
 export default function DeleteAccountSection({ profileType = 'pro' }) {
   const nav = useNavigate()
-  const { updateStore, showToast, log } = useMeereo()
+  const { logoutUser, showToast } = useMeereo()
   const [showModal, setShowModal] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const [password, setPassword] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
@@ -62,86 +63,22 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
     if (!canConfirm || isDeleting) return
     setIsDeleting(true)
 
-    // 1. Purge backend — AWAIT the result before doing anything locally
+    // 1. Soft-delete on backend — cookie is cleared server-side on success
     try {
       await api.auth.deleteAccount(password)
     } catch (e) {
-      // Backend rejected (wrong password, expired token, network error…)
       setIsDeleting(false)
-      const msg = e?.message || 'Erreur lors de la suppression'
-      showToast(msg, 'red')
+      showToast(e?.message || 'Erreur lors de la suppression', 'red')
       return
     }
 
-    // 2. NUKE localStorage SYNCHRONOUSLY with an empty store
-    // This is the ONLY reliable way to ensure no data survives
-    const emptyStore = JSON.stringify({
-      user: null, _token: null, users: [], projects: [], aos: [], offers: [],
-      markets: [], tasks: [], documents: [], decisions: [], products: [],
-      notifications: [], activities: [], transactions: [], commandes: [],
-      messages: [], conversations: [], events: [], intervenants: [],
-      clients: [], fournisseurs: [], rapports: [], sellerOrders: [],
-      photos: [], notes: [], paymentRequests: [], projectMembers: [],
-      projectInvitations: [], clotureRequests: [], aoInvitations: [],
-      entrepriseDocs: [], introductions: [], commissions: [],
-      commissionAcceptances: [], onboardingData: null,
-      kaiOnboardingDone: { pro: false, client: false, fournisseur: false },
-      kaiConversations: [], kaiMemory: [], kaiUsage: [],
-      paymentOrders: [], ledgerEntries: [], payoutRequests: [],
-      proofDocuments: [], disputeCases: [], wallets: [], reviews: [],
-      offerStatuts: {}, marketStatuts: {}, taskStates: {},
-      deletedEventIds: [], eventOverrides: {},
-    })
-    localStorage.setItem('meereo_store_v2', emptyStore)
-    try { sessionStorage.clear() } catch {}
+    // 2. Clear session client-side (store + sessionStorage + in-memory token)
+    await logoutUser()
 
-    // 3. Inject confirmation screen into DOM (outside React)
-    const overlay = document.createElement('div')
-    overlay.id = 'meereo-delete-confirm'
-    overlay.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:999999;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,-apple-system,sans-serif">
-        <div style="max-width:420px;text-align:center">
-          <div style="width:56px;height:56px;border-radius:50%;background:rgba(22,163,74,.06);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div style="font-size:22px;font-weight:700;color:#111;margin-bottom:8px;letter-spacing:-.3px">Compte supprimé</div>
-          <div style="font-size:14px;color:#666;line-height:1.6;margin-bottom:8px">Votre compte et toutes vos données ont été définitivement supprimés.</div>
-          <div style="font-size:12.5px;color:#999;line-height:1.6;margin-bottom:28px">Vos projets, documents, messages, fichiers et informations personnelles ont été effacés de nos serveurs. Cette action est irréversible.</div>
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.replace('/onboarding')" style="padding:12px 28px;border-radius:10px;background:#191c1d;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Créer un nouveau compte</button>
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.replace('/')" style="padding:10px 20px;border-radius:8px;background:transparent;color:#999;border:none;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">Retour à l'accueil</button>
-            <div id="meereo-delete-countdown" style="font-size:11px;color:#bbb;margin-top:12px">Redirection automatique dans 8 secondes</div>
-          </div>
-        </div>
-      </div>
-    `
-    document.body.appendChild(overlay)
-
-    // 4. Countdown + force redirect
-    let seconds = 8
-    const iv = setInterval(() => {
-      seconds--
-      const el = document.getElementById('meereo-delete-countdown')
-      if (el) el.textContent = seconds > 0 ? `Redirection automatique dans ${seconds} seconde${seconds > 1 ? 's' : ''}` : 'Redirection...'
-      if (seconds <= 0) { clearInterval(iv); localStorage.clear(); sessionStorage.clear(); window.location.replace('/onboarding') }
-    }, 1000)
-
-    // 5. Kill React state completely — wipe EVERYTHING
-    updateStore(() => ({
-      user: null, _token: null,
-      users: [], projects: [], aos: [], offers: [], markets: [], tasks: [],
-      documents: [], decisions: [], products: [], notifications: [], activities: [],
-      transactions: [], commandes: [], messages: [], conversations: [], events: [],
-      intervenants: [], clients: [], fournisseurs: [], rapports: [], sellerOrders: [],
-      photos: [], notes: [], paymentRequests: [], projectMembers: [], projectInvitations: [],
-      clotureRequests: [], aoInvitations: [], entrepriseDocs: [], introductions: [],
-      commissions: [], commissionAcceptances: [], onboardingData: null,
-      kaiOnboardingDone: { pro: false, client: false, fournisseur: false },
-      kaiConversations: [], kaiMemory: [], kaiUsage: [],
-      paymentOrders: [], ledgerEntries: [], payoutRequests: [], proofDocuments: [],
-      disputeCases: [], wallets: [], reviews: [], offerStatuts: {}, marketStatuts: {},
-      taskStates: {}, deletedEventIds: [], eventOverrides: [],
-    }))
+    // 3. Show success screen then redirect
+    setShowModal(false)
+    setShowSuccess(true)
+    setTimeout(() => nav('/onboarding', { replace: true }), 3000)
   }
 
   return (
@@ -161,7 +98,7 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
           {texts.desc}
         </p>
         <button
-          onClick={() => { setShowModal(true); setConfirmText(''); setPassword(''); log('ACCOUNT_DELETION_REQUESTED', { profileType }) }}
+          onClick={() => { setShowModal(true); setConfirmText(''); setPassword('') }}
           style={{
             padding: '10px 18px',
             borderRadius: 12,
@@ -309,6 +246,25 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
       )}
 
       {/* Confirmation screen — full overlay after deletion */}
+      {showSuccess && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 999999,
+          background: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20, fontFamily: 'var(--f, Inter, sans-serif)',
+        }}>
+          <div style={{ maxWidth: 420, textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 8, letterSpacing: '-.3px' }}>Compte supprimé</div>
+            <div style={{ fontSize: 14, color: '#666', lineHeight: 1.6, marginBottom: 24 }}>
+              Votre compte et toutes vos données ont été définitivement supprimés.
+              Redirection dans quelques secondes…
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -1,4 +1,4 @@
-﻿// === FICHIER : web/src/pages/cockpit/FinancePage.jsx ===
+// === FICHIER : web/src/pages/cockpit/FinancePage.jsx ===
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { api } from '../../services/api/client'
@@ -12,27 +12,27 @@ import { formatDateFR } from '../../utils/helpers'
 
 const TABS = [
   { key: 'budgets',  label: 'Budgets' },
-  { key: 'depenses', label: 'D�penses' },
+  { key: 'depenses', label: 'Dépenses' },
   { key: 'factures', label: 'Factures' },
   { key: 'rapports', label: 'Rapports' },
 ]
 
 const INVOICE_TRANSITIONS = {
-  brouillon: { next: 'emise',    label: '�mettre' },
-  emise:     { next: 'payee',    label: 'Marquer pay�e' },
+  brouillon: { next: 'emise',    label: 'émettre' },
+  emise:     { next: 'payee',    label: 'Marquer payée' },
   payee:     { next: 'validee',  label: 'Valider' },
 }
 
 const INVOICE_BADGE = {
   brouillon: { label: 'Brouillon', color: 'var(--t4)',  bg: 'var(--s2)' },
-  emise:     { label: '�mise',     color: '#007AFF',    bg: 'rgba(0,122,255,.07)' },
-  payee:     { label: 'Pay�e',     color: 'var(--ok)',  bg: 'rgba(52,199,89,.07)' },
-  validee:   { label: 'Valid�e',   color: '#7C3AED',    bg: 'rgba(124,58,237,.07)' },
+  emise:     { label: 'émise',     color: '#007AFF',    bg: 'rgba(0,122,255,.07)' },
+  payee:     { label: 'Payée',     color: 'var(--ok)',  bg: 'rgba(52,199,89,.07)' },
+  validee:   { label: 'Validûe',   color: '#7C3AED',    bg: 'rgba(124,58,237,.07)' },
 }
 
 const PIE_COLORS = ['#2563EB','#7C3AED','#DC2626','#16A34A','#F59E0B','#EA580C','#0891B2','#6366F1','#BE185D','#92400E']
 
-const EXPENSE_CATEGORIES = ['Main d\'�“uvre','Mat�riaux','Transport','�tudes','Honoraires','�quipements','Sous-traitance','Divers']
+const EXPENSE_CATEGORIES = ['Main d\'é“uvre','Matériaux','Transport','études','Honoraires','équipements','Sous-traitance','Divers']
 
 function Spinner() {
   return (
@@ -60,7 +60,7 @@ function burnColor(pct) {
 }
 
 function formatMonth(key) {
-  const months = ['Jan','F�v','Mar','Avr','Mai','Jun','Jul','Ao�','Sep','Oct','Nov','D�c']
+  const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoé','Sep','Oct','Nov','Déc']
   const [, m] = key.split('-')
   return months[parseInt(m, 10) - 1]
 }
@@ -94,7 +94,7 @@ export default function Finance({ showToast }) {
   // Transition confirm: { id, nextStatus, label }
   const [transition, setTransition] = useState(null)
 
-  // �”€�”€�”€ Fetchers �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Fetchers ───────────────────────────────────────────────────────────
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -131,7 +131,7 @@ export default function Finance({ showToast }) {
 
   useEffect(() => { fetchReport(selectedProjectId) }, [selectedProjectId, fetchReport])
 
-  // �”€�”€�”€ Modal helpers �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Modal helpers ───────────────────────────────────────────────────────
 
   const openCreate = (type) => {
     setForm({})
@@ -147,7 +147,7 @@ export default function Finance({ showToast }) {
 
   const pf = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
 
-  // �”€�”€�”€ CRUD — Budgets �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── CRUD — Budgets ──────────────────────────────────────────────────────
 
   const handleSaveBudget = async () => {
     setFormSubmitted(true)
@@ -155,10 +155,10 @@ export default function Finance({ showToast }) {
     try {
       if (modal.mode === 'create') {
         await api.finance.createBudget({ label: form.label || 'Budget', montant: form.montant, projectId: form.projectId || null })
-        showToast && showToast('Budget cr��')
+        showToast && showToast('Budget créé')
       } else {
         await api.finance.updateBudget(modal.item.id, { label: form.label, montant: form.montant })
-        showToast && showToast('Budget mis � jour')
+        showToast && showToast('Budget mis à jour')
       }
       closeModal(); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
@@ -167,12 +167,12 @@ export default function Finance({ showToast }) {
   const handleDeleteBudget = async (id) => {
     try {
       await api.finance.deleteBudget(id)
-      showToast && showToast('Budget supprim�')
+      showToast && showToast('Budget supprimé')
       setConfirm(null); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
   }
 
-  // �”€�”€�”€ CRUD — Expenses �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── CRUD — Expenses ─────────────────────────────────────────────────────
 
   const handleSaveExpense = async () => {
     setFormSubmitted(true)
@@ -180,10 +180,10 @@ export default function Finance({ showToast }) {
     try {
       if (modal.mode === 'create') {
         await api.finance.createExpense({ label: form.label, montant: form.montant, provider: form.provider || null, projectId: form.projectId || null })
-        showToast && showToast('D�pense enregistr�e')
+        showToast && showToast('Dépense enregistrée')
       } else {
         await api.finance.updateExpense(modal.item.id, { label: form.label, montant: form.montant, provider: form.provider })
-        showToast && showToast('D�pense mise � jour')
+        showToast && showToast('Dépense mise à jour')
       }
       closeModal(); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
@@ -192,12 +192,12 @@ export default function Finance({ showToast }) {
   const handleDeleteExpense = async (id) => {
     try {
       await api.finance.deleteExpense(id)
-      showToast && showToast('D�pense supprim�e')
+      showToast && showToast('Dépense supprimée')
       setConfirm(null); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
   }
 
-  // �”€�”€�”€ CRUD — Invoices �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── CRUD — Invoices ─────────────────────────────────────────────────────
 
   const handleSaveInvoice = async () => {
     setFormSubmitted(true)
@@ -205,10 +205,10 @@ export default function Finance({ showToast }) {
     try {
       if (modal.mode === 'create') {
         await api.finance.createInvoice({ label: form.label, montant: form.montant, provider: form.provider || null, projectId: form.projectId || null })
-        showToast && showToast('Facture cr��e')
+        showToast && showToast('Facture créée')
       } else {
         await api.finance.updateInvoice(modal.item.id, { label: form.label, montant: form.montant, provider: form.provider })
-        showToast && showToast('Facture mise � jour')
+        showToast && showToast('Facture mise à jour')
       }
       closeModal(); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
@@ -218,12 +218,12 @@ export default function Finance({ showToast }) {
     if (!transition) return
     try {
       await api.finance.patchInvoiceStatus(transition.id, transition.nextStatus)
-      showToast && showToast('Statut mis � jour')
+      showToast && showToast('Statut mis à jour')
       setTransition(null); fetchAll()
     } catch (err) { showToast && showToast(err.message) }
   }
 
-  // �”€�”€�”€ Computed �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Computed ────────────────────────────────────────────────────────────
 
   const projectExpenses = (projectId) =>
     expenses.filter(e => e.projectId === projectId).reduce((s, e) => s + e.montant, 0)
@@ -236,7 +236,7 @@ export default function Finance({ showToast }) {
     (!invStatusFilter || i.statut === invStatusFilter)
   )
 
-  // �”€�”€�”€ Rapports: pie chart data �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Rapports: pie chart data ─────────────────────────────────────────────
 
   const pieData = (() => {
     const all = selectedProjectId
@@ -250,42 +250,42 @@ export default function Finance({ showToast }) {
     return Object.entries(acc).map(([name, value]) => ({ name, value }))
   })()
 
-  // �”€�”€�”€ Modal footer helper �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Modal footer helper ──────────────────────────────────────────────────
 
   const modalFooter = (onSave, disabled) => (
     <>
       <button className="btn btn-sm" onClick={closeModal}>Annuler</button>
       <button className="btn btn-primary btn-sm" disabled={disabled} onClick={onSave}>
-        {modal?.mode === 'edit' ? 'Enregistrer' : 'Cr�er'}
+        {modal?.mode === 'edit' ? 'Enregistrer' : 'Créer'}
       </button>
     </>
   )
 
-  // �”€�”€�”€ Render �”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€�”€
+  // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
     <div>
-      <DSPageHeader title="Finance" subtitle="Budgets � D�penses � Factures � Rapports">
+      <DSPageHeader title="Finance" subtitle="Budgets à Dépenses à Factures à Rapports">
         <DSFilterBar filters={TABS} active={tab} onChange={setTab} />
         {tab === 'budgets'  && <button className="btn btn-primary btn-sm" onClick={() => openCreate('budget')}>+ Budget</button>}
-        {tab === 'depenses' && <button className="btn btn-primary btn-sm" onClick={() => openCreate('expense')}>+ D�pense</button>}
+        {tab === 'depenses' && <button className="btn btn-primary btn-sm" onClick={() => openCreate('expense')}>+ Dépense</button>}
         {tab === 'factures' && <button className="btn btn-primary btn-sm" onClick={() => openCreate('invoice')}>+ Facture</button>}
       </DSPageHeader>
 
-      {/* �•��•��•� BUDGETS �•��•��•� */}
+      {/* BUDGETS */}
       {tab === 'budgets' && (
         loading ? (
           <div className="card" style={{ overflow:'hidden' }}>
             {[1,2,3].map(i => <SkeletonRow key={i} />)}
           </div>
         ) : budgets.length === 0 ? (
-          <DSEmptyState icon="�Ÿ’�" title="Aucun budget" description="Cr�ez votre premier budget pour suivre les d�penses par projet." actionLabel="Cr�er un budget" onAction={() => openCreate('budget')} />
+          <DSEmptyState icon="’é" title="Aucun budget" description="Créez votre premier budget pour suivre les dûpenses par projet." actionLabel="Créer un budget" onAction={() => openCreate('budget')} />
         ) : (
           <div className="card" style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', minWidth:560, borderCollapse:'collapse', fontSize:13 }}>
               <thead>
                 <tr style={{ background:'var(--s2)', textAlign:'left' }}>
-                  {['Libell�','Projet','Montant','D�pens�','Taux',''].map((h, i) => (
+                  {['Libellé','Projet','Montant','Dépensé','Taux',''].map((h, i) => (
                     <th key={i} style={{ padding:'10px 18px', fontWeight:700, fontSize:10, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--t4)' }}>{h}</th>
                   ))}
                 </tr>
@@ -311,7 +311,7 @@ export default function Finance({ showToast }) {
                       </td>
                       <td style={{ padding:'12px 18px' }}>
                         <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                          <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('budget', b)}>�diter</button>
+                          <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('budget', b)}>éditer</button>
                           <button className="btn btn-sm" style={{ fontSize:10, color:'var(--err)', borderColor:'rgba(220,38,38,.2)' }} onClick={() => setConfirm({ type:'budget', id:b.id, label:b.label })}>Suppr.</button>
                         </div>
                       </td>
@@ -324,28 +324,28 @@ export default function Finance({ showToast }) {
         )
       )}
 
-      {/* �•��•��•� D�PENSES �•��•��•� */}
+      {/* DéPENSES */}
       {tab === 'depenses' && (
         budgets.length === 0 ? (
-          <DSEmptyState icon="�Ÿ“‹" title="Aucun budget d�fini" description="Cr�ez d'abord un budget avant d'enregistrer des d�penses." actionLabel="Cr�er un budget" onAction={() => setTab('budgets')} />
+          <DSEmptyState icon="“‹" title="Aucun budget dûfini" description="Créez d'abord un budget avant d'enregistrer des dûpenses." actionLabel="Créer un budget" onAction={() => setTab('budgets')} />
         ) : (
           <div>
             <div style={{ display:'flex', gap:10, marginBottom:16 }}>
               <select className="form-input" value={expCatFilter} onChange={e => setExpCatFilter(e.target.value)}>
-                <option value="">Toutes cat�gories</option>
+                <option value="">Toutes catégories</option>
                 {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             {loading ? (
               <div className="card" style={{ overflow:'hidden' }}>{[1,2,3].map(i => <SkeletonRow key={i} />)}</div>
             ) : filteredExpenses.length === 0 ? (
-              <DSEmptyState icon="�Ÿ’�" title="Aucune d�pense" description="Enregistrez vos premi�res d�penses de projet." actionLabel="Ajouter une d�pense" onAction={() => openCreate('expense')} />
+              <DSEmptyState icon="’é" title="Aucune dûpense" description="Enregistrez vos premières dûpenses de projet." actionLabel="Ajouter une dûpense" onAction={() => openCreate('expense')} />
             ) : (
               <div className="card" style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', minWidth:560, borderCollapse:'collapse', fontSize:13 }}>
                   <thead>
                     <tr style={{ background:'var(--s2)', textAlign:'left' }}>
-                      {['Description','Cat�gorie','Projet','Montant','Date',''].map((h, i) => (
+                      {['Description','Catégorie','Projet','Montant','Date',''].map((h, i) => (
                         <th key={i} style={{ padding:'10px 18px', fontWeight:700, fontSize:10, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--t4)' }}>{h}</th>
                       ))}
                     </tr>
@@ -364,7 +364,7 @@ export default function Finance({ showToast }) {
                           <td style={{ padding:'12px 18px', color:'var(--t4)', fontSize:12 }}>{formatDateFR(e.createdAt)}</td>
                           <td style={{ padding:'12px 18px' }}>
                             <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                              <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('expense', e)}>�diter</button>
+                              <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('expense', e)}>éditer</button>
                               <button className="btn btn-sm" style={{ fontSize:10, color:'var(--err)', borderColor:'rgba(220,38,38,.2)' }} onClick={() => setConfirm({ type:'expense', id:e.id, label:e.label })}>Suppr.</button>
                             </div>
                           </td>
@@ -379,7 +379,7 @@ export default function Finance({ showToast }) {
         )
       )}
 
-      {/* �•��•��•� FACTURES �•��•��•� */}
+      {/* FACTURES */}
       {tab === 'factures' && (
         <div>
           <div style={{ display:'flex', gap:10, marginBottom:16 }}>
@@ -391,13 +391,13 @@ export default function Finance({ showToast }) {
           {loading ? (
             <div className="card" style={{ overflow:'hidden' }}>{[1,2,3].map(i => <SkeletonRow key={i} />)}</div>
           ) : filteredInvoices.length === 0 ? (
-            <DSEmptyState icon="�Ÿ��" title="Aucune facture" description="Cr�ez votre premi�re facture." actionLabel="Nouvelle facture" onAction={() => openCreate('invoice')} />
+            <DSEmptyState icon="é" title="Aucune facture" description="Créez votre première facture." actionLabel="Nouvelle facture" onAction={() => openCreate('invoice')} />
           ) : (
             <div className="card" style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', minWidth:680, borderCollapse:'collapse', fontSize:13 }}>
                 <thead>
                   <tr style={{ background:'var(--s2)', textAlign:'left' }}>
-                    {['R�f�rence','Client / Note','Projet','Montant','Statut','Date','Actions'].map((h, i) => (
+                    {['Référence','Client / Note','Projet','Montant','Statut','Date','Actions'].map((h, i) => (
                       <th key={i} style={{ padding:'10px 18px', fontWeight:700, fontSize:10, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--t4)' }}>{h}</th>
                     ))}
                   </tr>
@@ -424,7 +424,7 @@ export default function Finance({ showToast }) {
                                 {tr.label}
                               </button>
                             )}
-                            <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('invoice', inv)}>�diter</button>
+                            <button className="btn btn-sm" style={{ fontSize:10 }} onClick={() => openEdit('invoice', inv)}>éditer</button>
                           </div>
                         </td>
                       </tr>
@@ -437,30 +437,30 @@ export default function Finance({ showToast }) {
         </div>
       )}
 
-      {/* �•��•��•� RAPPORTS �•��•��•� */}
+      {/* RAPPORTS */}
       {tab === 'rapports' && (
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
             <select className="form-input" value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}>
-              <option value="">S�lectionner un projet pour le rapport</option>
+              <option value="">Sélectionner un projet pour le rapport</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
             </select>
           </div>
 
           {!selectedProjectId ? (
-            <DSEmptyState icon="�Ÿ“Š" title="S�lectionnez un projet" description="Choisissez un projet pour afficher les indicateurs financiers d�taill�s." />
+            <DSEmptyState icon="“Š" title="Sélectionnez un projet" description="Choisissez un projet pour afficher les indicateurs financiers dûtaillés." />
           ) : reportLoading ? (
             <Spinner />
           ) : !report ? (
-            <DSEmptyState icon="�Ÿ“Š" title="Aucune donn�e" description="Aucune transaction enregistr�e pour ce projet." />
+            <DSEmptyState icon="“Š" title="Aucune donnée" description="Aucune transaction enregistrée pour ce projet." />
           ) : (
             <div>
               {/* KPIs */}
               <DSKpiStrip items={[
                 { label:'Budget total',    value: fmt(report.kpi.totalBudget) },
-                { label:'Total d�pens�',   value: fmt(report.kpi.totalExpenses),  color:'var(--err)' },
-                { label:'Total factur�',   value: fmt(report.kpi.totalInvoiced),  color:'#007AFF' },
-                { label:'Total encaiss�',  value: fmt(report.kpi.totalPaid),      color:'var(--ok)' },
+                { label:'Total dûpensé',   value: fmt(report.kpi.totalExpenses),  color:'var(--err)' },
+                { label:'Total facturé',   value: fmt(report.kpi.totalInvoiced),  color:'#007AFF' },
+                { label:'Total encaissé',  value: fmt(report.kpi.totalPaid),      color:'var(--ok)' },
               ]} />
 
               {/* Burn rate */}
@@ -468,7 +468,7 @@ export default function Finance({ showToast }) {
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                   <div>
                     <div style={{ fontSize:12, fontWeight:700, marginBottom:2 }}>Burn Rate</div>
-                    <div style={{ fontSize:11, color:'var(--t3)' }}>Budget consomm�</div>
+                    <div style={{ fontSize:11, color:'var(--t3)' }}>Budget consommé</div>
                   </div>
                   <div style={{ fontSize:28, fontWeight:800, color:burnColor(report.kpi.burnRate) }}>{report.kpi.burnRate}%</div>
                 </div>
@@ -477,37 +477,37 @@ export default function Finance({ showToast }) {
                 </div>
                 <div style={{ display:'flex', justifyContent:'space-between', marginTop:6, fontSize:10, color:'var(--t4)' }}>
                   <span>0%</span>
-                  <span style={{ color:'var(--wrn)' }}>�š� 70%</span>
-                  <span style={{ color:'var(--err)' }}>�Ÿ”� 90%</span>
+                  <span style={{ color:'var(--wrn)' }}>éšé 70%</span>
+                  <span style={{ color:'var(--err)' }}>”é 90%</span>
                   <span>100%</span>
                 </div>
               </div>
 
               {/* Charts */}
               <div className="rg-2" style={{ gap:20, marginBottom:20 }}>
-                {/* Bar chart — �volution mensuelle */}
+                {/* Bar chart — évolution mensuelle */}
                 <div className="card" style={{ padding:'18px 22px' }}>
-                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>�volution mensuelle</div>
+                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>évolution mensuelle</div>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={(report.monthlyBreakdown || []).map(m => ({ ...m, month: formatMonth(m.month) }))} barSize={8} barGap={2}>
                       <XAxis dataKey="month" tick={{ fontSize:10, fill:'var(--t4)' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize:9, fill:'var(--t4)' }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v} />
-                      <Tooltip formatter={(v, name) => [fmt(v), name === 'budgets' ? 'Budget' : 'D�penses']} contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid var(--border)' }} />
+                      <Tooltip formatter={(v, name) => [fmt(v), name === 'budgets' ? 'Budget' : 'Dépenses']} contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid var(--border)' }} />
                       <Bar dataKey="budgets"  fill="#2563EB" radius={[3,3,0,0]} />
                       <Bar dataKey="depenses" fill="#DC2626" radius={[3,3,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
                   <div style={{ display:'flex', gap:16, justifyContent:'center', marginTop:8 }}>
                     <span style={{ fontSize:10, color:'var(--t4)', display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:2, background:'#2563EB', display:'inline-block' }} />Budget</span>
-                    <span style={{ fontSize:10, color:'var(--t4)', display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:2, background:'#DC2626', display:'inline-block' }} />D�penses</span>
+                    <span style={{ fontSize:10, color:'var(--t4)', display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:2, background:'#DC2626', display:'inline-block' }} />Dépenses</span>
                   </div>
                 </div>
 
-                {/* Pie chart — r�partition par cat�gorie */}
+                {/* Pie chart — répartition par catégorie */}
                 <div className="card" style={{ padding:'18px 22px' }}>
-                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>R�partition des d�penses</div>
+                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>Répartition des dûpenses</div>
                   {pieData.length === 0 ? (
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200, fontSize:12, color:'var(--t4)' }}>Aucune d�pense enregistr�e</div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200, fontSize:12, color:'var(--t4)' }}>Aucune dûpense enregistrée</div>
                   ) : (
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
@@ -525,13 +525,13 @@ export default function Finance({ showToast }) {
         </div>
       )}
 
-      {/* �•��•��•� MODAL — Budget �•��•��•� */}
+      {/* MODAL — Budget */}
       <Modal isOpen={modal?.type === 'budget'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier le budget' : 'Nouveau budget'}
         footer={modalFooter(handleSaveBudget, false)}>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div>
-            <label className="form-label">Libell� *</label>
-            <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Budget gros �“uvre" />
+            <label className="form-label">Libellé *</label>
+            <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Budget gros é“uvre" />
           </div>
           <div>
             <label className="form-label">Montant (FCFA) *</label>
@@ -539,7 +539,7 @@ export default function Finance({ showToast }) {
             {formSubmitted && !form.montant && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
           </div>
           <div>
-            <label className="form-label">Projet associ� <span style={{ color: 'var(--t4)', fontWeight: 400 }}>(optionnel)</span></label>
+            <label className="form-label">Projet associé <span style={{ color: 'var(--t4)', fontWeight: 400 }}>(optionnel)</span></label>
             <select className="form-input" value={form.projectId || ''} onChange={e => pf('projectId', e.target.value)}>
               <option value="">Aucun projet</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
@@ -548,8 +548,8 @@ export default function Finance({ showToast }) {
         </div>
       </Modal>
 
-      {/* �•��•��•� MODAL — D�pense �•��•��•� */}
-      <Modal isOpen={modal?.type === 'expense'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier la d�pense' : 'Nouvelle d�pense'}
+      {/* MODAL — Dépense */}
+      <Modal isOpen={modal?.type === 'expense'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier la dûpense' : 'Nouvelle dûpense'}
         footer={modalFooter(handleSaveExpense, false)}>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div>
@@ -564,15 +564,15 @@ export default function Finance({ showToast }) {
               {formSubmitted && !form.montant && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
             </div>
             <div>
-              <label className="form-label">Cat�gorie</label>
+              <label className="form-label">Catégorie</label>
               <select className="form-input" value={form.provider || ''} onChange={e => pf('provider', e.target.value)}>
-                <option value="">S�lectionner</option>
+                <option value="">Sélectionner</option>
                 {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="form-label">Projet associ�</label>
+            <label className="form-label">Projet associé</label>
             <select className="form-input" value={form.projectId || ''} onChange={e => pf('projectId', e.target.value)}>
               <option value="">Aucun projet</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
@@ -581,13 +581,13 @@ export default function Finance({ showToast }) {
         </div>
       </Modal>
 
-      {/* �•��•��•� MODAL — Facture �•��•��•� */}
+      {/* MODAL — Facture */}
       <Modal isOpen={modal?.type === 'invoice'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier la facture' : 'Nouvelle facture'}
         footer={modalFooter(handleSaveInvoice, false)}>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div>
-            <label className="form-label">R�f�rence / Objet *</label>
-            <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Facture situation n°1 — Gros �“uvre" />
+            <label className="form-label">Référence / Objet *</label>
+            <input className="form-input" value={form.label || ''} onChange={e => pf('label', e.target.value)} placeholder="ex: Facture situation n°1 — Gros é“uvre" />
             {formSubmitted && !form.label && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Champ obligatoire</p>}
           </div>
           <div className="modal-row" style={{ gap:10 }}>
@@ -602,7 +602,7 @@ export default function Finance({ showToast }) {
             </div>
           </div>
           <div>
-            <label className="form-label">Projet associ�</label>
+            <label className="form-label">Projet associé</label>
             <select className="form-input" value={form.projectId || ''} onChange={e => pf('projectId', e.target.value)}>
               <option value="">Aucun projet</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
@@ -611,11 +611,11 @@ export default function Finance({ showToast }) {
         </div>
       </Modal>
 
-      {/* �•��•��•� CONFIRM — Suppression �•��•��•� */}
+      {/* CONFIRM — Suppression */}
       <ModalConfirm
         open={!!confirm}
         title={`Supprimer "${confirm?.label}" ?`}
-        message="Cette action est irr�versible."
+        message="Cette action est irréversible."
         confirmLabel="Supprimer"
         destructive
         onConfirm={() => {
@@ -625,11 +625,11 @@ export default function Finance({ showToast }) {
         onCancel={() => setConfirm(null)}
       />
 
-      {/* �•��•��•� CONFIRM — Transition facture �•��•��•� */}
+      {/* CONFIRM — Transition facture */}
       <ModalConfirm
         open={!!transition}
         title={`${transition?.label} cette facture ?`}
-        message={`Le statut passera � "${INVOICE_BADGE[transition?.nextStatus]?.label}".`}
+        message={`Le statut passera à "${INVOICE_BADGE[transition?.nextStatus]?.label}".`}
         confirmLabel={transition?.label || 'Confirmer'}
         onConfirm={handleTransitionInvoice}
         onCancel={() => setTransition(null)}

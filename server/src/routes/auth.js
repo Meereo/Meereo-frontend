@@ -501,6 +501,8 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       },
     })
 
+    // Clear the session cookie so the user is immediately unauthenticated
+    res.clearCookie('meereo_token', { path: '/', sameSite: 'strict' })
     return res.json({ success: true, message: 'Compte supprimé' })
   } catch (err) {
     next(err)

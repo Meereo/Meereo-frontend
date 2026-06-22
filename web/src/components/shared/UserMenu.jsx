@@ -24,7 +24,7 @@ export default function UserMenu({ onNavigate }) {
 
   const handleLogout = async () => {
     setOpen(false)
-    await logoutUser()  // vide token mémoire + sessionStorage + localStorage + cookie + socket
+    await logoutUser()  // vide token mémoire + sessionStorage + cookie + socket
     navigate('/onboarding')
   }
 
