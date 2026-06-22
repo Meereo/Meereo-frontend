@@ -28,6 +28,11 @@ router.post('/', requireAuth, async (req, res, next) => {
     if (!titre) throw createError('titre requis', 400)
     if (!date)  throw createError('date requise', 400)
 
+    // Verify projectId exists if provided — frontend may send local-only IDs
+    const resolvedProjectId = projectId
+      ? (await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } }))?.id || null
+      : null
+
     const event = await prisma.event.create({
       data: {
         titre,
@@ -36,7 +41,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         description: description || '',
         color:       color       || '#2563EB',
         auto:        auto        || false,
-        projectId:   projectId   || null,
+        projectId:   resolvedProjectId,
         createdBy:   req.user.id,
       },
     })
