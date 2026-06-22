@@ -457,12 +457,14 @@ export default function Onboarding() {
     delete fullData.photo       // File object
     delete fullData.logoFile    // File object
     delete fullData.coverFile   // File object
+    const plainPassword = form.password // sauvegarder avant delete
     delete fullData.password        // ne pas stocker le mot de passe en clair dans onboardingData
     delete fullData.passwordConfirm // idem
     // fullData.photoUrl, fullData.logoFileUrl, fullData.coverUrl are already strings (base64 or MinIO URL)
     try {
       // email/name/type APRÈS fullData pour ne pas être écrasés par form.email='' (pro/fournisseur utilisent emailPro)
-      await createUser({...fullData, email:email||'demo@meereo.ci', name:name || form.entreprise || 'Utilisateur', type:userType})
+      // password passé séparément pour ne pas finir dans onboardingData tout en étant utilisé pour le register
+      await createUser({...fullData, email:email||'demo@meereo.ci', name:name || form.entreprise || 'Utilisateur', type:userType, password:plainPassword})
     } catch (createErr) {
       showToast(createErr.message || 'Erreur lors de la création du compte', 'red')
       return

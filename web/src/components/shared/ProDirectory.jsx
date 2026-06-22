@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Briefcase, Star, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getEntrepriseAvatar } from '../../data/avatars'
-import { METIERS_AO } from '../../data/ao'
+import { CLIENT_METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
 
 function Avatar({ nom, size = 44 }) {
@@ -85,7 +85,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
           </div>
           <select value={metier} onChange={e => setMetier(e.target.value)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--surface-1)', fontSize: 11.5, fontFamily: 'var(--f)', color: 'var(--tx)' }}>
             <option value="all">Tous les métiers</option>
-            {METIERS_AO.map(m => <option key={m} value={m}>{m}</option>)}
+            {CLIENT_METIERS_AO.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         {/* Cards */}

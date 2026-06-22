@@ -299,6 +299,13 @@ export function MeereoProvider({ children }) {
         console.log('[MEEREO] Hydration complete — user:', me.email, '— AOs:', apiAos.length, '— projects:', apiProjects.length)
       } catch (e) {
         console.warn('[MEEREO] Session expired or backend down:', e.message)
+        // Si l'utilisateur vient de s'inscrire, le cookie peut ne pas encore être
+        // reconnu par /auth/me (appelé avant la fin du register). Ne pas effacer
+        // la session fraîchement créée.
+        if (justCreated.current) {
+          setStore(prev => { const next = { ...prev, _hydrated: true, _checking: false }; saveToStorage(next); return next })
+          return
+        }
         // Cookie invalid / réseau down → vider la session
         setInMemoryToken(null)
         setStore(prev => { const next = { ...prev, _hydrated: true, _checking: false, _cachedUser: null, user: null, _token: null }; saveToStorage(next); return next })
@@ -623,12 +630,19 @@ export function MeereoProvider({ children }) {
         ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
       })
       if (res?.token) {
-        // Store token + hydrate shared business data from PostgreSQL
-        const [apiAos, apiOffers, apiProjects, apiMarkets] = await Promise.all([
+        // Store token + hydrate ALL shared business data from PostgreSQL (même logique que loginUser)
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
           api.markets.getAll().catch(() => []),
+          api.projectMembers.getAll().catch(() => []),
+          api.usersApi.getFournisseurs().catch(() => []),
+          api.contacts.getAll().catch(() => []),
+          api.kai.getEntitlements().catch(() => []),
+          api.kai.getConversations().catch(() => []),
+          api.kai.getMemory().catch(() => []),
+          api.usersApi.getPrefs().catch(() => ({})),
         ])
         // Update user with real backend ID so _onboardingByUser is keyed correctly
         const realUser = {
@@ -655,11 +669,21 @@ export function MeereoProvider({ children }) {
             _onboardingByUser: updatedObs,
             _token: res.token,
             _hydrated: true,
+            _checking: false,
             _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
             aos: apiAos,
             offers: apiOffers,
             projects: apiProjects,
             markets: apiMarkets,
+            projectMembers: apiProjectMembers,
+            fournisseurs: apiFournisseurs,
+            contacts: apiContacts,
+            clients: apiContacts.filter(c => c.type === 'client'),
+            intervenants: apiContacts.filter(c => c.type === 'intervenant'),
+            ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
+            clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
+            // onboardingData : garder ce qui a été saisi dans le wizard (pas encore en BD)
+            onboardingData: prev.onboardingData || obData,
           }
         })
         // Persister onboardingData en BD maintenant que le compte existe
@@ -681,11 +705,18 @@ export function MeereoProvider({ children }) {
             type: loginRes.user.type || user.type,
             company: loginRes.user.company || user.company,
           }
-          const [apiAos, apiOffers, apiProjects, apiMarkets] = await Promise.all([
+          const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs] = await Promise.all([
             api.aos.getAll().catch(() => []),
             api.offers.getAll().catch(() => []),
             api.projects.getAll().catch(() => []),
             api.markets.getAll().catch(() => []),
+            api.projectMembers.getAll().catch(() => []),
+            api.usersApi.getFournisseurs().catch(() => []),
+            api.contacts.getAll().catch(() => []),
+            api.kai.getEntitlements().catch(() => []),
+            api.kai.getConversations().catch(() => []),
+            api.kai.getMemory().catch(() => []),
+            api.usersApi.getPrefs().catch(() => ({})),
           ])
           // Écriture synchrone du token en mémoire (login fallback)
           setInMemoryToken(loginRes.token)
@@ -704,11 +735,20 @@ export function MeereoProvider({ children }) {
               _onboardingByUser: updatedObs,
               _token: loginRes.token,
               _hydrated: true,
+              _checking: false,
               _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
               aos: apiAos,
               offers: apiOffers,
               projects: apiProjects,
               markets: apiMarkets,
+              projectMembers: apiProjectMembers,
+              fournisseurs: apiFournisseurs,
+              contacts: apiContacts,
+              clients: apiContacts.filter(c => c.type === 'client'),
+              intervenants: apiContacts.filter(c => c.type === 'intervenant'),
+              ...buildKaiState(apiKaiEnt, apiKaiConvs, apiKaiMem),
+              clientPrefs: { notifEmail: true, notifPush: true, rappels: false, resume: false, ...(apiPrefs || {}) },
+              onboardingData: prev.onboardingData || obData,
             }
           })
         }
