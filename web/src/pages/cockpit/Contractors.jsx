@@ -14,7 +14,6 @@ const ErrMsg = ({ show }) => show
 function ContractorModal({ isOpen, onClose, showToast }) {
   const { updateStore } = useMeereo()
   const [f, setF] = useState({ nom: '', role: '', email: '', tel: '' })
-  const [showCreateContractor, setShowCreateContractor] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const submit = async () => {
     setSubmitted(true)
@@ -47,6 +46,7 @@ export default function Contractors({ showToast, openModal }) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [, refresh] = useState(0)
+  const [showCreateContractor, setShowCreateContractor] = useState(false)
 
   const total = allIntervenants.length
   const entreprises = allIntervenants.filter(i => i.entreprise).length

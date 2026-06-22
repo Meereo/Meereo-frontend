@@ -24,7 +24,6 @@ const ErrMsg = ({ show }) => show
 function ReportModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
-  const [showCreateReport, setShowCreateReport] = useState(false)
   const submit = () => {
     updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), { id: 'rap_' + Date.now(), ...f, visibility: 'client_visible', createdAt: new Date().toISOString() }] }))
     emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
@@ -61,6 +60,7 @@ export default function Reports({ openModal, showToast }) {
   const [search, setSearch] = useState('')
   const [projetFilter, setProjetFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [showCreateReport, setShowCreateReport] = useState(false)
 
   const setRapportStatut = (id, statut) => {
     updateStore(prev => ({ ...prev, rapportStatuts: { ...(prev.rapportStatuts || {}), [id]: statut } }))

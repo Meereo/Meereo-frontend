@@ -24,7 +24,6 @@ const ErrMsg = ({ show }) => show
 function OrderModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent, requestPayment } = useMeereo()
   const [f, setF] = useState({ projet: '', article: '', fournisseur: '', montant: '' })
-  const [showCreateOrder, setShowCreateOrder] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const submit = () => {
     setSubmitted(true)
@@ -71,6 +70,7 @@ export default function Orders({ onNavigate, showToast, openModal }) {
   const [detail, setDetail] = useState(null)
   const [evalFourn, setEvalFourn] = useState(null)
   const [rated, setRated] = useState([])
+  const [showCreateOrder, setShowCreateOrder] = useState(false)
 
   // Charger depuis le backend au montage
   useEffect(() => {

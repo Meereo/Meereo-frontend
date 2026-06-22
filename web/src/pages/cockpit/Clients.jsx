@@ -17,7 +17,6 @@ const ErrMsg = ({ show }) => show
 function ClientModal({ isOpen, onClose, showToast }) {
   const { updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ nom: '', type: 'Public', statut: 'actif', contact: '', poste: '', email: '', tel: '' })
-  const [showCreateClient, setShowCreateClient] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const submit = async () => {
     setSubmitted(true)
@@ -58,6 +57,7 @@ export default function Clients({ openModal, showToast }) {
   const [search, setSearch] = useState('')
   const [editClient, setEditClient] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [showCreateClient, setShowCreateClient] = useState(false)
 
   // Auto-sync clients from markets — pour les pros, chaque marché signé/en cours/complété
   // dont le pro est fournisseur ajoute automatiquement le client dans le carnet d'adresses
