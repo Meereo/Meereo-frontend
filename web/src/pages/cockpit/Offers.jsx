@@ -37,7 +37,6 @@ const ErrMsg = ({ show }) => show
 function OfferModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ titre: '', entreprise: '', projet: '', montant: '', delai: '', note: '' })
-  const [showCreateOffer, setShowCreateOffer] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const submit = () => {
     setSubmitted(true)
@@ -74,6 +73,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState(null)
+  const [showCreateOffer, setShowCreateOffer] = useState(false)
   const [infoModal, setInfoModal] = useState(null) // offer object for "Demander info"
   const [infoMessage, setInfoMessage] = useState('')
 

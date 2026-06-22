@@ -13,10 +13,12 @@ import Toast from './components/shared/Toast'
 import NotifPanel from './components/shared/NotifPanel'
 import { useMeereo } from './hooks/useMeereoStore'
 
-// Hydration gate: wait for API session check before routing
+// Hydration gate: show spinner only when backend check is in progress AND no cached session hint
 function HydrationGate({ children }) {
   const { store } = useMeereo()
-  if (!store._hydrated) {
+  // If we have a cached user from last session, render immediately (no flash)
+  // _checking becomes false once /auth/me responds
+  if (store._checking && !store._cachedUser) {
     return <LoadingSpinner />
   }
   return children
@@ -34,9 +36,10 @@ const LoadingSpinner = () => (
 // Route guard: redirige vers l'espace correct selon le role actif
 function RoleGuard({ allowedRole, children }) {
   const { store } = useMeereo()
-  const user = store.user
-  // Hydration pas encore terminée — attendre avant de rediriger
-  if (!user && !store._hydrated) return <LoadingSpinner />
+  // Use confirmed user first, fall back to cached hint while backend check is in progress
+  const user = store.user || store._cachedUser
+  // Backend check still running — don't redirect yet, wait silently
+  if (store._checking) return null
   if (!user) return <Navigate to="/onboarding" replace />
   if (user.type !== allowedRole) {
     const dest = user.type === 'pro' ? '/cockpit' : user.type === 'client' ? '/client' : user.type === 'fournisseur' ? '/fournisseur' : '/onboarding'
@@ -48,9 +51,9 @@ function RoleGuard({ allowedRole, children }) {
 // Onboarding guard: si l'utilisateur est déjà connecté, redirige vers son espace
 function OnboardingGuard({ children }) {
   const { store } = useMeereo()
-  const user = store.user
-  // Hydration pas encore terminée — attendre avant de rediriger
-  if (!user && !store._hydrated) return <LoadingSpinner />
+  const user = store.user || store._cachedUser
+  // Backend check still running — don't redirect yet
+  if (store._checking) return null
   if (user) {
     const dest = user.type === 'pro' ? '/cockpit' : user.type === 'client' ? '/client' : user.type === 'fournisseur' ? '/fournisseur' : '/cockpit'
     return <Navigate to={dest} replace />

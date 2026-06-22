@@ -27,7 +27,6 @@ const ErrMsg = ({ show }) => show
 function SupplierModal({ isOpen, onClose, showToast }) {
   const { updateStore } = useMeereo()
   const [f, setF] = useState({ raison: '', specialite: '', ville: '', tel: '', email: '' })
-  const [showCreateSupplier, setShowCreateSupplier] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const submit = () => {
     setSubmitted(true)
@@ -60,6 +59,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
   const [showDevis, setShowDevis] = useState(null)
   const [devis, setDevis] = useState({ description: '', quantite: '', delai: '', projet: '', budget: '' })
   const [showVerif, setShowVerif] = useState(null)
+  const [showCreateSupplier, setShowCreateSupplier] = useState(false)
 
   const total = allFournisseurs.length
   const verified = allFournisseurs.filter(f => f.verified).length

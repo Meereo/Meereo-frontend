@@ -37,6 +37,8 @@ const STORE_KEY = 'meereo_store_v2'
 const defaultStore = {
   _token: null,
   _hydrated: false,
+  _checking: true,   // true tant que /auth/me n'a pas répondu — jamais persisté
+  _cachedUser: null, // { id, type, name } — hint de session stocké localement pour éviter le flash
   _onboardingByUser: {},
   user: null,
   users: [],
@@ -114,6 +116,7 @@ const PERSIST_KEYS = new Set([
   // Il vit dans sessionStorage (écrit par setInMemoryToken) + cookie httpOnly.
   // Un XSS ne peut pas l'extraire via localStorage.
   '_hydrated',           // flag de session — évite un double-fetch au montage
+  '_cachedUser',         // hint minimal { id, type, name } pour éviter le flash de redirection
   '_onboardingByUser',   // wizard avant création compte (userId temp → data) — nécessaire car pas encore en BD
   // Acceptations légales
   'commissionAcceptances',
@@ -260,6 +263,8 @@ export function MeereoProvider({ children }) {
           const next = {
             ...prev,
             _hydrated: true,
+            _checking: false,
+            _cachedUser: { id: user.id, type: user.type, name: user.name },
             user,
             users: mergeById(prev.users || [], [user]),
             // Business data: backend replaces local (no merge to avoid ghost duplicates)
@@ -296,7 +301,7 @@ export function MeereoProvider({ children }) {
         console.warn('[MEEREO] Session expired or backend down:', e.message)
         // Cookie invalid / réseau down → vider la session
         setInMemoryToken(null)
-        setStore(prev => { const next = { ...prev, _hydrated: true, user: null, _token: null }; saveToStorage(next); return next })
+        setStore(prev => { const next = { ...prev, _hydrated: true, _checking: false, _cachedUser: null, user: null, _token: null }; saveToStorage(next); return next })
       }
     })()
   }, []) // Run once on mount — no deps needed
@@ -1914,7 +1919,7 @@ export function MeereoProvider({ children }) {
     // 3. Déconnecter le socket
     disconnectSocket()
     // 4. Réinitialiser le store et localStorage
-    const next = { ...defaultStore, _hydrated: false }
+    const next = { ...defaultStore, _hydrated: false, _checking: false, _cachedUser: null }
     saveToStorage(next)
     updateStore(next)
   }, [updateStore])
