@@ -261,10 +261,24 @@ router.post('/login', async (req, res, next) => {
 //  Réponse : { ...user }
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   // Retourner aussi le token pour que le frontend puisse le garder en mémoire
   // (nécessaire pour le Bearer sur les WS et la compatibilité Bearer)
-  res.json({ ...req.user, token: req.authToken })
+  let user = req.user
+
+  // Auto-générer publicId si absent (comptes créés avant l'ajout du champ)
+  if (!user.publicId) {
+    try {
+      const prisma = getPrisma()
+      const publicId = crypto.randomUUID()
+      await prisma.user.update({ where: { id: user.id }, data: { publicId } })
+      user = { ...user, publicId }
+    } catch {
+      // Non bloquant — le profil public ne sera juste pas accessible
+    }
+  }
+
+  res.json({ ...user, token: req.authToken })
 })
 
 // ─── POST /auth/change-password ───────────────────────────────────────────────

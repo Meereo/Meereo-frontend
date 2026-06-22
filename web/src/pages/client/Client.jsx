@@ -127,6 +127,7 @@ export default function Client() {
     api.professionals.getAll()
       .then(data => setApiPros((data || []).map(u => ({
         id: u.id,
+        publicId: u.publicId || null,
         nom: u.company || u.name || '',
         metier: u.metier || '',
         ville: u.ville || '',

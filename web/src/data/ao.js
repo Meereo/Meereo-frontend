@@ -2,13 +2,13 @@ export const AO_DATA = []
 
 export const MES_AO = []
 
-export const METIERS_AO = ['Architecte', 'BET Structure', 'BET Fluides', 'Gros-oeuvre', 'Electricite', 'Plomberie', 'CVC', 'Menuiseries', 'Facades', 'Second-oeuvre', 'VRD', 'Economiste', 'OPC', 'Geometre', 'Designer interieur']
-
-// Liste restreinte pour les clients (lors de la création d'un AO)
-export const CLIENT_METIERS_AO = [
+export const METIERS_AO = [
   'Architecte & Design',
-  'Bureau d’étude fluides',
-  'Bureau d’étude structure',
-  'Construction gros œuvres',
-  'Construction seconde œuvres',
+  'Bureau d\u2019\u00e9tude structure',
+  'Bureau d\u2019\u00e9tude fluides',
+  'Construction gros \u0153uvres',
+  'Construction seconde \u0153uvres',
 ]
+
+// Liste restreinte pour les clients (lors de la cr\u00e9ation d\u2019un AO)
+export const CLIENT_METIERS_AO = METIERS_AO

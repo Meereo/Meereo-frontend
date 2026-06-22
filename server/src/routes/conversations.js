@@ -16,7 +16,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         conversation: {
           include: {
             participants: {
-              include: { user: { select: { id: true, name: true, email: true, type: true } } },
+              include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true } } },
             },
             messages: {
               orderBy: { createdAt: 'desc' },
@@ -80,7 +80,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         },
         include: {
           participants: {
-            include: { user: { select: { id: true, name: true, email: true, type: true } } },
+            include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true } } },
           },
           messages: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
@@ -107,7 +107,7 @@ router.post('/', requireAuth, async (req, res, next) => {
           },
           include: {
             participants: {
-              include: { user: { select: { id: true, name: true, email: true, type: true } } },
+              include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true } } },
             },
             messages: true,
           },
@@ -124,7 +124,7 @@ router.post('/', requireAuth, async (req, res, next) => {
               ],
             },
             include: {
-              participants: { include: { user: { select: { id: true, name: true, email: true, type: true } } } },
+              participants: { include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true } } } },
               messages: { orderBy: { createdAt: 'desc' }, take: 1 },
             },
           })
@@ -151,7 +151,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         },
         include: {
           participants: {
-            include: { user: { select: { id: true, name: true, email: true, type: true } } },
+            include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true } } },
           },
           messages: true,
         },

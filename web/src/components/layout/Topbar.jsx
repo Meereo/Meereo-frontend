@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Star, Check } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import ProDirectory from '../shared/ProDirectory'
 import NotifBell from '../shared/NotifBell'
 import UserMenu from '../shared/UserMenu'
 import { getMetierColor } from '../shared/AoGear'
+import { CLIENT_METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
 import './Topbar.css'
 
@@ -32,10 +34,11 @@ const PAGE_NAMES = {
   parametres: 'Paramètres'
 }
 
-const METIERS = ['Architecte', 'BET Structure', 'BET Fluides', 'Gros-oeuvre', 'Electricite', 'Plomberie', 'CVC', 'Menuiseries', 'Facades', 'Second-oeuvre', 'VRD', 'Economiste', 'OPC', 'Geometre', 'Designer interieur']
+const METIERS = CLIENT_METIERS_AO
 
 export default function Topbar({ activePage, onOpenSidebar }) {
   const { store } = useMeereo()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchType, setSearchType] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -125,7 +128,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
                         const initials = (p.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                         const mc = getMetierColor(p.metier)
                         return (
-                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                          <div key={p.id} onClick={() => { setSearchOpen(false); setSearchQuery(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
                             <div style={{ width: 32, height: 32, borderRadius: 8, background: mc + '12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: mc, flexShrink: 0 }}>{initials}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
