@@ -67,7 +67,7 @@ const computeSmartProgress = (project) => {
 export default function Client() {
   const navigate = useNavigate()
   const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation } = useMeereo()
-  const { conversations: mergedConversations } = useMergedData()
+  const { conversations: mergedConversations, documents: mergedDocuments } = useMergedData()
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
   const [page, setPage] = useState('home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -183,8 +183,8 @@ export default function Client() {
   const projBudget = parseBudget(proj?.budget || '0') || parseBudget(String(marketForProj?.amount || marketForProj?.montant || '0'))
   // Documents: store only (no mock merge)
   const projDocs = useMemo(() => {
-    return (store.documents || []).filter(d => d.projectId === proj?.id && d.visibility !== 'internal')
-  }, [store.documents, proj?.id])
+    return mergedDocuments.filter(d => d.projectId === proj?.id && d.visibility !== 'internal')
+  }, [mergedDocuments, proj?.id])
   // Transactions: store only (no mock merge)
   const storeTx = (store.transactions || []).filter(t => (t.projet === proj?.id || t.projectId === proj?.id) && t.visibility !== 'internal')
   const projTx = storeTx
@@ -321,7 +321,7 @@ export default function Client() {
           {page === 'projets' && <Projects showToast={showToast} openModal={openModal} onNavigate={p => setPage(p)} />}
 
           {/* DOCUMENTS */}
-          {page === 'documents' && <Documents ctx={{ projDocs, proj }} />}
+          {page === 'documents' && <Documents showToast={showToast} />}
 
           {/* GALERIE */}
           {page === 'galerie' && <Gallery ctx={{ proj }} />}

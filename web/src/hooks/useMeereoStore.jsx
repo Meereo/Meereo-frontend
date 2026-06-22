@@ -655,6 +655,7 @@ export function MeereoProvider({ children }) {
             _onboardingByUser: updatedObs,
             _token: res.token,
             _hydrated: true,
+            _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
             aos: apiAos,
             offers: apiOffers,
             projects: apiProjects,
@@ -703,6 +704,7 @@ export function MeereoProvider({ children }) {
               _onboardingByUser: updatedObs,
               _token: loginRes.token,
               _hydrated: true,
+              _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
               aos: apiAos,
               offers: apiOffers,
               projects: apiProjects,
@@ -788,6 +790,7 @@ export function MeereoProvider({ children }) {
             users: mergeById(prev.users || [], [backendUser]),
             _token: res.token,
             _hydrated: true,
+            _cachedUser: { id: backendUser.id, type: backendUser.type, name: backendUser.name },
             _onboardingByUser: savedObs,
             onboardingData: restoredOb,
             // Business data: backend replaces local (source of truth)
