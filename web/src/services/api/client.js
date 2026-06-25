@@ -457,12 +457,13 @@ const documentsApi = {
   update:  (id, data) => apiFetch(`/documents/${id}`, 'PATCH', data, true),
   delete:  (id)       => apiFetch(`/documents/${id}`, 'DELETE', null, true),
   /** Upload a real File object to the server (saves to /uploads/documents/) */
-  upload: (file, { name, type, projectId } = {}) => {
+  upload: (file, { name, type, projectId, isEntreprise } = {}) => {
     const form = new FormData()
     form.append('file', file)
-    if (name)      form.append('name',      name)
-    if (type)      form.append('type',      type)
-    if (projectId) form.append('projectId', projectId)
+    if (name)         form.append('name',         name)
+    if (type)         form.append('type',         type)
+    if (projectId)    form.append('projectId',    projectId)
+    if (isEntreprise) form.append('isEntreprise', 'true')
     return apiFetchForm('/documents/upload', 'POST', form)
   },
 }

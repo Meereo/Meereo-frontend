@@ -384,12 +384,26 @@ export function MeereoProvider({ children }) {
             const localOnly = mergedConvs.filter(c => !backendIds.has(c.id) && String(c.id).startsWith('conv_'))
             mergedConvs = [...convList, ...localOnly]
           }
+          // Merge projects: keep local-only proj_ entries pending backend sync
+          let mergedProjects = prev.projects || []
+          if (apiProjects) {
+            const backendProjIds = new Set(apiProjects.map(p => p.id))
+            const localOnlyProjects = mergedProjects.filter(p => !backendProjIds.has(p.id) && String(p.id).startsWith('proj_'))
+            mergedProjects = [...apiProjects, ...localOnlyProjects]
+          }
+          // Merge markets: keep local-only mkt_ entries pending backend sync
+          let mergedMarkets = prev.markets || []
+          if (apiMarkets) {
+            const backendMktIds = new Set(apiMarkets.map(m => m.id))
+            const localOnlyMarkets = mergedMarkets.filter(m => !backendMktIds.has(m.id) && String(m.id).startsWith('mkt_'))
+            mergedMarkets = [...apiMarkets, ...localOnlyMarkets]
+          }
           const next = {
             ...prev,
             aos: apiAos,
             offers: apiOffers || prev.offers,
-            markets: apiMarkets || prev.markets,
-            projects: apiProjects || prev.projects,
+            markets: mergedMarkets,
+            projects: mergedProjects,
             documents: apiDocuments || prev.documents,
             projectMembers: apiMembers || prev.projectMembers,
             conversations: mergedConvs,
@@ -1448,6 +1462,10 @@ export function MeereoProvider({ children }) {
         amount: offer.price || offer.montant || 0,
         montant: String(offer.price || offer.montant || 0),
         entreprise: offer.entreprise || offer.supplierName || '',
+        // Client info — stored explicitly so the pro's Clients page uses the right name
+        clientName: aoObj?.ownerName || prev.user?.company || prev.user?.name || '',
+        clientCompany: prev.user?.company || prev.user?.name || '',
+        clientEmail: prev.user?.email || '',
         offerMessage: offer.message || '',
         // Statut & cycle de vie
         statut: 'signed',
@@ -1527,10 +1545,10 @@ export function MeereoProvider({ children }) {
           try {
             const autoProj = storeRef.current.projects?.find(p => p.id === market.projectId)
             const backendProject = await api.projects.create({
-              nom: autoProject?.nom || market.titre || 'Projet', type: market.lot || 'Mission',
+              nom: autoProj?.nom || market.titre || 'Projet', type: market.lot || 'Mission',
               phase: 'ATTRIBUTION_MARCHES', budget: String(market.amount || market.budget || ''),
               description: market.description || '', status: 'active',
-              ownerId: store.user?.id || 'local', clientId: store.user?.id || null,
+              ownerId: store.user?.id || null, clientId: store.user?.id || null,
               clientEmail: store.user?.email || '', client: store.user?.name || '',
               sourceAoId: market.aoId || null,
               etapes: autoProj?.etapes || null, equipe: autoProj?.equipe || null,
@@ -1544,7 +1562,10 @@ export function MeereoProvider({ children }) {
               }))
               console.log('[acceptOffer] Auto-project synced:', backendProject.id)
             }
-          } catch (e) { console.warn('[acceptOffer] Project sync failed:', e.message) }
+          } catch (e) {
+            console.warn('[acceptOffer] Project sync failed:', e.message)
+            showToast('Erreur création projet: ' + e.message, 'red')
+          }
         }
         // 2. Create market on backend with real projectId
         const backendMarket = await api.markets.create({ titre: market?.titre, entreprise: market?.entreprise, lot: market?.lot, montant: String(market?.amount || market?.montant || market?.budget || ''), statut: 'signed', avancement: 0, projectId: backendProjectId, offerId, aoId: market?.aoId || null, clientId: market?.clientId || null, supplierId: market?.supplierId || null, delai: market?.delai || null, description: market?.description || null })
@@ -1555,15 +1576,60 @@ export function MeereoProvider({ children }) {
             markets: (prev.markets || []).map(m => m.id === market.id ? { ...m, id: backendMarket.id } : m)
           }))
         }
-      } catch (e) { console.warn('[acceptOffer] Market sync failed:', e.message) }
+        // 3. Immediately re-sync projects & markets so both client and pro see fresh data
+        const [freshProjects, freshMarkets] = await Promise.all([
+          api.projects.getAll().catch(() => null),
+          api.markets.getAll().catch(() => null),
+        ])
+        if (freshProjects || freshMarkets) {
+          setStore(prev => {
+            const next = {
+              ...prev,
+              ...(freshProjects ? { projects: freshProjects } : {}),
+              ...(freshMarkets ? { markets: freshMarkets } : {}),
+            }
+            saveToStorage(next)
+            return next
+          })
+        }
+      } catch (e) {
+        console.warn('[acceptOffer] Market sync failed:', e.message)
+        showToast('Erreur création marché: ' + e.message, 'red')
+      }
       // Sync remaining entities (fire-and-forget)
       sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
       if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
       sync(api.events.create({ titre: 'Marché signé — ' + (market?.lot || market?.titre || 'Nouveau marché'), date: new Date().toISOString().slice(0, 10), type: 'milestone', projectId: backendProjectId || market?.projectId, color: '#34C759' }))
-      // Sync auto-conversation to backend
+      // Sync auto-conversation to backend — use correct backend format (participantId for 1:1)
+      const supplierId = market?.supplierId
       const autoConvData = storeRef.current.conversations?.find(c => c.marketId === market?.id)
-      if (autoConvData) {
-        sync(api.conversations.create({ title: autoConvData.title, projectId: backendProjectId || autoConvData.projectId, marketId: autoConvData.marketId, participants: autoConvData.participants, lastMessage: autoConvData.lastMessage, lastAt: autoConvData.lastAt }))
+      if (supplierId) {
+        try {
+          const convRes = await api.conversations.create({ participantId: supplierId, title: autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '') })
+          const backendConv = convRes?.conversation || convRes
+          if (backendConv?.id && autoConvData?.id) {
+            // Replace local conv_ ID with real backend ID so both client and pro can see it
+            updateStore(prev => ({
+              ...prev,
+              conversations: (prev.conversations || []).map(c =>
+                c.id === autoConvData.id ? { ...c, id: backendConv.id } : c
+              ),
+            }))
+          }
+          // Re-fetch conversations immediately so the list shows the new conversation
+          api.conversations.getAll().then(res => {
+            const list = Array.isArray(res) ? res : (res?.conversations || [])
+            if (list.length > 0) {
+              setStore(prev => {
+                const next = { ...prev, conversations: list }
+                saveToStorage(next)
+                return next
+              })
+            }
+          }).catch(() => {})
+        } catch (e) {
+          console.warn('[acceptOffer] Conversation sync failed:', e.message)
+        }
       }
       // Sync project member (supplier added to project team)
       const offer = storeRef.current.offers?.find(o => o.id === offerId)
@@ -1770,7 +1836,10 @@ export function MeereoProvider({ children }) {
     disconnectSocket()
     // 4. Réinitialiser le store + vider sessionStorage
     try { sessionStorage.removeItem(SESSION_OB_KEY) } catch {}
-    updateStore({ ...defaultStore })
+    // 5. Reset store — IMPORTANT: _checking:false so the app doesn't show
+    //    a permanent loading spinner (hydrationDone.current stays true,
+    //    the boot useEffect won't re-run after a logout/delete)
+    updateStore({ ...defaultStore, _hydrated: true, _checking: false })
   }, [updateStore])
 
   // ═══ SYNCHRONISATION COCKPIT / CLIENT ═══

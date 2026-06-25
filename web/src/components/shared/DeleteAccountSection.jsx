@@ -75,10 +75,12 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
     // 2. Clear session client-side (store + sessionStorage + in-memory token)
     await logoutUser()
 
-    // 3. Show success screen then redirect
+    // 3. Navigate immediately — no 3-second wait to avoid stuck loading state
+    setIsDeleting(false)
     setShowModal(false)
     setShowSuccess(true)
-    setTimeout(() => nav('/onboarding', { replace: true }), 3000)
+    // Short delay so the success screen is briefly visible, then redirect
+    setTimeout(() => nav('/onboarding', { replace: true }), 1500)
   }
 
   return (

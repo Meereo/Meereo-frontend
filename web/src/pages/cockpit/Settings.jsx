@@ -101,9 +101,11 @@ export default function Settings({ showToast }) {
     const newMember = {
       id: 'tm_' + Date.now(),
       nom: inviteNom || (inviteEmail || '').split('@')[0] || 'Membre',
+      name: inviteNom || (inviteEmail || '').split('@')[0] || 'Membre',
       email: inviteEmail,
       role: inviteRole,
       poste: invitePoste || 'Collaborateur',
+      jobTitle: invitePoste || 'Collaborateur',
       photo: invitePhoto || '',
       photoUrl: invitePhoto || '',
       statut: 'invite',
@@ -391,7 +393,7 @@ export default function Settings({ showToast }) {
                 {/* Team list */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {team.map(m => {
-                    const initials = (m.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+                    const initials = (m.nom || m.name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                     return (
                       <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10 }}>
                         <div style={{ width: 38, height: 38, borderRadius: 19, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--t2)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
@@ -399,8 +401,8 @@ export default function Settings({ showToast }) {
                           <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: m.online ? 'var(--ok)' : 'var(--t4)', border: '2px solid var(--surface-1)' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
-                          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.poste} à {m.email}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom || m.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.poste || m.jobTitle} · {m.email}</div>
                         </div>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)' }}>{roleLabel(m.role)}</span>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut === 'invite' ? '⏳ Invite' : 'é—é Actif'}</span>

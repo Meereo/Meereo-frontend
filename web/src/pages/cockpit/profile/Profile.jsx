@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Star } from 'lucide-react'
+import { Star, Camera } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMeereo } from '../../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../../utils/logoShape'
@@ -142,7 +142,8 @@ export default function Profile() {
   const normalizeTeamMember = (t) => ({
     ...t,
     name: t.name || t.nom || '',
-    role: t.role || t.poste || '',
+    // jobTitle/poste is the displayed job title; role may be platform role — prefer job title fields
+    role: t.poste || t.jobTitle || t.role || '',
     photoUrl: t.photoUrl || t.photo || '',
     isPublic: t.isPublic !== undefined ? t.isPublic : true,
   })
@@ -186,7 +187,7 @@ export default function Profile() {
   const [portfolioViewer, setPortfolioViewer] = useState(null) // { imgs, idx, cap }
   // Team edit
   const [editTeamList, setEditTeamList] = useState(() => (rawTeam || []).map(t => ({ ...t })))
-  const [newMember, setNewMember] = useState({ name: '', role: '', img: '' })
+  const [newMember, setNewMember] = useState({ name: '', role: '', photoUrl: '' })
 
   const saveEdit = useCallback(async (field, value) => {
     // Optimistic update
@@ -941,13 +942,21 @@ export default function Profile() {
 
       {/* Modal Equipe */}
       <Modal isOpen={editModal === 'equipe'} onClose={() => setEditModal(null)} title="Gerer l'equipe" wide footer={
-        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => saveEdit('cockpitTeam', editTeamList)}>Enregistrer</button></>
+        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => saveEdit('cockpitTeam', editTeamList.map(m => ({ ...m, nom: m.nom || m.name || '', name: m.name || m.nom || '', poste: m.poste || m.jobTitle || m.role || '', jobTitle: m.poste || m.jobTitle || m.role || '', photo: m.photo || m.photoUrl || '', photoUrl: m.photoUrl || m.photo || '' })))}>Enregistrer</button></>
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {editTeamList.map((m, i) => (
             <div key={i} style={{ padding: '10px 14px', background: '#f8f9fa', borderRadius: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#474747', flexShrink: 0 }}>{(m.name || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}</div>
+                <div
+                  title="Cliquer pour ajouter une photo"
+                  style={{ width: 36, height: 36, borderRadius: '50%', background: m.photoUrl ? 'transparent' : 'var(--s3)', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#474747', border: '1.5px dashed var(--border)', position: 'relative' }}
+                  onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { default: compress } = await import('../../../utils/compressImage'); const url = await compress(f, 150, 0.7); setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, photoUrl: url, photo: url } : x)) } catch { } }; inp.click() }}
+                >
+                  {m.photoUrl
+                    ? <img src={m.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <Camera size={13} color="#9a9a9a" />}
+                </div>
                 <input className="form-input" style={{ flex: 1 }} value={m.name || ''} onChange={e => setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Nom" />
                 <input className="form-input" style={{ flex: 1 }} value={m.role || ''} onChange={e => setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} placeholder="Role" />
                 <button onClick={() => setEditTeamList(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ba1a1a', fontSize: 14, flexShrink: 0 }}>×</button>
@@ -961,12 +970,21 @@ export default function Profile() {
               </div>
             </div>
           ))}
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+            <div
+              title="Photo du membre"
+              style={{ width: 36, height: 36, borderRadius: '50%', background: newMember.photoUrl ? 'transparent' : 'var(--s3)', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px dashed var(--border)' }}
+              onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { default: compress } = await import('../../../utils/compressImage'); const url = await compress(f, 150, 0.7); setNewMember(prev => ({ ...prev, photoUrl: url })) } catch { } }; inp.click() }}
+            >
+              {newMember.photoUrl
+                ? <img src={newMember.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <Camera size={13} color="#9a9a9a" />}
+            </div>
             <input className="form-input" style={{ flex: 1 }} value={newMember.name} onChange={e => setNewMember(prev => ({ ...prev, name: e.target.value }))} placeholder="Nom du nouveau membre..." />
-            <input className="form-input" style={{ flex: 1 }} value={newMember.role} onChange={e => setNewMember(prev => ({ ...prev, role: e.target.value }))} placeholder="Role..." />
+            <input className="form-input" style={{ flex: 1 }} value={newMember.role} onChange={e => setNewMember(prev => ({ ...prev, role: e.target.value }))} placeholder="Poste / rôle..." />
             <button className="btn btn-sm" disabled={!newMember.name.trim()} onClick={() => {
-              setEditTeamList(prev => [...prev, { name: newMember.name, role: newMember.role, img: '', email: '', linkedinUrl: '', isPublic: true }])
-              setNewMember({ name: '', role: '', img: '' })
+              setEditTeamList(prev => [...prev, { name: newMember.name, nom: newMember.name, role: newMember.role, poste: newMember.role, jobTitle: newMember.role, photoUrl: newMember.photoUrl || '', photo: newMember.photoUrl || '', email: '', linkedinUrl: '', isPublic: true }])
+              setNewMember({ name: '', role: '', photoUrl: '' })
             }}>Ajouter</button>
           </div>
         </div>

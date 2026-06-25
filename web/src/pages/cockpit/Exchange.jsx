@@ -53,9 +53,16 @@ export default function Exchange({ showToast, onNavigate }) {
   }, [store.entrepriseDocs])
   // Aussi inclure les vrais documents importés dans le Dossier Entreprise (DocumentsPage)
   const uploadedEnterpriseDocs = useMemo(() =>
-    (store.documents || []).filter(d => !d._deleted && (d.isEntreprise || d.category === 'entreprise'))
+    (store.documents || []).filter(d =>
+      !d._deleted && (
+        d.isEntreprise === true ||
+        d.category === 'entreprise' ||
+        // Fallback : documents sans projet appartenant à l'utilisateur = dossier entreprise
+        (!d.projectId && (d.userId === store.user?.id || !d.userId))
+      )
+    )
       .map(d => ({ id: d.id, nom: d.nom || d.name, type: d.cat || d.type || 'Document', status: 'uploaded', uploadedAt: d.createdAt || d.date })),
-  [store.documents])
+  [store.documents, store.user?.id])
   const availableDocs = [
     ...entrepriseDocs.filter(d => d.status === 'uploaded' || d.status === 'generated'),
     // Dédupliquer si même id

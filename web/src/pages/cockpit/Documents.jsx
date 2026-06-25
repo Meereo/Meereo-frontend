@@ -422,6 +422,7 @@ export default function Documents({ showToast }) {
                           name: docName,
                           type: f.docType,
                           projectId,
+                          isEntreprise,
                         })
                         uploaded.push({ ...doc, nom: doc.name, projet: isEntreprise ? 'Dossier Entreprise' : importProjet, cat: f.cat, taille: f.size, isNew: true, isEntreprise, category: isEntreprise ? 'entreprise' : undefined })
                       } catch (err) {

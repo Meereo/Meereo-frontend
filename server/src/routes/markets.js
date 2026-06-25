@@ -28,6 +28,10 @@ router.get('/', requireAuth, async (req, res, next) => {
     const markets = await prisma.market.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: {
+        client: { select: { id: true, name: true, company: true, email: true } },
+        supplier: { select: { id: true, name: true, company: true } },
+      },
     })
     res.json(markets)
   } catch (e) {

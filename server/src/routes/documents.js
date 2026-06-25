@@ -88,6 +88,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 
     const prisma = getPrisma()
     const { name, type, projectId } = req.body
+    const isEntreprise = req.body.isEntreprise === 'true' || req.body.isEntreprise === true
     const userId = req.user.id
 
     // Check project access if projectId is given
@@ -112,11 +113,12 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 
     const doc = await prisma.document.create({
       data: {
-        name:      docName,
-        type:      type || '',
+        name:         docName,
+        type:         type || '',
         url,
-        projectId: projectId || null,
+        projectId:    projectId || null,
         userId,
+        isEntreprise: isEntreprise || (!projectId),
       },
     })
     res.status(201).json(doc)
@@ -127,16 +129,17 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { name, type, url, projectId } = req.body
+    const { name, type, url, projectId, isEntreprise } = req.body
     if (!name) throw createError('name requis', 400)
 
     const doc = await prisma.document.create({
       data: {
         name,
-        type:      type      || '',
-        url:       url       || '',
-        projectId: projectId || null,
-        userId:    req.user.id,
+        type:         type        || '',
+        url:          url         || '',
+        projectId:    projectId   || null,
+        userId:       req.user.id,
+        isEntreprise: isEntreprise === true || isEntreprise === 'true' || (!projectId),
       },
     })
     res.status(201).json(doc)

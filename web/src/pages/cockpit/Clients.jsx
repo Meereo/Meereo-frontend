@@ -76,16 +76,20 @@ export default function Clients({ openModal, showToast }) {
 
     const newOnes = []
     for (const m of myMarkets) {
+      // Use the client's company/name, NOT entreprise (which is the supplier's company)
+      const clientNom = m.client?.company || m.client?.name || m.clientName || m.clientCompany || null
+      const clientEmail = m.client?.email || m.clientEmail || ''
+      if (!clientNom) continue // skip if no client info available
       const alreadyExists = existingContacts.some(c =>
-        (m.email && c.email && c.email === m.email) ||
-        (m.entreprise && c.nom && c.nom === m.entreprise)
+        (clientEmail && c.email && c.email === clientEmail) ||
+        (clientNom && c.nom && c.nom.toLowerCase() === clientNom.toLowerCase())
       )
       if (!alreadyExists) {
         newOnes.push({
           type: 'client',
-          nom: m.entreprise || m.clientName || ('Client ' + (m.id || '').slice(-4)),
-          email: m.email || '',
-          tel: m.tel || '',
+          nom: clientNom,
+          email: clientEmail,
+          tel: m.clientTel || '',
           statut: 'actif',
           note: '',
         })
