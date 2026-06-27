@@ -283,7 +283,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   const userId = store.user?.id
   const allProjetsRaw = useMemo(() => getUserProjects(store, userId), [store.projects, userId, store.projectMembers])
   // Enrich with computed avancement (phase + étapes + stored)
-  const allProjets = useMemo(() => allProjetsRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p) })), [allProjetsRaw])
+  const allProjets = useMemo(() => allProjetsRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p, store.markets) })), [allProjetsRaw, store.markets])
 
   const total = allProjets.length
   const enCours = allProjets.filter(p => p.avancement > 0 && p.avancement < 100).length
@@ -291,7 +291,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
   const archivedProjets = useMemo(() => allProjets.filter(p => p.status === 'archived'), [allProjets])
   const activeRaw = useMemo(() => getUserActiveProjects(store, userId), [store.projects, userId, store.projectMembers])
-  const activeProjets = useMemo(() => activeRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p) })), [activeRaw])
+  const activeProjets = useMemo(() => activeRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p, store.markets) })), [activeRaw, store.markets])
 
   const filtered = (showArchived ? archivedProjets : activeProjets).filter(p => {
     const phaseOk = phaseFilter === 'all' || p.phase === phaseFilter

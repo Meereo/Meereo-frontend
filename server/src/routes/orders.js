@@ -101,4 +101,31 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
   }
 })
 
+// ─── DELETE /api/orders/:id ──────────────────────────────────────────────────────
+// Acheteur peut supprimer sa commande si elle est annulée ou au step 1
+// Fournisseur peut supprimer une commande terminée
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id } })
+    if (!existing) throw createError('Commande introuvable', 404)
+
+    const user = req.user
+    const isBuyer  = existing.buyerId  === user.id
+    const isSeller = existing.sellerId === user.id
+
+    if (!isBuyer && !isSeller) throw createError('Non autorisé', 403)
+
+    // Buyer can delete if cancelled or step 1; seller can delete completed orders
+    const canDelete =
+      (isBuyer  && (existing.statut === 'annulee' || existing.step === 1)) ||
+      (isSeller && (existing.statut === 'completed' || existing.statut === 'delivered'))
+
+    if (!canDelete) throw createError('Suppression non autorisée dans cet état', 400)
+
+    await prisma.order.delete({ where: { id: req.params.id } })
+    res.json({ success: true })
+  } catch (e) { next(e) }
+})
+
 module.exports = router

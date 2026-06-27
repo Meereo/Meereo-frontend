@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useMeereo, formatDate } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import { CheckCircle2, Megaphone, AlertTriangle, XCircle, MessageSquare, Bell } from 'lucide-react'
 import './NotifPanel.css'
 
@@ -42,13 +43,12 @@ export default function NotifPanel() {
       ...prev,
       notifications: (prev.notifications || []).filter(n => n.id !== id)
     }))
+    api.notifications.delete(id).catch(() => {})
   }
 
   const handleClearAll = () => {
-    updateStore(prev => ({
-      ...prev,
-      notifications: []
-    }))
+    updateStore(prev => ({ ...prev, notifications: [] }))
+    api.notifications.deleteAll().catch(() => {})
     setNotifOpen(false)
   }
 

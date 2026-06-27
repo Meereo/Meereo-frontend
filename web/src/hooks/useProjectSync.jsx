@@ -7,12 +7,6 @@
 
 import { useMemo } from 'react'
 import { useMeereo } from './useMeereoStore'
-import { OFFRES_DATA } from '../data/offers'
-import { MARCHES_DATA } from '../data/markets'
-import { DOCS_DATA } from '../data/documents'
-import { CONVERSATIONS } from '../data/messages'
-import { PAY_TRANSACTIONS } from '../data/payments'
-import { INTERVENANTS_DATA } from '../data/intervenants'
 import { CHANTIER_PHASES } from '../data/chantier'
 import {
   computeProgress,
@@ -21,7 +15,6 @@ import {
   computeBudgetSummary,
   computeProjectBadges,
   getChantierPhaseStatus,
-  getMemberPhoto,
 } from '../domain/projectAggregates'
 import { filterDocumentsForClient } from '../domain/permissions'
 import { useDevise } from './useDevise'
@@ -66,37 +59,34 @@ export function useProjectSync(projectId, options = {}) {
   const budget = useMemo(() => {
     if (!project) return { totalBudget: 0, totalPaid: 0, remaining: 0, pctUsed: 0, transactions: [] }
     const totalBudget = parseBudget(project.budget || '0')
-    return computeBudgetSummary(PAY_TRANSACTIONS, project.id, totalBudget)
-  }, [project, parseBudget])
+    return computeBudgetSummary(store.transactions, project.id, totalBudget)
+  }, [project, parseBudget, store.transactions])
 
   // Équipe avec photos
   const team = useMemo(() => {
     if (!project?.equipe) return []
     return project.equipe.map(m => ({
       ...m,
-      photo: getMemberPhoto(m.nom, INTERVENANTS_DATA),
+      photo: null,
       initials: (m.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase(),
     }))
   }, [project?.equipe])
 
   // Documents (filtrés pour le client)
   const documents = useMemo(() => {
-    const allDocs = DOCS_DATA.filter(d => d.projet === project?.nom || d.projectId === project?.id)
-    // Inclure aussi les docs du store
-    const storeDocs = (store.documents || []).filter(d => d.projectId === project?.id)
-    const merged = [...allDocs, ...storeDocs]
-    return role === 'client' ? filterDocumentsForClient(merged, project?.id) : merged
+    const storeDocs = (store.documents || []).filter(d => d.projectId === project?.id && !d._deleted)
+    return role === 'client' ? filterDocumentsForClient(storeDocs, project?.id) : storeDocs
   }, [project, store.documents, role])
 
   // Offres
   const offers = useMemo(() => {
-    return OFFRES_DATA.filter(o => o.projectId === project?.id || o.projet === project?.nom)
-  }, [project])
+    return (store.offers || []).filter(o => o.projectId === project?.id)
+  }, [store.offers, project])
 
   // Marchés
   const markets = useMemo(() => {
-    return MARCHES_DATA.filter(m => m.projectId === project?.id)
-  }, [project])
+    return (store.markets || []).filter(m => m.projectId === project?.id)
+  }, [store.markets, project])
 
   // Décisions
   const decisions = useMemo(() => {
@@ -112,11 +102,11 @@ export function useProjectSync(projectId, options = {}) {
   }, [store.decisions, project, role])
 
   const pendingDecisions = useMemo(() =>
-    decisions.filter(d => d.statut === 'pending'),
+    decisions.filter(d => d.statut === 'en_attente'),
   [decisions])
 
   const resolvedDecisions = useMemo(() =>
-    decisions.filter(d => d.statut !== 'pending'),
+    decisions.filter(d => d.statut !== 'en_attente'),
   [decisions])
 
   // Demandes de paiement
@@ -140,13 +130,13 @@ export function useProjectSync(projectId, options = {}) {
   // Badges / compteurs
   const badges = useMemo(() => {
     return computeProjectBadges(project?.id, {
-      decisions: store.decisions,
-      conversations: CONVERSATIONS,
-      transactions: PAY_TRANSACTIONS,
-      documents: DOCS_DATA,
-      offers: OFFRES_DATA,
+      decisions:     store.decisions,
+      conversations: store.conversations,
+      transactions:  store.transactions,
+      documents:     store.documents,
+      offers:        store.offers,
     })
-  }, [project, store.decisions])
+  }, [project, store.decisions, store.conversations, store.transactions, store.documents, store.offers])
 
   // Phases chantier avec statut dérivé
   const chantierStatus = useMemo(() => {

@@ -2,14 +2,18 @@ const { Server } = require('socket.io')
 const jwt = require('jsonwebtoken')
 const { getPrisma } = require('./db')
 
+let _io = null
+
+/** Expose the Socket.IO server for use in routes (e.g., push notifications). */
+function getIo() { return _io }
+
 /**
  * Attache Socket.IO au serveur HTTP et gère la messagerie temps réel.
  * @param {import('http').Server} httpServer
  * @param {string[]} allowedOrigins
  */
 function attachSocketIO(httpServer, allowedOrigins) {
-  const io = new Server(httpServer, {
-    cors: {
+  const io = new Server(httpServer, {    cors: {
       origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST'],
@@ -17,6 +21,8 @@ function attachSocketIO(httpServer, allowedOrigins) {
     // Utiliser websocket en priorité, fallback polling
     transports: ['websocket', 'polling'],
   })
+
+  _io = io
 
   // ─── Authentification JWT sur la connexion ─────────────────────────────────
   io.use((socket, next) => {
@@ -91,8 +97,8 @@ function attachSocketIO(httpServer, allowedOrigins) {
           data: { updatedAt: new Date() },
         })
 
-        // Diffuser à tous les membres de la conversation (y compris l'expéditeur)
-        io.to(`conv:${conversationId}`).emit('message:new', message)
+        // Diffuser aux autres membres de la conversation (pas l'expéditeur — il reçoit via ack)
+        socket.to(`conv:${conversationId}`).emit('message:new', message)
 
         // Notifier les participants qui ne sont pas dans la room (app en arrière-plan)
         const participants = await prisma.conversationParticipant.findMany({
@@ -149,4 +155,4 @@ function attachSocketIO(httpServer, allowedOrigins) {
   return io
 }
 
-module.exports = { attachSocketIO }
+module.exports = { attachSocketIO, getIo }

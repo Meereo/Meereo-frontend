@@ -93,6 +93,19 @@ model User {
   kaiConversations KaiConversation[]
   kaiMemory        KaiMemory[]
 
+  // Finance & Paiements
+  ownedBudgets       Budget[]       @relation("OwnedBudgets")
+  ownedExpenses      Expense[]      @relation("OwnedExpenses")
+  ownedInvoices      Invoice[]      @relation("OwnedInvoices")
+  ownedPaymentOrders PaymentOrder[] @relation("OwnedPaymentOrders")
+
+  // Rapports, transactions, introductions, commissions
+  ownedReports          Report[]          @relation("OwnedReports")
+  ownedTransactions     Transaction[]     @relation("OwnedTransactions")
+  ownedIntroductions    Introduction[]    @relation("OwnedIntroductions")
+  ownedCommissions      Commission[]      @relation("OwnedCommissions")
+  ownedPaymentRequests  PaymentRequest[]  @relation("OwnedPaymentRequests")
+
   // Préférences utilisateur (notifications, UI…)
   // Format : { notifEmail, notifPush, rappels, resume, devise, theme, langue, … }
   prefs Json @default("{}")
@@ -266,18 +279,22 @@ model Product {
 // ─── Offre de prestation (réponse d'un pro à un AO) ─────────────────────────
 
 model Offer {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   aoId        String
-  ao          AO       @relation(fields: [aoId], references: [id], onDelete: Cascade)
+  ao          AO        @relation(fields: [aoId], references: [id], onDelete: Cascade)
   supplierId  String
-  supplier    User     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  entreprise  String   @default("")
-  montant     String   @default("0")
-  delai       String   @default("")
-  message     String   @default("")
-  statut      String   @default("pending") // pending | accepted | rejected
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  supplier    User      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  entreprise  String    @default("")
+  montant     String    @default("0")
+  delai       String    @default("")
+  message     String    @default("")
+  technique   String    @default("") // Mémoire technique (note d'offre)
+  docs        Json      @default("[]") // Documents joints [{name, size, type, source}]
+  statut      String    @default("pending") // pending | accepted | rejected
+  acceptedBy  String?   // ID du user qui a accepté l'offre
+  acceptedAt  DateTime? // Date d'acceptation
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([aoId, supplierId]) // Un pro ne peut soumettre qu'une offre par AO
   @@map("offers")
@@ -447,14 +464,19 @@ model Project {
   color       String?
   etapes      Json?
   equipe      Json?
+  taskStates  Json?    // { taskId: 'todo'|'active'|'done' } — set by pro, read by client
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members     ProjectMember[]
-  tasks       Task[]
-  events      Event[]
-  documents   Document[]
-  decisions   Decision[]
+  members       ProjectMember[]
+  tasks         Task[]
+  events        Event[]
+  documents     Document[]
+  decisions     Decision[]
+  budgets       Budget[]
+  expenses      Expense[]
+  invoices      Invoice[]
+  paymentOrders PaymentOrder[]
 
   @@map("projects")
 }
@@ -539,16 +561,21 @@ model Document {
 // ─── Décision ─────────────────────────────────────────────────────────────────
 
 model Decision {
-  id          String   @id @default(cuid())
-  titre       String
-  description String   @default("")
-  statut      String   @default("en_attente") // en_attente | validee | refusee
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  createdBy   String
-  creator     User     @relation("CreatedDecisions", fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  titre           String
+  description     String    @default("")
+  statut          String    @default("en_attente") // en_attente | validee | refusee
+  urgent          Boolean   @default(false)
+  visibility      String    @default("client_visible") // client_visible | internal
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy       String
+  creator         User      @relation("CreatedDecisions", fields: [createdBy], references: [id], onDelete: Cascade)
+  respondedBy     String?   // ID de l'utilisateur qui a répondu
+  respondedByRole String?   // Rôle de l'utilisateur qui a répondu
+  respondedAt     DateTime? // Date de réponse
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@map("decisions")
 }
@@ -633,3 +660,193 @@ model KaiMemory {
   @@unique([userId, topic, context])
   @@map("kai_memory")
 }
+
+// ─── Budget ───────────────────────────────────────────────────────────────────
+
+model Budget {
+  id        String   @id @default(cuid())
+  label     String
+  montant   Float    @default(0)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  ownerId   String
+  owner     User     @relation("OwnedBudgets", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("budgets")
+}
+
+// ─── Dépense ──────────────────────────────────────────────────────────────────
+
+model Expense {
+  id        String   @id @default(cuid())
+  label     String
+  montant   Float    @default(0)
+  category  String   @default("")
+  provider  String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  ownerId   String
+  owner     User     @relation("OwnedExpenses", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("expenses")
+}
+
+// ─── Facture ─────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id        String   @id @default(cuid())
+  label     String
+  montant   Float    @default(0)
+  provider  String?
+  statut    String   @default("brouillon") // brouillon | emise | payee | validee
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  ownerId   String
+  owner     User     @relation("OwnedInvoices", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("invoices")
+}
+
+// ─── Ordre de paiement ────────────────────────────────────────────────────────
+
+model PaymentOrder {
+  id          String   @id @default(cuid())
+  label       String   @default("")
+  amount      Float    @default(0)
+  status      String   @default("PAY_INIT")
+  rail        String   @default("virement") // virement | carte | wave | orange_money | mtn | mobile_money
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  marketId    String?
+  ownerId     String
+  owner       User     @relation("OwnedPaymentOrders", fields: [ownerId], references: [id], onDelete: Cascade)
+  milestones  Json     @default("[]")  // [{id, title, amount, status}]
+  validations Json     @default("[]")  // [{id, createdAt, ...}]
+  proofs      Json     @default("[]")  // [{id, createdAt, ...}]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("payment_orders")
+}
+
+// ─── Rapport de chantier ──────────────────────────────────────────────────────
+
+model Report {
+  id           String   @id @default(cuid())
+  type         String   @default("Rapport hebdomadaire")
+  projet       String   @default("")
+  projectId    String?
+  date         String   @default("")
+  heure        String   @default("09:00")
+  lieu         String   @default("")
+  participants String   @default("")
+  ordre        String   @default("")
+  decisions    String   @default("")
+  alertes      String   @default("")
+  prochaine    String   @default("")
+  statut       String   @default("brouillon") // brouillon | transmis | valide
+  visibility   String   @default("private")   // private | client_visible
+  auteur       String   @default("")
+  ownerId      String
+  owner        User     @relation("OwnedReports", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("reports")
+}
+
+// ─── Transaction de paiement ──────────────────────────────────────────────────
+
+model Transaction {
+  id          String   @id @default(cuid())
+  type        String   @default("payment") // payment | payout | commission | refund
+  label       String   @default("")
+  montant     Float    @default(0)
+  statut      String   @default("pending") // pending | confirmed | failed | reversed
+  projectId   String?
+  marketId    String?
+  fromUserId  String?  // Payeur (client qui déclenche)
+  toUserId    String?  // Bénéficiaire (prestataire)
+  fromRole    String?  // Rôle du payeur
+  toRole      String?  // Rôle du bénéficiaire
+  ownerId     String
+  owner       User     @relation("OwnedTransactions", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("transactions")
+}
+
+// ─── Introduction (mise en relation AO / commissions clé en main) ─────────────
+
+model Introduction {
+  id            String    @id @default(cuid())
+  aoId          String?
+  projectId     String?
+  clientId      String?
+  structureId   String?
+  structureName String    @default("")
+  metier        String    @default("")
+  status        String    @default("sent") // sent | opened | responded | retained | signed_up
+  source        String    @default("manual") // manual | meereo_cle_en_main
+  introDate     DateTime  @default(now())
+  retainedAt    DateTime?
+  ownerId       String
+  owner         User      @relation("OwnedIntroductions", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("introductions")
+}
+
+// ─── Commission (suivi des commissions clé en main) ──────────────────────────
+
+model Commission {
+  id                String   @id @default(cuid())
+  introductionId    String?
+  structureId       String?
+  structureName     String   @default("")
+  projectId         String?
+  clientId          String?
+  montantBase       Float    @default(0)
+  montantCommission Float    @default(0)
+  rate              Float    @default(0.05)
+  status            String   @default("pending") // pending | invoiced | paid
+  ownerId           String
+  owner             User     @relation("OwnedCommissions", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("commissions")
+}
+
+// ─── Demande de paiement (pro → client) ────────────────────────────────────
+
+model PaymentRequest {
+  id              String    @id @default(cuid())
+  projectId       String?
+  marketId        String?
+  amount          Float     @default(0)
+  label           String    @default("")
+  paymentType     String    @default("paiement") // paiement | appel_de_fonds | acompte
+  statut          String    @default("pending") // pending | approved | rejected
+  visibility      String    @default("client_visible")
+  createdByName   String    @default("")
+  createdByRole   String?
+  respondedBy     String?
+  respondedByRole String?
+  respondedAt     DateTime?
+  ownerId         String
+  owner           User      @relation("OwnedPaymentRequests", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("payment_requests")
+}
+

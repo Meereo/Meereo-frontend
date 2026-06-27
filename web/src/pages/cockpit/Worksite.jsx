@@ -30,14 +30,24 @@ const ErrMsg = ({ show }) => show
 function ReportModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
-  const submit = () => {
-    updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), { id: 'rap_' + Date.now(), ...f, visibility: 'client_visible', createdAt: new Date().toISOString() }] }))
-    emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
-    showToast('Rapport créé')
-    setF({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' }); onClose()
+  const [saving, setSaving] = useState(false)
+  const submit = async () => {
+    setSaving(true)
+    try {
+      const created = await api.rapports.create({ ...f, visibility: 'client_visible', auteur: store.user?.name || '' })
+      updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), created] }))
+      emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
+      showToast('Rapport créé')
+      setF({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
+      onClose()
+    } catch (e) {
+      showToast(e.message || 'Erreur création rapport', 'red')
+    } finally {
+      setSaving(false)
+    }
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau rapport" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau rapport" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="form-row">
           <div><label className="form-label">Type de rapport</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Rapport hebdomadaire</option><option>Rapport de visite</option><option>Compte-rendu réunion</option><option>Rapport technique</option><option>Rapport mensuel</option><option>Rapport de chantier</option><option>PV de réception</option></select></div>
@@ -62,12 +72,16 @@ function ReportModal({ isOpen, onClose, showToast }) {
 function NoteModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, createDecision } = useMeereo()
   const [f, setF] = useState({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' })
-  const submit = () => {
+  const submit = async () => {
     const noteId = 'note_' + Date.now()
     updateStore(prev => ({ ...prev, notes: [...(prev.notes || []), { id: noteId, ...f, createdAt: new Date().toISOString() }] }))
     if (f.type === 'Validation' && f.tache) {
       createDecision({ titre: f.tache, desc: f.texte, urgent: f.statut === 'Bloque', projectId: (store.projects || [])[0]?.id || null, sourceType: 'note_chantier', sourceId: noteId, decisionType: 'validation' })
     }
+    try {
+      const created = await api.rapports.create({ titre: f.tache || 'Note chantier', type: 'note_chantier', statut: f.statut, avancement: f.avancement, texte: f.texte, alertType: f.type, projectId: (store.projects || [])[0]?.id || null })
+      updateStore(prev => ({ ...prev, notes: prev.notes.map(n => n.id === noteId ? { ...n, id: created.id } : n), rapports: [...(prev.rapports || []), created] }))
+    } catch (e) { console.warn('[NoteModal]', e.message) }
     showToast('Note enregistrée')
     setF({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' }); onClose()
   }
@@ -189,56 +203,69 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     }
   }, [allProjTasks, proj, updateStore])
 
-  // Task states per project — initialized from defaults + store
-  const [taskStates, setTaskStates] = useState(() => {
-    const init = {}
-    CHANTIER_PHASES.forEach(ph => ph.tasks.forEach(t => {
-      init['_' + t.id] = t.defaultStatus === 'done' ? 'done' : t.defaultStatus === 'active' ? 'active' : 'todo'
-    }))
-    // Merge stored task states from previous sessions
-    const stored = store.taskStates || {}
-    Object.keys(stored).forEach(projId => {
-      const projStates = stored[projId]
-      if (projStates && typeof projStates === 'object') {
-        Object.assign(init, projStates)
-      }
-    })
-    return init
-  })
-  const getTaskState = (taskId) => taskStates[selProjId + '_' + taskId] || taskStates['_' + taskId] || 'todo'
-  const cycleTask = (taskId) => {
-    const key = selProjId + '_' + taskId
-    const cur = getTaskState(taskId)
+  // Task states per project — keyed as `projId_taskId`
+  const [taskStates, setTaskStates] = useState({})
+
+  // Load task states from the project's backend data whenever the selected project changes
+  useEffect(() => {
+    if (!proj?.id) return
+    const backendTaskStates = proj.taskStates
+    if (backendTaskStates && typeof backendTaskStates === 'object' && Object.keys(backendTaskStates).length > 0) {
+      setTaskStates(prev => {
+        const next = { ...prev }
+        Object.entries(backendTaskStates).forEach(([taskId, status]) => {
+          // Only overwrite if the project-scoped key isn't set yet (don't override pending user changes)
+          if (!next[proj.id + '_' + taskId]) next[proj.id + '_' + taskId] = status
+        })
+        return next
+      })
+    }
+  }, [proj?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getTaskState = (taskId) => taskStates[selProjId + '_' + taskId] || 'todo'
+
+  const cycleTask = useCallback((taskId) => {
+    const cur = taskStates[selProjId + '_' + taskId] || 'todo'
     const cycle = { todo: 'active', active: 'done', done: 'todo' }
     const newState = cycle[cur]
-    setTaskStates(prev => {
-      const next = { ...prev, [key]: newState }
-      const projStates = {}
-      Object.keys(next).forEach(k => { if (k.startsWith(selProjId + '_')) projStates[k] = next[k] })
-      saveTaskStates(selProjId, projStates)
+    const key = selProjId + '_' + taskId
 
-      // Sync avancement projet apres changement de tache
-      if (proj && proj.id) {
-        const getState = (tid) => next[selProjId + '_' + tid] || next['_' + tid] || 'todo'
-        // Task-based avancement — source de vérité unique
-        const taskDone = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getState(t.id) === 'done').length, 0)
-        const taskTotal = CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.length, 0)
-        const taskPct = taskTotal ? Math.round(taskDone / taskTotal * 100) : 0
-        // étapes sync (for phase tracking, if étapes exist)
-        const sync = (proj.etapes && proj.etapes.length)
-          ? syncEtapesFromChantier(proj.etapes, CHANTIER_PHASES, getState)
-          : { etapes: proj.etapes || [], phase: proj.phase, avancement: 0 }
-        // Store the MAX of task-based and étapes-based avancement
-        const avancement = Math.max(taskPct, sync.avancement)
-        updateStore(p => ({
-          ...p,
-          projects: (p.projects || []).map(pr => pr.id === proj.id ? { ...pr, avancement, phase: sync.phase || pr.phase, etapes: sync.etapes || pr.etapes } : pr)
-        }))
+    // Compute new state synchronously so we can do side effects right away
+    const nextTaskStates = { ...taskStates, [key]: newState }
+    const getState = (tid) => nextTaskStates[selProjId + '_' + tid] || 'todo'
+
+    // Build flat map { taskId: status } for backend storage
+    const taskStatesForBackend = {}
+    CHANTIER_PHASES.forEach(ph => ph.tasks.forEach(t => { taskStatesForBackend[t.id] = getState(t.id) }))
+
+    // Compute avancement from task completion (source of truth)
+    const taskDone = Object.values(taskStatesForBackend).filter(s => s === 'done').length
+    const taskTotal = Object.values(taskStatesForBackend).length
+    const taskPct = taskTotal ? Math.round(taskDone / taskTotal * 100) : 0
+
+    // Sync étapes if they exist
+    const etapesSync = (proj?.etapes && proj.etapes.length)
+      ? syncEtapesFromChantier(proj.etapes, CHANTIER_PHASES, getState)
+      : { etapes: proj?.etapes || [], phase: proj?.phase, avancement: 0 }
+    const avancement = Math.max(taskPct, etapesSync.avancement)
+
+    setTaskStates(nextTaskStates)
+    saveTaskStates(selProjId, Object.fromEntries(Object.entries(nextTaskStates).filter(([k]) => k.startsWith(selProjId + '_'))))
+
+    if (proj?.id) {
+      // Update local store
+      updateStore(p => ({
+        ...p,
+        projects: (p.projects || []).map(pr => pr.id === proj.id
+          ? { ...pr, avancement, phase: etapesSync.phase || pr.phase, etapes: etapesSync.etapes || pr.etapes, taskStates: taskStatesForBackend }
+          : pr)
+      }))
+      // Persist to backend (only real backend IDs, not optimistic proj_ IDs)
+      if (!String(proj.id).startsWith('proj_')) {
+        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement }).catch(() => {})
       }
-
-      return next
-    })
-  }
+    }
+  }, [selProjId, taskStates, proj, updateStore, saveTaskStates]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePhase = (i) => setOpenPhases(prev => ({ ...prev, [i]: !prev[i] }))
 
@@ -252,19 +279,6 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     : CHANTIER_PHASES.reduce((s, ph) => s + ph.tasks.filter(t => getTaskState(t.id) === 'active').length, 0)
   const blockedTasks = 0
   const globalPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : (proj?.avancement || 0)
-
-  // Sync stored avancement on mount / project change if task states already exist
-  useEffect(() => {
-    if (!proj || !proj.id) return
-    const stored = proj.avancement || 0
-    if (globalPct > 0 && globalPct !== stored) {
-      const avancement = Math.max(globalPct, stored)
-      updateStore(p => ({
-        ...p,
-        projects: (p.projects || []).map(pr => pr.id === proj.id ? { ...pr, avancement } : pr)
-      }))
-    }
-  }, [proj?.id, globalPct]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stIcon = (st) => st === 'done' ? <Check size={11}/> : st === 'active' ? <Play size={11}/> : <Circle size={11}/>
   const stStyle = (st) => st === 'done' ? { bg: 'var(--tx)', color: '#fff' } : st === 'active' ? { bg: 'var(--tx)', color: '#fff' } : { bg: 'rgba(0,0,0,.04)', color: 'var(--t4)' }

@@ -9,8 +9,19 @@ const router = Router()
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const where = { createdBy: req.user.id }
-    if (req.query.projectId) where.projectId = req.query.projectId
+    // Retourner les décisions créées par le user ET celles des projets dont il est membre
+    const memberships = await prisma.projectMember.findMany({
+      where: { userId: req.user.id },
+      select: { projectId: true },
+    })
+    const projectIds = memberships.map(m => m.projectId)
+
+    const where = req.query.projectId
+      ? { projectId: req.query.projectId }
+      : { OR: [
+          { createdBy: req.user.id },
+          { projectId: { in: projectIds } },
+        ] }
 
     const decisions = await prisma.decision.findMany({
       where,
@@ -44,7 +55,16 @@ router.post('/', requireAuth, async (req, res, next) => {
 router.patch('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const allowed = ['titre', 'description', 'statut', 'projectId']
+    const decision = await prisma.decision.findUnique({ where: { id: req.params.id } })
+    if (!decision) throw createError('Décision introuvable', 404)
+    // Le créateur peut tout modifier ; le client désigné peut changer le statut
+    if (decision.createdBy !== req.user.id) {
+      // Autoriser uniquement la mise à jour du statut par un user tiers (client qui répond)
+      const allowedForClient = ['statut', 'respondedBy', 'respondedByRole', 'respondedAt']
+      const hasUnauthorizedField = Object.keys(req.body).some(k => !allowedForClient.includes(k))
+      if (hasUnauthorizedField) throw createError('Non autorisé', 403)
+    }
+    const allowed = ['titre', 'description', 'statut', 'projectId', 'urgent', 'visibility', 'respondedBy', 'respondedByRole', 'respondedAt']
     const data = {}
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key]
@@ -58,6 +78,9 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const decision = await prisma.decision.findUnique({ where: { id: req.params.id } })
+    if (!decision) throw createError('Décision introuvable', 404)
+    if (decision.createdBy !== req.user.id) throw createError('Non autorisé', 403)
     await prisma.decision.delete({ where: { id: req.params.id } })
     res.json({ success: true })
   } catch (e) { next(e) }

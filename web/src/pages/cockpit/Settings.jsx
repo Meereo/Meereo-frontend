@@ -38,19 +38,28 @@ const labelStyleSec = { fontSize: 11, fontWeight: 600, color: 'var(--t3)', displ
 
 function SecurityForm({ showToast }) {
   const [pwd, setPwd] = useState({ current: '', nouveau: '', confirm: '' })
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false)
+  const handleSave = async () => {
     if (!pwd.current || !pwd.nouveau || !pwd.confirm) { showToast && showToast('Tous les champs sont requis'); return }
-    if (pwd.nouveau.length < 8) { showToast && showToast('Le mot de passe doit faire 8 caractéres minimum'); return }
+    if (pwd.nouveau.length < 8) { showToast && showToast('Le mot de passe doit faire 8 caractères minimum'); return }
     if (pwd.nouveau !== pwd.confirm) { showToast && showToast('Les mots de passe ne correspondent pas'); return }
-    setPwd({ current: '', nouveau: '', confirm: '' })
-    showToast && showToast('Mot de passe mis à jour')
+    setSaving(true)
+    try {
+      await api.auth.changePassword({ currentPassword: pwd.current, newPassword: pwd.nouveau, confirmPassword: pwd.confirm })
+      setPwd({ current: '', nouveau: '', confirm: '' })
+      showToast && showToast('Mot de passe mis à jour')
+    } catch (e) {
+      showToast && showToast(e.message || 'Erreur mise à jour mot de passe', 'red')
+    } finally {
+      setSaving(false)
+    }
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div><label style={labelStyleSec}>Mot de passe actuel</label><input type="password" placeholder="••••••••" style={inputStyleSec} value={pwd.current} onChange={e => setPwd(p => ({ ...p, current: e.target.value }))} /></div>
       <div><label style={labelStyleSec}>Nouveau mot de passe</label><input type="password" placeholder="Minimum 8 caractéres" style={inputStyleSec} value={pwd.nouveau} onChange={e => setPwd(p => ({ ...p, nouveau: e.target.value }))} /></div>
       <div><label style={labelStyleSec}>Confirmer</label><input type="password" placeholder="Confirmer le nouveau" style={inputStyleSec} value={pwd.confirm} onChange={e => setPwd(p => ({ ...p, confirm: e.target.value }))} /></div>
-      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 8 }} onClick={handleSave}>Mettre a jour</button>
+      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 8 }} onClick={handleSave} disabled={saving}>{saving ? 'Mise à jour…' : 'Mettre à jour'}</button>
     </div>
   )
 }
@@ -83,6 +92,7 @@ export default function Settings({ showToast }) {
     setTeamLocal(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       updateStore(prevStore => ({ ...prevStore, onboardingData: { ...(prevStore.onboardingData || {}), cockpitTeam: next } }))
+      api.usersApi.updateOnboardingData({ cockpitTeam: next }).catch(() => {})
       return next
     })
   }
@@ -156,8 +166,11 @@ export default function Settings({ showToast }) {
               onboardingData: { ...(prev.onboardingData || {}), ...patch },
               user: prev.user ? { ...prev.user, name: pEntreprise || prev.user.name, email: pEmail || prev.user.email, phone: pTel || prev.user.phone } : prev.user,
             }))
-            // Persister cété serveur
+            // Persister côté serveur — onboardingData (profil étendu) + user (champs de base)
             api.usersApi.updateOnboardingData(patch).catch(() => {})
+            if (pEmail || pTel || pEntreprise) {
+              api.usersApi.updateMe({ name: pEntreprise || undefined, email: pEmail || undefined, phone: pTel || undefined, ville: pVille || undefined }).catch(() => {})
+            }
             setPSaved(true); setTimeout(() => setPSaved(false), 1500)
           }
           showToast && showToast('Paramètres enregistrès')

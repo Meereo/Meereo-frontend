@@ -72,6 +72,7 @@ const defaultStore = {
   connectedIntegrations: [],
   events: [],
   rapportStatuts: {},
+  rapports: [],
   reviews: [],
   offerStatuts: {},
   marketStatuts: {},
@@ -219,7 +220,7 @@ export function MeereoProvider({ children }) {
         }
 
         // 2. Fetch business data from PostgreSQL (source of truth)
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding, apiActivities, apiRapports, apiNotifications, apiEvents, apiTasks, apiCommandes, apiDecisions, apiTransactions, apiPaymentRequests] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
@@ -233,6 +234,15 @@ export function MeereoProvider({ children }) {
           api.kai.getMemory().catch(() => []),
           api.usersApi.getPrefs().catch(() => ({})),
           api.usersApi.getOnboardingData().catch(() => ({})),
+          api.activities.getAll().catch(() => []),
+          api.rapports.getAll().catch(() => []),
+          api.notifications.getAll().catch(() => []),
+          api.events.getAll().catch(() => []),
+          api.tasks.getAll().catch(() => []),
+          api.commandes.getAll().catch(() => []),
+          api.decisions.getAll().catch(() => []),
+          api.transactions.getAll().catch(() => []),
+          api.paymentRequests.getAll().catch(() => []),
         ])
 
         // 3. PostgreSQL is source of truth — replace business data entirely
@@ -272,6 +282,26 @@ export function MeereoProvider({ children }) {
             onboardingData: Object.keys(apiOnboarding || {}).length > 0
               ? apiOnboarding
               : (prev._onboardingByUser?.[user.id] || prev.onboardingData || {}),
+            // Activités — depuis la base, avec champ ts mappé depuis createdAt
+            activities: Array.isArray(apiActivities)
+              ? apiActivities.map(a => ({ ...a, ts: a.ts || a.createdAt }))
+              : (prev.activities || []),
+            // Rapports — depuis la base
+            rapports: Array.isArray(apiRapports) ? apiRapports : (prev.rapports || []),
+            // Notifications — depuis la base
+            notifications: Array.isArray(apiNotifications) ? apiNotifications : (prev.notifications || []),
+            // Événements — depuis la base (remplace les ev_ temporaires)
+            events: Array.isArray(apiEvents) ? apiEvents : (prev.events || []),
+            // Tâches — depuis la base
+            tasks: Array.isArray(apiTasks) ? apiTasks : (prev.tasks || []),
+            // Commandes — depuis la base
+            commandes: Array.isArray(apiCommandes) ? apiCommandes : (prev.commandes || []),
+            // Décisions — depuis la base
+            decisions: Array.isArray(apiDecisions) ? apiDecisions : (prev.decisions || []),
+            // Transactions — depuis la base
+            transactions: Array.isArray(apiTransactions) ? apiTransactions : (prev.transactions || []),
+            // Demandes de paiement — depuis la base
+            paymentRequests: Array.isArray(apiPaymentRequests) ? apiPaymentRequests : (prev.paymentRequests || []),
           }
           saveToStorage(next)
           return next
@@ -324,9 +354,14 @@ export function MeereoProvider({ children }) {
           ...prev,
           conversations: convs.map(c =>
             c.id === conversationId
-              ? { ...c, lastMessage, updatedAt: lastMessage?.createdAt || c.updatedAt }
+              ? { ...c, lastMessage, updatedAt: lastMessage?.createdAt || c.updatedAt, unread: (c.unread || 0) + 1 }
               : c
           ),
+          // Also add a bell notification so the user is alerted
+          notifications: [
+            { id: 'msg_' + (lastMessage?.id || Date.now()), text: 'Nouveau message de ' + (lastMessage?.senderName || 'quelqu\'un'), type: 'message', read: false, createdAt: new Date().toISOString(), page: 'messages' },
+            ...(prev.notifications || []),
+          ],
         }
         saveToStorage(next)
         return next
@@ -334,6 +369,18 @@ export function MeereoProvider({ children }) {
     }
 
     socket.on('conversation:updated', handleConvUpdated)
+
+    // Écouter les notifications push (ex: nouvelle offre sur un AO)
+    const handleNotifNew = (notif) => {
+      setStore(prev => {
+        const existing = prev.notifications || []
+        if (existing.some(n => n.id === notif.id)) return prev
+        const next = { ...prev, notifications: [notif, ...existing] }
+        saveToStorage(next)
+        return next
+      })
+    }
+    socket.on('notification:new', handleNotifNew)
 
     // Charger les conversations depuis l'API au premier login
     if (!store.conversations || store.conversations.length === 0) {
@@ -351,6 +398,7 @@ export function MeereoProvider({ children }) {
 
     return () => {
       socket.off('conversation:updated', handleConvUpdated)
+      socket.off('notification:new', handleNotifNew)
       // En dev (React Strict Mode), le cleanup + remount crée 2 sockets simultanés.
       // On déconnecte proprement ici pour éviter "WebSocket closed before established".
       // En prod ce cleanup ne s'exécute qu'au logout ou au changement de token.
@@ -365,7 +413,7 @@ export function MeereoProvider({ children }) {
       const currentStore = storeRef.current
       if (!currentStore.user) return
       try {
-        const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers] = await Promise.all([
+        const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers, apiDecisions, apiTasks, apiEvents, apiNotifications, apiContacts, apiRapports, apiTransactions] = await Promise.all([
           api.aos.getAll().catch(() => null),
           api.offers.getAll().catch(() => null),
           api.markets.getAll().catch(() => null),
@@ -373,6 +421,13 @@ export function MeereoProvider({ children }) {
           api.documents.getAll().catch(() => null),
           api.conversations.getAll().catch(() => null),
           api.projectMembers.getAll().catch(() => null),
+          api.decisions.getAll().catch(() => null),
+          api.tasks.getAll().catch(() => null),
+          api.events.getAll().catch(() => null),
+          api.notifications.getAll().catch(() => null),
+          api.contacts.getAll().catch(() => null),
+          api.rapports.getAll().catch(() => null),
+          api.transactions.getAll().catch(() => null),
         ])
         if (!apiAos) return // Backend unreachable, skip
         setStore(prev => {
@@ -412,6 +467,13 @@ export function MeereoProvider({ children }) {
             documents: apiDocuments || prev.documents,
             projectMembers: apiMembers || prev.projectMembers,
             conversations: mergedConvs,
+            decisions: apiDecisions || prev.decisions,
+            tasks: apiTasks || prev.tasks,
+            events: apiEvents || prev.events,
+            notifications: apiNotifications || prev.notifications,
+            contacts: apiContacts || prev.contacts,
+            rapports: apiRapports || prev.rapports,
+            transactions: apiTransactions || prev.transactions,
           }
           saveToStorage(next)
           return next
@@ -610,6 +672,7 @@ export function MeereoProvider({ children }) {
           email: res.user.email || email,
           phone: res.user.phone || '',
           avatar: res.user.avatar || '',
+          publicId: res.user.publicId || null,
           wallet: 0,
         }
         // 2. Hydrate business data from PostgreSQL
@@ -897,8 +960,8 @@ export function MeereoProvider({ children }) {
       budget: data.budget || '',
       status: 'draft',
       phase: data.phase || 'ESQUISSE',
-      progress: computePhaseProgress(data.phase || 'ESQUISSE'),
-      avancement: computePhaseProgress(data.phase || 'ESQUISSE'),
+      progress: 0,
+      avancement: data.avancement || 0,
       team: data.team || [],
       address: data.address || '',
       localisation: data.address || '',
@@ -1009,11 +1072,7 @@ export function MeereoProvider({ children }) {
       projects: (prev.projects || []).map(p => {
         if (p.id !== projectId) return p
         const merged = { ...p, ...updates }
-        // Auto-recalculate avancement when phase changes
-        if (updates.phase && updates.phase !== p.phase) {
-          const phaseFloor = computePhaseProgress(updates.phase)
-          merged.avancement = Math.max(merged.avancement || 0, phaseFloor)
-        }
+        // Phase changes no longer inflate avancement — actual tasks drive the number
         return merged
       }),
     }))
@@ -1331,6 +1390,8 @@ export function MeereoProvider({ children }) {
       montant: String(data.price || data.montant || 0),
       delai: data.delai || '',
       message: data.message || '',
+      technique: data.technique || '',
+      docs: Array.isArray(data.docs) ? data.docs : [],
       statut: 'pending',
       aoId: data.aoId,
       userId: store.user?.id || data.supplierId,
@@ -1352,6 +1413,8 @@ export function MeereoProvider({ children }) {
         montant: offerPayload.montant,
         delai: data.delai || '',
         message: data.message || '',
+        technique: data.technique || '',
+        docs: offerPayload.docs,
         status: 'pending',
         statut: 'pending',
         createdAt: backendOffer.createdAt || new Date().toISOString(),
@@ -1374,6 +1437,8 @@ export function MeereoProvider({ children }) {
         montant: offerPayload.montant,
         delai: data.delai || '',
         message: data.message || '',
+        technique: data.technique || '',
+        docs: offerPayload.docs,
         status: 'pending',
         statut: 'pending',
         createdAt: new Date().toISOString(),
@@ -1430,9 +1495,10 @@ export function MeereoProvider({ children }) {
           avancement: 0,
           status: 'active',
           ownerId: prev.user?.id || 'local',
-          clientId: aoObj?.ownerUserId || prev.user?.id || null,
-          clientEmail: prev.user?.email || '',
-          client: prev.user?.name || '',
+          clientId: aoObj?.ownerUserId || null,
+          // Look up client name/email from linked project (don't use current user who may be the supplier)
+          clientEmail: (aoObj?.projectId ? (prev.projects || []).find(p => p.id === aoObj.projectId)?.clientEmail : '') || '',
+          client: (aoObj?.projectId ? (prev.projects || []).find(p => p.id === aoObj.projectId)?.client : '') || '',
           color: '#2563EB',
           createdAt: new Date().toISOString(),
           // Link back to AO and market
@@ -1468,10 +1534,10 @@ export function MeereoProvider({ children }) {
         amount: offer.price || offer.montant || 0,
         montant: String(offer.price || offer.montant || 0),
         entreprise: offer.entreprise || offer.supplierName || '',
-        // Client info — stored explicitly so the pro's Clients page uses the right name
-        clientName: aoObj?.ownerName || prev.user?.company || prev.user?.name || '',
-        clientCompany: prev.user?.company || prev.user?.name || '',
-        clientEmail: prev.user?.email || '',
+        // Client info — resolved from linked project; never fall back to current user (who is the supplier)
+        clientName: (() => { const lp = aoObj?.projectId ? (prev.projects || []).find(p => p.id === aoObj.projectId) : null; return lp?.client || aoObj?.ownerName || '' })(),
+        clientCompany: (() => { const lp = aoObj?.projectId ? (prev.projects || []).find(p => p.id === aoObj.projectId) : null; return lp?.client || '' })(),
+        clientEmail: (() => { const lp = aoObj?.projectId ? (prev.projects || []).find(p => p.id === aoObj.projectId) : null; return lp?.clientEmail || '' })(),
         offerMessage: offer.message || '',
         // Statut & cycle de vie
         statut: 'signed',
@@ -1554,8 +1620,8 @@ export function MeereoProvider({ children }) {
               nom: autoProj?.nom || market.titre || 'Projet', type: market.lot || 'Mission',
               phase: 'ATTRIBUTION_MARCHES', budget: String(market.amount || market.budget || ''),
               description: market.description || '', status: 'active',
-              ownerId: store.user?.id || null, clientId: store.user?.id || null,
-              clientEmail: store.user?.email || '', client: store.user?.name || '',
+              ownerId: store.user?.id || null, clientId: market?.clientId || null,
+              clientEmail: market?.clientEmail || '', client: market?.clientName || '',
               sourceAoId: market.aoId || null,
               etapes: autoProj?.etapes || null, equipe: autoProj?.equipe || null,
             })
@@ -1673,7 +1739,7 @@ export function MeereoProvider({ children }) {
           montantBase: calc.base,
           montantCommission: calc.amount,
           rate: calc.rate,
-          status: 'due',
+          status: 'pending',
           createdAt: new Date().toISOString(),
           paidAt: null,
         }
@@ -1728,7 +1794,7 @@ export function MeereoProvider({ children }) {
       createdAt: new Date().toISOString()
     }
     updateStore(prev => ({ ...prev, transactions: [...prev.transactions, tx] }))
-    sync(api.transactions.create({ type: tx.type || 'payment', label: tx.label, montant: tx.amount, statut: tx.status, projectId: tx.projectId, marketId: tx.marketId, userId: tx.fromUserId }))
+    sync(api.transactions.create({ type: tx.type || 'payment', label: tx.label, montant: tx.amount, statut: tx.status, projectId: tx.projectId, marketId: tx.marketId, fromUserId: tx.fromUserId, toUserId: tx.toUserId, fromRole: tx.fromRole, toRole: tx.toRole }))
     log('PAYMENT_TRIGGERED', { amount: tx.amount, fromUserId: tx.fromUserId, toUserId: tx.toUserId, paymentType: tx.paymentType })
     addNotif('Paiement de ' + formatAmount(tx.amount) + ' initi\u00e9', 'blue', null, 'paiements')
     showToast('\ud83d\udcb0 Paiement de ' + formatAmount(tx.amount) + ' initi\u00e9', 'blue')
@@ -1928,7 +1994,7 @@ export function MeereoProvider({ children }) {
       titre: data.titre || data.title || '',
       desc: data.desc || data.description || '',
       urgent: data.urgent || false,
-      statut: 'pending',
+      statut: 'en_attente',
       visibility: data.visibility || 'client_visible',
       // Source métier — lien vers l'objet déclencheur
       sourceType: data.sourceType || null,
@@ -1943,7 +2009,7 @@ export function MeereoProvider({ children }) {
       createdAt: new Date().toISOString(),
     }
     updateStore(prev => ({ ...prev, decisions: [...(prev.decisions || []), decision] }))
-    sync(api.decisions.create({ titre: decision.titre, desc: decision.desc, statut: decision.statut, urgent: decision.urgent, projectId: decision.projectId, visibility: decision.visibility }))
+    sync(api.decisions.create({ titre: decision.titre, description: decision.desc, statut: decision.statut, urgent: decision.urgent, visibility: decision.visibility, projectId: decision.projectId }))
     log('DECISION_CREATED', { title: decision.titre, projectId: decision.projectId, createdByRole: role })
     emitEvent('decision_created', { title: decision.titre, projectId: decision.projectId }, {
       notifMsg: `Décision requise : ${decision.titre}`,
@@ -2012,6 +2078,24 @@ export function MeereoProvider({ children }) {
       ...prev,
       paymentRequests: [...(prev.paymentRequests || []), req]
     }))
+    // Persister en base — remplacer le temp ID par le vrai ID retourné
+    api.paymentRequests.create({
+      projectId:     req.projectId,
+      marketId:      req.marketId || null,
+      amount:        req.amount,
+      label:         req.label,
+      paymentType:   req.paymentType,
+      createdByName: req.createdByName,
+      createdByRole: req.createdByRole,
+      visibility:    req.visibility,
+    }).then(saved => {
+      if (saved?.id) {
+        updateStore(prev => ({
+          ...prev,
+          paymentRequests: prev.paymentRequests.map(r => r.id === req.id ? { ...r, id: saved.id } : r),
+        }))
+      }
+    }).catch(e => console.warn('[requestPayment]', e.message))
     log('PAYMENT_REQUESTED', { amount: req.amount, projectId: req.projectId, createdByRole: role, paymentType: req.paymentType })
     emitEvent('payment_requested', { amount: req.amount, projectId: req.projectId }, {
       notifMsg: `Demande de paiement : ${formatAmount(req.amount)}`,
@@ -2062,6 +2146,13 @@ export function MeereoProvider({ children }) {
       }
       return { ...prev, paymentRequests: updatedRequests, transactions: newTx }
     })
+    // Persister la réponse en base
+    sync(api.paymentRequests.update(requestId, {
+      statut:         response,
+      respondedBy:    storeRef.current.user?.id || null,
+      respondedByRole: storeRef.current.user?.type === 'client' ? 'client' : null,
+      respondedAt:    new Date().toISOString(),
+    }))
     const label = response === 'approved' ? 'approuvé' : 'refusé'
     log('PAYMENT_' + response.toUpperCase(), { requestId, respondedByRole: store.user?.type })
     emitEvent('payment_' + response, { requestId }, {
@@ -2099,7 +2190,7 @@ export function MeereoProvider({ children }) {
       ...prev,
       photos: [...(prev.photos || []), photo]
     }))
-    sync(api.photos.create({ url: photo.url, caption: photo.caption, projectId: photo.projectId, userId: storeRef.current.user?.id || null }))
+    sync(api.photos.create({ name: photo.caption || 'Photo', url: photo.url, projectId: photo.projectId || null }))
     if (photo.visibility === 'client_visible') {
       emitEvent('photo_added', { projectId: photo.projectId }, {
         notifMsg: 'Nouvelle photo de chantier ajoutée'

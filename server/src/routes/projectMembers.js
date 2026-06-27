@@ -49,6 +49,13 @@ router.post('/', requireAuth, async (req, res, next) => {
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const membership = await prisma.projectMember.findUnique({
+      where: { id: req.params.id },
+      include: { project: { select: { ownerId: true } } },
+    })
+    if (!membership) return res.status(404).json({ error: 'Membre introuvable' })
+    // Seul le propriétaire du projet peut retirer un membre
+    if (membership.project.ownerId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
     await prisma.projectMember.delete({ where: { id: req.params.id } })
     res.json({ success: true })
   } catch (e) { next(e) }

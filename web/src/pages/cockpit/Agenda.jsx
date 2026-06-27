@@ -4,6 +4,7 @@ import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader, DSFilterBar } from '../../design/components'
 import { formatDateFR } from '../../utils/helpers'
 import { PHASE_LABELS, normalizePhase } from '../../domain/status'
+import { api } from '../../services/api/client'
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
@@ -222,6 +223,10 @@ export default function Agenda({ openModal, showToast }) {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
               <button style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(220,38,38,.06)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12 }} onClick={() => {
+                // Persist deletion to backend (real IDs only)
+                if (editEvent.id && !String(editEvent.id).startsWith('ev_')) {
+                  api.events.delete(editEvent.id).catch(() => {})
+                }
                 updateStore(prev => ({
                   ...prev,
                   deletedEventIds: [...(prev.deletedEventIds || []), editEvent.id],
@@ -234,9 +239,14 @@ export default function Agenda({ openModal, showToast }) {
                 <button className="btn btn-sm" onClick={() => setEditEvent(null)}>Annuler</button>
                 <button className="btn btn-primary btn-sm" onClick={() => {
                   const override = { titre: editEvent.titre, date: editEvent.date, heure: editEvent.heure, type: editEvent.type, projet: editEvent.projet, color: editEvent.color }
+                  // Persist update to backend (real IDs only)
+                  if (editEvent.id && !String(editEvent.id).startsWith('ev_')) {
+                    api.events.update(editEvent.id, override).catch(() => {})
+                  }
                   updateStore(prev => ({
                     ...prev,
-                    eventOverrides: { ...(prev.eventOverrides || {}), [editEvent.id]: override }
+                    eventOverrides: { ...(prev.eventOverrides || {}), [editEvent.id]: override },
+                    events: (prev.events || []).map(e => e.id === editEvent.id ? { ...e, ...override } : e),
                   }))
                   setEditEvent(null)
                   showToast && showToast('Événement modifié')

@@ -25,11 +25,13 @@ router.get('/pros', requireAuth, async (req, res, next) => {
         avatar:    true,
         proProfile: {
           select: {
-            entreprise: true,
-            ville:      true,
-            tel:        true,
-            secteurs:   true,
-            logoFileUrl: true,
+            entreprise:     true,
+            ville:          true,
+            tel:            true,
+            secteurs:       true,
+            logoFileUrl:    true,
+            portfolioFiles: true,
+            slogan:         true,
           },
         },
       },
@@ -37,14 +39,17 @@ router.get('/pros', requireAuth, async (req, res, next) => {
     })
 
     let result = users.map(u => ({
-      id:          u.id,
-      publicId:    u.publicId,
-      nom:         u.proProfile?.entreprise || u.company || u.name || '',
-      metier:      u.metier || (u.proProfile?.secteurs?.[0]) || '',
-      ville:       u.proProfile?.ville || u.ville || 'Abidjan',
-      verified:    u.verified || false,
-      avatar:      u.avatar || null,
-      logoUrl:     u.proProfile?.logoFileUrl || null,
+      id:             u.id,
+      publicId:       u.publicId,
+      nom:            u.proProfile?.entreprise || u.company || u.name || '',
+      metier:         u.metier || (u.proProfile?.secteurs?.[0]) || '',
+      ville:          u.proProfile?.ville || u.ville || 'Abidjan',
+      verified:       u.verified || false,
+      avatar:         u.avatar || null,
+      logoUrl:        u.proProfile?.logoFileUrl || null,
+      portfolioFiles: u.proProfile?.portfolioFiles || [],
+      secteurs:       u.proProfile?.secteurs || [],
+      slogan:         u.proProfile?.slogan || null,
     }))
 
     if (q) {
@@ -98,7 +103,7 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
       specialite: (u.fournisseurProfile?.categories || []).join(', '),
       ville: u.fournisseurProfile?.ville || u.ville || 'Abidjan',
       tel: u.fournisseurProfile?.tel || u.phone || '',
-      email: u.email || '',
+      // email non exposé publiquement
       verified: u.verified || false,
       logoUrl: u.fournisseurProfile?.logoFileUrl || null,
       products: u.products || [],
@@ -137,14 +142,23 @@ router.get('/me/prefs', requireAuth, async (req, res) => {
  * Fusionne les préférences fournies avec celles existantes.
  * Body: objet partiel — ex: { notifEmail: false, theme: 'dark' }
  */
+const PREFS_ALLOWED_KEYS = [
+  'notifEmail', 'notifPush', 'rappels', 'resume', 'devise', 'theme', 'langue',
+  'connectedIntegrations', 'entrepriseDocs', 'commissionAcceptances',
+  'sidebar_collapsed', 'defaultView', 'currency', 'dateFormat',
+]
 router.patch('/me/prefs', requireAuth, async (req, res) => {
   const prisma = getPrisma()
   try {
+    // Whitelist keys to prevent arbitrary data injection
+    const safeBody = Object.fromEntries(
+      Object.entries(req.body).filter(([k]) => PREFS_ALLOWED_KEYS.includes(k))
+    )
     const current = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { prefs: true },
     })
-    const merged = { ...(current?.prefs || {}), ...req.body }
+    const merged = { ...(current?.prefs || {}), ...safeBody }
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { prefs: merged },
@@ -313,6 +327,45 @@ router.patch('/me/onboarding', requireAuth, async (req, res) => {
     res.json(updated.onboardingData)
   } catch (e) {
     console.error('[USERS] PATCH /me/onboarding', e)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+/**
+ * PATCH /api/users/me
+ * Met à jour les champs de base de l’utilisateur connecté (name, phone, email).
+ * Seuls les champs autorisés sont acceptés.
+ */
+router.patch('/me', requireAuth, async (req, res) => {
+  const prisma = getPrisma()
+  try {
+    const ALLOWED = ['name', 'phone', 'company', 'ville', 'metier', 'avatar']
+    const patch = {}
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined && req.body[key] !== null) {
+        patch[key] = String(req.body[key]).trim()
+      }
+    }
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'Aucun champ valide fourni' })
+    }
+    // Email change: enforce uniqueness
+    if (req.body.email) {
+      const email = String(req.body.email).trim().toLowerCase()
+      const existing = await prisma.user.findUnique({ where: { email } })
+      if (existing && existing.id !== req.user.id) {
+        return res.status(409).json({ error: 'Cet email est déjà utilisé' })
+      }
+      patch.email = email
+    }
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: patch,
+      select: { id: true, name: true, email: true, type: true, phone: true, company: true, ville: true, metier: true, avatar: true, verified: true, publicId: true },
+    })
+    res.json(updated)
+  } catch (e) {
+    console.error('[USERS] PATCH /me', e)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })

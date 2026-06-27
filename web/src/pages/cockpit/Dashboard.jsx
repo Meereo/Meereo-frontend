@@ -71,11 +71,11 @@ export default function Dashboard({ onNavigate, openModal }) {
   const [actTab, setActTab] = useState('all')
 
   const allProjetsRaw = useMemo(() => getUserActiveProjects(store, store.user?.id), [store.projects, store.user, store.projectMembers])
-  // Enrich each project with computed avancement (phase + étapes + stored)
+  // Enrich each project with computed avancement (phase + étapes + stored + marchés liés)
   const allProjets = useMemo(() => allProjetsRaw.map(p => ({
     ...p,
-    avancement: computeProjectAvancement(p),
-  })), [allProjetsRaw])
+    avancement: computeProjectAvancement(p, store.markets),
+  })), [allProjetsRaw, store.markets])
   const parseBudget = (b) => { const s = String(b || '').replace(/[^\d.,]/g, '').replace(',', '.'); const n = parseFloat(s) || 0; return (b && b.includes('Mds')) ? n * 1e9 : (b && b.includes('M')) ? n * 1e6 : n }
   const mainProj = [...allProjets].sort((a, b) => parseBudget(b.budget) - parseBudget(a.budget))[0]
   const hasProjects = allProjets.length > 0

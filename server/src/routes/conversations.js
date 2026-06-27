@@ -195,7 +195,45 @@ router.get('/:id/messages', requireAuth, async (req, res, next) => {
     next(err)
   }
 })
+// ─── Envoyer un message dans une conversation (fallback HTTP — socket en priorité) ─────────
+router.post('/:id/messages', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const userId = req.user.id
+    const { id } = req.params
+    const { text, type, fileUrl, fileName } = req.body
 
+    if (!text && !fileUrl) return res.status(400).json({ error: 'text ou fileUrl requis' })
+
+    // Vérifier participation
+    const participation = await prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId: id, userId } },
+    })
+    if (!participation) return res.status(403).json({ error: 'Accès refusé' })
+
+    const message = await prisma.message.create({
+      data: {
+        conversationId: id,
+        senderId: userId,
+        text: text || '',
+        type: type || 'text',
+        fileUrl: fileUrl || null,
+        fileName: fileName || null,
+      },
+      include: { sender: { select: { id: true, name: true, type: true } } },
+    })
+
+    // Mettre à jour updatedAt de la conversation
+    await prisma.conversation.update({
+      where: { id },
+      data: { updatedAt: new Date() },
+    })
+
+    res.status(201).json(message)
+  } catch (err) {
+    next(err)
+  }
+})
 // ─── Marquer une conversation comme lue ──────────────────────────────────────
 router.patch('/:id/read', requireAuth, async (req, res, next) => {
   try {
@@ -205,6 +243,22 @@ router.patch('/:id/read', requireAuth, async (req, res, next) => {
     await prisma.conversationParticipant.updateMany({
       where: { conversationId: id, userId },
       data: { lastReadAt: new Date() },
+    })
+    res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── Quitter / masquer une conversation (DELETE pour l'utilisateur courant) ───
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const userId = req.user.id
+    const { id } = req.params
+    // Retirer le participant — la conversation reste pour les autres
+    await prisma.conversationParticipant.deleteMany({
+      where: { conversationId: id, userId },
     })
     res.json({ ok: true })
   } catch (err) {

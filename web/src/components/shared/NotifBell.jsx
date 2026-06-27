@@ -3,7 +3,9 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 export default function NotifBell() {
   const { setNotifOpen, store } = useMeereo()
   const userType = store.user?.type
-  const unread = store.notifications.filter(n => !n.read && (!n.role || n.role === userType)).length
+  const notifUnread = store.notifications.filter(n => !n.read && (!n.role || n.role === userType)).length
+  const msgUnread = (store.conversations || []).reduce((s, c) => s + (c.unread || 0), 0)
+  const unread = notifUnread + msgUnread
 
   return (
     <button

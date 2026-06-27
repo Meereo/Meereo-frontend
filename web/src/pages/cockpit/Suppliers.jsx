@@ -28,12 +28,15 @@ function SupplierModal({ isOpen, onClose, showToast }) {
   const { updateStore } = useMeereo()
   const [f, setF] = useState({ raison: '', specialite: '', ville: '', tel: '', email: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const submit = async () => {
     setSubmitted(true)
     if (!f.raison.trim()) return
-    updateStore(prev => ({ ...prev, fournisseurs: [...(prev.fournisseurs || []), { id: 'fou_' + Date.now(), nom: f.raison, specialite: f.specialite, ville: f.ville, tel: f.tel, email: f.email, createdAt: new Date().toISOString() }] }))
-    showToast('Fournisseur ajouté')
-    setF({ raison: '', specialite: '', ville: '', tel: '', email: '' }); setSubmitted(false); onClose()
+    try {
+      const created = await api.contacts.create({ type: 'fournisseur', nom: f.raison, role: f.specialite || null, email: f.email || null, tel: f.tel || null, entreprise: f.raison, statut: 'actif' })
+      updateStore(prev => ({ ...prev, contacts: [...(prev.contacts || []), created] }))
+      showToast('Fournisseur ajouté')
+      setF({ raison: '', specialite: '', ville: '', tel: '', email: '' }); setSubmitted(false); onClose()
+    } catch (e) { showToast(e.message || 'Erreur ajout fournisseur', 'red') }
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nouveau fournisseur" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>

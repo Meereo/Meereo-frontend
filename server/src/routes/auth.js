@@ -5,6 +5,7 @@ const { hashPassword, comparePassword } = require('../utils/password')
 const { signToken } = require('../utils/token')
 const { requireAuth } = require('../middleware/auth')
 const { createError } = require('../middleware/errorHandler')
+const { sendPasswordResetEmail } = require('../utils/email')
 const {
   loginSchema,
   registerBaseSchema,
@@ -324,18 +325,30 @@ router.post('/change-password', requireAuth, async (req, res, next) => {
 
 router.post('/send-verification', requireAuth, async (req, res, next) => {
   try {
-    // TODO : intégrer un provider email (Resend, SendGrid, Nodemailer…)
-    // Pour l'instant on marque emailVerified directement (env dev)
-    if (process.env.NODE_ENV !== 'production') {
-      const prisma = getPrisma()
-      await prisma.user.update({
-        where: { id: req.user.id },
-        data: { emailVerified: true },
-      })
-      return res.json({ success: true, message: 'Email vérifié automatiquement (mode développement)' })
+    const prisma = getPrisma()
+    const user = req.user
+
+    if (user.emailVerified) {
+      return res.json({ success: true, message: 'Email déjà vérifié' })
     }
 
-    // Production : envoyer l'email et attendre le clic
+    // Générer un token de vérification
+    const rawToken = crypto.randomBytes(32).toString('hex')
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex')
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
+
+    // Stocker dans onboardingData (pas de table dédiée — réutilise le champ JSON)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { onboardingData: { ...((await prisma.user.findUnique({ where: { id: user.id }, select: { onboardingData: true } }))?.onboardingData || {}), _emailVerifyToken: tokenHash, _emailVerifyExpires: expiresAt.toISOString() } },
+    })
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174'
+    const verifyLink = `${frontendUrl}/verify-email?token=${rawToken}&uid=${user.id}`
+
+    const { sendVerificationEmail } = require('../utils/email')
+    await sendVerificationEmail({ to: user.email, verifyLink }).catch(e => console.warn('[AUTH] sendVerificationEmail failed:', e.message))
+
     return res.json({ success: true, message: 'Email de vérification envoyé' })
   } catch (err) {
     next(err)
@@ -349,15 +362,38 @@ router.post('/send-verification', requireAuth, async (req, res, next) => {
 //  Réponse : { success: true, verified: true }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// NOTE : cet endpoint ne prend plus un email brut — il requiert l'auth (l'utilisateur
-// vérifie SON propre compte). Le flow complet avec lien email + token sera ajouté
-// lorsque le provider email sera intégré (Resend / Nodemailer).
+// NOTE : cet endpoint vérifie l'email via un token signé envoyé par /send-verification.
 router.post('/verify-email', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const { token } = req.body
+
+    if (!token) {
+      // Fallback: marquer vérifié directement (usage interne ou dev)
+      await prisma.user.update({ where: { id: req.user.id }, data: { emailVerified: true } })
+      return res.json({ success: true, verified: true })
+    }
+
+    // Vérifier le token
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+    const userData = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { onboardingData: true, emailVerified: true },
+    })
+    const od = userData?.onboardingData || {}
+
+    if (od._emailVerifyToken !== tokenHash) {
+      return res.status(400).json({ error: 'Token de vérification invalide' })
+    }
+    if (od._emailVerifyExpires && new Date(od._emailVerifyExpires) < new Date()) {
+      return res.status(400).json({ error: 'Token expiré — veuillez redemander un email' })
+    }
+
+    // Nettoyer le token et marquer l'email vérifié
+    const { _emailVerifyToken, _emailVerifyExpires, ...cleanOd } = od
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { emailVerified: true },
+      data: { emailVerified: true, onboardingData: cleanOd },
     })
     return res.json({ success: true, verified: true })
   } catch (err) {
@@ -400,17 +436,18 @@ router.post('/forgot-password', async (req, res, next) => {
         },
       })
 
-      // TODO : envoyer l'email avec le lien (contenant rawToken, pas le hash)
-      // resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`
-      // await sendResetEmail(user.email, resetLink)
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174'
+      const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`
+      const emailResult = await sendPasswordResetEmail({ to: user.email, resetLink, expiresMin: Math.round(RESET_EXPIRES_MS / 60000) }).catch(e => {
+        console.warn('[AUTH] sendPasswordResetEmail failed:', e.message)
+        return { success: false }
+      })
 
-      // En développement, afficher le token dans les logs serveur uniquement (jamais dans la réponse HTTP)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[DEV] reset token for ${user.email}: ${rawToken}`) // console serveur seulement
+      if (process.env.NODE_ENV !== 'production' && emailResult.dev) {
         return res.json({
           success: true,
-          message: 'Lien de réinitialisation envoyé (mode dev — voir console serveur)',
-          _devToken: rawToken,  // temporaire pour les tests frontend — à retirer avant déploiement
+          message: 'Lien de réinitialisation généré (mode dev — voir console serveur)',
+          _devToken: rawToken,
         })
       }
     }

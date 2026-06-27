@@ -40,25 +40,47 @@ export const computePhaseProgress = (phase) => {
 
 /**
  * Calcule l'avancement réel d'un projet en combinant toutes les sources :
- * 1. Si des étapes existent et ont de la progression → computeProgress (le plus précis)
- * 2. Sinon, dérive un plancher depuis la phase courante
- * 3. Prend le MAX entre : stored avancement, étapes, phase-plancher
- *    → l'avancement ne régresse jamais
+ * 1. taskStates (tâches CHANTIER_PHASES cochées par le pro) — le plus précis
+ * 2. marchés liés (avancement moyen des marchés actifs)
+ * 3. étapes (phases done/total)
+ * 4. avancement stocké en DB
+ *
+ * Les planchers de phase (phaseFloor) ne sont PLUS utilisés pour éviter
+ * d'afficher 55 % dès l'attribution d'un marché alors qu'aucune tâche n'est faite.
+ *
+ * @param {object} project
+ * @param {Array}  linkedMarkets — marchés liés au projet (optionnel)
  */
-export const computeProjectAvancement = (project) => {
+export const computeProjectAvancement = (project, linkedMarkets = []) => {
   if (!project) return 0
-  const phase = project.phase || 'IDEE'
   const etapes = project.etapes || []
   const stored = project.avancement || 0
-
-  // Étapes-based progress (most precise, but only if étapes have data)
   const etapesProgress = computeProgress(etapes)
 
-  // Phase-based floor
-  const phaseFloor = computePhaseProgress(phase)
+  // Source 1 — task states set by the pro (most accurate, directly from task completion)
+  const taskStates = project.taskStates
+  if (taskStates && typeof taskStates === 'object') {
+    const keys = Object.keys(taskStates)
+    if (keys.length > 0) {
+      const done = keys.filter(k => taskStates[k] === 'done').length
+      const fromTaskStates = Math.round(done / keys.length * 100)
+      return Math.max(stored, etapesProgress, fromTaskStates)
+    }
+  }
 
-  // Take the maximum — avancement never regresses
-  return Math.max(stored, etapesProgress, phaseFloor)
+  // Source 2 — average avancement of linked active markets
+  const activeMarkets = (linkedMarkets || []).filter(
+    m => m.projectId === project.id && m.statut !== 'cancelled'
+  )
+  if (activeMarkets.length > 0) {
+    const avgMarket = Math.round(
+      activeMarkets.reduce((s, m) => s + (m.avancement || 0), 0) / activeMarkets.length
+    )
+    return Math.max(stored, etapesProgress, avgMarket)
+  }
+
+  // Source 3 — étapes or stored avancement only (no phase inflation)
+  return Math.max(stored, etapesProgress)
 }
 
 /**

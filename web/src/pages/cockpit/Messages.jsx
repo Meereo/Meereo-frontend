@@ -480,6 +480,10 @@ export default function Messages({ showToast }) {
       updateConv(convId, c => ({ ...c, _archived: false }))
       showToast && showToast('Conversation restaurée')
     } else if (type === 'delete') {
+      // Call backend to remove the current user from this conversation (won't reload on next sync)
+      if (!String(convId).startsWith('conv_')) {
+        api.conversations.delete(convId).catch(() => {})
+      }
       if (isStoreConv) {
         updateConv(convId, c => ({ ...c, _deleted: true }))
       } else {
@@ -1129,7 +1133,28 @@ export default function Messages({ showToast }) {
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>{groupFiltered.map((c, i) => <ContactRow key={i} c={c} onClick={() => { setGroupMembers(p => [...p, c.nom]); setGroupSearch('') }} />)}</div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
               <button className="btn btn-sm" onClick={() => setShowNewGroup(false)}>Annuler</button>
-              <button className="btn btn-primary btn-sm" disabled={!groupName.trim() || !groupMembers.length} onClick={() => { const id = 'conv_g_' + Date.now(); const grp = { id, nom: groupName, type: 'groupe', avatar: groupName ? groupName[0].toUpperCase() : 'G', color: '#191c1d', isGroup: true, participants: [...groupMembers], dernier: 'Groupe créé', time: 'Maintenant', unread: 0, msgs: [{ side: 'in', from: 'Système', text: 'Groupe créé avec ' + groupMembers.length + ' participants', time: 'Maintenant' }] }; updateStore(prev => ({ ...prev, conversations: [grp, ...(prev.conversations || [])] })); setShowNewGroup(false); setActiveId(id); showToast && showToast('Groupe créé') }}>Créer le groupe</button>
+              <button className="btn btn-primary btn-sm" disabled={!groupName.trim() || !groupMembers.length} onClick={async () => {
+                const tempId = 'conv_g_' + Date.now()
+                const grp = { id: tempId, nom: groupName, type: 'groupe', avatar: groupName ? groupName[0].toUpperCase() : 'G', color: '#191c1d', isGroup: true, title: groupName, participants: [...groupMembers], dernier: 'Groupe créé', time: 'Maintenant', unread: 0, msgs: [{ side: 'in', from: 'Système', text: 'Groupe créé avec ' + groupMembers.length + ' participants', time: 'Maintenant' }] }
+                updateStore(prev => ({ ...prev, conversations: [grp, ...(prev.conversations || [])] }))
+                setShowNewGroup(false); setActiveId(tempId); showToast && showToast('Groupe créé')
+                // Résoudre les IDs backend pour les membres et persister
+                const allContacts = [...(store.contacts || []), ...(store.fournisseurs || []), ...(store.users || [])]
+                const participantIds = groupMembers.map(nom => {
+                  const found = allContacts.find(u => (u.name || u.nom || '') === nom && (u.userId || u.id) && !String(u.userId || u.id).startsWith('u_'))
+                  return found?.userId || (found?.id && !String(found.id).startsWith('u_') ? found.id : null)
+                }).filter(Boolean)
+                if (participantIds.length > 0 && store._token) {
+                  try {
+                    const { conversation } = await api.conversations.create({ participantIds, title: groupName })
+                    updateStore(prev => ({
+                      ...prev,
+                      conversations: prev.conversations.map(c => c.id === tempId ? { ...grp, id: conversation.id, participants: conversation.participants } : c),
+                    }))
+                    setActiveId(conversation.id)
+                  } catch (e) { console.warn('[createGroup]', e.message) }
+                }
+              }}>Créer le groupe</button>
             </div>
           </div>
         </div>

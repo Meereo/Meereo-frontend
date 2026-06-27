@@ -2,6 +2,7 @@
 import CockpitLayout from '../../components/layout/CockpitLayout'
 import Modal from '../../components/shared/Modal'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import KaiAssistant from '../../components/shared/KaiAssistant'
 import ProDirectory from '../../components/shared/ProDirectory'
 import '../../styles/cockpit.css'
@@ -189,17 +190,22 @@ export default function Cockpit() {
       {/* All creation modals — form states managed internally */}
 
       {/* Event modal — kept here because of ref pattern */}
-      <Modal isOpen={modal === 'newEvent'} onClose={closeModal} title="Nouvel événement" footer={<><button className="btn btn-sm" onClick={closeModal}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => {
+      <Modal isOpen={modal === 'newEvent'} onClose={closeModal} title="Nouvel événement" footer={<><button className="btn btn-sm" onClick={closeModal}>Annuler</button><button className="btn btn-primary btn-sm" onClick={async () => {
         const fd = eventFormRef.current || {}
         const titre = fd.title || 'Nouvel événement'
         const date = fd.date || new Date().toISOString().slice(0, 10)
         const heure = fd.time || '09:00'
         const type = fd.type || 'reunion'
         const projet = fd.projet ? ((store.projects || []).find(p => p.id === fd.projet)?.nom || fd.projet) : ''
-        const newEvent = { id: 'ev_' + Date.now(), titre, date, heure, type, projet, projectId: fd.projet || null, color: 'var(--tx)', invited: fd.invited || [] }
-        updateStore(prev => ({ ...prev, events: [...(prev.events || []), newEvent] }))
+        const tempId = 'ev_' + Date.now()
+        const optimistic = { id: tempId, titre, date, heure, type, projet, projectId: fd.projet || null, color: 'var(--tx)', invited: fd.invited || [] }
+        updateStore(prev => ({ ...prev, events: [...(prev.events || []), optimistic] }))
         emitEvent('event_created', { title: titre }, { notifMsg: 'Événement créé' })
         showToast('Événement créé'); closeModal()
+        try {
+          const created = await api.events.create({ titre, date, heure, type, projet, projectId: fd.projet || null, color: 'var(--tx)' })
+          updateStore(prev => ({ ...prev, events: (prev.events || []).map(e => e.id === tempId ? { ...e, ...created } : e) }))
+        } catch (_) {}
       }}>Créer et inviter</button></>}>
         <EventForm formRef={eventFormRef} />
       </Modal>

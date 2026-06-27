@@ -17,7 +17,8 @@ router.get('/', requireAuth, async (req, res, next) => {
     if (user.type === 'client') {
       where.clientId = user.id
     } else if (user.type === 'pro') {
-      where.supplierId = user.id
+      // Le pro peut être prestataire (supplierId) OU maître d'ouvrage (clientId)
+      where = { OR: [{ supplierId: user.id }, { clientId: user.id }] }
     }
     // fournisseur : aucun marché de prestation (pas de where → liste vide volontairement)
     // On filtre explicitement pour le fournisseur

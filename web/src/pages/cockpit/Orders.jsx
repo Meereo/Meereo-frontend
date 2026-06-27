@@ -26,18 +26,24 @@ function OrderModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent, requestPayment } = useMeereo()
   const [f, setF] = useState({ projet: '', article: '', fournisseur: '', montant: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const [saving, setSaving] = useState(false)
+  const submit = async () => {
     setSubmitted(true)
     const amount = parseFloat(f.montant) || 0
     if (!f.projet || !f.article.trim() || amount <= 0) return
-    updateStore(prev => ({ ...prev, commandes: [...(prev.commandes || []), { id: 'cmd_' + Date.now(), ...f, montant: amount, scope: 'shared_with_project', createdAt: new Date().toISOString() }] }))
-    if (amount > 0) requestPayment({ projectId: f.projet, amount, label: 'Commande : ' + f.article })
-    emitEvent('order_placed', { ref: f.article }, { notifMsg: `Commande créée : ${f.article}` })
-    showToast('Commande créée')
-    setF({ projet: '', article: '', fournisseur: '', montant: '' }); setSubmitted(false); onClose()
+    setSaving(true)
+    try {
+      const created = await api.commandes.create({ ref: f.article, designation: f.article, fournisseur: f.fournisseur || '', total: amount, projet: f.projet, statut: 'confirmee', step: 1 })
+      updateStore(prev => ({ ...prev, commandes: [...(prev.commandes || []), created] }))
+      if (amount > 0) requestPayment({ projectId: f.projet, amount, label: 'Commande : ' + f.article })
+      emitEvent('order_placed', { ref: f.article }, { notifMsg: `Commande créée : ${f.article}` })
+      showToast('Commande créée')
+      setF({ projet: '', article: '', fournisseur: '', montant: '' }); setSubmitted(false); onClose()
+    } catch (e) { showToast(e.message || 'Erreur création commande', 'red') }
+    finally { setSaving(false) }
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouvelle commande" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouvelle commande" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <label className="form-label">Projet *</label>

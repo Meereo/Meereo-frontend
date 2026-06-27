@@ -336,35 +336,51 @@ const integrations = {
   getAll: async () => INTEGRATIONS,
 }
 
-// ─── Finance (localStorage) ───────────────────────────────────────────────────
+// ─── Finance (real HTTP → PostgreSQL) ────────────────────────────────────────
 
 const finance = {
-  getBudgets:         async (p) => getTable('fin_budgets').filter(r => !p?.projectId || r.projectId === p.projectId),
-  createBudget:       async (d) => { const r = { id: uid(), createdAt: now(), ...d }; const t = getTable('fin_budgets'); t.push(r); saveTable('fin_budgets', t); return r },
-  updateBudget:       async (id, d) => { const t = getTable('fin_budgets').map(r => r.id === id ? { ...r, ...d } : r); saveTable('fin_budgets', t); return t.find(r => r.id === id) },
-  deleteBudget:       async (id) => { saveTable('fin_budgets', getTable('fin_budgets').filter(r => r.id !== id)); return null },
-  getExpenses:        async (p) => getTable('fin_expenses').filter(r => !p?.projectId || r.projectId === p.projectId),
-  createExpense:      async (d) => { const r = { id: uid(), createdAt: now(), ...d }; const t = getTable('fin_expenses'); t.push(r); saveTable('fin_expenses', t); return r },
-  updateExpense:      async (id, d) => { const t = getTable('fin_expenses').map(r => r.id === id ? { ...r, ...d } : r); saveTable('fin_expenses', t); return t.find(r => r.id === id) },
-  deleteExpense:      async (id) => { saveTable('fin_expenses', getTable('fin_expenses').filter(r => r.id !== id)); return null },
-  getInvoices:        async (p) => getTable('fin_invoices').filter(r => !p?.projectId || r.projectId === p.projectId),
-  createInvoice:      async (d) => { const r = { id: uid(), createdAt: now(), ...d }; const t = getTable('fin_invoices'); t.push(r); saveTable('fin_invoices', t); return r },
-  updateInvoice:      async (id, d) => { const t = getTable('fin_invoices').map(r => r.id === id ? { ...r, ...d } : r); saveTable('fin_invoices', t); return t.find(r => r.id === id) },
-  patchInvoiceStatus: async (id, statut) => { const t = getTable('fin_invoices').map(r => r.id === id ? { ...r, statut } : r); saveTable('fin_invoices', t); return t.find(r => r.id === id) },
-  getReports:         async () => ({ budgets: [], expenses: [], invoices: [], kpis: {} }),
+  getBudgets:         (p) => {
+    const qs = p?.projectId ? `?projectId=${p.projectId}` : ''
+    return apiFetch(`/finance/budgets${qs}`, 'GET', null, true)
+  },
+  createBudget:       (d) => apiFetch('/finance/budgets', 'POST', d, true),
+  updateBudget:       (id, d) => apiFetch(`/finance/budgets/${id}`, 'PATCH', d, true),
+  deleteBudget:       (id) => apiFetch(`/finance/budgets/${id}`, 'DELETE', null, true),
+  getExpenses:        (p) => {
+    const qs = p?.projectId ? `?projectId=${p.projectId}` : ''
+    return apiFetch(`/finance/expenses${qs}`, 'GET', null, true)
+  },
+  createExpense:      (d) => apiFetch('/finance/expenses', 'POST', d, true),
+  updateExpense:      (id, d) => apiFetch(`/finance/expenses/${id}`, 'PATCH', d, true),
+  deleteExpense:      (id) => apiFetch(`/finance/expenses/${id}`, 'DELETE', null, true),
+  getInvoices:        (p) => {
+    const qs = p?.projectId ? `?projectId=${p.projectId}` : ''
+    return apiFetch(`/finance/invoices${qs}`, 'GET', null, true)
+  },
+  createInvoice:      (d) => apiFetch('/finance/invoices', 'POST', d, true),
+  updateInvoice:      (id, d) => apiFetch(`/finance/invoices/${id}`, 'PATCH', d, true),
+  patchInvoiceStatus: (id, statut) => apiFetch(`/finance/invoices/${id}`, 'PATCH', { statut }, true),
+  getReports:         (projectId) => {
+    const qs = projectId ? `?projectId=${projectId}` : ''
+    return apiFetch(`/finance/reports${qs}`, 'GET', null, true)
+  },
 }
 
-// ─── Payments (localStorage) ─────────────────────────────────────────────────
+// ─── Payments (real HTTP → PostgreSQL) ───────────────────────────────────────
 
 const payments = {
-  getPayments:     async (p) => getTable('payments').filter(r => !p?.projectId || r.projectId === p.projectId),
-  getPayment:      async (id) => getTable('payments').find(r => r.id === id) || null,
-  createPayment:   async (d) => { const r = { id: uid(), createdAt: now(), updatedAt: now(), status: 'PAY_INIT', milestones: [], proofs: [], ...d }; const t = getTable('payments'); t.push(r); saveTable('payments', t); return r },
-  updateStatus:    async (id, status, extra = {}) => { const t = getTable('payments').map(r => r.id === id ? { ...r, status, ...extra, updatedAt: now() } : r); saveTable('payments', t); return t.find(r => r.id === id) },
-  updateMilestone: async (id, mid, d) => { const t = getTable('payments').map(r => r.id === id ? { ...r, milestones: (r.milestones || []).map(m => m.id === mid ? { ...m, ...d } : m) } : r); saveTable('payments', t); return t.find(r => r.id === id) },
-  addProof:        async (id, d) => { const proof = { id: uid(), createdAt: now(), ...d }; const t = getTable('payments').map(r => r.id === id ? { ...r, proofs: [...(r.proofs || []), proof] } : r); saveTable('payments', t); return proof },
-  validate:        async (id, d) => { const v = { id: uid(), createdAt: now(), ...d }; const t = getTable('payments').map(r => r.id === id ? { ...r, validations: [...(r.validations || []), v] } : r); saveTable('payments', t); return v },
-  getLogs:         async () => [],
+  getPayments:     (p = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(p).filter(([, v]) => v))).toString()
+    return apiFetch(`/payments${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  getPayment:      (id) => apiFetch(`/payments/${id}`, 'GET', null, true),
+  createPayment:   (d) => apiFetch('/payments', 'POST', d, true),
+  updateStatus:    (id, status) => apiFetch(`/payments/${id}`, 'PATCH', { status }, true),
+  updateMilestone: (id, milestoneId, milestoneData) => apiFetch(`/payments/${id}`, 'PATCH', { milestoneId, milestoneData }, true),
+  addProof:        (id, d) => apiFetch(`/payments/${id}`, 'PATCH', { addProof: d }, true),
+  validate:        (id, d) => apiFetch(`/payments/${id}`, 'PATCH', { addValidation: d }, true),
+  getLogs:         (id) => apiFetch(`/payments/${id}/logs`, 'GET', null, true),
+  delete:          (id) => apiFetch(`/payments/${id}`, 'DELETE', null, true),
 }
 
 // ─── KAI API (real HTTP → PostgreSQL) ───────────────────────────────────────
@@ -485,6 +501,8 @@ const notificationsApi = {
   create:   (data) => apiFetch('/notifications', 'POST', data, true),
   markRead: (id)   => apiFetch(`/notifications/${id}/read`, 'PATCH', null, true),
   markAllRead: ()  => apiFetch('/notifications/read-all', 'PATCH', null, true),
+  delete:    (id)  => apiFetch(`/notifications/${id}`, 'DELETE', null, true),
+  deleteAll: ()    => apiFetch('/notifications', 'DELETE', null, true),
 }
 
 // ─── Activities API (real HTTP → PostgreSQL) ──────────────────────────────────
@@ -507,6 +525,56 @@ const ordersApi = {
   getAll: () => apiFetch('/orders', 'GET', null, true),
   create: (data) => apiFetch('/orders', 'POST', data, true),
   update: (id, data) => apiFetch(`/orders/${id}`, 'PATCH', data, true),
+  delete: (id) => apiFetch(`/orders/${id}`, 'DELETE', null, true),
+}
+
+// ─── Rapports API (real HTTP → PostgreSQL) ───────────────────────────────────
+const rapportsApi = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+    return apiFetch(`/rapports${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create: (data)      => apiFetch('/rapports', 'POST', data, true),
+  update: (id, data)  => apiFetch(`/rapports/${id}`, 'PATCH', data, true),
+  delete: (id)        => apiFetch(`/rapports/${id}`, 'DELETE', null, true),
+}
+
+// ─── Transactions API (real HTTP → PostgreSQL) ────────────────────────────────
+const transactionsApiHttp = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+    return apiFetch(`/transactions${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create: (data)      => apiFetch('/transactions', 'POST', data, true),
+  update: (id, data)  => apiFetch(`/transactions/${id}`, 'PATCH', data, true),
+  delete: (id)        => apiFetch(`/transactions/${id}`, 'DELETE', null, true),
+}
+
+// ─── Introductions API (real HTTP → PostgreSQL) ───────────────────────────────
+const introductionsApiHttp = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+    return apiFetch(`/introductions${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create: (data)      => apiFetch('/introductions', 'POST', data, true),
+  update: (id, data)  => apiFetch(`/introductions/${id}`, 'PATCH', data, true),
+}
+
+// ─── Commissions Tracking API (real HTTP → PostgreSQL) ────────────────────────
+const commissionsTrackingApiHttp = {
+  getAll: ()           => apiFetch('/introductions/commissions', 'GET', null, true),
+  create: (data)       => apiFetch('/introductions/commissions', 'POST', data, true),
+  update: (id, data)   => apiFetch(`/introductions/commissions/${id}`, 'PATCH', data, true),
+}
+
+// ─── Photos API (maps to Documents with type='photo') ────────────────────────
+const photosApi = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams({ ...params, type: 'photo' }).toString()
+    return apiFetch(`/documents?${qs}`, 'GET', null, true)
+  },
+  create: (data) => apiFetch('/documents', 'POST', { ...data, type: 'photo' }, true),
+  delete: (id)   => apiFetch(`/documents/${id}`, 'DELETE', null, true),
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
@@ -524,8 +592,7 @@ const aosApi = {
 const offersApi = {
   getAll: () => apiFetch('/offers', 'GET', null, true),
   create: (data) => apiFetch('/offers', 'POST', data, true),
-  update: (id, data) => apiFetch(`/offers/${id}`, 'PATCH', data, true),
-}
+  update: (id, data) => apiFetch(`/offers/${id}`, 'PATCH', data, true),  delete: (id) => apiFetch(`/offers/${id}`, 'DELETE', null, true),}
 
 // ─── Products API (real HTTP → PostgreSQL) ────────────────────────────────────
 const productsApi = {
@@ -538,8 +605,7 @@ const productsApi = {
 
 // ─── Users / Fournisseurs API (real HTTP → PostgreSQL) ───────────────────────
 const usersApi = {
-  getMe:               () => apiFetch('/auth/me', 'GET', null, true),
-  getFournisseurs:     () => apiFetch('/users/fournisseurs', 'GET', null, true),
+  getMe:               () => apiFetch('/auth/me', 'GET', null, true),  updateMe:            (data) => apiFetch('/users/me', 'PATCH', data, true),  getFournisseurs:     () => apiFetch('/users/fournisseurs', 'GET', null, true),
   getPrefs:            () => apiFetch('/users/me/prefs', 'GET', null, true),
   updatePrefs:         (data) => apiFetch('/users/me/prefs', 'PATCH', data, true),
   getOnboardingData:   () => apiFetch('/users/me/onboarding', 'GET', null, true),
@@ -566,17 +632,30 @@ const conversationsApi = {
     const qs = new URLSearchParams(params).toString()
     return apiFetch(`/conversations/${id}/messages${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
+  sendMessage: (id, data) => apiFetch(`/conversations/${id}/messages`, 'POST', data, true),
   markRead: (id) => apiFetch(`/conversations/${id}/read`, 'PATCH', null, true),
+  delete: (id) => apiFetch(`/conversations/${id}`, 'DELETE', null, true),
+}
+
+// ─── PaymentRequests API (real HTTP → PostgreSQL) ──────────────────────────────────
+const paymentRequestsApi = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+    return apiFetch(`/payment-requests${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  create: (data)      => apiFetch('/payment-requests', 'POST', data, true),
+  update: (id, data)  => apiFetch(`/payment-requests/${id}`, 'PATCH', data, true),
+  delete: (id)        => apiFetch(`/payment-requests/${id}`, 'DELETE', null, true),
 }
 
 export const api = {
   auth,
   upload,
-  users:               createEntityApi('users'),
+  users:               usersApi,
   projects:            projectsApi,
   contacts:            contactsApi,
-  clients:             contactsApi,      // alias — filtre par type='client' côté appelant
-  intervenants:        contactsApi,      // alias — filtre par type='intervenant' côté appelant
+  clients:             contactsApi,
+  intervenants:        contactsApi,
   aos:                 aosApi,
   offers:              offersApi,
   markets:             marketsApi,
@@ -587,14 +666,16 @@ export const api = {
   products:            productsApi,
   commandes:           ordersApi,
   usersApi,
-  transactions:        createEntityApi('transactions'),
+  rapports:            rapportsApi,
+  transactions:        transactionsApiHttp,
   notifications:       notificationsApi,
   activities:          activitiesApi,
   conversations:       conversationsApi,
   projectMembers:      projectMembersApi,
-  introductions:       createEntityApi('introductions'),
-  commissionsTracking: createEntityApi('commissions-tracking'),
-  photos:              createEntityApi('photos'),
+  introductions:       introductionsApiHttp,
+  commissionsTracking: commissionsTrackingApiHttp,
+  paymentRequests:     paymentRequestsApi,
+  photos:              photosApi,
   professionals,
   marketplace,
   finance,

@@ -69,12 +69,13 @@ export default function Progress({ ctx }) {
       {/* Suivi chantier — shows real task completion from pro */}
       <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Suivi chantier</div>
       {CHANTIER_PHASES.map((ph, phIdx) => {
-        const etapeMapping = { 0: ['ESQUISSE','AVANT_PROJET','PROJET_DETAILLE','PLANS_EXECUTION'], 1: ['CONSULTATION_ENTREPRISES','ATTRIBUTION_MARCHES'], 2: ['SUIVI_CHANTIER'], 3: ['SUIVI_CHANTIER'], 4: ['SUIVI_CHANTIER'], 5: ['SUIVI_CHANTIER'], 6: ['RECEPTION'] }
-        const mappedEtapes = (etapeMapping[phIdx] || []).map(label => (proj?.etapes || []).find(e => e.label === label)).filter(Boolean)
-        const allDone = mappedEtapes.length > 0 && mappedEtapes.every(e => e.done)
-        const anyActive = mappedEtapes.some(e => e.current)
-        const doneTasks = allDone ? ph.tasks.length : anyActive ? ph.tasks.filter(t => t.defaultStatus === 'done').length : 0
-        const pct = allDone ? 100 : Math.round(doneTasks / Math.max(ph.tasks.length, 1) * 100)
+        // Read task completion directly from taskStates saved by the pro
+        const taskStates = (proj?.taskStates && typeof proj.taskStates === 'object') ? proj.taskStates : {}
+        const doneTasks = ph.tasks.filter(t => taskStates[t.id] === 'done').length
+        const activeTasks = ph.tasks.filter(t => taskStates[t.id] === 'active').length
+        const allDone = doneTasks === ph.tasks.length && ph.tasks.length > 0
+        const anyActive = activeTasks > 0 || doneTasks > 0
+        const pct = Math.round(doneTasks / Math.max(ph.tasks.length, 1) * 100)
 
         return (
           <div key={phIdx} className="card" style={{ padding: '14px 16px', marginBottom: 8 }}>
@@ -85,8 +86,8 @@ export default function Progress({ ctx }) {
                 <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 2 }}>{ph.desc}</div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 60 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: allDone ? 'var(--ok)' : anyActive ? 'var(--tx)' : 'var(--t4)' }}>{allDone ? 'Termine' : anyActive ? pct + '%' : 'A venir'}</div>
-                <div style={{ fontSize: 9, color: 'var(--t4)' }}>{ph.tasks.length} taches</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: allDone ? 'var(--ok)' : anyActive ? 'var(--tx)' : 'var(--t4)' }}>{allDone ? 'Terminé' : anyActive ? pct + '%' : 'À venir'}</div>
+                <div style={{ fontSize: 9, color: 'var(--t4)' }}>{ph.tasks.length} tâches</div>
               </div>
             </div>
             {(allDone || anyActive) && (

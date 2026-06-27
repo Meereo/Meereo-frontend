@@ -39,16 +39,22 @@ function OfferModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ titre: '', entreprise: '', projet: '', montant: '', delai: '', note: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const [saving, setSaving] = useState(false)
+  const submit = async () => {
     setSubmitted(true)
     if (!f.titre.trim()) return
-    updateStore(prev => ({ ...prev, offers: [...(prev.offers || []), { id: 'off_' + Date.now(), ...f, statut: 'en_attente', createdAt: new Date().toISOString() }] }))
-    emitEvent('offer_received', { title: f.titre, from: f.entreprise }, { notifMsg: `Nouvelle offre : ${f.titre}`, notifType: 'blue' })
-    showToast('Offre enregistrée')
-    setF({ titre: '', entreprise: '', projet: '', montant: '', delai: '', note: '' }); setSubmitted(false); onClose()
+    setSaving(true)
+    try {
+      const created = await api.offers.create({ ...f, statut: 'en_attente' })
+      updateStore(prev => ({ ...prev, offers: [...(prev.offers || []), created] }))
+      emitEvent('offer_received', { title: f.titre, from: f.entreprise }, { notifMsg: `Nouvelle offre : ${f.titre}`, notifType: 'blue' })
+      showToast('Offre enregistrée')
+      setF({ titre: '', entreprise: '', projet: '', montant: '', delai: '', note: '' }); setSubmitted(false); onClose()
+    } catch (e) { showToast(e.message || 'Erreur enregistrement offre', 'red') }
+    finally { setSaving(false) }
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Enregistrer une offre" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Enregistrer une offre" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div><label className="form-label">Titre du lot *</label><input className="form-input" placeholder="ex: Gros Oeuvre — Villa" value={f.titre} onChange={e => setF(p => ({ ...p, titre: e.target.value }))} /><ErrMsg show={submitted && !f.titre.trim()} /></div>
         <div className="form-row">
@@ -117,6 +123,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
       rejectOffer(id)
     } else {
       updateStore(prev => ({ ...prev, offerStatuts: { ...(prev.offerStatuts || {}), [id]: decision } }))
+      api.offers.update(id, { statut: decision }).catch(() => {})
     }
   }
 
@@ -258,6 +265,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     {selected.statut === OFFER_STATUS.REJECTED && (
                       <button className="btn btn-sm" style={{ fontSize: 10, color: 'var(--err)', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.12)' }} onClick={() => {
                         updateStore(prev => ({ ...prev, offers: (prev.offers || []).filter(o => o.id !== selected.id) }))
+                        api.offers.delete ? api.offers.delete(selected.id).catch(() => {}) : api.offers.update(selected.id, { statut: 'deleted' }).catch(() => {})
                         setSelectedId(null)
                         showToast && showToast('Offre supprimée')
                       }}>Supprimer</button>

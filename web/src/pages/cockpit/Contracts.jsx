@@ -39,16 +39,22 @@ function ContractModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ objet: '', entreprise: '', montant: '', lot: '', projet: '' })
   const [submitted, setSubmitted] = useState(false)
-  const submit = () => {
+  const [saving, setSaving] = useState(false)
+  const submit = async () => {
     setSubmitted(true)
     if (!f.objet.trim()) return
-    updateStore(prev => ({ ...prev, markets: [...(prev.markets || []), { id: 'mkt_' + Date.now(), objet: f.objet, entreprise: f.entreprise, montant: parseFloat(f.montant) || 0, lot: f.lot, projectId: f.projet, statut: 'en_cours', createdAt: new Date().toISOString() }] }))
-    emitEvent('market_signed', { company: f.entreprise }, { notifMsg: `Marché signé avec ${f.entreprise}`, notifType: 'green' })
-    showToast('Marché créé')
-    setF({ objet: '', entreprise: '', montant: '', lot: '', projet: '' }); setSubmitted(false); onClose()
+    setSaving(true)
+    try {
+      const created = await api.markets.create({ objet: f.objet, entreprise: f.entreprise, montant: parseFloat(f.montant) || 0, lot: f.lot, projectId: f.projet || null, statut: 'en_cours' })
+      updateStore(prev => ({ ...prev, markets: [...(prev.markets || []), created] }))
+      emitEvent('market_signed', { company: f.entreprise }, { notifMsg: `Marché signé avec ${f.entreprise}`, notifType: 'green' })
+      showToast('Marché créé')
+      setF({ objet: '', entreprise: '', montant: '', lot: '', projet: '' }); setSubmitted(false); onClose()
+    } catch (e) { showToast(e.message || 'Erreur création marché', 'red') }
+    finally { setSaving(false) }
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau marché" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau marché" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div><label className="form-label">Objet du marché *</label><input className="form-input" placeholder="Titre..." value={f.objet} onChange={e => setF(p => ({ ...p, objet: e.target.value }))} /><ErrMsg show={submitted && !f.objet.trim()} /></div>
         <div><label className="form-label">Entreprise attributaire</label><input className="form-input" placeholder="Nom..." value={f.entreprise} onChange={e => setF(p => ({ ...p, entreprise: e.target.value }))} /></div>

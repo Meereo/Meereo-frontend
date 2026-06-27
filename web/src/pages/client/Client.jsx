@@ -43,19 +43,33 @@ const computeProgressFromEtapes = (etapes) => {
   return Math.round(done / etapes.length * 100)
 }
 
-// Smart progress: combines étapes, phase, and stored avancement
+// Smart progress: combines taskStates (set by pro), étapes, and stored avancement
 const computeSmartProgress = (project) => {
   if (!project) return 0
-  // Priority 1: explicit avancement set by the system
+
+  // Priority 0 — task states set by the pro (most accurate, direct task completion)
+  const taskStates = project.taskStates
+  if (taskStates && typeof taskStates === 'object') {
+    const keys = Object.keys(taskStates)
+    if (keys.length > 0) {
+      const done = keys.filter(k => taskStates[k] === 'done').length
+      return Math.round(done / keys.length * 100)
+    }
+  }
+
+  // Priority 1: explicit avancement stored in DB (set by pro via task completion)
   if (project.avancement > 0) return project.avancement
-  // Priority 2: real progress from completed etapes
+
+  // Priority 2: real progress from completed etapes phases
   const etapesP = computeProgressFromEtapes(project.etapes)
   if (etapesP > 0) return etapesP
-  // Priority 3: phase-based estimate (only if project has active work)
-  const hasMarkets = project._hasMarkets // set by caller if known
+
+  // Priority 3: minimal phase indicator (only if contract exists — shows project started)
+  const hasMarkets = project._hasMarkets
   if (hasMarkets) {
-    const PHASE_PROGRESS = { ESQUISSE:5, AVANT_PROJET:12, PROJET_DETAILLE:25, PLANS_EXECUTION:35, CONSULTATION_ENTREPRISES:45, ATTRIBUTION_MARCHES:10, SUIVI_CHANTIER:65, RECEPTION:90 }
-    return PHASE_PROGRESS[project.phase] || 0
+    // Very conservative floors — just indicates project is under way, not % completed
+    const PHASE_START = { SUIVI_CHANTIER: 5, RECEPTION: 10 }
+    return PHASE_START[project.phase] || 0
   }
   return 0
 }

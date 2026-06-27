@@ -67,9 +67,17 @@ export default function Profile() {
     }
   }, [uuid, store.user, navigate])
 
-  // é── Source de données : backend si uuid fourni, sinon store local ────────
-  // Pour le propriétaire sans uuid → utilise store. Sinon → pubData.profile
-  const ob = isOwner && !pubData ? (store.onboardingData || {}) : (pubData?.profile || store.onboardingData || {})
+  // Redirect owner to canonical UUID URL so the link is shareable
+  useEffect(() => {
+    if (isOwner && !uuid && myPublicId) {
+      navigate(`/pro?uuid=${myPublicId}`, { replace: true })
+    }
+  }, [isOwner, uuid, myPublicId, navigate])
+
+  // é── Source de données : toujours store.onboardingData pour le propriétaire
+  // (garantit que saveEdit optimistic updates sont immédiatement visibles)
+  // Pour un visiteur → pubData.profile (chargé depuis le backend)
+  const ob = isOwner ? (store.onboardingData || {}) : (pubData?.profile || store.onboardingData || {})
   const remoteStats = pubData?.stats || null
 
   // Données profil dynamiques — onboarding d'abord, puis user, puis dûfaut
@@ -85,7 +93,9 @@ export default function Profile() {
 
   // Banner
   const bannerUrl = ob.bannerUrl || null
-  const [bannerPos, setBannerPos] = useState(ob.bannerPosition || 50) // vertical % position
+  const [bannerPos, setBannerPos] = useState(ob.bannerPosition || 50)
+  // Sync bannerPos when ob loads asynchronously (hydration completes after mount)
+  useEffect(() => { if (ob.bannerPosition !== undefined) setBannerPos(ob.bannerPosition) }, [ob.bannerPosition])
   const [editingBanner, setEditingBanner] = useState(false)
   const [tempPos, setTempPos] = useState(50)
   const bannerInputRef = useRef(null)

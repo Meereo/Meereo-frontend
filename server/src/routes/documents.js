@@ -67,11 +67,16 @@ router.get('/', requireAuth, async (req, res, next) => {
     // Filter by projectId if requested
     const projectIdFilter = req.query.projectId
 
-    const where = projectIdFilter
+    let where = projectIdFilter
       ? { projectId: projectIdFilter }
       : accessibleIds.length
         ? { OR: [{ userId }, { projectId: { in: accessibleIds } }] }
         : { userId }
+
+    // Filtre optionnel par type (ex: type=photo pour la galerie)
+    if (req.query.type) {
+      where = { ...where, type: req.query.type }
+    }
 
     const docs = await prisma.document.findMany({
       where,

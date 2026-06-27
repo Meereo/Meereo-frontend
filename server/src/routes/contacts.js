@@ -28,8 +28,8 @@ router.post('/', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const { type, nom, email, tel, role, poste, statut, entreprise } = req.body
     if (!nom)  throw createError('nom requis', 400)
-    if (!type || !['client', 'intervenant'].includes(type))
-      throw createError('type doit être "client" ou "intervenant"', 400)
+    if (!type || !['client', 'intervenant', 'fournisseur'].includes(type))
+      throw createError('type doit être "client", "intervenant" ou "fournisseur"', 400)
 
     const contact = await prisma.contact.create({
       data: {

@@ -53,6 +53,9 @@ router.post('/', requireAuth, async (req, res, next) => {
 router.patch('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const event = await prisma.event.findUnique({ where: { id: req.params.id } })
+    if (!event) throw createError('Événement introuvable', 404)
+    if (event.createdBy !== req.user.id) throw createError('Accès non autorisé', 403)
     const allowed = ['titre', 'date', 'type', 'description', 'color', 'auto', 'projectId']
     const data = {}
     for (const key of allowed) {

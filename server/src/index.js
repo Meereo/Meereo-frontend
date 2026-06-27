@@ -35,6 +35,12 @@ const activitiesRouter = require('./routes/activities')
 const contactsRouter = require('./routes/contacts')
 const kaiRouter = require('./routes/kai')
 const proRouter  = require('./routes/pro')
+const financeRouter       = require('./routes/finance')
+const paymentsRouter      = require('./routes/payments')
+const rapportsRouter      = require('./routes/rapports')
+const transactionsRouter  = require('./routes/transactions')
+const introductionsRouter = require('./routes/introductions')
+const paymentRequestsRouter = require('./routes/paymentRequests')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -147,6 +153,12 @@ app.use('/api/activities', activitiesRouter)
 app.use('/api/contacts', contactsRouter)
 app.use('/api/kai', kaiRouter)
 app.use('/api/pro', proRouter)  // public — pas de requireAuth
+app.use('/api/finance',       financeRouter)
+app.use('/api/payments',      paymentsRouter)
+app.use('/api/rapports',          rapportsRouter)
+app.use('/api/transactions',      transactionsRouter)
+app.use('/api/introductions',     introductionsRouter)
+app.use('/api/payment-requests',  paymentRequestsRouter)
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 

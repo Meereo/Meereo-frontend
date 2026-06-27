@@ -1,8 +1,8 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import Modal from '../../components/shared/Modal'
 import { ClipboardList, HardHat, MessageSquare, Settings, BarChart2, Check, AlertTriangle, CalendarDays } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
-import { useMergedData } from '../../hooks/useMergedData'
+import { api } from '../../services/api/client'
 import { DSPageHeader, DSEmptyState } from '../../design/components'
 import { exportCSV } from '../../utils/export'
 import { formatDateFR } from '../../utils/helpers'
@@ -24,14 +24,24 @@ const ErrMsg = ({ show }) => show
 function ReportModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, emitEvent } = useMeereo()
   const [f, setF] = useState({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
-  const submit = () => {
-    updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), { id: 'rap_' + Date.now(), ...f, visibility: 'client_visible', createdAt: new Date().toISOString() }] }))
-    emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
-    showToast('Rapport créé')
-    setF({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' }); onClose()
+  const [saving, setSaving] = useState(false)
+  const submit = async () => {
+    setSaving(true)
+    try {
+      const created = await api.rapports.create({ ...f, visibility: 'client_visible', auteur: store.user?.name || '' })
+      updateStore(prev => ({ ...prev, rapports: [...(prev.rapports || []), created] }))
+      emitEvent('document_uploaded', { name: f.type }, { notifMsg: `Rapport créé : ${f.type}` })
+      showToast('Rapport créé')
+      setF({ type: 'Rapport hebdomadaire', projet: '', date: '', heure: '09:00', lieu: '', participants: '', ordre: '', decisions: '', alertes: '', prochaine: '' })
+      onClose()
+    } catch (e) {
+      showToast(e.message || 'Erreur création rapport', 'red')
+    } finally {
+      setSaving(false)
+    }
   }
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau rapport" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nouveau rapport" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="form-row">
           <div><label className="form-label">Type de rapport</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Rapport hebdomadaire</option><option>Rapport de visite</option><option>Compte-rendu réunion</option><option>Rapport technique</option><option>Rapport mensuel</option><option>Rapport de chantier</option><option>PV de réception</option></select></div>
@@ -55,15 +65,26 @@ function ReportModal({ isOpen, onClose, showToast }) {
 
 export default function Reports({ openModal, showToast }) {
   const { store, updateStore } = useMeereo()
-  const { rapports: allRapports } = useMergedData()
+  const [allRapports, setAllRapports] = useState(store.rapports || [])
   const [selectedId, setSelectedId] = useState(null)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    api.rapports.getAll().then(r => {
+      setAllRapports(r)
+      updateStore(prev => ({ ...prev, rapports: r }))
+    }).catch(() => {})
+  }, [])
   const [projetFilter, setProjetFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [showCreateReport, setShowCreateReport] = useState(false)
 
-  const setRapportStatut = (id, statut) => {
-    updateStore(prev => ({ ...prev, rapportStatuts: { ...(prev.rapportStatuts || {}), [id]: statut } }))
+  const setRapportStatut = async (id, statut) => {
+    try {
+      await api.rapports.update(id, { statut })
+      setAllRapports(prev => prev.map(r => r.id === id ? { ...r, statut } : r))
+      updateStore(prev => ({ ...prev, rapports: (prev.rapports || []).map(r => r.id === id ? { ...r, statut } : r) }))
+    } catch (e) { showToast && showToast(e.message || 'Erreur', 'red') }
   }
 
   const projets = [...new Set(allRapports.map(r => r.projet).filter(Boolean))]

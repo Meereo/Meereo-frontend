@@ -30,17 +30,17 @@ export function useMergedData() {
   const offers = useMemo(() => {
     const overrides = store.offerStatuts || {}
     return (store.offers || []).map(o => ({
-      id: o.id, titre: o.titre || o.title || '', entreprise: o.entreprise || o.company || '',
+      id: o.id, titre: o.titre || o.title || o.ao?.title || '', entreprise: o.entreprise || o.company || '',
       projet: o.projet || '', montant: o.montant || '', delai: o.delai || '',
       statut: normalizeOfferStatus(overrides[o.id] || o.statut || o.status || OFFER_STATUS.PENDING),
-      lot: o.lot || '',
+      lot: o.lot || o.ao?.lot || '',
       aoId: o.aoId || null,
       userId: o.userId || o.supplierId || null,
       supplierId: o.supplierId || o.userId || null,
       supplierRole: o.supplierRole || null,
       soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
-      lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: [],
-      message: o.message || o.note || '', technique: '', note: o.note || '',
+      lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: o.docs || [],
+      message: o.message || o.note || '', technique: o.technique || '', note: o.note || '',
       // Données réelles du prestataire (depuis le backend)
       supplier: o.supplier || null,
       // Données du propriétaire de l'AO (visible après acceptation)
@@ -90,15 +90,27 @@ export function useMergedData() {
     return [...storeCmd, ...mktCmd]
   }, [store.commandes, store.sellerOrders])
 
-  const rapports = useMemo(() => [], []) // Fonctionnalité non encore implémentée côté backend
+  const rapports = useMemo(() => (store.rapports || []), [store.rapports])
 
   const fournisseurs = useMemo(() => {
-    // Fournisseurs: store only (real users from PostgreSQL)
-    return (store.fournisseurs || []).map(f => ({
+    // Fournisseurs: registered pro users + contacts type='fournisseur'
+    const registeredUsers = (store.fournisseurs || []).map(f => ({
       id: f.id, nom: f.nom || '', specialite: f.specialite || '', ville: f.ville || 'Abidjan',
       tel: f.tel || '', email: f.email || '', note: 0, nbAvis: 0, verified: false, color: '#6B7280',
     }))
-  }, [store.fournisseurs])
+    const contactFournisseurs = (store.contacts || [])
+      .filter(c => c.type === 'fournisseur')
+      .map(c => ({
+        id: c.id, nom: c.nom || c.name || '', specialite: c.role || '', ville: c.ville || '',
+        tel: c.tel || '', email: c.email || '', note: 0, nbAvis: 0, verified: false, color: '#6B7280',
+      }))
+    const seen = new Set()
+    return [...registeredUsers, ...contactFournisseurs].filter(f => {
+      if (seen.has(f.id)) return false
+      seen.add(f.id)
+      return true
+    })
+  }, [store.fournisseurs, store.contacts])
 
   const transactions = useMemo(() => {
     return (store.transactions || [])

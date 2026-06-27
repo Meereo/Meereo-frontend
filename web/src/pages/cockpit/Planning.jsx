@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo } from 'react'
 // CAL_EVENTS mock removed — store.events is source of truth
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { api } from '../../services/api/client'
 import { formatDateFR } from '../../utils/helpers'
 import { PHASE_LABELS, normalizePhase } from '../../domain/status'
 
@@ -214,16 +215,24 @@ export default function Planning({ openModal, showToast }) {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'space-between' }}>
               <button style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(220,38,38,.06)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12 }} onClick={() => {
-                updateStore(prev => ({ ...prev, deletedEventIds: [...(prev.deletedEventIds || []), editEvent.id] }))
+                if (editEvent.id && !String(editEvent.id).startsWith('ev_')) {
+                  api.events.delete(editEvent.id).catch(() => {})
+                }
+                updateStore(prev => ({ ...prev, deletedEventIds: [...(prev.deletedEventIds || []), editEvent.id], events: (prev.events || []).filter(e => e.id !== editEvent.id) }))
                 setEditEvent(null)
                 showToast && showToast('Événement supprimé')
               }}>Supprimer</button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn btn-sm" onClick={() => setEditEvent(null)}>Annuler</button>
                 <button className="btn btn-primary btn-sm" onClick={() => {
+                  const override = { titre: editEvent.titre, date: editEvent.date, heure: editEvent.heure, type: editEvent.type, projet: editEvent.projet, color: editEvent.color }
+                  if (editEvent.id && !String(editEvent.id).startsWith('ev_')) {
+                    api.events.update(editEvent.id, override).catch(() => {})
+                  }
                   updateStore(prev => ({
                     ...prev,
-                    eventOverrides: { ...(prev.eventOverrides || {}), [editEvent.id]: { titre: editEvent.titre, date: editEvent.date, heure: editEvent.heure, type: editEvent.type, projet: editEvent.projet, color: editEvent.color } }
+                    eventOverrides: { ...(prev.eventOverrides || {}), [editEvent.id]: override },
+                    events: (prev.events || []).map(e => e.id === editEvent.id ? { ...e, ...override } : e),
                   }))
                   setEditEvent(null)
                   showToast && showToast('Événement modifié')

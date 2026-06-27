@@ -227,12 +227,27 @@ export default function Exchange({ showToast, onNavigate }) {
   const submitReponse = () => {
     setReponseSubmitted(true)
     const ao = showRepondre
+    // Merge docs: pièces jointes uploadées + documents entreprise sélectionnés (résolution nom/type)
+    const mergedDocs = [
+      ...reponse.docsJoints.map(f => ({
+        name: f.name || f,
+        size: f.size ? (f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : undefined,
+        type: (f.type || '').split('/').pop()?.toUpperCase() || 'DOC',
+        source: 'upload',
+      })),
+      ...reponse.docsEntreprise.map(id => {
+        const d = availableDocs.find(d => d.id === id)
+        return d ? { name: d.nom, type: d.type || 'DOC', id: d.id, source: 'entreprise' } : null
+      }).filter(Boolean),
+    ]
     // Use store.submitOffer with permission guards instead of raw updateStore
     const result = storeSubmitOffer({
       aoId: ao?.id,
       montant: reponse.montant,
       delai: reponse.delai || '',
       message: reponse.message || '',
+      technique: reponse.technique || '',
+      docs: mergedDocs,
       entreprise: store.onboardingData?.entreprise || store.user?.company || store.user?.name || '',
     })
     if (!result) return // Permission denied — toast already shown by store
@@ -324,7 +339,7 @@ export default function Exchange({ showToast, onNavigate }) {
                 {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajouté</span>}
                 {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAI</span>}
                 {d.status === 'missing' ? (
-                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { updateStore(prev => ({ ...prev, entrepriseDocs: [...(prev.entrepriseDocs || []), { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }] })); showToast && showToast('Document ajouté') }}>Ajouter</button>
+                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { const newEntry = { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }; const next = [...(store.entrepriseDocs || []), newEntry]; updateStore(prev => ({ ...prev, entrepriseDocs: next })); api.usersApi.updatePrefs({ entrepriseDocs: next }).catch(e => console.warn('[Exchange]', e.message)); showToast && showToast('Document ajouté') }}>Ajouter</button>
                 ) : (
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Remplacer le document...')}>Remplacer</button>
                 )}

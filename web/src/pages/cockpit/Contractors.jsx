@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader , DSEmptyState } from '../../design/components'
+import { api } from '../../services/api/client'
 
 
 const ErrMsg = ({ show }) => show
@@ -145,9 +146,10 @@ export default function Contractors({ showToast, openModal }) {
                 )}
                 <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => {  showToast && showToast('Nouveau message pour ' + m.nom) }}>Contacter</button>
                 <button style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.04)', color: 'var(--err)', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }} onClick={() => {
-                  updateStore(prev => ({ ...prev, intervenants: (prev.intervenants || []).filter(x => x.id !== m.id) }))
+                  api.contacts.delete(m.id).catch(() => {})
+                  updateStore(prev => ({ ...prev, intervenants: (prev.intervenants || []).filter(x => x.id !== m.id), contacts: (prev.contacts || []).filter(x => x.id !== m.id) }))
                   refresh(n => n + 1)
-                  showToast && showToast(m.nom + ' retire des intervenants')
+                  showToast && showToast(m.nom + ' retiré des intervenants')
                 }}>Retirer</button>
               </div>
             </div>

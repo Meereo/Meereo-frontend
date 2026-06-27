@@ -52,7 +52,9 @@ export default function Integrations({ showToast }) {
               </div>
               <button className={`btn btn-sm ${g.actif ? '' : 'btn-primary'}`} style={{ fontSize: 11 }} onClick={() => {
                 if (!g.actif) {
-                  updateStore(prev => ({ ...prev, connectedIntegrations: [...(prev.connectedIntegrations || []), g.id] }))
+                  const next = [...(store.connectedIntegrations || []), g.id]
+                  updateStore(prev => ({ ...prev, connectedIntegrations: next }))
+                  api.usersApi.updatePrefs({ connectedIntegrations: next }).catch(e => console.warn('[Integrations]', e.message))
                   showToast && showToast(g.nom + ' connecté')
                 } else {
                   showToast && showToast('Gestion ' + g.nom)

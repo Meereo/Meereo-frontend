@@ -70,14 +70,15 @@ export default function Clients({ openModal, showToast }) {
     const ACCEPTED_STATUSES = ['SIGNED', 'IN_PROGRESS', 'COMPLETED', 'signed', 'in_progress', 'completed']
     const myMarkets = markets.filter(m =>
       m.supplierId === userId &&
+      m.clientId !== userId &&  // guard: client must be a different person than the supplier
       ACCEPTED_STATUSES.some(s => (m.statut || '').toUpperCase() === s.toUpperCase()) &&
-      (m.clientId || m.entreprise)
+      (m.clientId || m.client?.name || m.clientName)  // only pass if real client data exists
     )
 
     const newOnes = []
     for (const m of myMarkets) {
-      // Use the client's company/name, NOT entreprise (which is the supplier's company)
-      const clientNom = m.client?.company || m.client?.name || m.clientName || m.clientCompany || null
+      // Use backend-populated client relation first; never use clientCompany (was always current user's company)
+      const clientNom = m.client?.company || m.client?.name || m.clientName || null
       const clientEmail = m.client?.email || m.clientEmail || ''
       if (!clientNom) continue // skip if no client info available
       const alreadyExists = existingContacts.some(c =>

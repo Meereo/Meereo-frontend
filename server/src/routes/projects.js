@@ -9,7 +9,7 @@ const router = Router()
 const ALLOWED = [
   'nom', 'type', 'phase', 'budget', 'adresse', 'livraison', 'priorite',
   'description', 'avancement', 'status', 'client', 'clientEmail',
-  'clientId', 'color', 'etapes', 'equipe', 'sourceAoId',
+  'clientId', 'color', 'etapes', 'equipe', 'sourceAoId', 'taskStates',
 ]
 
 // ─── GET /api/projects ────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ router.post('/', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const { nom, type, phase, budget, adresse, livraison, priorite, description,
             avancement, status, client, clientEmail, clientId, color, etapes,
-            equipe, sourceAoId } = req.body
+            equipe, sourceAoId, taskStates } = req.body
     if (!nom) throw createError('nom requis', 400)
 
     const project = await prisma.project.create({
@@ -93,6 +93,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         etapes:      etapes      || null,
         equipe:      equipe      || null,
         sourceAoId:  sourceAoId  || null,
+        taskStates:  taskStates  || null,
       },
     })
     res.status(201).json(project)

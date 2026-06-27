@@ -65,4 +65,25 @@ router.patch('/read-all', requireAuth, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
+// ─── DELETE /api/notifications/:id ────────────────────────────────────────────
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const notif = await prisma.notification.findUnique({ where: { id: req.params.id } })
+    if (!notif) return res.status(404).json({ error: 'Notification introuvable' })
+    if (notif.userId !== req.user.id) return res.status(403).json({ error: 'Accès non autorisé' })
+    await prisma.notification.delete({ where: { id: req.params.id } })
+    res.json({ success: true })
+  } catch (e) { next(e) }
+})
+
+// ─── DELETE /api/notifications (all) ──────────────────────────────────────────
+router.delete('/', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    await prisma.notification.deleteMany({ where: { userId: req.user.id } })
+    res.json({ success: true })
+  } catch (e) { next(e) }
+})
+
 module.exports = router
