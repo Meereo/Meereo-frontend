@@ -405,6 +405,69 @@ export default function Onboarding() {
   const rccmError = form.rccm ? validateRCCM(form.rccm) : null
   const nccError = form.ncc ? validateNCC(form.ncc) : null
 
+  // ── Validation par étape — retourne un message d'erreur ou null si OK ──
+  const validateStep = (step, type, f) => {
+    const isEmail = (v) => v && v.includes('@') && v.includes('.')
+    if (type === 'client') {
+      if (step === 1) {
+        if (!f.prenom?.trim()) return 'Le prénom est requis'
+        if (!f.nom?.trim()) return 'Le nom de famille est requis'
+        if (!isEmail(f.email)) return 'Adresse email valide requise'
+        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
+        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
+        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+      }
+      if (step === 2) {
+        if (!f.projectType) return 'Veuillez sélectionner un type de projet'
+        if (!f.location?.trim()) return 'La localisation du projet est requise'
+        if (!f.budget || f.budget === '— Choisir —') return 'Veuillez estimer votre budget'
+      }
+      if (step === 3) {
+        if (!f.situation) return 'Veuillez choisir votre situation actuelle'
+      }
+    }
+    if (type === 'pro') {
+      if (step === 1) {
+        if (!f.entreprise?.trim()) return 'Le nom de la structure est requis'
+        if (!f.secteurs?.length) return "Sélectionnez au moins un secteur d'activité"
+        if (!f.ville?.trim()) return 'La ville est requise'
+        if (!isEmail(f.email)) return 'Adresse email professionnelle valide requise'
+        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
+        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
+        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+        if (rccmError) return rccmError
+        if (nccError) return nccError
+      }
+      if (step === 3) {
+        if (!f.services?.length) return 'Sélectionnez au moins un service proposé'
+        if (!f.bio?.trim()) return 'La présentation de votre structure est requise'
+      }
+    }
+    if (type === 'fournisseur') {
+      if (step === 1) {
+        if (!f.entreprise?.trim()) return "Le nom de l'entreprise est requis"
+        if (!f.ville?.trim()) return 'La ville est requise'
+        if (!isEmail(f.email)) return 'Adresse email professionnelle valide requise'
+        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
+        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
+        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+        if (rccmError) return rccmError
+        if (nccError) return nccError
+      }
+      if (step === 3) {
+        if (!f.categories?.length) return 'Sélectionnez au moins une catégorie de produits'
+      }
+      if (step === 5) {
+        if (!f.zones?.length) return 'Sélectionnez au moins une zone de livraison'
+        if (!f.delaiLivraison?.trim()) return 'Le délai de livraison est requis'
+      }
+    }
+    return null
+  }
+
   const handleLogin = async () => {
     if (!email) { showToast('Veuillez saisir votre email','orange'); return }
     if (!password) { showToast('Mot de passe requis','orange'); return }
@@ -1729,9 +1792,10 @@ export default function Onboarding() {
                     </div>
                   ) : (
                     <button className="ob-btn-blk" onClick={()=>{
-                      // Block if RCCM or NCC are filled but invalid (step 1 for pro/fournisseur)
-                      if (wizStep === 1 && (userType === 'pro' || userType === 'fournisseur') && (rccmError || nccError)) {
-                        showToast(rccmError || nccError, 'orange'); return
+                      // Valider les champs de l'étape courante avant d'avancer
+                      if (wizStep < totalSteps) {
+                        const err = validateStep(wizStep, userType, form)
+                        if (err) { showToast(err, 'red'); return }
                       }
                       if(wizStep===totalSteps) handleFinish()
                       else {
