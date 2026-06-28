@@ -249,6 +249,9 @@ export default function Client() {
   const pendingPaymentReqs = (store.paymentRequests || []).filter(r => r.projectId === proj?.id && r.statut === 'pending')
   // Count pending actions (decisions + payment requests)
   const totalPendingActions = pendingDecisions.length + pendingPaymentReqs.length
+  const pendingOffresCount = useMemo(() =>
+    (store.offers || []).filter(o => o.statut === 'pending' || o.statut === 'en_attente' || o.statut === 'En attente').length
+  , [store.offers])
 
   const filteredPros = apiPros.filter(p => {
     const metierOk = proMetier === 'all' || p.metier === proMetier
@@ -265,7 +268,7 @@ export default function Client() {
     decisions: { label: 'Choix & validations', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, group: 'Échanges', badge: totalPendingActions > 0 ? totalPendingActions : null, badgeColor: 'var(--wrn)' },
     documents: { label: 'Documents', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>, group: 'Échanges' },
     ao: { label: 'Mes demandes', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>, group: 'Trouver' },
-    offres: { label: 'Offres reçues', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>, group: 'Trouver' },
+    offres: { label: 'Offres reçues', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>, group: 'Trouver', badge: pendingOffresCount > 0 ? pendingOffresCount : null, badgeColor: 'var(--wrn)' },
     marches: { label: 'Contrats validés', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.42 4.58a5.4 5.4 0 00-7.65 0l-.77.78-.77-.78a5.4 5.4 0 00-7.65 7.65l.78.77L12 20.65l7.65-7.65.77-.78a5.4 5.4 0 000-7.64z"/></svg>, group: 'Trouver' },
     marketplace: { label: 'Catalogue', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>, group: 'Achats' },
     fournisseurs: { label: 'Professionnels', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>, group: 'Achats' },
@@ -324,10 +327,10 @@ export default function Client() {
         {/* KAI Quota — bottom-left, meme position que cockpit */}
         <div style={{ padding: '0 10px 8px' }}><KaiQuota role="client" /></div>
         <div className="fourni-sb-foot" style={{ cursor: 'pointer' }} onClick={() => setPage('parametres')}>
-          {ob.photoUrl
-            ? <img src={ob.photoUrl} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-            : <div className="fourni-sb-av">{clientInitials}</div>
-          }
+          {uid.photo
+            ? <img src={uid.photo} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
+            : null}
+          <div className="fourni-sb-av" style={uid.photo ? { display: 'none' } : undefined}>{clientInitials}</div>
           <div>
             {clientName && <div style={{ fontSize: 12, fontWeight: 600 }}>{clientName}</div>}
             {uid.roleLabel && <div style={{ fontSize: 10, color: 'var(--t3)' }}>{uid.roleLabel}</div>}

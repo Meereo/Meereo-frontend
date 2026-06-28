@@ -13,6 +13,18 @@
   position: relative;
 }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 12px;
+  min-width: 0;
+}
+.topbar-search {
+  width: 100%;
+  max-width: 420px;
+}
 .topbar-crumb {
   font-size: 13px;
   font-weight: 600;
@@ -82,7 +94,7 @@
   .topbar-hamburger {
     display: flex;
   }
-  .topbar-search {
+  .topbar-center {
     display: none;
   }
 }

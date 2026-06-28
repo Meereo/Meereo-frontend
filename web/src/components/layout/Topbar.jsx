@@ -46,11 +46,17 @@ export default function Topbar({ activePage, onOpenSidebar }) {
   const [dirSearch, setDirSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const searchRef = useRef(null)
+  const dropdownRef = useRef(null)
   const debounceRef = useRef(null)
 
   // Close on outside click
   useEffect(() => {
-    const handler = (e) => { if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false) }
+    const handler = (e) => {
+      if (
+        searchRef.current && !searchRef.current.contains(e.target) &&
+        (!dropdownRef.current || !dropdownRef.current.contains(e.target))
+      ) setSearchOpen(false)
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
@@ -89,10 +95,11 @@ export default function Topbar({ activePage, onOpenSidebar }) {
         <span className="topbar-crumb">{PAGE_NAMES[activePage] || 'Tableau de bord'}</span>
       </div>
 
-      {/* Search bar — absolute center (hidden on mobile) */}
-      <div ref={searchRef} className="topbar-search" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 420, maxWidth: 'calc(100% - 320px)', zIndex: 10 }}>
+      {/* Search bar — flex-centered column */}
+      <div className="topbar-center">
+      <div ref={searchRef} className="topbar-search">
         <div style={{ position: 'relative' }}>
-          <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+          <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input
               value={searchQuery}
@@ -115,13 +122,12 @@ export default function Topbar({ activePage, onOpenSidebar }) {
           {/* Search results dropdown via portal */}
           {searchOpen && searchQuery.trim().length >= 2 && createPortal(
             <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setSearchOpen(false)} />
               {(() => {
-                const rect = searchRef.current?.querySelector('div')?.getBoundingClientRect()
+                const rect = searchRef.current?.getBoundingClientRect()
                 if (!rect) return null
                 const results = filtered.slice(0, 6)
                 return (
-                  <div style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,.15)', maxHeight: 340, overflowY: 'auto', zIndex: 9999, fontFamily: 'var(--f)' }}>
+                  <div ref={dropdownRef} style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,.15)', maxHeight: 340, overflowY: 'auto', zIndex: 9999, fontFamily: 'var(--f)' }}>
                     {results.length > 0 ? (<>
                       <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
                       {results.map(p => {
@@ -155,6 +161,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
             document.body
           )}
         </div>
+      </div>
       </div>
 
       <div className="topbar-right">

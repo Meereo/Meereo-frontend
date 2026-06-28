@@ -224,22 +224,43 @@ export default function Exchange({ showToast, onNavigate }) {
     showToast && showToast('AO publie — visible par les ' + newAO.metier + 's')
   }
 
-  const submitReponse = () => {
+  const submitReponse = async () => {
     setReponseSubmitted(true)
     const ao = showRepondre
-    // Merge docs: pièces jointes uploadées + documents entreprise sélectionnés (résolution nom/type)
-    const mergedDocs = [
-      ...reponse.docsJoints.map(f => ({
-        name: f.name || f,
-        size: f.size ? (f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : undefined,
-        type: (f.type || '').split('/').pop()?.toUpperCase() || 'DOC',
-        source: 'upload',
-      })),
-      ...reponse.docsEntreprise.map(id => {
-        const d = availableDocs.find(d => d.id === id)
-        return d ? { name: d.nom, type: d.type || 'DOC', id: d.id, source: 'entreprise' } : null
-      }).filter(Boolean),
-    ]
+
+    // Upload each attached file to MinIO — capture the persistent URL
+    // Falls back gracefully: if MinIO is unavailable, url stays null (metadata-only)
+    const uploadedJoints = await Promise.all(
+      reponse.docsJoints.map(async (f) => {
+        let url = null
+        try {
+          const { uploadFile } = await import('../../utils/upload')
+          url = await uploadFile(f, 'offer-docs', 'doc')
+        } catch { /* MinIO unavailable — store metadata only */ }
+        return {
+          name: f.name || String(f),
+          size: f.size ? (f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : undefined,
+          type: (f.type || '').split('/').pop()?.toUpperCase() || 'DOC',
+          source: 'upload',
+          ...(url ? { url } : {}),
+        }
+      })
+    )
+
+    // Enterprise docs: resolve URL from store documents if available
+    const enterpriseMapped = reponse.docsEntreprise.map(id => {
+      const d = availableDocs.find(d => d.id === id)
+      if (!d) return null
+      const storeDoc = (store.documents || []).find(sd => sd.id === id)
+      const docUrl = storeDoc?.url || storeDoc?.fileUrl || null
+      return {
+        name: d.nom, type: d.type || 'DOC', id: d.id, source: 'entreprise',
+        ...(docUrl ? { url: docUrl } : {}),
+      }
+    }).filter(Boolean)
+
+    const mergedDocs = [...uploadedJoints, ...enterpriseMapped]
+
     // Use store.submitOffer with permission guards instead of raw updateStore
     const result = storeSubmitOffer({
       aoId: ao?.id,

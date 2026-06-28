@@ -204,12 +204,21 @@ export default function Profile() {
   // Team edit
   const [editTeamList, setEditTeamList] = useState(() => (rawTeam || []).map(t => ({ ...t })))
   const [newMember, setNewMember] = useState({ name: '', role: '', photoUrl: '' })
+  // Keep editTeamList in sync if cockpitTeam is updated externally (e.g. from Settings page)
+  useEffect(() => {
+    if (editModal !== 'equipe') setEditTeamList(rawTeam.map(t => ({ ...t })))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ob.cockpitTeam])
 
   const saveEdit = useCallback(async (field, value) => {
     // Optimistic update
     updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), [field]: value } }))
     try {
-      await api.usersApi.updateOnboardingData({ [field]: value })
+      const saved = await api.usersApi.updateOnboardingData({ [field]: value })
+      // Update store with full server response (merged proProfile + onboardingData)
+      if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+        updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), ...saved } }))
+      }
       showToast('Profil mis \u00e0 jour', 'green')
       setEditModal(null)
     } catch (e) {
@@ -807,14 +816,23 @@ export default function Profile() {
       <Modal isOpen={editModal === 'profil'} onClose={() => setEditModal(null)} title="Gerer mon profil" wide footer={
         <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={async () => {
           const updates = { entreprise: epEntreprise, bio: epBio, slogan: epSlogan, ville: epVille, pays: epPays, email: epEmail, tel: epTel, rccm: epRccm, secteurs: editSecteurs, logoColor: editLogoColor }
+          const prevOb = store.onboardingData || {}
           updateStore(prev => ({
             ...prev,
             onboardingData: { ...(prev.onboardingData || {}), ...updates },
             user: prev.user ? { ...prev.user, name: epEntreprise || prev.user.name, email: epEmail || prev.user.email } : prev.user,
           }))
-          await api.usersApi.updateOnboardingData(updates).catch(() => {})
-          showToast('Profil mis à jour', 'green')
-          setEditModal(null)
+          try {
+            const saved = await api.usersApi.updateOnboardingData(updates)
+            if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+              updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), ...saved } }))
+            }
+            showToast('Profil mis à jour', 'green')
+            setEditModal(null)
+          } catch (e) {
+            updateStore(prev => ({ ...prev, onboardingData: prevOb }))
+            showToast(e?.message || 'Erreur lors de la sauvegarde', 'red')
+          }
         }}>Enregistrer</button></>
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -834,7 +852,14 @@ export default function Profile() {
                 setEpLogoUploading(true)
                 try {
                   const { uploadFile } = await import('../../../utils/upload')
-                  const url = await uploadFile(f, 'logos', 'logo')
+                  let url = null
+                  try { url = await uploadFile(f, 'logos', 'logo') } catch { /* MinIO indispo */ }
+                  if (!url) {
+                    // Fallback base64 — compressed logo (<400KB)
+                    const { default: compress } = await import('../../../utils/compressImage')
+                    url = await compress(f, 400, 0.85)
+                  }
+                  if (!url) throw new Error('Upload échoué')
                   updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), logoFileUrl: url } }))
                   await api.usersApi.updateOnboardingData({ logoFileUrl: url }).catch(() => {})
                   showToast('Logo mis à jour', 'green')
@@ -903,55 +928,139 @@ export default function Profile() {
       </Modal>
 
       {/* Modal Portfolio */}
-      <Modal isOpen={editModal === 'portfolio'} onClose={() => setEditModal(null)} title="Gérer le portfolio" wide footer={
-        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button><button className="btn btn-primary btn-sm" onClick={() => saveEdit('portfolio', editPortfolio)}>Enregistrer</button></>
+      <Modal isOpen={editModal === 'portfolio'} onClose={() => setEditModal(null)} title="Portfolio" wide footer={
+        <><button className="btn btn-sm" onClick={() => setEditModal(null)}>Annuler</button>
+        <button className="btn btn-primary btn-sm" onClick={() => saveEdit('portfolio', editPortfolio)}>Enregistrer</button></>
       }>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {editPortfolio.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--t4)', fontSize: 13 }}>
+              Aucun projet pour le moment — ajoutez-en un ci-dessous.
+            </div>
+          )}
+
           {editPortfolio.map((p, i) => {
             const imgs = p.imgs || []
-            const addImgs = async (files) => {
-              const { default: compress } = await import('../../../utils/compressImage')
-              const results = []
-              for (const f of files) { try { results.push(await compress(f, 1200, 0.75)) } catch { /* skip failed */ } }
-              if (results.length) setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: [...(x.imgs || []), ...results] } : x))
+            const pickAndAddImgs = () => {
+              const inp = document.createElement('input')
+              inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true
+              inp.onchange = async (e) => {
+                const files = Array.from(e.target.files || [])
+                const { default: compress } = await import('../../../utils/compressImage')
+                const newImgs = []
+                for (const f of files) {
+                  try {
+                    // Try MinIO upload first — stores a URL instead of large base64
+                    try {
+                      const { uploadFile } = await import('../../../utils/upload')
+                      const url = await uploadFile(f, 'portfolio', 'img')
+                      if (url && typeof url === 'string') { newImgs.push(url); continue }
+                    } catch { /* fall through to base64 */ }
+                    // Fallback: small compressed base64 (~15-25 KB)
+                    newImgs.push(await compress(f, 480, 0.60))
+                  } catch { /* skip unreadable file */ }
+                }
+                if (newImgs.length) setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: [...(x.imgs || []), ...newImgs] } : x))
+              }
+              inp.click()
             }
+
             return (
-              <div key={i} style={{ padding: '14px 16px', background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                {/* Header — title + controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <input className="form-input" style={{ flex: 1, fontSize: 13, fontWeight: 600 }} value={p.cap} onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, cap: e.target.value } : x))} placeholder="Titre du projet" />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--t3)', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                    <input type="checkbox" checked={p.feat || false} onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, feat: e.target.checked } : x))} /> à la une
-                  </label>
-                  <button onClick={() => setEditPortfolio(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--err)', fontSize: 16, flexShrink: 0 }} title="Supprimer ce projet">×</button>
+              <div key={i} style={{ background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', overflow: 'hidden' }}>
+
+                {/* ── Title row ────────────────────────── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px' }}>
+                  {/* Cover thumbnail / upload trigger */}
+                  <div
+                    onClick={pickAndAddImgs}
+                    title="Cliquer pour ajouter des photos"
+                    style={{ width: 46, height: 46, borderRadius: 8, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: 'var(--s2)', border: '1.5px solid var(--border-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {imgs[0]
+                      ? <img src={imgs[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
+                  </div>
+
+                  <input
+                    className="form-input"
+                    style={{ flex: 1, fontWeight: 600 }}
+                    value={p.cap}
+                    onChange={e => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, cap: e.target.value } : x))}
+                    placeholder="Titre du projet..."
+                  />
+
+                  {/* Featured star toggle */}
+                  <button
+                    title={p.feat ? 'Retirer de la une' : 'Mettre à la une'}
+                    onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, feat: !x.feat } : x))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', flexShrink: 0, color: p.feat ? '#F59E0B' : 'var(--t4)', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 500 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={p.feat ? '#F59E0B' : 'none'} stroke={p.feat ? '#F59E0B' : 'currentColor'} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {p.feat ? 'Une' : 'Une'}
+                  </button>
+
+                  <button
+                    onClick={() => setEditPortfolio(prev => prev.filter((_, j) => j !== i))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--err)', fontSize: 18, lineHeight: 1, flexShrink: 0, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}
+                    title="Supprimer ce projet"
+                  >×</button>
                 </div>
-                {/* Gallery thumbnails + add */}
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, alignItems: 'flex-start' }}>
+
+                {/* ── Gallery row ───────────────────────── */}
+                <div style={{ display: 'flex', gap: 7, padding: '2px 12px 12px', overflowX: 'auto', alignItems: 'flex-start' }}>
                   {imgs.map((src, k) => (
-                    <div key={k} style={{ position: 'relative', flexShrink: 0, width: 80, height: 80, borderRadius: 8, overflow: 'hidden', border: k === 0 ? '2px solid #3B82F6' : '1.5px solid var(--border-card)' }}>
-                      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      {k === 0 && <div style={{ position: 'absolute', top: 3, left: 3, background: 'rgba(59,130,246,.85)', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, pointerEvents: 'none' }}>Cover</div>}
-                      <button onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: x.imgs.filter((_, m) => m !== k) } : x))} style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(220,38,38,.85)', color: '#fff', border: 'none', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
+                    <div key={k} style={{ position: 'relative', flexShrink: 0 }}>
+                      <img
+                        src={src} alt=""
+                        style={{ width: 70, height: 70, borderRadius: 8, objectFit: 'cover', display: 'block', border: k === 0 ? '2px solid #3B82F6' : '1.5px solid var(--border-card)' }}
+                      />
+                      {k === 0 && <span style={{ position: 'absolute', top: 3, left: 3, background: '#3B82F6', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, pointerEvents: 'none' }}>Cover</span>}
+                      <button
+                        onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: x.imgs.filter((_, m) => m !== k) } : x))}
+                        style={{ position: 'absolute', top: -5, right: -5, width: 17, height: 17, borderRadius: '50%', background: 'var(--err)', color: '#fff', border: '1.5px solid var(--surface-1)', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                      >×</button>
                     </div>
                   ))}
                   {/* Add photos */}
-                  <div onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.onchange = e => addImgs(Array.from(e.target.files || [])); inp.click() }} style={{ flexShrink: 0, width: 80, height: 80, borderRadius: 8, border: '1.5px dashed var(--border-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, transition: 'background .12s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--surface-1)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>Ajouter<br/>photos</span>
+                  <div
+                    onClick={pickAndAddImgs}
+                    style={{ flexShrink: 0, width: 70, height: 70, borderRadius: 8, border: '1.5px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 3, background: 'var(--s2)', transition: 'opacity .15s' }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '.7'} onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                    <span style={{ fontSize: 9, color: 'var(--t4)', fontWeight: 600 }}>Photos</span>
                   </div>
                 </div>
-                {imgs.length > 1 && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>{imgs.length} photos à La 1ére est la couverture affichée</div>}
-                {imgs.length === 0 && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4 }}>Aucune photo — cliquez « Ajouter photos » pour en ajouter.</div>}
+
+                {imgs.length > 0 && (
+                  <div style={{ padding: '0 12px 8px', fontSize: 10, color: 'var(--t4)' }}>
+                    {imgs.length} photo{imgs.length > 1 ? 's' : ''} — la 1ère est la couverture
+                  </div>
+                )}
               </div>
             )
           })}
-          {/* Add new project */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input className="form-input" style={{ flex: 1 }} value={newPortfolio.cap} onChange={e => setNewPortfolio(prev => ({ ...prev, cap: e.target.value }))} placeholder="Titre du nouveau projet..." />
+
+          {/* ── Add new project ───────────────────── */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, border: '1.5px dashed var(--border)' }}>
+            <input
+              className="form-input"
+              style={{ flex: 1, background: 'transparent', border: 'none', boxShadow: 'none', padding: '0 2px' }}
+              value={newPortfolio.cap}
+              onChange={e => setNewPortfolio(prev => ({ ...prev, cap: e.target.value }))}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newPortfolio.cap.trim()) {
+                  setEditPortfolio(prev => [...prev, { cap: newPortfolio.cap, imgs: [], feat: false }])
+                  setNewPortfolio({ cap: '', imgs: [], feat: false })
+                }
+              }}
+              placeholder="+ Nouveau projet..."
+            />
             <button className="btn btn-sm" disabled={!newPortfolio.cap.trim()} onClick={() => {
               setEditPortfolio(prev => [...prev, { cap: newPortfolio.cap, imgs: [], feat: false }])
               setNewPortfolio({ cap: '', imgs: [], feat: false })
-            }}>Ajouter</button>
+            }}>Créer</button>
           </div>
         </div>
       </Modal>

@@ -287,6 +287,7 @@ router.get('/me/onboarding', requireAuth, async (req, res) => {
         description: p.description || '',
         situation:   p.situation   || '',
         architecteEmail: p.architecteEmail || '',
+        photoUrl:    p.photoUrl    || '',
       }
     }
 
@@ -313,19 +314,62 @@ router.get('/me/onboarding', requireAuth, async (req, res) => {
 router.patch('/me/onboarding', requireAuth, async (req, res) => {
   const prisma = getPrisma()
   try {
+    const sanitized = sanitizeOnboardingData(req.body)
     const current = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { onboardingData: true },
     })
     const merged = {
       ...(current?.onboardingData || {}),
-      ...sanitizeOnboardingData(req.body),
+      ...sanitized,
     }
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: { onboardingData: merged },
       select: { onboardingData: true },
     })
+
+    // Sync to structured profile table so public API endpoint stays consistent
+    if (Object.keys(sanitized).length > 0) {
+      if (req.user.type === 'pro') {
+        const proMap = {
+          entreprise: 'entreprise', ville: 'ville', pays: 'pays', tel: 'tel',
+          annee: 'annee', rccm: 'rccm', ncc: 'ncc', secteurs: 'secteurs',
+          services: 'services', logoColor: 'logoColor', logoShape: 'logoShape',
+          logoTypo: 'logoTypo', logoFileUrl: 'logoFileUrl', slogan: 'slogan',
+          bio: 'bio', projetsN: 'projetsN', effectif: 'effectif',
+          cockpitTeam: 'cockpitTeam', portfolio: 'portfolioFiles', bannerUrl: 'coverUrl',
+        }
+        const profileData = {}
+        for (const [k, dest] of Object.entries(proMap)) {
+          if (sanitized[k] !== undefined) profileData[dest] = sanitized[k]
+        }
+        if (Object.keys(profileData).length > 0) {
+          await prisma.proProfile.update({
+            where: { userId: req.user.id },
+            data: profileData,
+          }).catch(e => console.warn('[ONBOARDING] proProfile sync failed:', e.message))
+        }
+      } else if (req.user.type === 'fournisseur') {
+        const frnMap = {
+          entreprise: 'entreprise', ville: 'ville', pays: 'pays', tel: 'tel',
+          rccm: 'rccm', ncc: 'ncc', logoColor: 'logoColor', logoShape: 'logoShape',
+          logoTypo: 'logoTypo', logoFileUrl: 'logoFileUrl',
+          categories: 'categories', zones: 'zones', delaiLivraison: 'delaiLivraison',
+        }
+        const profileData = {}
+        for (const [k, dest] of Object.entries(frnMap)) {
+          if (sanitized[k] !== undefined) profileData[dest] = sanitized[k]
+        }
+        if (Object.keys(profileData).length > 0) {
+          await prisma.fournisseurProfile.update({
+            where: { userId: req.user.id },
+            data: profileData,
+          }).catch(e => console.warn('[ONBOARDING] fournisseurProfile sync failed:', e.message))
+        }
+      }
+    }
+
     res.json(updated.onboardingData)
   } catch (e) {
     console.error('[USERS] PATCH /me/onboarding', e)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, User } from 'lucide-react'
 import { useDevise } from '../../hooks/useDevise'
@@ -78,6 +78,8 @@ export default function Settings({ showToast }) {
   const [pBio, setPBio] = useState(ob.bio || '')
   const [pSlogan, setPSlogan] = useState(ob.slogan || '')
   const [pLogoUrl, setPLogoUrl] = useState(ob.logoFileUrl || '')
+  // Sync local state when onboardingData loads asynchronously after mount
+  useEffect(() => { if (ob.logoFileUrl && !pLogoUrl) setPLogoUrl(ob.logoFileUrl) }, [ob.logoFileUrl]) // eslint-disable-line react-hooks/exhaustive-deps
   const [pSecteurs, setPSecteurs] = useState(ob.secteurs || [])
   const [pServices, setPServices] = useState(ob.services || [])
   const [newSecteur, setNewSecteur] = useState('')
@@ -88,6 +90,10 @@ export default function Settings({ showToast }) {
   const storedTeam = store.onboardingData?.cockpitTeam
   const initialTeam = []
   const [team, setTeamLocal] = useState(storedTeam && storedTeam.length > 0 ? storedTeam : initialTeam)
+  // Sync team when store data loads asynchronously after mount
+  useEffect(() => {
+    if (storedTeam && storedTeam.length > 0 && team.length === 0) setTeamLocal(storedTeam)
+  }, [storedTeam])
   const setTeam = (updater) => {
     setTeamLocal(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
@@ -388,9 +394,13 @@ export default function Settings({ showToast }) {
             {tab === 'equipe' && (
               <div>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, color: 'var(--t3)' }}>{team.length} membres à {team.filter(t => t.online).length} en ligne</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, color: 'var(--t3)' }}>{team.length} membre{team.length > 1 ? 's' : ''} à {team.filter(t => t.online).length} en ligne</div>
                   <button className="btn btn-primary btn-sm" onClick={() => setInviteModal(true)}>+ Inviter un membre</button>
+                </div>
+                <div style={{ padding: '8px 12px', background: 'rgba(99,102,241,.06)', border: '1px solid rgba(99,102,241,.15)', borderRadius: 8, fontSize: 11, color: 'var(--t3)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Les membres marqués « Public » sont visibles sur votre <strong>page profil publique</strong>.</span>
                 </div>
 
                 {/* Roles explanation */}
@@ -418,7 +428,8 @@ export default function Settings({ showToast }) {
                           <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.poste || m.jobTitle} · {m.email}</div>
                         </div>
                         <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)' }}>{roleLabel(m.role)}</span>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut === 'invite' ? '⏳ Invite' : 'é—é Actif'}</span>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut === 'invite' ? '⏳ Invité' : '● Actif'}</span>
+                        {m.isPublic !== false && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(99,102,241,.1)', color: '#6366f1' }}>Profil</span>}
                         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => setEditMember({ ...m })}>Modifier</button>
                           {m.role !== 'admin' && <button style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.05)', color: 'var(--err)', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }} onClick={() => removeMember(m.id)}>Retirer</button>}
@@ -533,8 +544,11 @@ export default function Settings({ showToast }) {
                   </div>
                 </div>
               </div>
-              <div><label className="form-label">Poste</label><input className="form-input" value={editMember.poste} onChange={e => setEditMember(p => ({ ...p, poste: e.target.value }))} /></div>
-              <div><label className="form-label">Role</label>
+              <div className="modal-row">
+                <div><label className="form-label">Nom complet</label><input className="form-input" value={editMember.nom || editMember.name || ''} onChange={e => setEditMember(p => ({ ...p, nom: e.target.value, name: e.target.value }))} placeholder="Prénom Nom" /></div>
+                <div><label className="form-label">Poste / Titre</label><input className="form-input" value={editMember.poste || editMember.jobTitle || ''} onChange={e => setEditMember(p => ({ ...p, poste: e.target.value, jobTitle: e.target.value }))} placeholder="Architecte, Ingénieur..." /></div>
+              </div>
+              <div><label className="form-label">Rôle sur la plateforme</label>
                 <select className="form-input" value={editMember.role} onChange={e => setEditMember(p => ({ ...p, role: e.target.value }))}>
                   {ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                 </select>
@@ -542,15 +556,21 @@ export default function Settings({ showToast }) {
               <div><label className="form-label">Statut</label>
                 <select className="form-input" value={editMember.statut} onChange={e => setEditMember(p => ({ ...p, statut: e.target.value }))}>
                   <option value="actif">Actif</option>
-                  <option value="invite">Invite</option>
+                  <option value="invite">Invité</option>
                   <option value="suspendu">Suspendu</option>
                 </select>
               </div>
+              <div><label className="form-label">Email</label><input className="form-input" value={editMember.email || ''} onChange={e => setEditMember(p => ({ ...p, email: e.target.value }))} placeholder="email@entreprise.com" /></div>
+              <div><label className="form-label">Lien LinkedIn</label><input className="form-input" value={editMember.linkedinUrl || ''} onChange={e => setEditMember(p => ({ ...p, linkedinUrl: e.target.value }))} placeholder="https://linkedin.com/in/..." /></div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                <input type="checkbox" checked={editMember.isPublic !== false} onChange={e => setEditMember(p => ({ ...p, isPublic: e.target.checked }))} />
+                <span>Visible sur la <strong>page profil publique</strong></span>
+              </label>
+            </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
                 <button className="btn btn-sm" onClick={() => setEditMember(null)}>Annuler</button>
                 <button className="btn btn-primary btn-sm" onClick={saveEditMember}>Enregistrer</button>
               </div>
-            </div>
           </div>
         </div>
       , document.body)}

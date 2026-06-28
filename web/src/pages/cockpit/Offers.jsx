@@ -349,17 +349,41 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Documents de l'offre {selected.docs?.length > 0 ? `(${selected.docs.length})` : ''}</div>
                 {selected.docs?.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {selected.docs.map((d, i) => (
+                    {selected.docs.map((d, i) => {
+                      const fileUrl = d.url || d.fileUrl || null
+                      const openDoc = () => {
+                        if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
+                        // Validate URL scheme before opening (security)
+                        try { const u = new URL(fileUrl); if (!['https:', 'http:', 'data:'].includes(u.protocol) && !fileUrl.startsWith('data:')) { showToast && showToast('URL invalide'); return } } catch { /* data: URIs throw, treat as safe */ }
+                        window.open(fileUrl, '_blank', 'noopener,noreferrer')
+                      }
+                      const downloadDoc = () => {
+                        if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
+                        const a = document.createElement('a')
+                        a.href = fileUrl
+                        a.download = d.n || d.name || 'document'
+                        a.rel = 'noopener noreferrer'
+                        a.target = '_blank'
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+                      }
+                      return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
-                        <div style={{ width: 30, height: 30, borderRadius: 7, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: 'var(--t2)', flexShrink: 0 }}>{(d.type || 'PDF').toUpperCase()}</div>
+                        <div style={{ width: 30, height: 30, borderRadius: 7, background: fileUrl ? 'rgba(59,130,246,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: fileUrl ? '#3B82F6' : 'var(--t2)', flexShrink: 0 }}>{(d.type || 'PDF').toUpperCase()}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 500 }}>{d.n || d.name || 'Document'}</div>
-                          {d.size && <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.size}</div>}
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.size || (fileUrl ? 'Disponible' : 'Non disponible')}</div>
                         </div>
-                        <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Ouverture...')}>Voir</button>
-                        <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => showToast && showToast('Téléchargement...')}>Télécharger</button>
+                        {fileUrl ? (
+                          <>
+                            <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 10px' }} onClick={openDoc}>Voir</button>
+                            <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 10px' }} onClick={downloadDoc} title="Télécharger">↓</button>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 10, color: 'var(--t4)', fontStyle: 'italic', whiteSpace: 'nowrap' }}>Non disponible</span>
+                        )}
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px dashed var(--border-card)', textAlign: 'center' }}>

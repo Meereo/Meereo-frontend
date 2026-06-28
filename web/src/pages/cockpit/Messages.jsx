@@ -249,15 +249,24 @@ export default function Messages({ showToast }) {
         const nom = c.isGroup
           ? (c.title || 'Groupe')
           : (firstOther?.name || 'Contact')
-        // Photo réelle depuis onboardingData ou avatar du participant
+        // Photo réelle : priorité au champ photoUrl pré-calculé côté serveur
         const photoUrl = !c.isGroup
-          ? (firstOther?.onboardingData?.photoUrl ||
+          ? (firstOther?.photoUrl ||
+             firstOther?.onboardingData?.photoUrl ||
              firstOther?.onboardingData?.logoFileUrl ||
              firstOther?.avatar || null)
           : null
         const color = c.isGroup ? '#7C3AED' : '#2563EB'
         const lastMsg = c.lastMessage
-        const dernier = lastMsg ? (lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : lastMsg.text || '') : ''
+        let dernier = ''
+        if (lastMsg) {
+          const content = lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : (lastMsg.text || '')
+          if (content) {
+            const isMe = lastMsg.senderId === myId
+            const label = isMe ? 'Vous' : (lastMsg.senderName ? lastMsg.senderName.split(' ')[0].slice(0, 5) : null)
+            dernier = label ? label + ' : ' + content : content
+          }
+        }
         // Safe date formatting — guard against undefined/invalid createdAt
         let time = ''
         if (lastMsg?.createdAt) {
@@ -672,10 +681,29 @@ export default function Messages({ showToast }) {
   }
 
   const directContacts = getDirectContacts(store.projects || [], store)
-  const allSearchable = [...directContacts, ...EXTERNAL_PROS.filter(e => !directContacts.find(d => d.nom === e.nom)).map(e => ({ ...e, source: 'externe', direct: false }))]
-  const newConvFiltered = newConvSearch ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(newConvSearch.toLowerCase())) : directContacts
-  const inviteFiltered = inviteSearch ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(inviteSearch.toLowerCase())) : directContacts
-  const groupFiltered = groupSearch ? directContacts.filter(c => (c.nom + c.role).toLowerCase().includes(groupSearch.toLowerCase()) && !groupMembers.includes(c.nom)) : directContacts.filter(c => !groupMembers.includes(c.nom))
+  // Include all registered backend users as searchable contacts
+  const registeredUserContacts = (store.users || [])
+    .filter(u => u.id !== store.user?.id && u.status !== 'deleted' && u.name)
+    .map(u => ({
+      nom: u.name,
+      role: u.type === 'pro' ? 'Professionnel' : u.type === 'client' ? 'Client' : u.type === 'fournisseur' ? 'Fournisseur' : 'Utilisateur',
+      source: (u.type === 'pro' || u.type === 'fournisseur') ? 'prestataire' : 'client',
+      direct: true, registered: true, email: u.email || '', userId: u.id,
+    }))
+  const allSearchable = [
+    ...directContacts,
+    ...registeredUserContacts.filter(u => !directContacts.find(d => d.nom === u.nom)),
+    ...EXTERNAL_PROS.filter(e => !directContacts.find(d => d.nom === e.nom)).map(e => ({ ...e, source: 'externe', direct: false })),
+  ]
+  const newConvFiltered = newConvSearch
+    ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(newConvSearch.toLowerCase()))
+    : allSearchable.slice(0, 30)
+  const inviteFiltered = inviteSearch
+    ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(inviteSearch.toLowerCase()))
+    : allSearchable.slice(0, 30)
+  const groupFiltered = groupSearch
+    ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(groupSearch.toLowerCase()) && !groupMembers.includes(c.nom))
+    : allSearchable.filter(c => !groupMembers.includes(c.nom)).slice(0, 30)
 
   const startConversation = async (c) => {
     const existing = allConversations.find(conv => conv.nom === c.nom && !conv.isGroup)
@@ -733,6 +761,27 @@ export default function Messages({ showToast }) {
     )
   }
 
+  // Group marché conversations as Discord-style threads under their project parent
+  const { mainConvs, threadMap } = useMemo(() => {
+    const byProject = {}
+    for (const c of visibleConversations) {
+      if (!c.marketId && c.projectId) byProject[c.projectId] = c.id
+    }
+    const map = {}
+    const threadIds = new Set()
+    for (const c of visibleConversations) {
+      if (c.marketId && c.projectId) {
+        const parentId = byProject[c.projectId]
+        if (parentId) {
+          if (!map[parentId]) map[parentId] = []
+          map[parentId].push(c)
+          threadIds.add(c.id)
+        }
+      }
+    }
+    return { mainConvs: filtered.filter(c => !threadIds.has(c.id)), threadMap: map }
+  }, [visibleConversations, filtered])
+
   return (
     <div>
       <div className="split">
@@ -756,7 +805,7 @@ export default function Messages({ showToast }) {
             </div>
           </div>
           <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--border)' }}>
-            <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)', marginBottom: 10 }}>
+            <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)', marginBottom: 10 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
             </div>
@@ -780,12 +829,13 @@ export default function Messages({ showToast }) {
                 </div>
               </div>
             )}
-            {filtered.map(c => {
+            {mainConvs.map(c => {
               const av = getContactAvatar(c.nom, store.projects || [])
               // Photo réelle : priorité à photoUrl (depuis backend), puis getContactAvatar (statique)
               const listPhoto = c.photoUrl || (av?.type === 'img' ? av.value : null)
-              return (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: active?.id === c.id ? 'var(--s2)' : undefined, transition: 'background .12s' }}
+              const convThreads = threadMap[c.id] || []
+              const mainRow = (
+              <div key={'c-' + c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: convThreads.length ? 'none' : '1px solid var(--border)', cursor: 'pointer', background: active?.id === c.id ? 'var(--s2)' : undefined, transition: 'background .12s' }}
                 onClick={() => { setActiveId(c.id); if (c.unread) updateConv(c.id, cv => ({ ...cv, unread: 0 })) }}
                 onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ convId: c.id, x: e.clientX, y: e.clientY }) }}
               >
@@ -1119,7 +1169,7 @@ export default function Messages({ showToast }) {
                 <div style={{ fontSize: 16, fontWeight: 800 }}>Nouvelle conversation</div>
                 <button onClick={() => setShowNewConv(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
               </div>
-              <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+              <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input value={newConvSearch} onChange={e => setNewConvSearch(e.target.value)} placeholder="Rechercher un contact..." style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 13, fontFamily: 'var(--f)', color: 'var(--tx)' }} autoFocus />
               </div>
@@ -1142,7 +1192,7 @@ export default function Messages({ showToast }) {
               <button onClick={() => setShowInvite(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '0 22px 12px' }}>
-              <input placeholder="Rechercher..." value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} style={{ width: '100%', padding: '8px 14px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} autoFocus />
+              <input placeholder="Rechercher..." value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} style={{ width: '100%', padding: '8px 14px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} autoFocus />
             </div>
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
               {inviteFiltered.filter(c => c.direct && !(active.participants || []).includes(c.nom)).map((c, i) => (
@@ -1162,9 +1212,9 @@ export default function Messages({ showToast }) {
                 <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un groupe</div>
                 <button onClick={() => setShowNewGroup(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
               </div>
-              <input placeholder="Nom du groupe..." value={groupName} onChange={e => setGroupName(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)', marginBottom: 10 }} autoFocus />
+              <input placeholder="Nom du groupe..." value={groupName} onChange={e => setGroupName(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', marginBottom: 10 }} autoFocus />
               {groupMembers.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>{groupMembers.map(m => <span key={m} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 100, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>{m} <span style={{ cursor: 'pointer', opacity: .7 }} onClick={() => setGroupMembers(p => p.filter(x => x !== m))}>×</span></span>)}</div>}
-              <input placeholder="Ajouter des participants..." value={groupSearch} onChange={e => setGroupSearch(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'transparent', outline: 'none', color: 'var(--tx)' }} />
+              <input placeholder="Ajouter des participants..." value={groupSearch} onChange={e => setGroupSearch(e.target.value)} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} />
             </div>
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>{groupFiltered.map((c, i) => <ContactRow key={i} c={c} onClick={() => { setGroupMembers(p => [...p, c.nom]); setGroupSearch('') }} />)}</div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>

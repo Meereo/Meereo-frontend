@@ -132,7 +132,7 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
         <MeereoLogo size={28} />
         <div>
           <div className="sidebar-brand">MEEREO</div>
-          <div className="sidebar-tagline">Cockpit</div>
+          <div className="sidebar-tagline">Professionnel</div>
         </div>
         <button className="sidebar-close" onClick={onClose} aria-label="Fermer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -196,9 +196,18 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
           {(() => {
             const ob = store.onboardingData || {}
             const shape = logoShapeStyle(ob.logoShape)
-            return identity.photo
-              ? <img src={identity.photo} alt="" style={{ width: 32, height: 32, objectFit: 'cover', flexShrink: 0, ...shape }} />
-              : <div className="sidebar-avatar" style={{ ...shape, background: ob.logoColor || undefined }}>{identity.initials || ''}</div>
+            const fallback = <div className="sidebar-avatar" style={{ ...shape, background: ob.logoColor || undefined }}>{identity.initials || ''}</div>
+            if (!identity.photo) return fallback
+            return (
+              <>
+                <img
+                  src={identity.photo} alt=""
+                  style={{ width: 32, height: 32, objectFit: 'cover', flexShrink: 0, ...shape }}
+                  onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }}
+                />
+                <div className="sidebar-avatar" style={{ ...shape, background: ob.logoColor || undefined, display: 'none' }}>{identity.initials || ''}</div>
+              </>
+            )
           })()}
           <div>
             {identity.displayName && <div className="sidebar-user-name">{identity.displayName}</div>}

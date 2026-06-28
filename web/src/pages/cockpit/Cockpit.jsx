@@ -178,7 +178,7 @@ export default function Cockpit() {
     <CockpitLayout activePage={activePage} onNavigate={setActivePage}>
       <Suspense fallback={<PageLoader />}>
         <div className="page-enter" key={activePage}>
-          <PageComponent onNavigate={setActivePage} openModal={openModal} showToast={showToast} />
+          <PageComponent onNavigate={setActivePage} openModal={openModal} showToast={showToast} openProDir={() => setShowProDir(true)} />
         </div>
       </Suspense>
 

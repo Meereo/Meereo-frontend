@@ -4,6 +4,34 @@ const { getPrisma } = require('../db')
 
 const router = Router()
 
+// ─── Shared participant user select (includes profile tables for photo lookup) ─
+const PARTICIPANT_USER_SELECT = {
+  select: {
+    id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true,
+    proProfile:         { select: { logoFileUrl: true } },
+    clientProfile:      { select: { photoUrl: true } },
+    fournisseurProfile: { select: { logoFileUrl: true } },
+  },
+}
+
+// Strip base64 — only keep real URLs
+const safeUrl = (v) => (v && typeof v === 'string' && !v.startsWith('data:') ? v : null)
+
+// Compute a canonical photoUrl for a participant and remove the raw profile sub-objects
+const mapParticipantUser = (u) => {
+  if (!u) return u
+  const photoUrl =
+    safeUrl(u.proProfile?.logoFileUrl) ||
+    safeUrl(u.clientProfile?.photoUrl) ||
+    safeUrl(u.fournisseurProfile?.logoFileUrl) ||
+    safeUrl(u.onboardingData?.logoFileUrl) ||
+    safeUrl(u.onboardingData?.photoUrl) ||
+    safeUrl(u.avatar) ||
+    null
+  const { proProfile: _1, clientProfile: _2, fournisseurProfile: _3, ...rest } = u
+  return { ...rest, photoUrl }
+}
+
 // ─── Lister les conversations de l'utilisateur connecté ──────────────────────────────
 router.get('/', requireAuth, async (req, res, next) => {
   try {
@@ -16,7 +44,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         conversation: {
           include: {
             participants: {
-              include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true } } },
+              include: { user: PARTICIPANT_USER_SELECT },
             },
             messages: {
               orderBy: { createdAt: 'desc' },
@@ -42,7 +70,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         offerId: c.offerId,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
-        participants: c.participants.map((pp) => pp.user),
+        participants: c.participants.map((pp) => mapParticipantUser(pp.user)),
         lastMessage: lastMsg
           ? { id: lastMsg.id, text: lastMsg.text, type: lastMsg.type, senderId: lastMsg.senderId, senderName: lastMsg.sender.name, createdAt: lastMsg.createdAt }
           : null,
@@ -80,13 +108,14 @@ router.post('/', requireAuth, async (req, res, next) => {
         },
         include: {
           participants: {
-            include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true } } },
+            include: { user: PARTICIPANT_USER_SELECT },
           },
           messages: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
       })
 
       if (existing) {
+        if (existing.participants) existing.participants = existing.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
         return res.json({ conversation: existing, created: false })
       }
 
@@ -107,7 +136,7 @@ router.post('/', requireAuth, async (req, res, next) => {
           },
           include: {
             participants: {
-              include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true } } },
+              include: { user: PARTICIPANT_USER_SELECT },
             },
             messages: true,
           },
@@ -124,7 +153,7 @@ router.post('/', requireAuth, async (req, res, next) => {
               ],
             },
             include: {
-              participants: { include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true } } } },
+              participants: { include: { user: PARTICIPANT_USER_SELECT } },
               messages: { orderBy: { createdAt: 'desc' }, take: 1 },
             },
           })
@@ -151,7 +180,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         },
         include: {
           participants: {
-            include: { user: { select: { id: true, name: true, email: true, type: true, publicId: true, avatar: true, onboardingData: true } } },
+            include: { user: PARTICIPANT_USER_SELECT },
           },
           messages: true,
         },

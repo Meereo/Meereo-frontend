@@ -350,18 +350,18 @@ export function MeereoProvider({ children }) {
           }).catch(() => {})
           return prev
         }
+        // Only increment unread and notify when the message is from someone else
+        const isOwnMessage = lastMessage?.senderId && prev.user?.id && lastMessage.senderId === prev.user.id
         const next = {
           ...prev,
           conversations: convs.map(c =>
             c.id === conversationId
-              ? { ...c, lastMessage, updatedAt: lastMessage?.createdAt || c.updatedAt, unread: (c.unread || 0) + 1 }
+              ? { ...c, lastMessage, updatedAt: lastMessage?.createdAt || c.updatedAt, unread: isOwnMessage ? (c.unread || 0) : (c.unread || 0) + 1 }
               : c
           ),
-          // Also add a bell notification so the user is alerted
-          notifications: [
-            { id: 'msg_' + (lastMessage?.id || Date.now()), text: 'Nouveau message de ' + (lastMessage?.senderName || 'quelqu\'un'), type: 'message', read: false, createdAt: new Date().toISOString(), page: 'messages' },
-            ...(prev.notifications || []),
-          ],
+          // Do NOT add a local notification here — the server emits notification:new with the correct
+          // sender name in the `msg` field. Adding one here would deduplicate (same id: 'msg_<id>')
+          // and block the server notification, causing the panel to show blank text.
         }
         saveToStorage(next)
         return next

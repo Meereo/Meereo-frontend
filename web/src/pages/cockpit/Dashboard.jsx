@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin } from 'lucide-react'
+import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin, Users } from 'lucide-react'
 // RECENT_ACTIVITY mock removed — store.activities is source of truth
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -59,7 +59,7 @@ const translateAction = (action) => {
   return action.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())
 }
 
-export default function Dashboard({ onNavigate, openModal }) {
+export default function Dashboard({ onNavigate, openModal, openProDir }) {
   const { formatShort } = useDevise()
   const { store } = useMeereo()
   const { badgeCounts } = useMergedData()
@@ -131,7 +131,7 @@ export default function Dashboard({ onNavigate, openModal }) {
             <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 14 }}>Commencer</div>
             <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.5px', marginBottom: 8, lineHeight: 1.2 }}>Créez votre premier projet</div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,.45)', lineHeight: 1.6, marginBottom: 28, maxWidth: 400 }}>Pilotez votre chantier, coordonnez vos intervenants et suivez chaque étape depuis un seul espace.</div>
-            <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }} onClick={() => openModal ? openModal('newProjet') : onNavigate('projets')}>+ Créer un projet</button>
+            <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }} onClick={() => onNavigate('projets')}>+ Créer un projet</button>
           </div>
         </div>
 
@@ -159,11 +159,12 @@ export default function Dashboard({ onNavigate, openModal }) {
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Explorer</div>
           <div className="rg-3" style={{ gap: 10 }}>
             {[
+              { icon: <Users size={16} />, label: 'Annuaire des professionnels', desc: 'Trouver et contacter des structures', page: null },
               { icon: <Radio size={16} />, label: 'Bourse des AO', desc: 'Consulter les opportunités', page: 'bourse' },
               { icon: <Package size={16} />, label: 'Marketplace', desc: 'Parcourir les produits', page: 'marketplace' },
               { icon: <Settings size={16} />, label: 'Paramètres', desc: 'Configurer votre espace', page: 'parametres' },
             ].map(btn => (
-              <div key={btn.page} onClick={() => onNavigate(btn.page)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .15s' }}>
+              <div key={btn.page || btn.label} onClick={() => btn.page ? onNavigate(btn.page) : openProDir?.()} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .15s' }}>
                 <div style={{ fontSize: 18, flexShrink: 0 }}>{btn.icon}</div>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{btn.label}</div>
@@ -196,6 +197,15 @@ export default function Dashboard({ onNavigate, openModal }) {
       </div>
 
       {/* Actions urgentes — seule zone d'alertes, pas de doublons */}
+      {/* Accès annuaire */}
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={() => openProDir?.()} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10, cursor: 'pointer', width: '100%', transition: 'all .12s' }}>
+          <Users size={14} style={{ flexShrink: 0, color: 'var(--t3)' }} />
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', flex: 1, textAlign: 'left' }}>Annuaire des professionnels</span>
+          <span style={{ fontSize: 11, color: 'var(--t4)' }}>Trouver une structure →</span>
+        </button>
+      </div>
+
       {urgentItems.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           {urgentItems.map((item, i) => (

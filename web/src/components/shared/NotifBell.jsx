@@ -5,7 +5,11 @@ export default function NotifBell() {
   const userType = store.user?.type
   const notifUnread = store.notifications.filter(n => !n.read && (!n.role || n.role === userType)).length
   const msgUnread = (store.conversations || []).reduce((s, c) => s + (c.unread || 0), 0)
-  const unread = notifUnread + msgUnread
+  // For clients: pending offers act as unread if no server notification was pushed for them
+  const pendingOffers = userType === 'client'
+    ? (store.offers || []).filter(o => o.statut === 'pending' || o.statut === 'en_attente' || o.statut === 'En attente').length
+    : 0
+  const unread = notifUnread + msgUnread + pendingOffers
 
   return (
     <button
