@@ -122,8 +122,8 @@ router.get('/:publicId', async (req, res, next) => {
       effectif:      od.effectif      || pro.effectif      || null,
       portfolioFiles: od.portfolio    || pro.portfolioFiles || [],
       cockpitTeam:   od.cockpitTeam   || pro.cockpitTeam  || [],
-      coverUrl:      od.bannerUrl     || pro.coverUrl      || null,
-      bannerUrl:     od.bannerUrl     || null,
+      coverUrl:      od.bannerUrl     || od.coverUrl || pro.coverUrl      || null,
+      bannerUrl:     od.bannerUrl     || od.coverUrl || pro.coverUrl || null,
       bannerPosition: od.bannerPosition || 50,
       zones:         od.zones         || [],
     }

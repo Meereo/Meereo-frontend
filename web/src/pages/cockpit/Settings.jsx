@@ -82,6 +82,21 @@ export default function Settings({ showToast }) {
   useEffect(() => { if (ob.logoFileUrl && !pLogoUrl) setPLogoUrl(ob.logoFileUrl) }, [ob.logoFileUrl]) // eslint-disable-line react-hooks/exhaustive-deps
   const [pSecteurs, setPSecteurs] = useState(ob.secteurs || [])
   const [pServices, setPServices] = useState(ob.services || [])
+  // Sync ALL profil fields once when onboardingData first loads (hydration completes after mount)
+  useEffect(() => {
+    const od = store.onboardingData
+    if (!od || Object.keys(od).length === 0) return
+    setPEntreprise(p => p || od.entreprise || store.user?.company || store.user?.name || '')
+    setPRccm(p => p || od.rccm || '')
+    setPEmail(p => p || od.email || od.emailPro || store.user?.email || '')
+    setPTel(p => p || od.tel || od.telPro || store.user?.phone || '')
+    setPVille(p => (!p || p === 'Abidjan') ? (od.ville || 'Abidjan') : p)
+    setPBio(p => p || od.bio || '')
+    setPSlogan(p => p || od.slogan || '')
+    setPLogoUrl(p => p || od.logoFileUrl || '')
+    setPSecteurs(p => p.length > 0 ? p : (od.secteurs || []))
+    setPServices(p => p.length > 0 ? p : (od.services || []))
+  }, [store.onboardingData]) // eslint-disable-line react-hooks/exhaustive-deps
   const [newSecteur, setNewSecteur] = useState('')
   const [newService, setNewService] = useState('')
   const [pSaved, setPSaved] = useState(false)
@@ -163,7 +178,15 @@ export default function Settings({ showToast }) {
               user: prev.user ? { ...prev.user, name: pEntreprise || prev.user.name, email: pEmail || prev.user.email, phone: pTel || prev.user.phone } : prev.user,
             }))
             // Persister côté serveur — onboardingData (profil étendu) + user (champs de base)
-            api.usersApi.updateOnboardingData(patch).catch(() => {})
+            // Après la sauvegarde, mettre à jour le store avec la réponse serveur
+            // (le sanitizer backend ignore les chaînes vides/tableaux vides → restaure les bonnes valeurs)
+            api.usersApi.updateOnboardingData(patch)
+              .then(saved => {
+                if (saved && typeof saved === 'object' && Object.keys(saved).length > 0) {
+                  updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), ...saved } }))
+                }
+              })
+              .catch(() => {})
             if (pEmail || pTel || pEntreprise) {
               api.usersApi.updateMe({ name: pEntreprise || undefined, email: pEmail || undefined, phone: pTel || undefined, ville: pVille || undefined }).catch(() => {})
             }

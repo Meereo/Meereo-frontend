@@ -299,6 +299,9 @@ router.get('/me/onboarding', requireAuth, async (req, res) => {
       if (Array.isArray(v) && v.length === 0) continue
       merged[k] = v
     }
+    // Normaliser : l'onboarding sauvegarde la bannière sous 'coverUrl',
+    // le profil la lit sous 'bannerUrl'. Assurer la cohérence des deux clés.
+    if (!merged.bannerUrl && merged.coverUrl) merged.bannerUrl = merged.coverUrl
 
     res.json(merged)
   } catch (e) {

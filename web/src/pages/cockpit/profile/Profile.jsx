@@ -93,8 +93,8 @@ export default function Profile() {
   const proEmail = ob.email || ob.emailPro || store.user?.email || ''
   const proTel = ob.tel || ob.telPro || store.user?.phone || ''
 
-  // Banner
-  const bannerUrl = ob.bannerUrl || null
+  // Banner — onboarding saves as 'coverUrl', Profile uploads save as 'bannerUrl' → read both
+  const bannerUrl = ob.bannerUrl || ob.coverUrl || null
   const [bannerPos, setBannerPos] = useState(ob.bannerPosition || 50)
   // Sync bannerPos when ob loads asynchronously (hydration completes after mount)
   useEffect(() => { if (ob.bannerPosition !== undefined) setBannerPos(ob.bannerPosition) }, [ob.bannerPosition])

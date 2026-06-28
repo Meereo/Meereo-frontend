@@ -648,6 +648,9 @@ export function MeereoProvider({ children }) {
       // Temporarily activate session to persist full onboarding data to DB
       setInMemoryToken(res.token)
       if (obData && Object.keys(obData).length > 0) {
+        // Normaliser la bannière : l'onboarding la stocke sous 'coverUrl',
+        // mais Profile.jsx et le proMap backend l'attendent sous 'bannerUrl'
+        if (obData.coverUrl && !obData.bannerUrl) obData.bannerUrl = obData.coverUrl
         await api.usersApi.updateOnboardingData(obData).catch(() => {})
       }
       setInMemoryToken(null)
