@@ -113,34 +113,24 @@ export default function Settings({ showToast }) {
   const [editMember, setEditMember] = useState(null)
 
   const inviteMember = () => {
-    if (!inviteEmail.trim()) return
+    if (!inviteNom.trim()) return
     const newMember = {
       id: 'tm_' + Date.now(),
-      nom: inviteNom || (inviteEmail || '').split('@')[0] || 'Membre',
-      name: inviteNom || (inviteEmail || '').split('@')[0] || 'Membre',
+      nom: inviteNom,
+      name: inviteNom,
       email: inviteEmail,
       role: inviteRole,
       poste: invitePoste || 'Collaborateur',
       jobTitle: invitePoste || 'Collaborateur',
       photo: invitePhoto || '',
       photoUrl: invitePhoto || '',
-      statut: 'invite',
+      statut: 'actif',
       online: false,
     }
     setTeam(prev => [...prev, newMember])
-    // Creer une conversation dans le store
-    updateStore(prev => ({
-      ...prev,
-      conversations: [...(prev.conversations || []), {
-        id: 'conv_tm_' + Date.now(), nom: newMember.nom, type: 'equipe', avatar: newMember.nom ? newMember.nom[0].toUpperCase() : '?', color: '#7C3AED',
-        isGroup: false, participants: [newMember.nom],
-        dernier: 'Invitation envoyée', time: 'Maintenant', unread: 0,
-        msgs: [{ side: 'out', text: 'Bienvenue dans l\'équipe ! Vous avez été invité à rejoindre notre espace MEEREO.', time: 'Maintenant' }]
-      }]
-    }))
     setInviteModal(false)
     setInviteEmail(''); setInviteNom(''); setInvitePoste(''); setInviteRole('collaborateur'); setInvitePhoto(null)
-    showToast && showToast('Invitation envoyée à ' + inviteEmail)
+    showToast && showToast(inviteNom + ' ajouté à l\'équipe')
   }
 
   const removeMember = (id) => {
@@ -457,17 +447,17 @@ export default function Settings({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInviteModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Inviter un collaborateur</div>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Ajouter un membre</div>
               <button onClick={() => setInviteModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ padding: '12px 14px', background: 'var(--s2)', borderRadius: 10, fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
-                Le membre recevra un email d'invitation pour rejoindre votre espace MEEREO. Il aura acces au cockpit et pourra communiquer avec l'equipe.
+                Ajoutez un collaborateur directement à votre équipe. Il apparaîtra sur votre profil public et dans la liste de l'équipe.
               </div>
-              <div><label className="form-label">Email *</label><input className="form-input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="collaborateur@entreprise.com" autoFocus /></div>
+              <div><label className="form-label">Nom complet *</label><input className="form-input" value={inviteNom} onChange={e => setInviteNom(e.target.value)} placeholder="Prénom Nom" autoFocus /></div>
               <div className="modal-row">
-                <div><label className="form-label">Nom complet</label><input className="form-input" value={inviteNom} onChange={e => setInviteNom(e.target.value)} placeholder="Prenom Nom" /></div>
-                <div><label className="form-label">Poste</label><input className="form-input" value={invitePoste} onChange={e => setInvitePoste(e.target.value)} placeholder="Architecte, Ingenieur..." /></div>
+                <div><label className="form-label">Poste</label><input className="form-input" value={invitePoste} onChange={e => setInvitePoste(e.target.value)} placeholder="Architecte, Ingénieur..." /></div>
+                <div><label className="form-label">Email</label><input className="form-input" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="email@entreprise.com" /></div>
               </div>
               <div>
                 <label className="form-label">Photo</label>
@@ -489,7 +479,7 @@ export default function Settings({ showToast }) {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setInviteModal(false)}>Annuler</button>
-              <button className="btn btn-primary btn-sm" disabled={!inviteEmail.trim()} onClick={inviteMember}>Envoyer l'invitation</button>
+              <button className="btn btn-primary btn-sm" disabled={!inviteNom.trim()} onClick={inviteMember}>Ajouter au profil</button>
             </div>
           </div>
         </div>
