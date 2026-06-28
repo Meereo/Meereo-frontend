@@ -105,17 +105,24 @@ function attachSocketIO(httpServer, allowedOrigins) {
           where: { conversationId, userId: { not: userId } },
           select: { userId: true },
         })
+        const lastMsgPayload = {
+          id: message.id,
+          text: message.text,
+          type: message.type,
+          senderId: message.senderId,
+          senderName: message.sender.name,
+          createdAt: message.createdAt,
+        }
+        const notifText = message.type === 'image' ? '📷 Photo' : message.type === 'file' ? '📎 Fichier' : message.text.length > 60 ? message.text.slice(0, 60) + '…' : message.text
         participants.forEach(({ userId: uid }) => {
-          io.to(`user:${uid}`).emit('conversation:updated', {
+          io.to(`user:${uid}`).emit('conversation:updated', { conversationId, lastMessage: lastMsgPayload })
+          // Push notification en temps réel
+          io.to(`user:${uid}`).emit('notification:new', {
+            id: 'msg_' + message.id,
+            msg: message.sender.name + ' : ' + notifText,
+            type: 'blue',
             conversationId,
-            lastMessage: {
-              id: message.id,
-              text: message.text,
-              type: message.type,
-              senderId: message.senderId,
-              senderName: message.sender.name,
-              createdAt: message.createdAt,
-            },
+            link: '/messages',
           })
         })
 

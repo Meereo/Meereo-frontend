@@ -5,10 +5,18 @@ import { getEntrepriseAvatar } from '../../data/avatars'
 import { CLIENT_METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
 
-function Avatar({ nom, size = 44 }) {
+function Avatar({ nom, logoUrl, size = 44 }) {
   const av = getEntrepriseAvatar(nom)
   const sz = size
-  const initials = nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const initials = nom ? nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?'
+  // Prefer explicit logoUrl, then matched avatar, then initials
+  if (logoUrl) {
+    return (
+      <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+        <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    )
+  }
   return (
     <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
       {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || initials)}
@@ -46,16 +54,19 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
 
   if (!open) return null
 
-  // Normalise: API returns { name, company, metier, ville, verified, avatar }
-  // Display name = company if set, else name
+  // Normalise: API returns { publicId, nom, metier, ville, verified, avatar, logoUrl, logoColor, slogan }
   const allPros = pros.map(u => ({
-    id: u.id,
-    nom: u.company || u.name || '',
-    metier: u.metier || '',
-    ville: u.ville || '',
-    note: 0,
-    verified: u.verified || false,
-    avatar: u.avatar || null,
+    id:        u.id,
+    publicId:  u.publicId || null,
+    nom:       u.nom || u.company || u.name || '',
+    metier:    u.metier || '',
+    ville:     u.ville || '',
+    note:      0,
+    verified:  u.verified || false,
+    avatar:    u.avatar || null,
+    logoUrl:   u.logoUrl || null,
+    logoColor: u.logoColor || null,
+    slogan:    u.slogan || null,
   }))
 
   const filtered = allPros.filter(p => {
@@ -107,22 +118,22 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
           ) : (
             <div className="rg-2" style={{ gap: 10 }}>
               {filtered.map(p => {
-                const mc = p.color || '#6B7280'
                 return (
                   <div key={p.id} onClick={() => { onClose(); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Avatar nom={p.nom} size={44} />
+                      <Avatar nom={p.nom} logoUrl={p.logoUrl} size={44} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom || 'Professionnel'}</span>
                           {p.verified && <span style={{ fontWeight: 700, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, flexShrink: 0, display: 'inline-flex' }}><Check size={7}/></span>}
                         </div>
-                        <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{p.ville || 'Côte d\'Ivoire'}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{p.ville || "Côte d'Ivoire"}</div>
                       </div>
                     </div>
                     <div>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: 4 }}>{p.metier}</span>
-                      {p.specialite && <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>{p.specialite}</div>}
+                      {(() => { const mc = p.logoColor || '#6B7280'; return <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: p.slogan ? 4 : 0 }}>{p.metier}</span> })()
+                      }
+                      {p.slogan && <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>{p.slogan}</div>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

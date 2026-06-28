@@ -79,7 +79,12 @@ export default function Clients({ openModal, showToast }) {
     for (const m of myMarkets) {
       // Use backend-populated client relation first; never use clientCompany (was always current user's company)
       const clientNom = m.client?.company || m.client?.name || m.clientName || null
+      // Nom du contact si le nom principal est la société (company != name)
+      const clientContactName = (m.client?.company && m.client?.name && m.client.company !== m.client.name)
+        ? m.client.name : ''
       const clientEmail = m.client?.email || m.clientEmail || ''
+      // Téléphone : priorité à onboardingData, puis champ phone de l'utilisateur
+      const clientTel = m.client?.onboardingData?.phone || m.client?.phone || m.clientTel || ''
       if (!clientNom) continue // skip if no client info available
       const alreadyExists = existingContacts.some(c =>
         (clientEmail && c.email && c.email === clientEmail) ||
@@ -89,8 +94,9 @@ export default function Clients({ openModal, showToast }) {
         newOnes.push({
           type: 'client',
           nom: clientNom,
+          contact: clientContactName,
           email: clientEmail,
-          tel: m.clientTel || '',
+          tel: clientTel,
           statut: 'actif',
           note: '',
         })
@@ -163,12 +169,22 @@ export default function Clients({ openModal, showToast }) {
           </div>
         )}
         {filtered.map(c => {
-          const initials = (c.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+          const initials = (c.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
           const projCount = (store.projects || []).filter(p => p.client === c.nom || p.clientId === c.id).length
+          // Récupérer la photo réelle via les marchés (le marché contient maintenant avatar+onboardingData)
+          const matchingMarket = (store.markets || []).find(m =>
+            c.email ? (m.client?.email === c.email) : (m.client?.company === c.nom || m.client?.name === c.nom)
+          )
+          const clientPhoto = matchingMarket?.client?.onboardingData?.photoUrl ||
+                              matchingMarket?.client?.onboardingData?.logoFileUrl ||
+                              matchingMarket?.client?.avatar || null
           return (
             <div key={c.id} className="card" style={{ overflow: 'hidden' }}>
               <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--t2)' }}>{initials}</div>
+                {clientPhoto
+                  ? <img src={clientPhoto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                  : <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                }
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="card-title" style={{ fontSize: 13 }}>{c.nom}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.type}</div>

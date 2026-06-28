@@ -30,8 +30,8 @@ router.get('/', requireAuth, async (req, res, next) => {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        client: { select: { id: true, name: true, company: true, email: true } },
-        supplier: { select: { id: true, name: true, company: true } },
+        client: { select: { id: true, name: true, company: true, email: true, phone: true, avatar: true, onboardingData: true } },
+        supplier: { select: { id: true, name: true, company: true, phone: true, avatar: true, onboardingData: true } },
       },
     })
     res.json(markets)

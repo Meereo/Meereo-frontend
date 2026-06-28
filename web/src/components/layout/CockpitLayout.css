@@ -7,9 +7,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   min-width: 0;
   background: #ffffff;
+  /* overflow: hidden removed — it clips position:fixed modal overlays to .main bounds */
 }
 .page-wrap {
   flex: 1;

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import './Modal.css'
 
 export default function Modal({ isOpen, onClose, title, children, footer, wide }) {
@@ -11,7 +12,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, wide }
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className={`modal-box ${wide ? 'modal-wide' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
@@ -24,5 +25,5 @@ export default function Modal({ isOpen, onClose, title, children, footer, wide }
         {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>
-  )
+  , document.body)
 }

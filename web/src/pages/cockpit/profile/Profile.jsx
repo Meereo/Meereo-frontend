@@ -17,17 +17,19 @@ const DEFAULT_SERVICES = [
   'Réhabilitation', 'Architecture intérieure', 'Conception BIM', 'Bureau de contrôle',
 ]
 
-// Dynamic projects from cockpit data
-const getProjects = (projects) => (projects || []).map((p, i) => ({
-  num: String(i + 1).padStart(2, '0'),
-  name: p.nom,
-  loc: (p.adresse || 'Abidjan') + ' à Client : ' + p.client,
-  budget: p.budget,
-  status: p.avancement >= 100 ? 'Livre' : p.avancement > 0 ? 'En cours' : 'A lancer',
-  cls: p.avancement >= 100 ? 'done' : p.avancement > 0 ? 'active' : 'delivery',
-  img: p.img,
-  progress: p.avancement || 0,
-}))
+// Dynamic projects from cockpit data — exclude archived/stopped
+const getProjects = (projects) => (projects || [])
+  .filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted')
+  .map((p, i) => ({
+    num: String(i + 1).padStart(2, '0'),
+    name: p.nom,
+    loc: (p.adresse || 'Abidjan') + ' à Client : ' + p.client,
+    budget: p.budget,
+    status: p.avancement >= 100 ? 'Livré' : p.avancement > 0 ? 'En cours' : 'À lancer',
+    cls: p.avancement >= 100 ? 'done' : p.avancement > 0 ? 'active' : 'delivery',
+    img: p.img,
+    progress: p.avancement || 0,
+  }))
 
 
 export default function Profile() {
@@ -143,11 +145,15 @@ export default function Profile() {
     ? (store.projects || []).filter(p => !p.clientId || p.clientId === store.user?.id)
     : (store.projects || []).filter(p => p.avancement < 100)
 
-  // Données dynamiques depuis store (portfolio, equipe)
-  const displayPortfolio = store.onboardingData?.portfolio || []
-  // Team: UNIQUE source = store.onboardingData.cockpitTeam
-  // Même source que le cockpit Parametres > Equipe
-  const cockpitTeam = store.onboardingData?.cockpitTeam || null
+  // Données dynamiques — ob pointe sur store.onboardingData pour l'owner, pubData.profile pour le visiteur
+  // 'portfolio' = clé store/GET /me/onboarding ; 'portfolioFiles' = clé GET /api/pro/:uuid
+  const rawPortfolio = ob.portfolio || ob.portfolioFiles || []
+  // Normalise les items : peut être {img,cap,feat} OU une URL string brute (fallback proProfile)
+  const displayPortfolio = rawPortfolio.map(p =>
+    typeof p === 'string' ? { img: p, cap: 'Réalisation', feat: false } : p
+  )
+  // Team: ob.cockpitTeam (owner → store.onboardingData, visiteur → pubData.profile)
+  const cockpitTeam = ob.cockpitTeam || null
   // Normalize: cockpit uses 'nom'/'poste', display uses 'name'/'role'
   const normalizeTeamMember = (t) => ({
     ...t,

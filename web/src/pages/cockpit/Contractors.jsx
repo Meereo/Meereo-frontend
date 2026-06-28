@@ -41,7 +41,7 @@ function ContractorModal({ isOpen, onClose, showToast }) {
 }
 
 export default function Contractors({ showToast, openModal }) {
-  const { updateStore } = useMeereo()
+  const { store, updateStore } = useMeereo()
   const { intervenants: allIntervenants } = useMergedData()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -98,13 +98,19 @@ export default function Contractors({ showToast, openModal }) {
           </div>
         )}
         {filtered.map(m => {
-          const initials = (m.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+          const initials = (m.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+          // Cross-référence avec les marchés pour récupérer le logo/avatar du prestataire inscrit
+          const matchingSupplier = !m.photo ? (store.markets || []).find(mk =>
+            m.email ? (mk.supplier?.email === m.email) : (mk.supplier?.company === m.nom || mk.supplier?.name === m.nom)
+          )?.supplier : null
+          const displayPhoto = m.photo || matchingSupplier?.onboardingData?.logoFileUrl ||
+                               matchingSupplier?.onboardingData?.photoUrl || matchingSupplier?.avatar || null
           return (
             <div key={m.id} className="card" style={{ padding: 20 }}>
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-                {m.photo ? (
-                  <img src={m.photo} alt="" style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                {displayPhoto ? (
+                  <img src={displayPhoto} alt="" style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 ) : (
                   <div style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                 )}

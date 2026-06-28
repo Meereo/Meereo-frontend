@@ -114,9 +114,12 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
             return (
               <div key={idx} className="card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: f.color || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{initials}</span>
-                  </div>
+                  {f.logoUrl
+                    ? <img src={f.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                    : <div style={{ width: 44, height: 44, borderRadius: 10, background: f.color || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{initials}</span>
+                      </div>
+                  }
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
                       <span style={{ fontSize: 13, fontWeight: 700 }}>{f.nom}</span>

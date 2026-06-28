@@ -80,7 +80,7 @@ const computeSmartProgress = (project) => {
 
 export default function Client() {
   const navigate = useNavigate()
-  const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation } = useMeereo()
+  const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation, stopProject } = useMeereo()
   const { conversations: mergedConversations, documents: mergedDocuments } = useMergedData()
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
   const [page, setPage] = useState('home')
@@ -217,9 +217,15 @@ export default function Client() {
         return { ...p, nom: p.nom || p.name, etapes: p.etapes || [], _hasMarkets: hasMarkets, progress: computeSmartProgress({ ...p, _hasMarkets: hasMarkets }) }
       })
   }, [store.projects, store.user, store.aos, store.markets, ob.email])
+
+  // Séparer projets actifs vs arrêtés/archivés
+  const activeClientProjects = useMemo(() => clientProjects.filter(p => p.status !== 'stopped' && p.status !== 'archived'), [clientProjects])
+  const stoppedClientProjects = useMemo(() => clientProjects.filter(p => p.status === 'stopped' || p.status === 'archived'), [clientProjects])
+
+  const [stopConfirm, setStopConfirm] = useState(false)
   const [selProjId, setSelProjId] = useState(null)
-  // Selected project — default to oldest still in progress
-  const proj = selProjId ? clientProjects.find(p => p.id === selProjId) || clientProjects[0] : clientProjects.find(p => p.progress < 100) || clientProjects[0]
+  // Selected project — default to oldest still in progress (only among active projects)
+  const proj = selProjId ? clientProjects.find(p => p.id === selProjId) || activeClientProjects[0] : activeClientProjects.find(p => p.progress < 100) || activeClientProjects[0]
   const projProgress = computeSmartProgress(proj)
   // Budget: project budget, fallback to market amount if no project budget
   const marketForProj = (store.markets || []).find(m => m.projectId === proj?.id)
@@ -279,16 +285,28 @@ export default function Client() {
           <div><div style={{ fontSize: 11, fontWeight: 300, letterSpacing: 3 }}>MEEREO</div><div style={{ fontSize: 8, color: 'var(--t3)', letterSpacing: '.07em', textTransform: 'uppercase', marginTop: 1 }}>Espace Client</div></div>
         </div>
         <div className="client-sb-proj">
-          {clientProjects.length > 1 && (
+          {activeClientProjects.length > 1 && (
             <select value={proj?.id || ''} onChange={e => setSelProjId(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: '5px 8px', border: '1px solid var(--border-card)', borderRadius: 6, fontSize: 10, fontFamily: 'var(--f)', background: 'var(--surface-1)', color: 'var(--tx)', cursor: 'pointer', outline: 'none' }}>
-              {clientProjects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+              {activeClientProjects.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
             </select>
           )}
-          {clientProjects.length <= 1 && <div style={{ fontSize: 8, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--t4)', marginBottom: 4 }}>Projet suivi</div>}
-          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{proj?.nom}</div>
-          <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{[proj?.address || proj?.localisation || proj?.adresse, proj?.budget || (projBudget > 0 ? formatShort(projBudget) : null)].filter(Boolean).join(' · ') || ' '}</div>
-          <div className="prog-track" style={{ height: 3 }}><div className="prog-fill" style={{ width: projProgress + '%', background: '#F59E0B' }} /></div>
-          <div style={{ fontSize: 9, color: 'var(--t4)', marginTop: 4 }}>{projProgress}%</div>
+          {activeClientProjects.length <= 1 && <div style={{ fontSize: 8, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--t4)', marginBottom: 4 }}>Projet suivi</div>}
+          {proj?.status === 'stopped' || proj?.status === 'archived' ? (
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#FF9500', marginBottom: 4 }}>Projet arrêté</div>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{proj?.nom}</div>
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{[proj?.address || proj?.localisation || proj?.adresse, proj?.budget || (projBudget > 0 ? formatShort(projBudget) : null)].filter(Boolean).join(' · ') || ' '}</div>
+              <div className="prog-track" style={{ height: 3 }}><div className="prog-fill" style={{ width: projProgress + '%', background: '#F59E0B' }} /></div>
+              <div style={{ fontSize: 9, color: 'var(--t4)', marginTop: 4 }}>{projProgress}%</div>
+            </>
+          )}
+          {stoppedClientProjects.length > 0 && (
+            <button onClick={() => setPage('projets')} style={{ marginTop: 10, width: '100%', display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px', borderRadius: 6, background: 'rgba(255,149,0,.08)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 10, fontWeight: 600, color: '#FF9500' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
+              {stoppedClientProjects.length} projet{stoppedClientProjects.length > 1 ? 's' : ''} arrêté{stoppedClientProjects.length > 1 ? 's' : ''}
+            </button>
+          )}
         </div>
         <nav className="client-sb-nav">
           {groups.map(g => (
@@ -343,11 +361,46 @@ export default function Client() {
           </div>
         </div>
         <div className="client-scroll">
+          {/* Bannière projet arrêté */}
+          {proj && (proj.status === 'stopped' || proj.status === 'archived') && (
+            <div style={{ margin: '0 0 0 0', padding: '12px 24px', background: 'rgba(255,149,0,.08)', borderBottom: '1px solid rgba(255,149,0,.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FF9500' }}>
+                  {proj.status === 'stopped' ? 'Projet arrêté' : 'Projet archivé'}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--t3)', marginLeft: 8 }}>
+                  {proj.stoppedAt || proj.archivedAt ? 'Le ' + new Date(proj.stoppedAt || proj.archivedAt).toLocaleDateString('fr-FR') : ''}
+                  {proj.status === 'stopped' ? ' — Ce projet a été arrêté. Consultez les archives pour accéder aux données.' : ' — Ce projet est archivé.'}
+                </span>
+              </div>
+              <button onClick={() => setPage('projets')} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 7, background: 'rgba(255,149,0,.12)', border: '1px solid rgba(255,149,0,.3)', color: '#FF9500', cursor: 'pointer', fontFamily: 'var(--f)', flexShrink: 0 }}>Voir mes projets</button>
+            </div>
+          )}
+          {/* Modal arrêt confirmation */}
+          {stopConfirm && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setStopConfirm(false)}>
+              <div style={{ background: 'var(--surface-1)', borderRadius: 16, width: 420, boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding: '24px 24px 16px', textAlign: 'center' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,149,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
+                  </div>
+                  <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Arrêter ce projet ?</div>
+                  <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55 }}>Le projet sera marqué comme <strong>arrêté</strong> pour vous et votre prestataire. Les données restent accessibles dans les archives.</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 8 }}>« {proj?.nom} »</div>
+                </div>
+                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
+                  <button onClick={() => setStopConfirm(false)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--t3)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Annuler</button>
+                  <button onClick={() => { stopProject(proj.id); setStopConfirm(false); showToast('Projet arrêté') }} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: '#FF9500', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Arrêter le projet</button>
+                </div>
+              </div>
+            </div>
+          )}
           <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40vh', opacity: .4 }}><div style={{ width: 24, height: 24, border: '2.5px solid var(--border)', borderTopColor: 'var(--tx)', borderRadius: '50%', animation: 'spin .6s linear infinite' }} /></div>}>
           {/* HOME */}
           {page === 'home' && <Home ctx={{ proj, projProgress, projBudget, projMarkets, projDocs, totalEngage, totalPendingActions, pendingPaymentReqs, displayedAOs, nonLus, setPage, respondProjectInvitation, ob, store, clientName, fmtDevise, formatShort, getMemberPhoto, setShowProDirectory }} />}
           {/* AVANCEMENT */}
-          {page === 'avancement' && <Progress ctx={{ proj, clientProjects, projProgress, setSelProjId, setPage }} />}
+          {page === 'avancement' && <Progress ctx={{ proj, clientProjects: activeClientProjects, stoppedProjects: stoppedClientProjects, projProgress, setSelProjId, setPage, onStopProject: () => setStopConfirm(true) }} />}
           {/* BUDGET */}
           {page === 'budget' && <Budget showToast={showToast} onNavigate={p => setPage(p)} />}
 

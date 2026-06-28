@@ -1029,16 +1029,44 @@ export function MeereoProvider({ children }) {
   }, [store.user, updateStore, log, addNotif, showToast, addProjectMember])
 
   const deleteProject = useCallback((projectId) => {
+    // Soft-delete : le projet passe en 'stopped' — toujours visible pour le client
+    updateStore(prev => ({
+      ...prev,
+      projects: (prev.projects || []).map(p =>
+        p.id === projectId ? { ...p, status: 'stopped', stoppedAt: new Date().toISOString() } : p
+      ),
+      taskStates: (() => { const ts = { ...(prev.taskStates || {}) }; delete ts[projectId]; return ts })()
+    }))
+    sync(api.projects.update(projectId, { status: 'stopped' }))
+    log('PROJECT_STOPPED', { projectId })
+    addNotif('Projet arrêté', 'orange', null, 'projets')
+    showToast('Projet arrêté', 'orange')
+  }, [updateStore, log, addNotif, showToast])
+
+  const hardDeleteProject = useCallback((projectId) => {
+    // Hard delete : suppression définitive (uniquement depuis les archives)
     updateStore(prev => ({
       ...prev,
       projects: (prev.projects || []).filter(p => p.id !== projectId),
-      // Nettoyage des données liées
-      taskStates: (() => { const ts = { ...(prev.taskStates || {}) }; delete ts[projectId]; return ts })(),
+      taskStates: (() => { const ts = { ...(prev.taskStates || {}) }; Object.keys(ts).forEach(k => { if (k.startsWith(projectId + '_')) delete ts[k] }); return ts })()
     }))
     sync(api.projects.delete(projectId))
     log('PROJECT_DELETED', { projectId })
-    addNotif('Projet supprimé', 'orange', null, 'projets')
-    showToast('Projet supprimé', 'orange')
+    addNotif('Projet supprimé', 'info', null, 'projets')
+    showToast('Projet supprimé')
+  }, [updateStore, log, addNotif, showToast])
+
+  const stopProject = useCallback((projectId) => {
+    updateStore(prev => ({
+      ...prev,
+      projects: (prev.projects || []).map(p =>
+        p.id === projectId ? { ...p, status: 'stopped', stoppedAt: new Date().toISOString() } : p
+      ),
+    }))
+    sync(api.projects.update(projectId, { status: 'stopped' }))
+    log('PROJECT_STOPPED', { projectId })
+    addNotif('Projet arrêté', 'orange', null, 'projets')
+    showToast('Projet arrêté', 'orange')
   }, [updateStore, log, addNotif, showToast])
 
   const archiveProject = useCallback((projectId) => {
@@ -1672,21 +1700,44 @@ export function MeereoProvider({ children }) {
       sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
       if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
       sync(api.events.create({ titre: 'Marché signé — ' + (market?.lot || market?.titre || 'Nouveau marché'), date: new Date().toISOString().slice(0, 10), type: 'milestone', projectId: backendProjectId || market?.projectId, color: '#34C759' }))
-      // Sync auto-conversation to backend — use correct backend format (participantId for 1:1)
+      // Sync auto-conversation to backend — 1:1 si un seul prestataire, groupe si équipe déjà constituée
       const supplierId = market?.supplierId
       const autoConvData = storeRef.current.conversations?.find(c => c.marketId === market?.id)
       if (supplierId) {
         try {
-          const convRes = await api.conversations.create({ participantId: supplierId, title: autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '') })
+          const convTitle = autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '')
+          // Vérifier si d'autres membres du projet doivent être inclus (→ groupe)
+          const extraMembers = (storeRef.current.projectMembers || [])
+            .filter(pm => pm.projectId === (backendProjectId || market?.projectId) && pm.userId !== storeRef.current.user?.id && pm.userId !== supplierId)
+            .map(pm => pm.userId)
+            .filter(Boolean)
+          let convRes
+          if (extraMembers.length > 0) {
+            // Plusieurs intervenants → conversation de groupe
+            convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle })
+          } else {
+            // 1:1 — le backend déduplique si elle existe déjà
+            convRes = await api.conversations.create({ participantId: supplierId, title: convTitle })
+          }
           const backendConv = convRes?.conversation || convRes
-          if (backendConv?.id && autoConvData?.id) {
-            // Replace local conv_ ID with real backend ID so both client and pro can see it
-            updateStore(prev => ({
-              ...prev,
-              conversations: (prev.conversations || []).map(c =>
-                c.id === autoConvData.id ? { ...c, id: backendConv.id } : c
-              ),
-            }))
+          if (backendConv?.id) {
+            updateStore(prev => {
+              // Supprimer le local autoConv et tout doublon de la conversation backend
+              const withoutLocal = (prev.conversations || []).filter(c => c.id !== autoConvData?.id && c.id !== backendConv.id)
+              const shaped = {
+                id: backendConv.id,
+                nom: backendConv.title || autoConvData?.nom || convTitle,
+                isGroup: backendConv.isGroup || extraMembers.length > 0,
+                participants: (backendConv.participants || []).map(p => p.id || p.userId).filter(Boolean),
+                title: backendConv.title || convTitle,
+                marketId: market?.id,
+                projectId: backendProjectId || market?.projectId,
+                dernier: 'Marché signé — la conversation est ouverte.',
+                lastMessage: null,
+                unread: 0,
+              }
+              return { ...prev, conversations: [shaped, ...withoutLocal] }
+            })
           }
           // Re-fetch conversations immediately so the list shows the new conversation
           api.conversations.getAll().then(res => {
@@ -2471,6 +2522,8 @@ export function MeereoProvider({ children }) {
     addMemberToOrg,
     createProject,
     deleteProject,
+    hardDeleteProject,
+    stopProject,
     archiveProject,
     unarchiveProject,
     updateProject,

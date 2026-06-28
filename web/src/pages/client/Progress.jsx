@@ -12,7 +12,7 @@ const PHASE_ICON_MAP = {
 }
 
 export default function Progress({ ctx }) {
-  const { proj, clientProjects, projProgress, setSelProjId, setPage } = ctx
+  const { proj, clientProjects, stoppedProjects, projProgress, setSelProjId, setPage, onStopProject } = ctx
 
   if (!proj) return (
     <div style={{ padding: '60px 24px', textAlign: 'center' }}>
@@ -98,6 +98,32 @@ export default function Progress({ ctx }) {
           </div>
         )
       })}
+      {/* Projets arrêtés / archivés */}
+      {stoppedProjects?.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>Projets arrêtés</div>
+          {stoppedProjects.map(p => (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', marginBottom: 6, background: 'var(--surface-1)', opacity: .7 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,149,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{p.nom}</div>
+                <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 1 }}>{p.status === 'stopped' ? 'Arrêté' : 'Archivé'}{(p.stoppedAt || p.archivedAt) ? ' · ' + new Date(p.stoppedAt || p.archivedAt).toLocaleDateString('fr-FR') : ''}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Action : arrêter le projet actif */}
+      {proj && proj.status !== 'stopped' && proj.status !== 'archived' && onStopProject && (
+        <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          <button onClick={onStopProject} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 9, background: 'rgba(255,149,0,.06)', border: '1px solid rgba(255,149,0,.2)', color: '#FF9500', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
+            Arrêter ce projet
+          </button>
+        </div>
+      )}
     </div>
   )
 }

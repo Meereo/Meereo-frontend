@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { HardHat, Check, Wallet, FileText } from 'lucide-react'
 import { INTERVENANTS_DATA } from '../../data/intervenants'
 import MoneyInput from '../../components/shared/MoneyInput'
@@ -243,7 +244,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
 }
 
 export default function Projects({ onNavigate, openModal, showToast }) {
-  const { store, updateStore, deleteProject, archiveProject, unarchiveProject, updateProject } = useMeereo()
+  const { store, updateStore, deleteProject, hardDeleteProject, archiveProject, unarchiveProject, updateProject } = useMeereo()
   const isClientUser = store.user?.type === 'client'
   const { format: fmtMoney, parseBudget: parseBgt } = useDevise()
   const [showCreateProject, setShowCreateProject] = useState(false)
@@ -289,8 +290,13 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   const enCours = allProjets.filter(p => p.avancement > 0 && p.avancement < 100).length
   const avgAvt = Math.round(allProjets.reduce((s, p) => s + p.avancement, 0) / Math.max(total, 1))
 
-  const archivedProjets = useMemo(() => allProjets.filter(p => p.status === 'archived'), [allProjets])
-  const activeRaw = useMemo(() => getUserActiveProjects(store, userId), [store.projects, userId, store.projectMembers])
+  // Pour les clients : 'stopped' est un concept pro — un projet arrêté par le pro reste visible
+  // côté client dans la liste active. Seul 'archived' est une vraie archive client.
+  const archivedProjets = useMemo(() => allProjets.filter(p => p.status === 'archived' || (!isClientUser && p.status === 'stopped')), [allProjets, isClientUser])
+  const activeRaw = useMemo(() => {
+    const base = getUserProjects(store, userId).filter(p => p.status !== 'deleted' && p.status !== 'archived')
+    return isClientUser ? base : base.filter(p => p.status !== 'stopped')
+  }, [store.projects, userId, store.projectMembers, isClientUser])
   const activeProjets = useMemo(() => activeRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p, store.markets) })), [activeRaw, store.markets])
 
   const filtered = (showArchived ? archivedProjets : activeProjets).filter(p => {
@@ -461,8 +467,8 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {p.img ? (
                 <img src={p.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
               ) : (
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: p.status === 'archived' ? 'var(--s2)' : (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {p.status !== 'archived' ? <AoGear size={16} color={p.color || '#F59E0B'} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--t4)' }} />}
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: (p.status === 'archived' || p.status === 'stopped') ? 'var(--s2)' : (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {(p.status !== 'archived' && p.status !== 'stopped') ? <AoGear size={16} color={p.color || '#F59E0B'} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.status === 'stopped' ? '#FF9500' : 'var(--t4)' }} />}
                 </div>
               )}
               <div className="list-item-body">
@@ -470,7 +476,13 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div className="list-item-sub">{p.client}{p.type ? ' à ' + p.type : ''}</div>
               </div>
               <div className="list-item-right">
-                <span className="status-pill status-active" style={{ fontSize: 10 }}>{PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</span>
+                {p.status === 'stopped' ? (
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: '#FF9500' }}>Arrêté</span>
+                ) : p.status === 'archived' ? (
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>
+                ) : (
+                  <span className="status-pill status-active" style={{ fontSize: 10 }}>{PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</span>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                   <div className="prog-track" style={{ width: 50, height: 3 }}><div className="prog-fill" style={{ width: p.avancement + '%', background: p.color || undefined }} /></div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: p.color || 'var(--tx)' }}>{p.avancement}%</span>
@@ -727,7 +739,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
       </div>}
 
       {/*•• MODAL: Editer Projet •• */}
-      {editModal && (
+      {editModal && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEditModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 620, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             {/* Header */}
@@ -851,7 +863,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <button style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-card)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', color: 'var(--t3)' }} onClick={() => setArchiveConfirm({ id: editModal.id, nom: editModal.nom })}>Archiver</button>
                 <button style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,59,48,.04)', border: '1px solid rgba(255,59,48,.15)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', color: 'var(--err)' }} onClick={() => {
                   const hasData = (store.markets || []).some(m => m.projectId === editModal.id) || (store.documents || []).some(d => d.projectId === editModal.id) || (store.paymentOrders || []).some(o => o.projectId === editModal.id)
-                  setDeleteConfirm({ id: editModal.id, nom: editModal.nom, hasData })
+                  setDeleteConfirm({ id: editModal.id, nom: editModal.nom, hasData, isArchived: showArchived })
                 }}>Supprimer</button>
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
@@ -861,38 +873,41 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* MODAL: Confirmer suppression */}
-      {deleteConfirm && (
+      {deleteConfirm && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setDeleteConfirm(null)}>
           <div style={{ background: '#fff', borderRadius: 16, width: 420, boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '24px 24px 16px', textAlign: 'center' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,59,48,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Supprimer ce projet ?</div>
+              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{deleteConfirm.isArchived ? 'Supprimer définitivement ?' : 'Arrêter ce projet ?'}</div>
               <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>
-                {deleteConfirm.hasData
-                  ? <><strong style={{ color: '#FF3B30' }}>Attention :</strong> Ce projet contient des données (marchés, documents ou paiements). Cette action est dûfinitive.</>
-                  : 'Cette action est dûfinitive. Le projet sera retiré de votre portefeuille.'
-                }
+                {deleteConfirm.isArchived
+                  ? 'Ce projet archivé sera définitivement supprimé. Cette action est irréversible.'
+                  : <>Le projet sera retiré de votre liste active et marqué comme <strong>arrêté</strong>. Votre client verra une indication que le projet a été arrêté. Les données restent accessibles dans les archives.</>}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>« {deleteConfirm.nom} »</div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,.06)', display: 'flex', gap: 10 }}>
               <button onClick={() => setDeleteConfirm(null)} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--t3)', border: '1px solid var(--border)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Annuler</button>
               <button onClick={() => {
-                deleteProject(deleteConfirm.id)
+                if (deleteConfirm.isArchived) {
+                  hardDeleteProject(deleteConfirm.id)
+                } else {
+                  deleteProject(deleteConfirm.id)
+                }
                 setDeleteConfirm(null); setEditModal(null); setSelectedId(null)
-              }} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: '#FF3B30', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Confirmer la suppression</button>
+              }} style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: deleteConfirm.isArchived ? '#FF3B30' : '#FF9500', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>{deleteConfirm.isArchived ? 'Supprimer' : 'Arrêter le projet'}</button>
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* MODAL: Confirmer archivage */}
-      {archiveConfirm && (
+      {archiveConfirm && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setArchiveConfirm(null)}>
           <div style={{ background: '#fff', borderRadius: 16, width: 400, boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '24px 24px 16px', textAlign: 'center' }}>
@@ -912,10 +927,10 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/*•• MODAL: Ajouter un membre •• */}
-      {addMemberModal && (
+      {addMemberModal && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2100, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setAddMemberModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 20px 14px' }}>
@@ -1036,10 +1051,10 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/*•• MODAL: Modifier membre •• */}
-      {editMember && (
+      {editMember && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2200, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setEditMember(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)', padding: 22 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -1065,7 +1080,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
       <ProjetModal isOpen={showCreateProject} onClose={() => setShowCreateProject(false)} showToast={showToast} />
     </div>
   )

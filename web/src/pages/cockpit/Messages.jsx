@@ -245,9 +245,16 @@ export default function Messages({ showToast }) {
 
         const myId = store.user?.id
         const otherParticipants = c.participants.filter(p => p.id !== myId)
+        const firstOther = otherParticipants[0]
         const nom = c.isGroup
           ? (c.title || 'Groupe')
-          : (otherParticipants[0]?.name || 'Contact')
+          : (firstOther?.name || 'Contact')
+        // Photo réelle depuis onboardingData ou avatar du participant
+        const photoUrl = !c.isGroup
+          ? (firstOther?.onboardingData?.photoUrl ||
+             firstOther?.onboardingData?.logoFileUrl ||
+             firstOther?.avatar || null)
+          : null
         const color = c.isGroup ? '#7C3AED' : '#2563EB'
         const lastMsg = c.lastMessage
         const dernier = lastMsg ? (lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : lastMsg.text || '') : ''
@@ -266,12 +273,13 @@ export default function Messages({ showToast }) {
           nom,
           color,
           avatar: nom?.[0]?.toUpperCase() || '?',
+          photoUrl,
           dernier,
           time,
           unread,
           // publicId du contact (pour lien vers profil public)
-          publicId: !c.isGroup ? (otherParticipants[0]?.publicId || null) : null,
-          otherParticipantType: !c.isGroup ? (otherParticipants[0]?.type || null) : null,
+          publicId: !c.isGroup ? (firstOther?.publicId || null) : null,
+          otherParticipantType: !c.isGroup ? (firstOther?.type || null) : null,
           // msgs is served from messagesMap; keep empty here so UI renders from messagesMap
           msgs: messagesMap[c.id] || [],
         }
@@ -341,6 +349,7 @@ export default function Messages({ showToast }) {
           text: m.text,
           type: m.type || 'text',
           fileUrl: m.fileUrl,
+          url: m.fileUrl || null,
           fileName: m.fileName,
           time: new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           senderId: m.senderId,
@@ -374,6 +383,7 @@ export default function Messages({ showToast }) {
         text: msg.text,
         type: msg.type || 'text',
         fileUrl: msg.fileUrl,
+        url: msg.fileUrl || null,
         fileName: msg.fileName,
         time: new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         senderId: msg.senderId,
@@ -634,10 +644,27 @@ export default function Messages({ showToast }) {
         if (String(convId).startsWith('conv_')) {
           updateConv(convId, c => ({ ...c, msgs: [...(c.msgs || []), msg], dernier, time: 'Maintenant' }))
         } else {
-          // Optimistic for backend conv (file text only for now)
+          // Optimistic for backend conv — includes fileUrl so image displays immediately
           const optimistic = { ...msg, id: '_opt_' + Date.now(), senderId: store.user?.id }
           setMessagesMap(prev => ({ ...prev, [convId]: [...(prev[convId] || []), optimistic] }))
-          sendSocketMessage({ conversationId: convId, text: msg.text || dernier, type: msg.type || 'text' }, () => {})
+          sendSocketMessage({
+            conversationId: convId,
+            text: msg.text || dernier,
+            type: msg.type || 'text',
+            fileUrl: msg.url || null,
+            fileName: msg.text || null,
+          }, (ack) => {
+            if (!ack?.error && ack?.message) {
+              setMessagesMap(prev => ({
+                ...prev,
+                [convId]: (prev[convId] || []).map(m =>
+                  m.id === optimistic.id
+                    ? { ...optimistic, id: ack.message.id, _pending: false }
+                    : m
+                ),
+              }))
+            }
+          })
         }
       }
     }
@@ -755,13 +782,18 @@ export default function Messages({ showToast }) {
             )}
             {filtered.map(c => {
               const av = getContactAvatar(c.nom, store.projects || [])
+              // Photo réelle : priorité à photoUrl (depuis backend), puis getContactAvatar (statique)
+              const listPhoto = c.photoUrl || (av?.type === 'img' ? av.value : null)
               return (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: active?.id === c.id ? 'var(--s2)' : undefined, transition: 'background .12s' }}
                 onClick={() => { setActiveId(c.id); if (c.unread) updateConv(c.id, cv => ({ ...cv, unread: 0 })) }}
                 onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ convId: c.id, x: e.clientX, y: e.clientY }) }}
               >
                 <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 700, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar}
+                  {listPhoto
+                    ? <img src={listPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+                    : av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar
+                  }
                   {c.isGroup && <div style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface-1)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={8}/></div>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -844,43 +876,45 @@ export default function Messages({ showToast }) {
                           ) : (
                             <>
                               <div style={{ display: 'flex', justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', opacity: m._pending ? 0.65 : 1 }}>
-                                {m.type === 'image' && m.url ? (
-                                  <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }} onClick={() => window.open(m.url, '_blank')}>
-                                    <img src={m.url} alt={m.text || 'Photo'} style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 300 }} />
-                                    {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
-                                  </div>
-                                ) : m.type === 'image' && !m.url ? (
-                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                                    <span style={{ fontSize: 14 }}><Camera size={14}/></span>
-                                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Photo'}</div>
-                                  </div>
-                                ) : m.type === 'video' && m.url ? (
-                                  <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
-                                    <video src={m.url} controls style={{ width: '100%', display: 'block', maxHeight: 300, borderRadius: 14 }} />
-                                    {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
-                                  </div>
-                                ) : m.type === 'video' ? (
-                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                                    <span style={{ fontSize: 14 }}><Video size={14}/></span>
-                                    <div>
-                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidûo'}</div>
-                                      {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                                {(() => {
+                                  // Src robuste : url (base64/http) OU fileUrl du backend
+                                  const imgSrc = m.url || m.fileUrl || null
+                                  const vidSrc = m.url || m.fileUrl || null
+                                  if (m.type === 'image' && imgSrc) return (
+                                    <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }} onClick={() => window.open(imgSrc, '_blank')}>
+                                      <img src={imgSrc} alt={m.text || 'Photo'} style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 300 }} onError={e => { e.target.parentElement.style.display = 'none' }} />
+                                      {m.text && m.text !== imgSrc && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
                                     </div>
-                                  </div>
-                                ) : m.type === 'file' ? (
-                                  <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
-                                    <div style={{ width: 32, height: 32, borderRadius: 8, background: m.side === 'out' ? 'rgba(255,255,255,.15)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.side === 'out' ? '#fff' : 'var(--t2)', flexShrink: 0 }}><Paperclip size={14}/></div>
-                                    <div>
-                                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text}</div>
-                                      {m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}
+                                  )
+                                  if (m.type === 'image' && !imgSrc) return (
+                                    <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                                      <Camera size={14}/><div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Photo'}</div>
                                     </div>
-                                  </div>
-                                ) : m.type === 'devis' ? (() => {
-                                  let d = {}
-                                  try { d = JSON.parse(m.text) } catch { d = { montant: m.text } }
-                                  const isOut = m.side === 'out'
-                                  return (
-                                    <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
+                                  )
+                                  if (m.type === 'video' && vidSrc) return (
+                                    <div style={{ maxWidth: '65%', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+                                      <video src={vidSrc} controls style={{ width: '100%', display: 'block', maxHeight: 300, borderRadius: 14 }} />
+                                      {m.text && <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--t4)', background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)' }}>{m.text}</div>}
+                                    </div>
+                                  )
+                                  if (m.type === 'video') return (
+                                    <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%' }}>
+                                      <Video size={14}/><div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.text || 'Vidéo'}</div>{m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}</div>
+                                    </div>
+                                  )
+                                  if (m.type === 'file') return (
+                                    <div style={{ padding: '10px 14px', borderRadius: 14, background: m.side === 'out' ? 'var(--tx)' : 'var(--s2)', color: m.side === 'out' ? '#fff' : 'var(--tx)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: '70%', cursor: m.fileUrl ? 'pointer' : 'default' }}
+                                      onClick={() => m.fileUrl && window.open(m.fileUrl, '_blank')}>
+                                      <div style={{ width: 32, height: 32, borderRadius: 8, background: m.side === 'out' ? 'rgba(255,255,255,.15)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.side === 'out' ? '#fff' : 'var(--t2)', flexShrink: 0 }}><Paperclip size={14}/></div>
+                                      <div><div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.fileName || m.text}</div>{m.size && <div style={{ fontSize: 10, opacity: .7 }}>{m.size}</div>}</div>
+                                    </div>
+                                  )
+                                  if (m.type === 'devis') {
+                                    let d = {}
+                                    try { d = JSON.parse(m.text) } catch { d = { montant: m.text } }
+                                    const isOut = m.side === 'out'
+                                    return (
+                                      <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
                                       <div style={{ padding: '8px 14px 6px', background: isOut ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', gap: 7 }}>
                                         <span style={{ fontSize: 12 }}>“‹</span>
                                         <span style={{ fontSize: 10, fontWeight: 700, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
@@ -901,14 +935,16 @@ export default function Messages({ showToast }) {
                                       </div>
                                     </div>
                                   )
-                                })() : (
-                                  <div style={{
-                                    maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
-                                    ...(m.side === 'out'
-                                      ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
-                                      : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
-                                  }}>{m.text}</div>
-                                )}
+                                  }
+                                  return (
+                                    <div style={{
+                                      maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
+                                      ...(m.side === 'out'
+                                        ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
+                                        : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
+                                    }}>{m.text}</div>
+                                  )
+                                })()}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: m.side === 'out' ? 'flex-end' : 'flex-start', padding: '0 4px', marginTop: 2 }}>
                                 <span style={{ fontSize: 10, color: 'var(--t4)' }}>{m.time}</span>

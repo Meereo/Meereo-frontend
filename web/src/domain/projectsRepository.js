@@ -62,7 +62,7 @@ export function getUserProjects(store, userId) {
   )
 }
 
-/** Projets actifs accessibles par un utilisateur */
+/** Projets actifs uniquement (ni archivés, ni arrêtés, ni supprimés) */
 export function getUserActiveProjects(store, userId) {
-  return getUserProjects(store, userId).filter(p => p.status !== 'archived')
+  return getUserProjects(store, userId).filter(p => p.status !== 'archived' && p.status !== 'stopped')
 }

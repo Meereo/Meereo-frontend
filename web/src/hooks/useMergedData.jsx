@@ -41,6 +41,8 @@ export function useMergedData() {
       soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
       lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: o.docs || [],
       message: o.message || o.note || '', technique: o.technique || '', note: o.note || '',
+      // Logo réel du prestataire (onboardingData.logoFileUrl)
+      logoUrl: o.supplier?.onboardingData?.logoFileUrl || null,
       // Données réelles du prestataire (depuis le backend)
       supplier: o.supplier || null,
       // Données du propriétaire de l'AO (visible après acceptation)
@@ -96,13 +98,22 @@ export function useMergedData() {
     // Fournisseurs: registered pro users + contacts type='fournisseur'
     const registeredUsers = (store.fournisseurs || []).map(f => ({
       id: f.id, nom: f.nom || '', specialite: f.specialite || '', ville: f.ville || 'Abidjan',
-      tel: f.tel || '', email: f.email || '', note: 0, nbAvis: 0, verified: false, color: '#6B7280',
+      tel: f.tel || '', email: f.email || '', note: 0, nbAvis: 0,
+      verified: f.verified || false,
+      logoUrl: f.logoUrl || null,
+      products: f.products || [],
+      zones: f.zones || [],
+      color: '#6B7280',
     }))
     const contactFournisseurs = (store.contacts || [])
       .filter(c => c.type === 'fournisseur')
       .map(c => ({
         id: c.id, nom: c.nom || c.name || '', specialite: c.role || '', ville: c.ville || '',
-        tel: c.tel || '', email: c.email || '', note: 0, nbAvis: 0, verified: false, color: '#6B7280',
+        tel: c.tel || '', email: c.email || '', note: 0, nbAvis: 0,
+        verified: false,
+        logoUrl: c.photo || c.avatar || null,
+        products: [], zones: [],
+        color: '#6B7280',
       }))
     const seen = new Set()
     return [...registeredUsers, ...contactFournisseurs].filter(f => {

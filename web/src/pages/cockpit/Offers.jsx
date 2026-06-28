@@ -4,6 +4,12 @@ import MoneyInput from '../../components/shared/MoneyInput'
 import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Lock, Building2, Send, User } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
+
+// Résolution du logo d'une offre : logo réel > lookup statique > initiales
+function getOfferAvatar(offer) {
+  if (offer?.logoUrl) return { type: 'img', value: offer.logoUrl, initials: '' }
+  return getEntrepriseAvatar(offer?.entreprise) || { type: null, initials: (offer?.entreprise || '').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() }
+}
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { api } from '../../services/api/client'
@@ -202,7 +208,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
           </div>
           {filtered.map(o => (
             <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
-              {(() => { const av = getEntrepriseAvatar(o.entreprise); return (
+              {(() => { const av = getOfferAvatar(o); return (
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : o.color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: av?.type === 'color' ? '#fff' : o.color, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
                   {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
                   {o.lu === false && <div style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: 'var(--tx)', border: '2px solid var(--surface-1)' }} />}
@@ -227,8 +233,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               </div>
               {filteredArchived.map(o => (
                 <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', opacity: 0.45, background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
-                  {(() => { const av = getEntrepriseAvatar(o.entreprise); return (
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0 }}>
+                  {(() => { const av = getOfferAvatar(o); return (
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
                       {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
                     </div>
                   )})()}
@@ -275,7 +281,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               )}
 
               {/* En-tête entreprise */}
-              {(() => { const av = getEntrepriseAvatar(selected.entreprise); return (
+              {(() => { const av = getOfferAvatar(selected); return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
                   {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (selected.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
@@ -635,7 +641,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 // é─── Composant carte contrat ──────────────────────────────────────────────────
 function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, archived }) {
   const inter = INTERVENANTS_DATA.find(i => i.nom === o.entreprise)
-  const av = getEntrepriseAvatar(o.entreprise)
+  const av = getOfferAvatar(o)
   return (
     <div style={{ padding: '18px 20px', background: archived ? 'var(--s2)' : 'var(--surface-1)', border: '1px solid', borderColor: archived ? 'var(--border)' : 'rgba(52,199,89,.15)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
       <div style={{ width: 46, height: 46, borderRadius: 12, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
@@ -676,7 +682,6 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
         </div>
         {o.message && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--t2)', fontStyle: 'italic', lineHeight: 1.5, borderLeft: '2px solid var(--border)', paddingLeft: 10 }}>"{o.message}"</div>}
       </div>
-      <OfferModal isOpen={showCreateOffer} onClose={() => setShowCreateOffer(false)} showToast={showToast} />
     </div>
   )
 }
