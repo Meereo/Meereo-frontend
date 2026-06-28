@@ -60,7 +60,11 @@ export default function useUserIdentity() {
   const initials = getInitials(displayName)
   const email = ob.email || user.email || null
   const phone = ob.tel || user.phone || null
-  const photo = ob.photoUrl || ob.logoFileUrl || user.avatar || null
+  // Pro/fournisseur: company logo takes priority over personal photo
+  // Client: personal photo takes priority
+  const photo = (userType === 'pro' || userType === 'fournisseur')
+    ? (ob.logoFileUrl || ob.photoUrl || user.avatar || null)
+    : (ob.photoUrl || ob.logoFileUrl || user.avatar || null)
   const city = ob.ville || null
   const role = ob.secteurs?.[0] || null
   const roleLabel = ROLE_LABELS[userType] || null

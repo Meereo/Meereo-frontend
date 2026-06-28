@@ -126,7 +126,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const allChantierProjets = getUserProjects(store, store.user?.id)
+  const allChantierProjets = getUserProjects(store, store.user?.id, store.user?.email)
   const [selProjId, setSelProjId] = useState(allChantierProjets[0]?.id)
   const [openPhases, setOpenPhases] = useState({ 0: true })
   const [assignModal, setAssignModal] = useState(null) // { phaseIdx, taskId? }

@@ -218,11 +218,19 @@ export default function Settings({ showToast }) {
                         inp.onchange = async (e) => {
                           const file = e.target.files?.[0]; if (!file) return
                           try {
-                            const { default: compress } = await import('../../utils/compressImage')
-                            const url = await compress(file, 400, 0.8)
+                            // Try MinIO upload first — gives a persistent URL (no body-size issues)
+                            let url = null
+                            try {
+                              const { uploadFile } = await import('../../utils/upload')
+                              url = await uploadFile(file, 'logos', 'logo')
+                            } catch {
+                              // MinIO unavailable — fall back to small base64 (< 15 KB)
+                              const { default: compress } = await import('../../utils/compressImage')
+                              url = await compress(file, 200, 0.7)
+                            }
                             setPLogoUrl(url)
                             showToast && showToast('Logo mis à jour — pensez à enregistrer')
-                          } catch { showToast && showToast('Erreur lors du chargement') }
+                          } catch { showToast && showToast('Erreur lors du chargement du logo') }
                         }
                         inp.click()
                       }}>{pLogoUrl || ob.logoFileUrl ? 'Changer le logo' : 'Ajouter un logo'}</button>

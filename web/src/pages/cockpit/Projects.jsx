@@ -282,7 +282,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const userId = store.user?.id
-  const allProjetsRaw = useMemo(() => getUserProjects(store, userId), [store.projects, userId, store.projectMembers])
+  const allProjetsRaw = useMemo(() => getUserProjects(store, userId, store.user?.email), [store.projects, userId, store.projectMembers, store.user])
   // Enrich with computed avancement (phase + étapes + stored)
   const allProjets = useMemo(() => allProjetsRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p, store.markets) })), [allProjetsRaw, store.markets])
 
@@ -294,7 +294,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   // côté client dans la liste active. Seul 'archived' est une vraie archive client.
   const archivedProjets = useMemo(() => allProjets.filter(p => p.status === 'archived' || (!isClientUser && p.status === 'stopped')), [allProjets, isClientUser])
   const activeRaw = useMemo(() => {
-    const base = getUserProjects(store, userId).filter(p => p.status !== 'deleted' && p.status !== 'archived')
+    const base = getUserProjects(store, userId, store.user?.email).filter(p => p.status !== 'deleted' && p.status !== 'archived')
     return isClientUser ? base : base.filter(p => p.status !== 'stopped')
   }, [store.projects, userId, store.projectMembers, isClientUser])
   const activeProjets = useMemo(() => activeRaw.map(p => ({ ...p, avancement: computeProjectAvancement(p, store.markets) })), [activeRaw, store.markets])

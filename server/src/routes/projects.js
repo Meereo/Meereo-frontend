@@ -31,6 +31,8 @@ router.get('/', requireAuth, async (req, res, next) => {
         OR: [
           { ownerId: userId },
           { clientId: userId },
+          // Fallback: match by email in case clientId wasn't properly linked
+          ...(req.user.email ? [{ clientEmail: req.user.email }] : []),
           { members: { some: { userId } } },
           ...(supplierProjectIds.length ? [{ id: { in: supplierProjectIds } }] : []),
         ],

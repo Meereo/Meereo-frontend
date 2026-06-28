@@ -372,10 +372,12 @@ export function MeereoProvider({ children }) {
 
     // Écouter les notifications push (ex: nouvelle offre sur un AO)
     const handleNotifNew = (notif) => {
+      // Normalize: some server events send `text` instead of `msg`
+      const normalized = notif.msg ? notif : { ...notif, msg: notif.text || '' }
       setStore(prev => {
         const existing = prev.notifications || []
-        if (existing.some(n => n.id === notif.id)) return prev
-        const next = { ...prev, notifications: [notif, ...existing] }
+        if (existing.some(n => n.id === normalized.id)) return prev
+        const next = { ...prev, notifications: [normalized, ...existing] }
         saveToStorage(next)
         return next
       })
@@ -951,7 +953,8 @@ export function MeereoProvider({ children }) {
       id: data.id || 'proj_' + Date.now(),
       color: data.color || autoProjectColor(storeRef.current.projects || []),
       name: data.name || data.nom || 'Nouveau projet',
-      clientId: data.clientId || currentUser?.id || null,
+      // clientId must come from data — never fall back to currentUser.id (that's ownerId)
+      clientId: data.clientId || null,
       clientEmail: data.clientEmail || null,
       clientInviteStatus: data.clientEmail ? 'pending' : null,
       ownerId: data.ownerId || currentUser?.id || null,
@@ -989,16 +992,33 @@ export function MeereoProvider({ children }) {
       }
       return updates
     })
-    // Sync to PostgreSQL
-    sync(api.projects.create({ nom: p.nom, type: p.type, phase: p.phase, budget: p.budget, adresse: p.address || p.localisation, livraison: p.livraison, priorite: p.priorite, description: p.description, avancement: p.avancement, status: p.status, client: p.client, clientEmail: p.clientEmail, clientId: p.clientId || null, sourceAoId: p.sourceAoId || null, etapes: p.etapes || null, equipe: p.team || p.equipe || null, color: p.color || null, ownerId: p.ownerId || 'local' }))
-    if (p.livraison) {
-      sync(api.events.create({ titre: 'Livraison — ' + p.nom, date: p.livraison, type: 'deadline', projectId: p.id, color: '#FF9500' }))
-    }
+    // Sync to PostgreSQL — then replace local proj_ ID with the real backend UUID
+    const localId = p.id
+    const creatorRole = currentUser?.type === 'client' ? ROLES.CLIENT : ROLES.PRO_ADMIN
+    api.projects.create({ nom: p.nom, type: p.type, phase: p.phase, budget: p.budget, adresse: p.address || p.localisation, livraison: p.livraison, priorite: p.priorite, description: p.description, avancement: p.avancement, status: p.status, client: p.client, clientEmail: p.clientEmail, clientId: p.clientId || null, sourceAoId: p.sourceAoId || null, etapes: p.etapes || null, equipe: p.team || p.equipe || null, color: p.color || null })
+      .then(created => {
+        if (!created?.id) return
+        const realId = created.id
+        if (realId === localId) return
+        // Swap local proj_ ID → real backend UUID in projects, members, conversations, events
+        updateStore(prev => ({
+          ...prev,
+          projects: (prev.projects || []).map(pr => pr.id === localId ? { ...pr, id: realId } : pr),
+          projectMembers: (prev.projectMembers || []).map(m => m.projectId === localId ? { ...m, projectId: realId } : m),
+          conversations: (prev.conversations || []).map(c => c.projectId === localId ? { ...c, id: c.id.includes(localId) ? c.id.replace(localId, realId) : c.id, projectId: realId } : c),
+          events: (prev.events || []).map(e => e.projectId === localId ? { ...e, id: e.id?.includes(localId) ? e.id.replace(localId, realId) : e.id, projectId: realId } : e),
+        }))
+        // Now register the creator as a member with the real project ID
+        sync(api.projectMembers.create({ projectId: realId, userId: currentUser?.id, role: creatorRole, userName: currentUser?.name || '', userEmail: currentUser?.email || '' }))
+        // Sync livraison event with real project ID
+        if (p.livraison) sync(api.events.create({ titre: 'Livraison — ' + p.nom, date: p.livraison, type: 'Livraison projet', projectId: realId, color: '#7C3AED' }))
+      })
+      .catch(e => console.warn('[createProject] backend sync failed:', e.message))
     log('PROJECT_CREATED', { name: p.name })
     addNotif('Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green', null, 'projets')
     showToast('\u2705 Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green')
-    // Auto-membership: enregistrer le créateur comme membre du projet
-    const creatorRole = currentUser?.type === 'client' ? ROLES.CLIENT : ROLES.PRO_ADMIN
+    // Local-only member record (so project appears immediately in getUserProjects via memberProjectIds)
+    // Will be replaced by the real backend member record once api.projects.create resolves
     addProjectMember(p.id, currentUser?.id, creatorRole, { userName: currentUser?.name, userEmail: currentUser?.email })
     // Créer automatiquement le groupe de discussion du projet
     const groupConvId = 'conv_grp_' + p.id

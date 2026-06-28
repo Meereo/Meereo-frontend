@@ -51,18 +51,24 @@ export function getProjectByIdRaw(store, id) {
  *   - client (clientId)
  *   - membre formel (projectMembers)
  */
-export function getUserProjects(store, userId) {
+export function getUserProjects(store, userId, userEmail) {
   if (!userId) return []
+  const email = (userEmail || '').toLowerCase().trim()
   const memberProjectIds = new Set(
     (store.projectMembers || []).filter(m => m.userId === userId).map(m => m.projectId)
   )
   return (store.projects || []).filter(p =>
     p.status !== 'deleted' &&
-    (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))
+    (
+      p.ownerId === userId ||
+      p.clientId === userId ||
+      memberProjectIds.has(p.id) ||
+      (email && (p.clientEmail || '').toLowerCase().trim() === email)
+    )
   )
 }
 
 /** Projets actifs uniquement (ni archivés, ni arrêtés, ni supprimés) */
-export function getUserActiveProjects(store, userId) {
-  return getUserProjects(store, userId).filter(p => p.status !== 'archived' && p.status !== 'stopped')
+export function getUserActiveProjects(store, userId, userEmail) {
+  return getUserProjects(store, userId, userEmail).filter(p => p.status !== 'archived' && p.status !== 'stopped')
 }

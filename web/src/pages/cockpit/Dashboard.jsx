@@ -70,7 +70,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
 
   const [actTab, setActTab] = useState('all')
 
-  const allProjetsRaw = useMemo(() => getUserActiveProjects(store, store.user?.id), [store.projects, store.user, store.projectMembers])
+  const allProjetsRaw = useMemo(() => getUserActiveProjects(store, store.user?.id, store.user?.email), [store.projects, store.user, store.projectMembers])
   // Enrich each project with computed avancement (phase + étapes + stored + marchés liés)
   const allProjets = useMemo(() => allProjetsRaw.map(p => ({
     ...p,

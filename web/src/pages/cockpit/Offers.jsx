@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
-import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Lock, Building2, Send, User } from 'lucide-react'
+import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Building2, Send, User } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
 
@@ -393,46 +393,9 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 )}
               </div>
 
-              {/* Profil du prestataire — masqué si l'offre est en attente et que je suis le client (AO owner) */}
+              {/* Profil du prestataire — toujours visible pour le client */}
               {isClient ? (
-                selected.statut === OFFER_STATUS.PENDING ? (
-                  // Profil masqué : le client ne voit que le nom de l'entreprise avant acceptation
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Entreprise candidate</div>
-                    <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Building2 size={18} color="var(--t4)" />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{ fontSize: 13, fontWeight: 700, cursor: selected.supplier?.publicId ? 'pointer' : 'default', display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                            onClick={() => selected.supplier?.publicId && window.open('/pro?uuid=' + selected.supplier.publicId, '_blank')}
-                          >
-                            {selected.entreprise}
-                            {selected.supplier?.publicId && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>}
-                          </div>
-                          {selected.supplierRole && <span style={getRoleBadgeStyle(selected.supplierRole)}>{getRoleLabel(selected.supplierRole)}</span>}
-                          {selected.supplier?.publicId && (
-                            <div style={{ marginTop: 4 }}>
-                              <button
-                                onClick={() => window.open('/pro?uuid=' + selected.supplier.publicId, '_blank')}
-                                style={{ background: 'none', border: 'none', padding: 0, fontSize: 11, color: 'var(--t3)', cursor: 'pointer', fontFamily: 'var(--f)', textDecoration: 'underline', textUnderlineOffset: 2 }}
-                              >
-                                Voir le profil public →
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(0,0,0,.03)', borderRadius: 8, border: '1px dashed var(--border-card)' }}>
-                        <Lock size={13} color="var(--t4)" />
-                        <span style={{ fontSize: 12, color: 'var(--t3)' }}>Le profil complet du prestataire sera révélé après acceptation de l'offre</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Profil complet — offre acceptée ou refusée
+                  // Profil complet — visible dès la réception de l'offre
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du prestataire</div>
                     <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
@@ -471,7 +434,6 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                       })()}
                     </div>
                   </div>
-                )
               ) : (
                 // Vue pro : affiche les infos du client si l'offre est acceptée
                 selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (

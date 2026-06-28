@@ -98,11 +98,11 @@ router.post('/', requireAuth, async (req, res, next) => {
     if (io && ao.ownerUserId && ao.ownerUserId !== req.user.id) {
       io.to(`user:${ao.ownerUserId}`).emit('notification:new', {
         id: 'offer_' + offer.id,
-        text: (req.user.company || req.user.name || 'Un prestataire') + ' a soumis une offre sur votre AO « ' + (ao.title || ao.lot || 'sans titre') + ' »',
-        type: 'ao',
+        msg: (req.user.company || req.user.name || 'Un prestataire') + ' a soumis une offre sur « ' + (ao.title || ao.lot || 'sans titre') + ' »',
+        type: 'blue',
         read: false,
         createdAt: new Date().toISOString(),
-        page: 'bourse',
+        page: 'offres',
         aoId,
       })
     }
