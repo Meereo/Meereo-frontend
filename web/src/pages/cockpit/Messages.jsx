@@ -232,20 +232,27 @@ export default function Messages({ showToast }) {
   // ── Conversations from store (hydrated by socket useEffect in useMeereoStore) ─
   const allConversations = useMemo(() => {
     const storeConvs = store.conversations || []
-    console.log('[MSG] store.conversations:', storeConvs.length, storeConvs.map(c => c.id))
     // Normalize backend conversations to the UI shape expected by existing components
     return storeConvs
       .filter(c => !c._deleted)
       .map(c => {
-        // Backend shape: { id, title, isGroup, participants: [{id,name,type}], lastMessage, ... }
+        // Backend shape (GET): { id, title, isGroup, participants: [{id,name,type}], lastMessage }
+        // Backend shape (POST): { id, isGroup, participants: [{userId,user:{id,name,type}}] }
         // Local shape: { id, nom, msgs, ... } — always has a 'nom' field
-        // Detect backend conv: no 'nom' AND participants are objects (not strings/names)
-        const isBackend = !c.nom && !!c.participants && Array.isArray(c.participants)
-          && (c.participants.length === 0 || (typeof c.participants[0] === 'object' && c.participants[0] !== null && 'id' in c.participants[0]))
+        // Detect backend conv: no 'nom' AND participants are objects
+        const hasParticipants = !!c.participants && Array.isArray(c.participants) && c.participants.length > 0
+          && typeof c.participants[0] === 'object' && c.participants[0] !== null
+        const isBackend = !c.nom && hasParticipants
         if (!isBackend) return c // already in UI shape (local-only convs)
 
+        // Normalize participants: handle both GET format ({id,name}) and POST format ({userId,user:{id,name}})
+        const participants = c.participants.map(p => {
+          if (p.user && typeof p.user === 'object') return { ...p.user, photoUrl: p.user.photoUrl || null }
+          return p
+        })
+
         const myId = store.user?.id
-        const otherParticipants = c.participants.filter(p => p.id !== myId)
+        const otherParticipants = participants.filter(p => p.id !== myId)
         const firstOther = otherParticipants[0]
         const nom = c.isGroup
           ? (c.title || 'Groupe')
@@ -284,6 +291,7 @@ export default function Messages({ showToast }) {
           color,
           avatar: nom?.[0]?.toUpperCase() || '?',
           photoUrl,
+          participants,
           dernier,
           time,
           unread,
@@ -297,16 +305,12 @@ export default function Messages({ showToast }) {
   }, [store.conversations, store.user?.id, messagesMap])
 
   const visibleConversations = allConversations.filter(c => !c._deleted)
-  console.log('[MSG] allConversations:', allConversations.length, 'visible:', visibleConversations.length, 'tab:', msgTab)
-  allConversations.forEach(c => console.log('[MSG] conv:', c.id, 'nom:', c.nom, '_deleted:', c._deleted, '_archived:', c._archived, 'type:', c.type))
   const filtered = visibleConversations.filter(c => {
     if (msgTab === 'archives') return c._archived
     if (c._archived) return false
     const tabOk = msgTab === 'all' || c.type === msgTab || (msgTab === 'groupe' && c.isGroup) || (msgTab === 'demande' && c.pending)
     const q = search.toLowerCase()
-    const pass = tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
-    console.log('[MSG] filter:', c.nom, 'tabOk:', tabOk, 'pass:', pass)
-    return pass
+    return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
   })
   const _activeRaw = activeId ? visibleConversations.find(c => c.id === activeId) : null
   // Résoudre dynamiquement l'état `invited` : si le contact est inscrit sur Meereo,
