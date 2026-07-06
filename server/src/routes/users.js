@@ -125,7 +125,6 @@ router.get('/registered', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const users = await prisma.user.findMany({
       where: {
-        status: { not: 'deleted' },
         id: { not: req.user.id },
       },
       select: {
