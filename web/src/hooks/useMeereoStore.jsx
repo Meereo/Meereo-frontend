@@ -191,7 +191,7 @@ export function MeereoProvider({ children }) {
 
   // Ref for current store — avoids stale closures in sync() calls
   const storeRef = useRef(store)
-  useEffect(() => { storeRef.current = store }, [store])
+  useEffect(() => { storeRef.current = store; window.__MEEREO_STORE__ = store }, [store])
 
   const justCreated = useRef(false)
   const hydrationDone = useRef(false)
