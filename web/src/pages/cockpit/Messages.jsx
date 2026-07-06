@@ -297,12 +297,16 @@ export default function Messages({ showToast }) {
   }, [store.conversations, store.user?.id, messagesMap])
 
   const visibleConversations = allConversations.filter(c => !c._deleted)
+  console.log('[MSG] allConversations:', allConversations.length, 'visible:', visibleConversations.length, 'tab:', msgTab)
+  allConversations.forEach(c => console.log('[MSG] conv:', c.id, 'nom:', c.nom, '_deleted:', c._deleted, '_archived:', c._archived, 'type:', c.type))
   const filtered = visibleConversations.filter(c => {
     if (msgTab === 'archives') return c._archived
     if (c._archived) return false
     const tabOk = msgTab === 'all' || c.type === msgTab || (msgTab === 'groupe' && c.isGroup) || (msgTab === 'demande' && c.pending)
     const q = search.toLowerCase()
-    return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
+    const pass = tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
+    console.log('[MSG] filter:', c.nom, 'tabOk:', tabOk, 'pass:', pass)
+    return pass
   })
   const _activeRaw = activeId ? visibleConversations.find(c => c.id === activeId) : null
   // Résoudre dynamiquement l'état `invited` : si le contact est inscrit sur Meereo,
