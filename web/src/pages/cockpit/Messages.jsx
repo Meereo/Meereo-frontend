@@ -709,9 +709,10 @@ export default function Messages({ showToast }) {
     const existing = allConversations.find(conv => conv.nom === c.nom && !conv.isGroup)
     if (existing) { setActiveId(existing.id); setShowNewConv(false); return }
 
-    // Try to find matching backend user
-    const backendUser = (store.fournisseurs || []).find(u => u.name === c.nom || u.nom === c.nom)
-      || (store.users || []).find(u => u.name === c.nom && u.id && !String(u.id).startsWith('u_'))
+    // Try to find matching backend user — prefer userId if already resolved
+    const backendUser = c.userId ? { id: c.userId }
+      : (store.users || []).find(u => u.id !== store.user?.id && (u.name === c.nom || u.email === c.email) && u.id && !String(u.id).startsWith('u_'))
+      || (store.fournisseurs || []).find(u => u.name === c.nom || u.nom === c.nom)
 
     if (backendUser?.id && store._token) {
       try {

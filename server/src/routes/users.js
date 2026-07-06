@@ -119,6 +119,33 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
   }
 })
 
+// GET /api/users/registered — all registered users for contact resolution & messaging
+router.get('/registered', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const users = await prisma.user.findMany({
+      where: {
+        status: { not: 'deleted' },
+        id: { not: req.user.id },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        type: true,
+        company: true,
+        phone: true,
+        publicId: true,
+        avatar: true,
+      },
+      orderBy: { name: 'asc' },
+    })
+    res.json(users)
+  } catch (e) {
+    next(e)
+  }
+})
+
 // ─── Préférences utilisateur ──────────────────────────────────────────────────
 
 /**

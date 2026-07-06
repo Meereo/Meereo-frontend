@@ -220,7 +220,7 @@ export function MeereoProvider({ children }) {
         }
 
         // 2. Fetch business data from PostgreSQL (source of truth)
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding, apiActivities, apiRapports, apiNotifications, apiEvents, apiTasks, apiCommandes, apiDecisions, apiTransactions, apiPaymentRequests] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding, apiActivities, apiRapports, apiNotifications, apiEvents, apiTasks, apiCommandes, apiDecisions, apiTransactions, apiPaymentRequests, apiRegisteredUsers] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
@@ -243,6 +243,7 @@ export function MeereoProvider({ children }) {
           api.decisions.getAll().catch(() => []),
           api.transactions.getAll().catch(() => []),
           api.paymentRequests.getAll().catch(() => []),
+          api.usersApi.getRegistered().catch(() => []),
         ])
 
         // 3. PostgreSQL is source of truth — replace business data entirely
@@ -256,7 +257,7 @@ export function MeereoProvider({ children }) {
             _checking: false,
             _cachedUser: { id: user.id, type: user.type, name: user.name },
             user,
-            users: mergeById(prev.users || [], [user]),
+            users: mergeById([user], Array.isArray(apiRegisteredUsers) ? apiRegisteredUsers : []),
             // Business data: backend replaces local (no merge to avoid ghost duplicates)
             aos: apiAos,
             offers: apiOffers,
@@ -415,7 +416,7 @@ export function MeereoProvider({ children }) {
       const currentStore = storeRef.current
       if (!currentStore.user) return
       try {
-        const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers, apiDecisions, apiTasks, apiEvents, apiNotifications, apiContacts, apiRapports, apiTransactions] = await Promise.all([
+        const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers, apiDecisions, apiTasks, apiEvents, apiNotifications, apiContacts, apiRapports, apiTransactions, apiRegisteredUsers] = await Promise.all([
           api.aos.getAll().catch(() => null),
           api.offers.getAll().catch(() => null),
           api.markets.getAll().catch(() => null),
@@ -430,6 +431,7 @@ export function MeereoProvider({ children }) {
           api.contacts.getAll().catch(() => null),
           api.rapports.getAll().catch(() => null),
           api.transactions.getAll().catch(() => null),
+          api.usersApi.getRegistered().catch(() => null),
         ])
         if (!apiAos) return // Backend unreachable, skip
         setStore(prev => {
@@ -476,6 +478,7 @@ export function MeereoProvider({ children }) {
             contacts: apiContacts || prev.contacts,
             rapports: apiRapports || prev.rapports,
             transactions: apiTransactions || prev.transactions,
+            users: apiRegisteredUsers ? mergeById([prev.user].filter(Boolean), apiRegisteredUsers) : prev.users,
           }
           saveToStorage(next)
           return next

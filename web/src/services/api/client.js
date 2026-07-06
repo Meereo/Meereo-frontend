@@ -606,6 +606,7 @@ const productsApi = {
 // ─── Users / Fournisseurs API (real HTTP → PostgreSQL) ───────────────────────
 const usersApi = {
   getMe:               () => apiFetch('/auth/me', 'GET', null, true),  updateMe:            (data) => apiFetch('/users/me', 'PATCH', data, true),  getFournisseurs:     () => apiFetch('/users/fournisseurs', 'GET', null, true),
+  getRegistered:       () => apiFetch('/users/registered', 'GET', null, true),
   getPrefs:            () => apiFetch('/users/me/prefs', 'GET', null, true),
   updatePrefs:         (data) => apiFetch('/users/me/prefs', 'PATCH', data, true),
   getOnboardingData:   () => apiFetch('/users/me/onboarding', 'GET', null, true),
