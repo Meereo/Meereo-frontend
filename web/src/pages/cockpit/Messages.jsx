@@ -268,7 +268,7 @@ export default function Messages({ showToast }) {
         const lastMsg = c.lastMessage
         let dernier = ''
         if (lastMsg) {
-          const content = lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : (lastMsg.text || '')
+          const content = lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : lastMsg.type === 'devis' ? 'Proposition commerciale' : (lastMsg.text || '')
           if (content) {
             const isMe = lastMsg.senderId === myId
             const label = isMe ? 'Vous' : (lastMsg.senderName ? lastMsg.senderName.split(' ')[0].slice(0, 5) : null)
@@ -863,7 +863,7 @@ export default function Messages({ showToast }) {
                   </div>
                   <div style={{ fontSize: 12, color: c.unread ? 'var(--tx)' : 'var(--t3)', fontWeight: c.unread ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c._archived && <span style={{ fontSize: 10, color: 'var(--t4)', marginRight: 4 }}><Package size={10}/></span>}
-                    {c.dernier}
+                    {c.lastMessage?.type === 'devis' ? <span style={{ color: '#2563EB', fontWeight: 600 }}>{c.dernier}</span> : c.dernier}
                   </div>
                 </div>
                 {c.pending && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: 'var(--wrn)', flexShrink: 0 }}>ATTENTE</span>}
@@ -1003,7 +1003,7 @@ export default function Messages({ showToast }) {
                                       maxWidth: '72%', padding: '10px 16px', fontSize: 13, lineHeight: 1.55,
                                       ...(m.side === 'out'
                                         ? { background: 'var(--tx)', color: '#fff', borderRadius: '18px 18px 4px 18px' }
-                                        : { background: 'var(--s2)', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
+                                        : { background: '#E8E8ED', color: 'var(--tx)', borderRadius: '18px 18px 18px 4px' })
                                     }}>{m.text}</div>
                                   )
                                 })()}
