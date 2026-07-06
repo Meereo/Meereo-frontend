@@ -305,6 +305,7 @@ export default function Messages({ showToast }) {
   }, [store.conversations, store.user?.id, messagesMap])
 
   const visibleConversations = allConversations.filter(c => !c._deleted)
+  console.log('[MSG-DEBUG] all:', allConversations.length, 'visible:', visibleConversations.length, allConversations.map(c => ({id:c.id,nom:c.nom,del:c._deleted})))
   const filtered = visibleConversations.filter(c => {
     if (msgTab === 'archives') return c._archived
     if (c._archived) return false
