@@ -232,6 +232,7 @@ export default function Messages({ showToast }) {
   // ── Conversations from store (hydrated by socket useEffect in useMeereoStore) ─
   const allConversations = useMemo(() => {
     const storeConvs = store.conversations || []
+    console.log('[MSG] store.conversations:', storeConvs.length, storeConvs.map(c => c.id))
     // Normalize backend conversations to the UI shape expected by existing components
     return storeConvs
       .filter(c => !c._deleted)
