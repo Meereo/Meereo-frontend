@@ -67,13 +67,15 @@ function ProjetModal({ isOpen, onClose, showToast }) {
       .filter(i => !registeredPros.some(u => u.email === i.email))
       .map(i => ({ name: i.nom, email: i.email || '', registered: false })),
   ]
-  const filteredPros = proSearch.trim()
-    ? allPros.filter(p => p.name.toLowerCase().includes(proSearch.toLowerCase()) || p.email.toLowerCase().includes(proSearch.toLowerCase()))
+  const [proDropdownOpen, setProDropdownOpen] = useState(false)
+  const q = proSearch.trim().toLowerCase()
+  const filteredPros = proDropdownOpen
+    ? allPros.filter(p => !q || p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)).slice(0, 8)
     : []
 
   const reset = () => {
     setF(blank); setSubmitted(false)
-    setProEmail(''); setProName(''); setProSearch(''); setSelectedPro(null); setProMode('email')
+    setProEmail(''); setProName(''); setProSearch(''); setSelectedPro(null); setProMode('email'); setProDropdownOpen(false)
   }
 
   const proDesignated = isClient && (selectedPro || (proEmail.trim() && proEmail.includes('@')))
@@ -197,17 +199,18 @@ function ProjetModal({ isOpen, onClose, showToast }) {
                   className="form-input"
                   placeholder="Rechercher un professionnel..."
                   value={selectedPro ? selectedPro.name : proSearch}
-                  onChange={e => { setProSearch(e.target.value); setSelectedPro(null) }}
+                  onChange={e => { setProSearch(e.target.value); setSelectedPro(null); setProDropdownOpen(true) }}
+                  onFocus={() => { if (!selectedPro) setProDropdownOpen(true) }}
                 />
                 {selectedPro && (
-                  <button type="button" onClick={() => setSelectedPro(null)}
+                  <button type="button" onClick={() => { setSelectedPro(null); setProDropdownOpen(true) }}
                     style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--t3)', lineHeight: 1 }}>×</button>
                 )}
                 {!selectedPro && filteredPros.length > 0 && (
                   <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50, background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.1)', maxHeight: 180, overflowY: 'auto' }}>
                     {filteredPros.map((p, i) => (
                       <div key={i}
-                        onClick={() => { setSelectedPro(p); setProSearch('') }}
+                        onClick={() => { setSelectedPro(p); setProSearch(''); setProDropdownOpen(false) }}
                         style={{ padding: '9px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-subtle)' }}
                         onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'}
                         onMouseOut={e => e.currentTarget.style.background = ''}>
