@@ -64,19 +64,18 @@ export default function Topbar({ activePage, onOpenSidebar }) {
   // Debounced search — loads all pros then filters client-side (avoids backend query param issues)
   const runSearch = useCallback((q, metier) => {
     clearTimeout(debounceRef.current)
-    if (!q || q.trim().length < 2) { setSearchResults([]); return }
     debounceRef.current = setTimeout(async () => {
       try {
         const all = await api.professionals.getAll()
-        const qLow = q.trim().toLowerCase()
+        const qLow = (q || '').trim().toLowerCase()
         const filtered = (all || []).filter(u => {
           const name = (u.company || u.name || '').toLowerCase()
           const mtr = (u.metier || '').toLowerCase()
           const vil = (u.ville || '').toLowerCase()
           const metierOk = !metier || u.metier === metier
-          return metierOk && (name.includes(qLow) || mtr.includes(qLow) || vil.includes(qLow))
+          return metierOk && (!qLow || name.includes(qLow) || mtr.includes(qLow) || vil.includes(qLow))
         })
-        const mapped = filtered.map(u => ({ id: u.id, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false })).filter(p => p.nom)
+        const mapped = filtered.map(u => ({ id: u.id, publicId: u.publicId || null, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false })).filter(p => p.nom)
         setSearchResults(mapped)
       } catch {
         setSearchResults([])
@@ -104,7 +103,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
             <input
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); runSearch(e.target.value, searchType) }}
-              onFocus={() => searchQuery && setSearchOpen(true)}
+              onFocus={() => { setSearchOpen(true); if (!searchResults.length) runSearch('', searchType) }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setSearchOpen(false); setDirSearch(searchQuery); setSearchQuery(''); setShowDirectory(true) } }}
               placeholder="Rechercher un professionnel..."
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', boxShadow: 'none', fontSize: 12.5, fontFamily: 'var(--f)', color: 'var(--tx)' }}
@@ -120,12 +119,12 @@ export default function Topbar({ activePage, onOpenSidebar }) {
           </div>
 
           {/* Search results dropdown via portal */}
-          {searchOpen && searchQuery.trim().length >= 2 && createPortal(
+          {searchOpen && searchResults.length > 0 && createPortal(
             <>
               {(() => {
                 const rect = searchRef.current?.getBoundingClientRect()
                 if (!rect) return null
-                const results = filtered.slice(0, 6)
+                const results = filtered.slice(0, 8)
                 return (
                   <div ref={dropdownRef} style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,.15)', maxHeight: 340, overflowY: 'auto', zIndex: 9999, fontFamily: 'var(--f)' }}>
                     {results.length > 0 ? (<>
