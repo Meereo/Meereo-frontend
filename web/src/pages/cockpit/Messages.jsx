@@ -305,7 +305,6 @@ export default function Messages({ showToast }) {
   }, [store.conversations, store.user?.id, messagesMap])
 
   const visibleConversations = allConversations.filter(c => !c._deleted)
-  console.log('[MSG-DEBUG] all:', allConversations.length, 'visible:', visibleConversations.length, 'tab:', msgTab)
   const filtered = visibleConversations.filter(c => {
     if (msgTab === 'archives') return c._archived
     if (c._archived) return false
@@ -313,7 +312,6 @@ export default function Messages({ showToast }) {
     const q = search.toLowerCase()
     return tabOk && (!q || ((c.nom || c.title || '') + (c.participants || []).join(' ')).toLowerCase().includes(q))
   })
-  console.log('[MSG-DEBUG] filtered:', filtered.length, 'search:', search)
   const _activeRaw = activeId ? visibleConversations.find(c => c.id === activeId) : null
   // Résoudre dynamiquement l'état `invited` : si le contact est inscrit sur Meereo,
   // on écrase `invited: false` même si l'ancienne donnée en store dit `true`.
@@ -791,9 +789,7 @@ export default function Messages({ showToast }) {
         }
       }
     }
-    const result = filtered.filter(c => !threadIds.has(c.id))
-    console.log('[MSG-DEBUG] mainConvs:', result.length, 'threadIds:', [...threadIds])
-    return { mainConvs: result, threadMap: map }
+    return { mainConvs: filtered.filter(c => !threadIds.has(c.id)), threadMap: map }
   }, [visibleConversations, filtered])
 
   return (
@@ -874,7 +870,9 @@ export default function Messages({ showToast }) {
                 {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVITé</span>}
                 {c.unread > 0 && !c.pending && !c.invited && <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>{c.unread}</div>}
               </div>
-            )})}
+            )
+              return mainRow
+            })}
           </div>
         </div>
 
