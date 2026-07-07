@@ -41,7 +41,7 @@ export default function Settings({ ctx }) {
           ))}
         </div>
         <div style={{ flex: 1, maxWidth: 560 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{PTABS.find(t => t.id === pTab)?.label}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>{PTABS.find(t => t.id === pTab)?.label}</div>
 
           {pTab === 'entreprise' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -67,7 +67,7 @@ export default function Settings({ ctx }) {
                   {categories.length > 0 ? categories.map(c => <span key={c} style={{ fontSize: 10.5, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t3)' }}>{c}</span>) : <span style={{ fontSize: 11, color: 'var(--t4)' }}>Aucune categorie configuree</span>}
                 </div>
               </div>
-              <div><label className="form-label">Produits en ligne</label><div style={{ fontSize: 22, fontWeight: 800 }}>{activeProducts.length} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--t3)' }}>dont {sponsoredProducts.length} sponsorises</span></div></div>
+              <div><label className="form-label">Produits en ligne</label><div style={{ fontSize: 22, fontWeight: 600 }}>{activeProducts.length} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--t3)' }}>dont {sponsoredProducts.length} sponsorises</span></div></div>
               <div><label className="form-label">Visibilite marketplace</label><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>{visibleMarketplace.length} produit{visibleMarketplace.length > 1 ? 's' : ''} visible{visibleMarketplace.length > 1 ? 's' : ''}</div></div>
             </div>
           )}

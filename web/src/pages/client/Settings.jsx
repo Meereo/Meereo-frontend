@@ -32,7 +32,7 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
           <img src={ob.photoUrl} alt="" style={{ width: 52, height: 52, borderRadius: 12, objectFit: 'cover' }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>{prenom} {nom}</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{prenom} {nom}</div>
             <div style={{ fontSize: 10, color: 'var(--t3)' }}>{store.user?.type === 'client' ? 'Client' : ''}</div>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function Settings({ ctx }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div><div style={{ fontSize: 15, fontWeight: 700 }}>Parametres</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>Mon compte</div></div>
+        <div><div style={{ fontSize: 15, fontWeight: 600 }}>Parametres</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>Mon compte</div></div>
       </div>
       <div style={{ display: 'flex', gap: 24 }}>
         <div style={{ width: 180, flexShrink: 0 }}>
@@ -143,7 +143,7 @@ export default function Settings({ ctx }) {
           ))}
         </div>
         <div style={{ flex: 1, maxWidth: 500 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{PARAM_TABS.find(t => t.id === paramTab)?.label}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>{PARAM_TABS.find(t => t.id === paramTab)?.label}</div>
           {paramTab === 'profil' && <ClientProfileForm ob={ob} store={store} updateStore={updateStore} showToast={showToast} />}
           {paramTab === 'securite' && <ClientSecurityForm showToast={showToast} />}
           {paramTab === 'prefs' && <ClientPrefsForm store={store} updateStore={updateStore} />}

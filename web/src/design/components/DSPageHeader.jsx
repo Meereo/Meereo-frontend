@@ -1,23 +1,26 @@
+import { motion } from 'framer-motion'
+
 /**
  * DSPageHeader — Unified page header for all cockpit pages.
- * Replaces the ad-hoc .ph-row divs scattered across 20+ pages.
- *
- * @param {string} title
- * @param {string} subtitle
- * @param {React.ReactNode} actions - Right-side slot (buttons, filters)
+ * Tailwind + Framer Motion version.
  */
 export default function DSPageHeader({ title, subtitle, actions, children }) {
   return (
-    <div className="ph-row" style={{ marginBottom: 24 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="flex items-start justify-between gap-4 mb-6"
+    >
       <div>
-        <div className="ph-title">{title}</div>
-        {subtitle && <div className="ph-sub">{subtitle}</div>}
+        <h1 className="text-[22px] font-semibold text-[var(--tx)] tracking-[-0.02em] leading-tight">{title}</h1>
+        {subtitle && <p className="text-xs text-[var(--t3)] mt-1">{subtitle}</p>}
       </div>
       {(actions || children) && (
-        <div className="ph-actions">
+        <div className="flex gap-2 shrink-0">
           {actions || children}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

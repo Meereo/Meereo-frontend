@@ -66,8 +66,8 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
       <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
         <div style={{ background: '#fff', borderRadius: 16, width: 420, maxWidth: '90vw', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
           <div style={{ padding: '28px 28px 24px', textAlign: 'center' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#fff', fontSize: 18, fontWeight: 700 }}>K</div>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>KAI Pro est actif</div>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#fff', fontSize: 18, fontWeight: 600 }}>K</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>KAI Pro est actif</div>
             <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 4 }}>Espace {roleLabels[role]}</div>
             <div style={{ fontSize: 11, color: 'var(--t4)' }}>Actif jusqu'au {endDate}</div>
             <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 8 }}>9 900 FCFA / mois · Renouvellement automatique</div>
@@ -87,9 +87,9 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
         {/* Header */}
         <div style={{ padding: '28px 28px 0', textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 0 20px rgba(124,58,237,.25)' }}>
-            <span style={{ color: '#7C3AED', fontSize: 22, fontWeight: 700 }}>K</span>
+            <span style={{ color: '#7C3AED', fontSize: 22, fontWeight: 600 }}>K</span>
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 6 }}>Passez à KAI Pro</div>
+          <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 6 }}>Passez à KAI Pro</div>
           <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 4 }}>Copilote opérationnel pour {roleLabels[role]}s</div>
           <div style={{ fontSize: 11, color: 'var(--t4)' }}>Standard : {quota.used}/{quota.limit} analyses utilisées ce mois</div>
         </div>
@@ -98,7 +98,7 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
         <div style={{ padding: '20px 28px' }}>
           <div className="rg-2" style={{ gap: 12, marginBottom: 20 }}>
             <div style={{ padding: '14px 16px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Standard</div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Standard</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.6 }}>
                 {quota.limit} analyses/mois<br />
                 Recommandations basiques<br />
@@ -106,7 +106,7 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
               </div>
             </div>
             <div style={{ padding: '14px 16px', background: 'rgba(124,58,237,.03)', borderRadius: 10, border: '1px solid rgba(124,58,237,.12)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#7C3AED', marginBottom: 8 }}>Pro</div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: '#7C3AED', marginBottom: 8 }}>Pro</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.6 }}>
                 Analyses illimitées<br />
                 Orchestration proactive<br />
@@ -116,7 +116,7 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
           </div>
 
           {/* Features */}
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Ce que KAI Pro fait pour vous</div>
+          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Ce que KAI Pro fait pour vous</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
             {features.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 11.5, color: 'var(--tx)', lineHeight: 1.5 }}>
@@ -132,7 +132,7 @@ export default function KaiGoldModal({ isOpen, onClose, role = 'pro' }) {
           {success ? (
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
               <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center', color: '#34C759' }}><Check size={24}/></div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#34C759' }}>KAI Pro activé avec succès</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#34C759' }}>KAI Pro activé avec succès</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 4 }}>Actif dans tous vos espaces</div>
             </div>
           ) : !confirming ? (

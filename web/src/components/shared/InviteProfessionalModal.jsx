@@ -50,7 +50,7 @@ export default function InviteProfessionalModal({ open, ao, professionals = [], 
 
         {/* Header */}
         <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #E5E5E5', flexShrink: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#111', marginBottom: 4 }}>Inviter un professionnel</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#111', marginBottom: 4 }}>Inviter un professionnel</div>
           <div style={{ fontSize: 12, color: '#6B6B6B' }}>{ao.titre || ao.title} · {ao.ref || ao.id}</div>
         </div>
 

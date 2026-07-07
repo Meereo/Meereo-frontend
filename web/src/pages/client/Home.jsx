@@ -27,7 +27,7 @@ export default function Home({ ctx }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><ClipboardList size={16}/></div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>Invitation projet</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Invitation projet</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>De {inv.sentByName || 'un professionnel'}</div>
                 </div>
               </div>
@@ -49,7 +49,7 @@ export default function Home({ ctx }) {
         /* ─── ÉTAT VIDE — Pas de projet ─── */
         <div style={{ maxWidth: 640, margin: '0 auto', paddingTop: 10 }}>
           <div style={{ marginBottom: 36 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {clientName.split(' ')[0] || ''}</div>
+            <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {clientName.split(' ')[0] || ''}</div>
             <div style={{ fontSize: 13, color: 'var(--t3)', marginTop: 4 }}>Votre espace MEEREO est prêt.</div>
           </div>
 
@@ -93,10 +93,10 @@ export default function Home({ ctx }) {
                 <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,.03) 0%, transparent 60%)', pointerEvents: 'none' }} />
                 <div style={{ position: 'relative' }}>
                   <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 14 }}>{eyebrow}</div>
-                  <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.5px', marginBottom: 10, lineHeight: 1.2 }}>{title}</div>
+                  <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 10, lineHeight: 1.2 }}>{title}</div>
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', lineHeight: 1.7, maxWidth: 440, marginBottom: 6 }}>{text}</div>
                   <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.35)', lineHeight: 1.6, maxWidth: 440, marginBottom: 24 }}>{action}</div>
-                  <button className="btn" style={{ background: '#fff', color: '#111', padding: '10px 20px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, border: 'none', cursor: 'pointer' }} onClick={() => cta === 'Rechercher un professionnel' ? setShowProDirectory(true) : setPage(ctaPage)}>{cta}</button>
+                  <button className="btn" style={{ background: '#fff', color: '#111', padding: '10px 20px', borderRadius: 10, fontSize: 12.5, fontWeight: 600, border: 'none', cursor: 'pointer' }} onClick={() => cta === 'Rechercher un professionnel' ? setShowProDirectory(true) : setPage(ctaPage)}>{cta}</button>
                 </div>
               </div>
             )
@@ -168,8 +168,8 @@ export default function Home({ ctx }) {
                 { n: '04', title: 'Recevoir la livraison', desc: 'Centraliser les PV, échanges et paiements.' },
               ].map(step => (
                 <div key={step.n} style={{ padding: '18px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--t4)', letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--t4)', letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>{step.desc}</div>
                 </div>
               ))}
@@ -187,7 +187,7 @@ export default function Home({ ctx }) {
                 <div key={btn.p} onClick={() => setPage(btn.p)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .15s' }}>
                   <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{btn.icon}</div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{btn.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{btn.label}</div>
                     <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{btn.desc}</div>
                   </div>
                 </div>
@@ -199,7 +199,7 @@ export default function Home({ ctx }) {
         /* ─── ÉTAT ACTIF — Projet en cours ─── */
         <div>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {clientName.split(' ')[0] || ''}</div>
+            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {clientName.split(' ')[0] || ''}</div>
             <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
           </div>
 
@@ -237,7 +237,7 @@ export default function Home({ ctx }) {
               <div style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>Progression globale</span>
-                  <span style={{ fontSize: 26, fontWeight: 800, color: proj.color || '#F59E0B', letterSpacing: '-1px', lineHeight: 1 }}>{projProgress}<span style={{ fontSize: 13, fontWeight: 500, opacity: .6 }}>%</span></span>
+                  <span style={{ fontSize: 26, fontWeight: 600, color: proj.color || '#F59E0B', letterSpacing: '-1px', lineHeight: 1 }}>{projProgress}<span style={{ fontSize: 13, fontWeight: 500, opacity: .6 }}>%</span></span>
                 </div>
                 <div className="dash-hero-v2-track" style={{ height: 3 }}>
                   <div className="dash-hero-v2-fill" style={{ width: projProgress + '%', background: proj.color || undefined }} />
@@ -252,7 +252,7 @@ export default function Home({ ctx }) {
                 ].map(([l, v]) => (
                   <div key={l} style={{ padding: '12px 14px', background: 'rgba(255,255,255,.04)', borderRadius: 9, border: '1px solid rgba(255,255,255,.06)' }}>
                     <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 5 }}>{l}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{v}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -313,7 +313,7 @@ export default function Home({ ctx }) {
               <div key={card.label} onClick={() => setPage(card.p)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .12s' }}>
                 <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{card.icon}</div>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{card.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{card.label}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{card.sub}</div>
                 </div>
               </div>
@@ -369,7 +369,7 @@ export default function Home({ ctx }) {
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: i < arr.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
                       {photo
                         ? <img src={photo} alt="" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                        : <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                        : <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                       }
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 600 }}>{m.nom}</div>

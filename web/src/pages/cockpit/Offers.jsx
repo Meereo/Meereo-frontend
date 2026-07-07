@@ -153,7 +153,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
           ].map(t => (
             <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, fontWeight: mainTab === t.key ? 700 : 500, color: mainTab === t.key ? 'var(--tx)' : 'var(--t3)', borderBottom: mainTab === t.key ? '2px solid var(--tx)' : '2px solid transparent', marginBottom: -1, transition: 'all .15s' }}>
               {t.icon} {t.label}
-              {t.count > 0 && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: mainTab === t.key ? 'var(--tx)' : 'var(--s2)', color: mainTab === t.key ? '#fff' : 'var(--t3)' }}>{t.count}</span>}
+              {t.count > 0 && <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 100, background: mainTab === t.key ? 'var(--tx)' : 'var(--s2)', color: mainTab === t.key ? '#fff' : 'var(--t3)' }}>{t.count}</span>}
             </button>
           ))}
         </div>
@@ -175,7 +175,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
             <>
               {contratsActifs.length > 0 && (
                 <>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Contrats actifs ({contratsActifs.length})</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Contrats actifs ({contratsActifs.length})</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
                     {contratsActifs.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} />)}
                   </div>
@@ -185,7 +185,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     <Archive size={12} color="var(--t4)" />
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Archives ({contratsArchives.length})</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Archives ({contratsArchives.length})</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.45 }}>
                     {contratsArchives.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} archived />)}
@@ -209,7 +209,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
           {filtered.map(o => (
             <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
               {(() => { const av = getOfferAvatar(o); return (
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : o.color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: av?.type === 'color' ? '#fff' : o.color, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : o.color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: av?.type === 'color' ? '#fff' : o.color, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
                   {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
                   {o.lu === false && <div style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: 'var(--tx)', border: '2px solid var(--surface-1)' }} />}
                 </div>
@@ -229,12 +229,12 @@ export default function Offers({ showToast, openModal, onNavigate }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 14px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--s2)' }}>
                 <Archive size={11} color="var(--t4)" />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Archivées ({filteredArchived.length})</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Archivées ({filteredArchived.length})</span>
               </div>
               {filteredArchived.map(o => (
                 <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', opacity: 0.45, background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
                   {(() => { const av = getOfferAvatar(o); return (
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
                       {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
                     </div>
                   )})()}
@@ -283,12 +283,12 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {/* En-tête entreprise */}
               {(() => { const av = getOfferAvatar(selected); return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 14, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
                   {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (selected.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                    <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>{selected.entreprise}</span>
+                    <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>{selected.entreprise}</span>
                     {selected.supplierRole && <span style={getRoleBadgeStyle(selected.supplierRole)}>{getRoleLabel(selected.supplierRole)}</span>}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>{selected.nbRef || 0} projets à {(selected.certifs || []).join(' à ') || 'Aucune certification'}</div>
@@ -303,7 +303,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                           <Star key={i} size={15} fill={i < Math.round(note) ? '#F59E0B' : 'none'} color="#F59E0B" strokeWidth={1.5}/>
                         ))}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800 }}>{note > 0 ? note + '/5' : '—'}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{note > 0 ? note + '/5' : '—'}</div>
                       <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)' }}>{inter?.nbAvis || 0} avis</div>
                     </div>
                   )
@@ -322,14 +322,14 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {/* Montant */}
               <div style={{ padding: '18px 20px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', borderRadius: 14, color: '#fff', marginBottom: 20 }}>
                 <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant proposé</div>
-                <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatShort(parseBudget(selected.montant))}</div>
+                <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatShort(parseBudget(selected.montant))}</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selected.delai}</div>
               </div>
 
               {/* Message prestataire */}
               {selected.message && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du prestataire</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du prestataire</div>
                   <div style={{ fontSize: 13, color: 'var(--tx)', lineHeight: 1.65, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', borderLeft: '3px solid var(--tx)' }}>"{selected.message}"</div>
                 </div>
               )}
@@ -337,7 +337,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {/* Mémoire technique / Description dûtaillée */}
               {(selected.technique || selected.description) && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Détails techniques</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Détails techniques</div>
                   <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.65, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                     {selected.technique || selected.description}
                   </div>
@@ -346,7 +346,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 
               {/* Documents de l'offre — toujours visible */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Documents de l'offre {selected.docs?.length > 0 ? `(${selected.docs.length})` : ''}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Documents de l'offre {selected.docs?.length > 0 ? `(${selected.docs.length})` : ''}</div>
                 {selected.docs?.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {selected.docs.map((d, i) => {
@@ -368,7 +368,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                       }
                       return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
-                        <div style={{ width: 30, height: 30, borderRadius: 7, background: fileUrl ? 'rgba(59,130,246,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: fileUrl ? '#3B82F6' : 'var(--t2)', flexShrink: 0 }}>{(d.type || 'PDF').toUpperCase()}</div>
+                        <div style={{ width: 30, height: 30, borderRadius: 7, background: fileUrl ? 'rgba(59,130,246,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: fileUrl ? '#3B82F6' : 'var(--t2)', flexShrink: 0 }}>{(d.type || 'PDF').toUpperCase()}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 500 }}>{d.n || d.name || 'Document'}</div>
                           <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.size || (fileUrl ? 'Disponible' : 'Non disponible')}</div>
@@ -397,7 +397,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {isClient ? (
                   // Profil complet — visible dès la réception de l'offre
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du prestataire</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Profil du prestataire</div>
                     <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                       {(() => {
                         const s = selected.supplier
@@ -408,10 +408,10 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <div>
-                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{ob.entreprise || s?.company || selected.entreprise}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{ob.entreprise || s?.company || selected.entreprise}</div>
                                 {metier && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{metier}{ville ? ' à ' + ville : ''}</div>}
                               </div>
-                              {ob.rccm && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+                              {ob.rccm && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
                             </div>
                             {ob.bio && <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6 }}>{ob.bio}</div>}
                             {ob.services?.length > 0 && (
@@ -438,7 +438,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 // Vue pro : affiche les infos du client si l'offre est acceptée
                 selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Informations du client</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Informations du client</div>
                     <div style={{ padding: '16px 18px', background: 'rgba(52,199,89,.04)', borderRadius: 12, border: '1px solid rgba(52,199,89,.15)' }}>
                       {(() => {
                         const owner = selected.aoOwner
@@ -447,9 +447,9 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                         return (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{initials}</div>
                               <div>
-                                <div style={{ fontSize: 13, fontWeight: 700 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
                                 {ob.ville && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ob.ville}</div>}
                               </div>
                             </div>
@@ -473,7 +473,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 if (!ao) return null
                 return (
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Appel d'offres lié</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Appel d'offres lié</div>
                     <div style={{ padding: '12px 16px', background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border-card)', display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
@@ -482,7 +482,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                         <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ao.title || ao.titre}</div>
                         <div style={{ fontSize: 10, color: 'var(--t4)' }}>{ao.lot || ao.requestedTrade || ''}{ao.budget ? ' à ' + ao.budget : ''}</div>
                       </div>
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: ao.status === 'open' ? 'rgba(52,199,89,.08)' : ao.status === 'attributed' ? 'rgba(59,130,246,.08)' : ao.status === 'cancelled_by_owner' ? 'rgba(245,158,11,.08)' : 'rgba(107,114,128,.08)', color: ao.status === 'open' ? 'var(--ok)' : ao.status === 'attributed' ? '#3B82F6' : ao.status === 'cancelled_by_owner' ? 'var(--wrn)' : 'var(--t4)' }}>{ao.status === 'open' ? 'Ouvert' : ao.status === 'attributed' ? 'Attribué' : ao.status === 'cancelled_by_owner' ? 'Annulé' : ao.status === 'archived' ? 'Archivé' : 'Clôturé'}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: ao.status === 'open' ? 'rgba(52,199,89,.08)' : ao.status === 'attributed' ? 'rgba(59,130,246,.08)' : ao.status === 'cancelled_by_owner' ? 'rgba(245,158,11,.08)' : 'rgba(107,114,128,.08)', color: ao.status === 'open' ? 'var(--ok)' : ao.status === 'attributed' ? '#3B82F6' : ao.status === 'cancelled_by_owner' ? 'var(--wrn)' : 'var(--t4)' }}>{ao.status === 'open' ? 'Ouvert' : ao.status === 'attributed' ? 'Attribué' : ao.status === 'cancelled_by_owner' ? 'Annulé' : ao.status === 'archived' ? 'Archivé' : 'Clôturé'}</span>
                     </div>
                   </div>
                 )
@@ -492,8 +492,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {selected.note && (
                 <div style={{ marginBottom: 20, padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', borderLeft: '3px solid var(--tx)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 10, fontWeight: 800, color: '#7C3AED' }}>K</span></div>
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Analyse <span style={{ color: '#7C3AED' }}>KAI</span></span>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 10, fontWeight: 600, color: '#7C3AED' }}>K</span></div>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Analyse <span style={{ color: '#7C3AED' }}>KAI</span></span>
                   </div>
                   <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{selected.note}</div>
                 </div>
@@ -509,7 +509,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     <button className="btn" style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-1)', color: 'var(--t2)', border: '1px solid var(--border-card)', fontWeight: 500, fontSize: 12 }} onClick={() => { setInfoModal(selected); setInfoMessage('') }}>Demander info</button>
                   )}
                   {selected.statut !== OFFER_STATUS.ACCEPTED && (
-                    <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontWeight: 700, fontSize: 13 }} onClick={() => decide(selected.id, 'acceptee')}>Accepter l'offre</button>
+                    <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontWeight: 600, fontSize: 13 }} onClick={() => decide(selected.id, 'acceptee')}>Accepter l'offre</button>
                   )}
                 </div>
               ) : (
@@ -532,7 +532,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInfoModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Demander des informations</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>Demander des informations</div>
               <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 4 }}>à {infoModal.entreprise} — concernant l'offre {formatShort(parseBudget(infoModal.montant))}</div>
             </div>
             <div style={{ padding: '18px 22px' }}>
@@ -630,15 +630,15 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
   const av = getOfferAvatar(o)
   return (
     <div style={{ padding: '18px 20px', background: archived ? 'var(--s2)' : 'var(--surface-1)', border: '1px solid', borderColor: archived ? 'var(--border)' : 'rgba(52,199,89,.15)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-      <div style={{ width: 46, height: 46, borderRadius: 12, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
+      <div style={{ width: 46, height: 46, borderRadius: 12, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
         {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>{o.entreprise}</span>
-          {archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>}
-          {!archived && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>Contrat actif</span>}
-          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.2px' }}>{o.entreprise}</span>
+          {archived && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>}
+          {!archived && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>Contrat actif</span>}
+          {inter?.verified && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
         </div>
         <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 8 }}>
           {o.lot && <span>{o.lot}</span>}
@@ -648,7 +648,7 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
         <div style={{ display: 'flex', gap: 20 }}>
           <div>
             <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Montant</div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-1px' }}>{formatShort(parseBudget(o.montant))}</div>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-1px' }}>{formatShort(parseBudget(o.montant))}</div>
           </div>
           {o.delai && (
             <div>
@@ -661,7 +661,7 @@ function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, ar
               <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 2 }}>Note</div>
               <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                 {Array.from({length: 5}, (_, i) => <Star key={i} size={11} fill={i < Math.round(inter.note || 0) ? '#F59E0B' : 'none'} color="#F59E0B" strokeWidth={1.5}/>)}
-                <span style={{ fontSize: 11, fontWeight: 700, marginLeft: 3 }}>{inter.note || '—'}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 3 }}>{inter.note || '—'}</span>
               </div>
             </div>
           )}

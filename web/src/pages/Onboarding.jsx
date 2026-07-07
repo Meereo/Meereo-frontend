@@ -700,7 +700,7 @@ export default function Onboarding() {
             <div style={{ background: '#fff', borderRadius: 16, width: 420, maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden', animation: 'modalIn .18s ease' }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '24px 24px 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.3px' }}>Reinitialiser votre mot de passe</h3>
+                  <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>Reinitialiser votre mot de passe</h3>
                   <button onClick={() => setShowForgot(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t4)' }}>x</button>
                 </div>
                 {!forgotSent ? (
@@ -714,7 +714,7 @@ export default function Onboarding() {
                 ) : (
                   <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
                     <div style={{ fontSize: 32, marginBottom: 12 }}>&#9989;</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>Email envoyé</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 6 }}>Email envoyé</div>
                     <p style={{ fontSize: 12, color: 'var(--t4)', lineHeight: 1.6 }}>Si un compte existe avec <strong>{forgotEmail}</strong>, vous recevrez un lien de réinitialisation dans quelques minutes. Pensez à vérifier vos spams.</p>
                   </div>
                 )}
@@ -723,10 +723,10 @@ export default function Onboarding() {
                 {!forgotSent ? (
                   <>
                     <button onClick={() => setShowForgot(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: 'var(--t3)', cursor: 'pointer' }}>Annuler</button>
-                    <button onClick={() => { if (!forgotEmail.trim() || !forgotEmail.includes('@')) { showToast('Saisissez un email valide', 'orange'); return } setForgotSent(true) }} disabled={!forgotEmail.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: forgotEmail.trim() ? 'var(--tx)' : 'var(--s3)', fontSize: 12, fontWeight: 700, fontFamily: 'var(--f)', color: forgotEmail.trim() ? '#fff' : 'var(--t4)', cursor: 'pointer' }}>Envoyer le lien</button>
+                    <button onClick={() => { if (!forgotEmail.trim() || !forgotEmail.includes('@')) { showToast('Saisissez un email valide', 'orange'); return } setForgotSent(true) }} disabled={!forgotEmail.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: forgotEmail.trim() ? 'var(--tx)' : 'var(--s3)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: forgotEmail.trim() ? '#fff' : 'var(--t4)', cursor: 'pointer' }}>Envoyer le lien</button>
                   </>
                 ) : (
-                  <button onClick={() => { setShowForgot(false); setForgotSent(false) }} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--tx)', fontSize: 12, fontWeight: 700, fontFamily: 'var(--f)', color: '#fff', cursor: 'pointer' }}>Fermer</button>
+                  <button onClick={() => { setShowForgot(false); setForgotSent(false) }} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--tx)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: '#fff', cursor: 'pointer' }}>Fermer</button>
                 )}
               </div>
             </div>

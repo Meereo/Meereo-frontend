@@ -297,7 +297,7 @@ export default function Client() {
           )}
           {activeClientProjects.length <= 1 && <div style={{ fontSize: 8, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--t4)', marginBottom: 4 }}>Projet suivi</div>}
           {proj?.status === 'stopped' || proj?.status === 'archived' ? (
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#FF9500', marginBottom: 4 }}>Projet arrêté</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#FF9500', marginBottom: 4 }}>Projet arrêté</div>
           ) : (
             <>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{proj?.nom}</div>
@@ -320,7 +320,7 @@ export default function Client() {
               {Object.entries(PAGES).filter(([, v]) => v.group === g).map(([k, v]) => (
                 <button key={k} className={`fourni-ni ${page === k ? 'on' : ''}`} onClick={() => { setPage(k); setSidebarOpen(false) }}>
                   <span style={{ color: { home:'#191c1d', avancement:'#EA580C', budget:'#16A34A', messages:'#7C3AED', decisions:'#F59E0B', documents:'#0891B2', ao:'#DC2626', offres:'#F59E0B', marches:'#16A34A', marketplace:'#0891B2', fournisseurs:'#2563EB', commandes:'#EA580C', parametres:'#6B7280' }[k] || '#6B7280' }}>{v.icon}</span> {v.label}
-                  {v.badge && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: v.badgeColor + '18', color: v.badgeColor }}>{v.badge}</span>}
+                  {v.badge && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: v.badgeColor + '18', color: v.badgeColor }}>{v.badge}</span>}
                 </button>
               ))}
             </div>
@@ -371,7 +371,7 @@ export default function Client() {
             <div style={{ margin: '0 0 0 0', padding: '12px 24px', background: 'rgba(255,149,0,.08)', borderBottom: '1px solid rgba(255,149,0,.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
               <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FF9500' }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#FF9500' }}>
                   {proj.status === 'stopped' ? 'Projet arrêté' : 'Projet archivé'}
                 </span>
                 <span style={{ fontSize: 12, color: 'var(--t3)', marginLeft: 8 }}>
@@ -390,7 +390,7 @@ export default function Client() {
                   <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,149,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
                   </div>
-                  <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Arrêter ce projet ?</div>
+                  <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Arrêter ce projet ?</div>
                   <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55 }}>Le projet sera marqué comme <strong>arrêté</strong> pour vous et votre prestataire. Les données restent accessibles dans les archives.</div>
                   <div style={{ fontSize: 12, fontWeight: 600, marginTop: 8 }}>« {proj?.nom} »</div>
                 </div>
@@ -461,14 +461,14 @@ export default function Client() {
             return (
               <div style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width, background: '#fff', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,.2)', maxHeight: 340, overflowY: 'auto', zIndex: 9999, fontFamily: 'var(--f)' }}>
                 {results.length > 0 ? (<>
-                  <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
+                  <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
                   {results.map((p, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => { setTopSearchOpen(false); setTopSearch(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} onMouseOver={e => e.currentTarget.style.background = '#f5f5f7'} onMouseOut={e => e.currentTarget.style.background = ''}>
                       <ProAvatar nom={p.nom} size={32} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                           <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111' }}>{p.nom}</span>
-                          {p.verified && <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: '#16A34A', padding: '1px 4px', borderRadius: 100, fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}><Check size={8}/></span>}
+                          {p.verified && <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: '#16A34A', padding: '1px 4px', borderRadius: 100, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}><Check size={8}/></span>}
                         </div>
                         <div style={{ fontSize: 10.5, color: '#777', display: 'flex', alignItems: 'center', gap: 2 }}>{p.metier} · {p.ville} · <Star size={9} fill="#F59E0B" color="#F59E0B" strokeWidth={1.5}/> {p.note}</div>
                       </div>

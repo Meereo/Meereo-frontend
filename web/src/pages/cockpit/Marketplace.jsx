@@ -340,7 +340,7 @@ export default function Marketplace({ showToast, commerceScope }) {
       {/* â”€â”€ Topbar MeereoShop â”€â”€ */}
       <div style={{ background: 'linear-gradient(150deg, #0a0b0c 0%, #1a1d1e 50%, #0a0b0c 100%)', flexShrink: 0, padding: '18px 28px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.5px', whiteSpace: 'nowrap' }}>Meereo<span style={{ color: '#F59E0B' }}>Shop</span></div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-.5px', whiteSpace: 'nowrap' }}>Meereo<span style={{ color: '#F59E0B' }}>Shop</span></div>
           <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, padding: '10px 16px', flex: 1, maxWidth: 520, transition: 'all .15s' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input value={search} onChange={e => { setSearch(e.target.value); if (e.target.value) setActiveCat('all') }} placeholder="Rechercher materiaux, mobilier, equipements..." style={{ background: 'none', border: 'none', outline: 'none', fontSize: 13.5, fontFamily: 'var(--f)', color: '#fff', width: '100%' }} />
@@ -348,18 +348,18 @@ export default function Marketplace({ showToast, commerceScope }) {
           <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginLeft: 'auto' }}>
             {[{ v: MKT_ITEMS.length, l: 'Produits' }, { v: fournisseurs.length, l: 'Fournisseurs' }].map((s, i) => (
               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{s.v}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', lineHeight: 1 }}>{s.v}</div>
                 <div style={{ fontSize: 8.5, fontWeight: 600, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.6px', marginTop: 3 }}>{s.l}</div>
               </div>
             ))}
           </div>
           <button onClick={() => setShowCommandes(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 10, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', color: '#fff', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative' }}>
             <Package size={13}/> Commandes
-            {commandes.filter(c => c.step < 5).length > 0 && <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 16, height: 16, borderRadius: 100, background: '#F59E0B', color: '#fff', fontSize: 8, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{commandes.filter(c => c.step < 5).length}</span>}
+            {commandes.filter(c => c.step < 5).length > 0 && <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 16, height: 16, borderRadius: 100, background: '#F59E0B', color: '#fff', fontSize: 8, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{commandes.filter(c => c.step < 5).length}</span>}
           </button>
-          <button onClick={() => setShowCart(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, background: '#F59E0B', color: '#fff', fontSize: 12.5, fontWeight: 700, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', position: 'relative', whiteSpace: 'nowrap', boxShadow: '0 2px 12px rgba(245,158,11,.3)' }}>
+          <button onClick={() => setShowCart(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, background: '#F59E0B', color: '#fff', fontSize: 12.5, fontWeight: 600, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', position: 'relative', whiteSpace: 'nowrap', boxShadow: '0 2px 12px rgba(245,158,11,.3)' }}>
             <ShoppingCart size={13}/> Panier
-            {cartCount > 0 && <span style={{ position: 'absolute', top: -7, right: -7, minWidth: 18, height: 18, borderRadius: 100, background: '#DC2626', color: '#fff', fontSize: 9, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid #0a0b0c', boxShadow: '0 2px 8px rgba(220,38,38,.4)' }}>{cartCount}</span>}
+            {cartCount > 0 && <span style={{ position: 'absolute', top: -7, right: -7, minWidth: 18, height: 18, borderRadius: 100, background: '#DC2626', color: '#fff', fontSize: 9, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid #0a0b0c', boxShadow: '0 2px 8px rgba(220,38,38,.4)' }}>{cartCount}</span>}
           </button>
         </div>
         {/* Category pills inside header */}
@@ -377,8 +377,8 @@ export default function Marketplace({ showToast, commerceScope }) {
         {/* Sidebar fournisseurs */}
         <div style={{ width: 210, flexShrink: 0, borderRight: '1px solid var(--border)', overflowY: 'auto', background: 'var(--surface-1)' }}>
           <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--t4)', marginBottom: 10 }}>Fournisseurs</div>
-            <div onClick={() => setActiveFournisseur(null)} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--tx)', background: !activeFournisseur ? 'var(--s2)' : 'transparent', borderRadius: 8, marginBottom: 4, transition: 'background .12s' }}>
+            <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--t4)', marginBottom: 10 }}>Fournisseurs</div>
+            <div onClick={() => setActiveFournisseur(null)} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--tx)', background: !activeFournisseur ? 'var(--s2)' : 'transparent', borderRadius: 8, marginBottom: 4, transition: 'background .12s' }}>
               <Store size={13}/> Tous les fournisseurs <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500 }}>({allProducts.length})</span>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function Marketplace({ showToast, commerceScope }) {
               const initials = f.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
               return (
                 <div key={f} onClick={() => setActiveFournisseur(active ? null : f)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', cursor: 'pointer', borderRadius: 8, background: active ? 'var(--s2)' : 'transparent', transition: 'background .12s', marginBottom: 2 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: active ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: active ? '#fff' : 'var(--t3)', flexShrink: 0, transition: 'all .12s' }}>{initials}</div>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: active ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: active ? '#fff' : 'var(--t3)', flexShrink: 0, transition: 'all .12s' }}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 11.5, fontWeight: active ? 700 : 500, color: active ? 'var(--tx)' : 'var(--t2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f}</div>
                     <div style={{ fontSize: 9.5, color: 'var(--t4)' }}>{count} produit{count > 1 ? 's' : ''}</div>
@@ -409,17 +409,17 @@ export default function Marketplace({ showToast, commerceScope }) {
             <div onClick={() => setActiveCat('mobilier')} style={{ height: 150, borderRadius: 14, overflow: 'hidden', position: 'relative', cursor: 'pointer', background: 'linear-gradient(135deg, #1a1d1e 0%, #2d3436 50%, #191c1d 100%)' }}>
               <div style={{ position: 'absolute', inset: 0 }} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 28px' }}>
-                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '3px 10px', borderRadius: 100, background: '#F59E0B', color: '#fff', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 8 }}><Flame size={9}/> Promo du mois</span>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.4px', lineHeight: 1.25, marginBottom: 5 }}>Mobilier de bureau<br />jusqu'a -20%</div>
+                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '3px 10px', borderRadius: 100, background: '#F59E0B', color: '#fff', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 8 }}><Flame size={9}/> Promo du mois</span>
+                <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-.4px', lineHeight: 1.25, marginBottom: 5 }}>Mobilier de bureau<br />jusqu'a -20%</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', marginBottom: 10 }}>Equipez vos espaces de travail</div>
-                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 11, fontWeight: 700, backdropFilter: 'blur(6px)' }}>Voir les offres â†’</span>
+                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 11, fontWeight: 600, backdropFilter: 'blur(6px)' }}>Voir les offres â†’</span>
               </div>
             </div>
             <div onClick={() => setActiveCat('gros-oeuvre')} style={{ height: 150, borderRadius: 14, overflow: 'hidden', position: 'relative', cursor: 'pointer', background: 'linear-gradient(135deg, #2d3436 0%, #191c1d 50%, #0a0b0c 100%)' }}>
               <div style={{ position: 'absolute', inset: 0 }} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '20px 22px' }}>
-                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '3px 10px', borderRadius: 100, background: 'var(--err)', color: '#fff', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 8 }}><Zap size={9}/> Stock limite</span>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-.3px', lineHeight: 1.25, marginBottom: 5 }}>Gros Oeuvre<br />Livraison 24h</div>
+                <span style={{ display: 'inline-flex', width: 'fit-content', padding: '3px 10px', borderRadius: 100, background: 'var(--err)', color: '#fff', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 8 }}><Zap size={9}/> Stock limite</span>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', letterSpacing: '-.3px', lineHeight: 1.25, marginBottom: 5 }}>Gros Oeuvre<br />Livraison 24h</div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>Beton, agglos, acier</div>
               </div>
             </div>
@@ -430,17 +430,17 @@ export default function Marketplace({ showToast, commerceScope }) {
         {activeCat === 'all' && !search && !activeFournisseur && (
           <div style={{ marginBottom: 22 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.3px' }}>Produits sponsorises</div>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(245,158,11,.1)', color: '#F59E0B' }}>AD</span>
+              <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-.3px' }}>Produits sponsorises</div>
+              <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(245,158,11,.1)', color: '#F59E0B' }}>AD</span>
             </div>
             <div className="rg-4" style={{ gap: 10 }}>
               {MKT_ITEMS.filter(m => m.sponsorise).map(m => (
                 <div key={m.id} onClick={() => { setDetail(m); setDetailQty(1) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--surface-1)', border: '1px solid rgba(245,158,11,.15)', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }} onMouseOver={e => e.currentTarget.style.borderColor = '#F59E0B'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,.15)'}>
                   <img src={m.img} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{m.marque}</div>
-                    <div style={{ fontSize: 12, fontWeight: 800, marginTop: 2 }}>{m.prix}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2 }}>{m.prix}</div>
                   </div>
                 </div>
               ))}
@@ -452,16 +452,16 @@ export default function Marketplace({ showToast, commerceScope }) {
         {activeCat === 'all' && !search && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.3px', display: 'flex', alignItems: 'center', gap: 5 }}><Zap size={15}/> Ventes Flash <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--err)', background: 'rgba(220,38,38,.08)', padding: '3px 9px', borderRadius: 100, marginLeft: 4 }}>Offres limitees</span></div>
+              <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px', display: 'flex', alignItems: 'center', gap: 5 }}><Zap size={15}/> Ventes Flash <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--err)', background: 'rgba(220,38,38,.08)', padding: '3px 9px', borderRadius: 100, marginLeft: 4 }}>Offres limitees</span></div>
             </div>
             <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
               {flashItems.map(m => (
                 <div key={m.id} onClick={() => { setDetail(m); setDetailQty(1) }} style={{ flexShrink: 0, width: 170, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', transition: 'all .15s' }}>
                   <img src={m.img} alt="" style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ padding: '10px 10px 12px' }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 100, background: 'var(--err)', color: '#fff', marginBottom: 5, display: 'inline-block' }}>-{m.flashRemise || m.remise}%</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--err)', color: '#fff', marginBottom: 5, display: 'inline-block' }}>-{m.flashRemise || m.remise}%</span>
                     <div style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.35, marginBottom: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.nom}</div>
-                    <div><span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--err)' }}>{m.prix}</span></div>
+                    <div><span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--err)' }}>{m.prix}</span></div>
                   </div>
                 </div>
               ))}
@@ -495,15 +495,15 @@ export default function Marketplace({ showToast, commerceScope }) {
               <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--s2)' }}>
                 <img src={m.img} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block', transition: 'transform .4s ease' }} onMouseOver={e => e.target.style.transform = 'scale(1.06)'} onMouseOut={e => e.target.style.transform = 'scale(1)'} onError={e => { e.target.style.display = 'none' }} />
                 <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {m.remise > 0 && <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 100, background: 'var(--err)', color: '#fff', backdropFilter: 'blur(8px)' }}>-{m.remise}%</span>}
+                  {m.remise > 0 && <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: 'var(--err)', color: '#fff', backdropFilter: 'blur(8px)' }}>-{m.remise}%</span>}
                 </div>
-                <span style={{ position: 'absolute', top: 8, right: 8, padding: '3px 8px', borderRadius: 100, fontSize: 8.5, fontWeight: 700, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,.85)', color: dispoColor(m.dispo) }}>
+                <span style={{ position: 'absolute', top: 8, right: 8, padding: '3px 8px', borderRadius: 100, fontSize: 8.5, fontWeight: 600, backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,.85)', color: dispoColor(m.dispo) }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: dispoColor(m.dispo), display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />{m.dispo}
                 </span>
               </div>
               <div style={{ padding: '12px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: 10, color: 'var(--tx)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.3px', marginBottom: 3 }}>{m.marque}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '-.2px', lineHeight: 1.35, marginBottom: 8, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.nom}</div>
+                <div style={{ fontSize: 10, color: 'var(--tx)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.3px', marginBottom: 3 }}>{m.marque}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '-.2px', lineHeight: 1.35, marginBottom: 8, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.nom}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 4 }}>
                   <span style={{ display: 'inline-flex', gap: 1, color: '#F59E0B' }}>{Array.from({length: Math.round(m.note)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}</span>
                   <span style={{ fontSize: 10, color: 'var(--t4)', marginLeft: 3 }}>({m.nb_avis})</span>
@@ -511,10 +511,10 @@ export default function Marketplace({ showToast, commerceScope }) {
                 <div style={{ fontSize: 10, color: 'var(--ok)', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 3 }}><Check size={9}/> {m.livraison}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 'auto', gap: 8 }}>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-.4px', lineHeight: 1 }}>{m.prix}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.4px', lineHeight: 1 }}>{m.prix}</div>
                     <div style={{ fontSize: 9.5, color: 'var(--t4)', marginTop: 2 }}>{m.unit}</div>
                   </div>
-                  <button onClick={e => { e.stopPropagation(); addToCart(m) }} style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--tx)', color: '#fff', fontSize: 15, fontWeight: 700, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .12s' }} onMouseOver={e => e.currentTarget.style.transform = 'scale(1.08)'} onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>+</button>
+                  <button onClick={e => { e.stopPropagation(); addToCart(m) }} style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--tx)', color: '#fff', fontSize: 15, fontWeight: 600, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .12s' }} onMouseOver={e => e.currentTarget.style.transform = 'scale(1.08)'} onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>+</button>
                 </div>
               </div>
             </div>
@@ -529,7 +529,7 @@ export default function Marketplace({ showToast, commerceScope }) {
         <div onClick={() => setShowCart(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.3)', zIndex: 1500 }} />
         <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 360, background: 'var(--surface-1)', borderLeft: '1px solid var(--border)', boxShadow: '0 0 40px rgba(0,0,0,.12)', zIndex: 1501, display: 'flex', flexDirection: 'column', animation: 'cartSlideIn .25s ease' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><ShoppingCart size={15}/> Mon panier</span>
+          <span style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><ShoppingCart size={15}/> Mon panier</span>
           <button onClick={() => setShowCart(false)} style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--s2)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t2)' }}>À</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -540,10 +540,10 @@ export default function Marketplace({ showToast, commerceScope }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nom}</div>
                 <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{c.fournisseur}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, marginTop: 2 }}>{c.prix} {c.unit}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>{c.prix} {c.unit}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
                   <button onClick={() => changeQty(c.id, -1)} style={{ width: 22, height: 22, borderRadius: 5, background: 'var(--surface-1)', border: 'none', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âˆ’</button>
-                  <span style={{ fontSize: 12, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{c.qty}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, minWidth: 20, textAlign: 'center' }}>{c.qty}</span>
                   <button onClick={() => changeQty(c.id, 1)} style={{ width: 22, height: 22, borderRadius: 5, background: 'var(--surface-1)', border: 'none', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                 </div>
               </div>
@@ -555,10 +555,10 @@ export default function Marketplace({ showToast, commerceScope }) {
           <div style={{ padding: '14px 18px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <span style={{ fontSize: 12, color: 'var(--t2)' }}>Sous-total</span>
-              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.4px' }}>{fmt(cartTotal)}</span>
+              <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>{fmt(cartTotal)}</span>
             </div>
-            <button onClick={() => { setShowCheckout(true); setPayMethod(null) }} style={{ width: '100%', padding: 11, borderRadius: 8, background: 'var(--tx)', color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', marginBottom: 7 }}>Commander — {fmt(cartTotal)} â†’</button>
-            <button onClick={() => { showToast && showToast('Devis multi-fournisseurs envoye'); setCart([]); setShowCart(false) }} style={{ width: '100%', padding: 9, borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 12, fontWeight: 700, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer' }}>Demander un devis groupe</button>
+            <button onClick={() => { setShowCheckout(true); setPayMethod(null) }} style={{ width: '100%', padding: 11, borderRadius: 8, background: 'var(--tx)', color: '#fff', fontSize: 13, fontWeight: 600, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', marginBottom: 7 }}>Commander — {fmt(cartTotal)} â†’</button>
+            <button onClick={() => { showToast && showToast('Devis multi-fournisseurs envoye'); setCart([]); setShowCart(false) }} style={{ width: '100%', padding: 9, borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer' }}>Demander un devis groupe</button>
           </div>
         )}
       </div>
@@ -571,25 +571,25 @@ export default function Marketplace({ showToast, commerceScope }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setDetail(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 720, maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 15, fontWeight: 700 }}>Detail produit</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Detail produit</span>
               <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
             </div>
             <div className="rg-2" style={{ minHeight: 420 }}>
               {/* Image */}
               <div style={{ background: 'var(--s2)', position: 'relative', overflow: 'hidden' }}>
                 <img src={detail.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none' }} />
-                {detail.remise > 0 && <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 100, background: 'var(--err)', color: '#fff' }}>-{detail.remise}%</span>}
+                {detail.remise > 0 && <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 100, background: 'var(--err)', color: '#fff' }}>-{detail.remise}%</span>}
               </div>
               {/* Info */}
               <div style={{ padding: '22px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ fontSize: 11, color: 'var(--tx)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.4px' }}>{detail.marque} · {detail.fournisseur}</div>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.4px', lineHeight: 1.25 }}>{detail.nom}</div>
+                <div style={{ fontSize: 11, color: 'var(--tx)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>{detail.marque} · {detail.fournisseur}</div>
+                <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', lineHeight: 1.25 }}>{detail.nom}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ display: 'inline-flex', gap: 1, color: '#F59E0B' }}>{Array.from({length: Math.round(detail.note)}, (_, i) => <Star key={i} size={13} fill="#F59E0B" strokeWidth={0}/>)}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--t3)' }}>{detail.nb_avis} avis</span>
                 </div>
                 <div style={{ height: 1, background: 'var(--border)' }} />
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.6px' }}>{detail.prix}<span style={{ fontSize: 12, fontWeight: 500, color: 'var(--t3)', marginLeft: 6 }}>{detail.unit}</span></div>
+                <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.6px' }}>{detail.prix}<span style={{ fontSize: 12, fontWeight: 500, color: 'var(--t3)', marginLeft: 6 }}>{detail.unit}</span></div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: dispoColor(detail.dispo), display: 'inline-block' }} />
                   <span style={{ color: dispoColor(detail.dispo), fontWeight: 600 }}>{detail.dispo}</span>
@@ -605,7 +605,7 @@ export default function Marketplace({ showToast, commerceScope }) {
                 {/* Documentation technique */}
                 {(detail.ficheUrl || detail.noticeUrl || detail.certificatUrl || detail.garantieUrl) && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5, background: 'var(--s2)', borderRadius: 8, padding: '12px 14px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 4 }}>Documentation</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 4 }}>Documentation</div>
                     {detail.ficheUrl && <a href={detail.ficheUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>📄 Fiche technique</a>}
                     {detail.noticeUrl && <a href={detail.noticeUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>📋 Notice d'installation</a>}
                     {detail.certificatUrl && <a href={detail.certificatUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>✅ Certificat de conformité</a>}
@@ -620,16 +620,16 @@ export default function Marketplace({ showToast, commerceScope }) {
                   <span style={{ fontSize: 12, color: 'var(--t2)' }}>Qte :</span>
                   <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-card)', borderRadius: 8, overflow: 'hidden' }}>
                     <button onClick={() => setDetailQty(q => Math.max(1, q - 1))} style={{ width: 32, height: 32, background: 'var(--s2)', border: 'none', cursor: 'pointer', fontSize: 14 }}>âˆ’</button>
-                    <span style={{ width: 36, textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{detailQty}</span>
+                    <span style={{ width: 36, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{detailQty}</span>
                     <button onClick={() => setDetailQty(q => q + 1)} style={{ width: 32, height: 32, background: 'var(--s2)', border: 'none', cursor: 'pointer', fontSize: 14 }}>+</button>
                   </div>
                 </div>
                 {/* CTA */}
                 <div style={{ display: 'flex', gap: 8 }}>
                   {detail.dispo !== 'Sur devis' && (
-                    <button onClick={() => { addToCart(detail, detailQty); setDetail(null) }} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: '#F59E0B', color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><ShoppingCart size={13}/> Ajouter au panier</button>
+                    <button onClick={() => { addToCart(detail, detailQty); setDetail(null) }} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: '#F59E0B', color: '#fff', fontSize: 13, fontWeight: 600, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><ShoppingCart size={13}/> Ajouter au panier</button>
                   )}
-                  <button onClick={() => { demanderDevis(detail); setDetail(null) }} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 13, fontWeight: 700, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><ClipboardList size={13}/> Demander un devis</button>
+                  <button onClick={() => { demanderDevis(detail); setDetail(null) }} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 13, fontWeight: 600, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><ClipboardList size={13}/> Demander un devis</button>
                 </div>
               </div>
             </div>
@@ -644,7 +644,7 @@ export default function Marketplace({ showToast, commerceScope }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Finaliser la commande</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Finaliser la commande</div>
                 <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'monospace', marginTop: 2 }}>Ref: CMD-{new Date().getFullYear()}{String(new Date().getMonth() + 1).padStart(2, '0')}-{String(cmdCounter + 1).padStart(5, '0')}</div>
               </div>
               <button onClick={() => setShowCheckout(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
@@ -652,45 +652,45 @@ export default function Marketplace({ showToast, commerceScope }) {
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Recapitulatif */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Recapitulatif ({cart.length} articles)</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Recapitulatif ({cart.length} articles)</div>
                 {cart.map(c => (
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12 }}>
                     <span style={{ color: 'var(--t2)' }}>{c.nom} x{c.qty}</span>
-                    <span style={{ fontWeight: 700 }}>{fmt(c.prix_num * c.qty)}</span>
+                    <span style={{ fontWeight: 600 }}>{fmt(c.prix_num * c.qty)}</span>
                   </div>
                 ))}
               </div>
 
               {/* Livraison */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Livraison</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Livraison</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div onClick={() => setLivMode('retrait')} style={{ flex: 1, padding: '14px 14px', borderRadius: 10, border: livMode === 'retrait' ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                     <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center' }}><Store size={20}/></div>
-                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 2 }}>Retrait</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>Retrait</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>Chez le fournisseur</div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ok)', marginTop: 6 }}>Gratuit</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ok)', marginTop: 6 }}>Gratuit</div>
                   </div>
                   {HAS_LOGISTICS_PARTNER && <div onClick={() => setLivMode('livraison')} style={{ flex: 1, padding: '14px 14px', borderRadius: 10, border: livMode === 'livraison' ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                     <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'center' }}><Truck size={20}/></div>
-                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 2 }}>Livraison MEEREO</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>Livraison MEEREO</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>Partenaire logistique</div>
-                    <div style={{ fontSize: 12, fontWeight: 800, marginTop: 6 }}>{fmt(calcLivraison(livKm, livKg))}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>{fmt(calcLivraison(livKm, livKg))}</div>
                   </div>}
                 </div>
                 {livMode === 'livraison' && (
                   <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {/* Destination */}
                     <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Livrer ou ?</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Livrer ou ?</div>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <div onClick={() => setLivDest('chantier')} style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: livDest === 'chantier' ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                           <div style={{ fontSize: 16, marginBottom: 2, display: 'flex', justifyContent: 'center' }}><HardHat size={16}/></div>
-                          <div style={{ fontSize: 11, fontWeight: 700 }}>Sur le chantier</div>
+                          <div style={{ fontSize: 11, fontWeight: 600 }}>Sur le chantier</div>
                         </div>
                         <div onClick={() => setLivDest('domicile')} style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: livDest === 'domicile' ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                           <div style={{ fontSize: 16, marginBottom: 2, display: 'flex', justifyContent: 'center' }}><Home size={16}/></div>
-                          <div style={{ fontSize: 11, fontWeight: 700 }}>A domicile</div>
+                          <div style={{ fontSize: 11, fontWeight: 600 }}>A domicile</div>
                         </div>
                       </div>
                     </div>
@@ -781,17 +781,17 @@ export default function Marketplace({ showToast, commerceScope }) {
 
               {/* Moyen de paiement */}
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Moyen de paiement</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Moyen de paiement</div>
                 <div className="rg-3" style={{ gap: 6 }}>
                   {PAY_PROVIDERS.filter(p => p.statut === 'Vérifié').map(p => (
                     <div key={p.id} onClick={() => setPayMethod(p.id)} style={{ padding: '10px 8px', borderRadius: 8, border: payMethod === p.id ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>{p.logo}</div>
-                      <div style={{ fontSize: 10, fontWeight: 700 }}>{p.short || p.name}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600 }}>{p.short || p.name}</div>
                     </div>
                   ))}
                   <div onClick={() => setPayMethod('cash')} style={{ padding: '10px 8px', borderRadius: 8, border: payMethod === 'cash' ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', cursor: 'pointer', textAlign: 'center' }}>
                       <div style={{ marginBottom: 2, display: 'flex', justifyContent: 'center' }}><Banknote size={18}/></div>
-                    <div style={{ fontSize: 10, fontWeight: 700 }}>Cash</div>
+                    <div style={{ fontSize: 10, fontWeight: 600 }}>Cash</div>
                   </div>
                 </div>
               </div>
@@ -814,12 +814,12 @@ export default function Marketplace({ showToast, commerceScope }) {
                 )}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,.15)', paddingTop: 8, marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Total</span>
-                  <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px' }}>{fmt(grandTotal)}</span>
+                  <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-1px' }}>{fmt(grandTotal)}</span>
                 </div>
               </div>
             </div>
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-              <button onClick={passerCommande} disabled={!payMethod} style={{ width: '100%', padding: '13px 16px', borderRadius: 10, background: payMethod ? 'var(--tx)' : 'var(--s3)', color: payMethod ? '#fff' : 'var(--t4)', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 14 }}>
+              <button onClick={passerCommande} disabled={!payMethod} style={{ width: '100%', padding: '13px 16px', borderRadius: 10, background: payMethod ? 'var(--tx)' : 'var(--s3)', color: payMethod ? '#fff' : 'var(--t4)', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 14 }}>
                 {payMethod ? (HAS_LOGISTICS_PARTNER ? 'Confirmer et payer ' : 'Confirmer la commande — ') + fmt(grandTotal) : 'Choisissez un moyen de paiement'}
               </button>
             </div>
@@ -835,17 +835,17 @@ export default function Marketplace({ showToast, commerceScope }) {
             <div key={d.itemId} style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', boxShadow: '0 8px 32px rgba(0,0,0,.12)', width: 320, animation: 'modalIn .2s ease' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 2 }}>Devis recu !</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>Devis recu !</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}><span style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--t2)' }}>{d.ref}</span> · {d.fournisseur}</div>
                 </div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Nouveau</span>
+                <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Nouveau</span>
               </div>
               <div style={{ fontSize: 11, marginBottom: 6 }}>{d.itemNom}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 10 }}>{fmt(d.prixPropose)}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>{fmt(d.prixPropose)}</div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => accepterDevis(d.itemId)} style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'var(--tx)', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer' }}>Accepter</button>
-                <button onClick={() => { const newPrix = prompt('Votre contre-proposition (FCFA):'); if (newPrix) { showToast && showToast('Contre-proposition envoyee'); setDevisRequests(prev => prev.map(x => x.itemId === d.itemId ? { ...x, status: 'pending' } : x)); setTimeout(() => { setDevisRequests(prev => prev.map(x => x.itemId === d.itemId && x.status === 'pending' ? { ...x, status: 'responded', prixPropose: parseInt(newPrix) || d.prixPropose } : x)); refresh(n => n + 1) }, 2000) } }} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 11, fontWeight: 700, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer' }}>Contre-proposer</button>
-                <button onClick={() => { setDevisRequests(prev => prev.filter(x => x.itemId !== d.itemId)); showToast && showToast('Devis refuse') }} style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(220,38,38,.06)', color: 'var(--err)', fontSize: 11, fontWeight: 700, fontFamily: 'var(--f)', border: '1px solid rgba(220,38,38,.15)', cursor: 'pointer' }}>Refuser</button>
+                <button onClick={() => accepterDevis(d.itemId)} style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'var(--tx)', color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: 'var(--f)', border: 'none', cursor: 'pointer' }}>Accepter</button>
+                <button onClick={() => { const newPrix = prompt('Votre contre-proposition (FCFA):'); if (newPrix) { showToast && showToast('Contre-proposition envoyee'); setDevisRequests(prev => prev.map(x => x.itemId === d.itemId ? { ...x, status: 'pending' } : x)); setTimeout(() => { setDevisRequests(prev => prev.map(x => x.itemId === d.itemId && x.status === 'pending' ? { ...x, status: 'responded', prixPropose: parseInt(newPrix) || d.prixPropose } : x)); refresh(n => n + 1) }, 2000) } }} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--s2)', color: 'var(--tx)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--f)', border: '1px solid var(--border-card)', cursor: 'pointer' }}>Contre-proposer</button>
+                <button onClick={() => { setDevisRequests(prev => prev.filter(x => x.itemId !== d.itemId)); showToast && showToast('Devis refuse') }} style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(220,38,38,.06)', color: 'var(--err)', fontSize: 11, fontWeight: 600, fontFamily: 'var(--f)', border: '1px solid rgba(220,38,38,.15)', cursor: 'pointer' }}>Refuser</button>
               </div>
             </div>
           ))}
@@ -858,7 +858,7 @@ export default function Marketplace({ showToast, commerceScope }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 580, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Mes commandes</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Mes commandes</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{commandes.length} commandes · {commandes.filter(c => c.step < 5).length} en cours</div>
               </div>
               <button onClick={() => setShowCommandes(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
@@ -873,12 +873,12 @@ export default function Marketplace({ showToast, commerceScope }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ fontSize: 20 }}>{currentStep.icon}</span>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700 }}>{currentStep.label}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{currentStep.label}</div>
                           <div style={{ fontSize: 10, color: 'var(--t3)' }}><span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--t2)' }}>{cmd.ref}</span> · {formatDateFR(cmd.date)} · {cmd.fournisseur}</div>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 14, fontWeight: 800 }}>{fmt(cmd.total)}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{fmt(cmd.total)}</div>
                         <div style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: isActive ? 'rgba(245,158,11,.08)' : 'rgba(52,199,89,.08)', color: isActive ? '#F59E0B' : 'var(--ok)', display: 'inline-block', marginTop: 2 }}>{isActive ? 'En cours' : 'Livrée'}</div>
                       </div>
                     </div>
@@ -909,8 +909,8 @@ export default function Marketplace({ showToast, commerceScope }) {
             <div style={{ padding: '20px 24px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', color: '#fff', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Suivi en temps reel</div>
-                  <div style={{ fontSize: 17, fontWeight: 800 }}>{showTracking.ref}</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Suivi en temps reel</div>
+                  <div style={{ fontSize: 17, fontWeight: 600 }}>{showTracking.ref}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                     {showTracking.refLiv && <span style={{ fontSize: 9, fontFamily: 'monospace', padding: '2px 7px', borderRadius: 4, background: 'rgba(245,158,11,.15)', color: '#F59E0B' }}>{showTracking.refLiv}</span>}
                     <span style={{ fontSize: 9, fontFamily: 'monospace', padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.6)' }}>{showTracking.refFac}</span>
@@ -965,11 +965,11 @@ export default function Marketplace({ showToast, commerceScope }) {
               {/* Partenaire logistique */}
               {HAS_LOGISTICS_PARTNER && showTracking.partner && (
                 <div style={{ padding: '14px 16px', background: 'var(--s2)', borderRadius: 12, marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Partenaire logistique</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Partenaire logistique</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}><Truck size={16}/></div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{showTracking.partner.nom}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{showTracking.partner.nom}</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)' }}>{showTracking.partner.chauffeur} · {showTracking.partner.vehicule}</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)' }}>{showTracking.partner.plaque}</div>
                     </div>
@@ -979,14 +979,14 @@ export default function Marketplace({ showToast, commerceScope }) {
               )}
 
               {/* Articles */}
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Articles ({showTracking.items.length})</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Articles ({showTracking.items.length})</div>
               {showTracking.items.map((it, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12, borderBottom: '1px solid var(--border)' }}>
                   <span>{it.nom} x{it.qty}</span>
-                  <span style={{ fontWeight: 700 }}>{fmt(it.prix_num * it.qty)}</span>
+                  <span style={{ fontWeight: 600 }}>{fmt(it.prix_num * it.qty)}</span>
                 </div>
               ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 14, fontWeight: 800 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 14, fontWeight: 600 }}>
                 <span>Total</span>
                 <span>{fmt(showTracking.total)}</span>
               </div>
@@ -996,7 +996,7 @@ export default function Marketplace({ showToast, commerceScope }) {
             {showTracking.step < 5 && (
               <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => showToast && showToast('Support contacte')}>Contacter le support</button>
-                <button style={{ flex: 1, padding: '10px 16px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => { setCommandes(prev => prev.map(c => c.id === showTracking.id ? { ...c, step: 5 } : c)); setShowTracking(null); refresh(n => n + 1); showToast && showToast('Livraison confirmee') }}>Confirmer la reception</button>
+                <button style={{ flex: 1, padding: '10px 16px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => { setCommandes(prev => prev.map(c => c.id === showTracking.id ? { ...c, step: 5 } : c)); setShowTracking(null); refresh(n => n + 1); showToast && showToast('Livraison confirmee') }}>Confirmer la reception</button>
               </div>
             )}
           </div>

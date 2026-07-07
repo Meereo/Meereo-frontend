@@ -34,14 +34,14 @@ export default function Orders({ ctx }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--t4)' }}>{o.ref}</span>
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: (STATUS_COLORS[o.statut] || 'var(--t4)') + '14', color: STATUS_COLORS[o.statut] || 'var(--t4)' }}>{STATUS_LABELS[o.statut] || o.statut}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 7px', borderRadius: 100, background: (STATUS_COLORS[o.statut] || 'var(--t4)') + '14', color: STATUS_COLORS[o.statut] || 'var(--t4)' }}>{STATUS_LABELS[o.statut] || o.statut}</span>
                       <span style={{ fontSize: 8, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--s2)', color: 'var(--t3)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>{o.livMode === 'retrait' ? <><Store size={8}/> Retrait</> : <><Truck size={8}/> Livraison</>}</span>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{o.buyer}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{o.buyer}</div>
                     <div style={{ fontSize: 11, color: 'var(--t3)' }}>{o.items?.map(it => it.name).join(', ')} · {formatDateFR(o.date)}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800 }}>{fmtMoney(o.total)}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600 }}>{fmtMoney(o.total)}</div>
                     <div style={{ fontSize: 9, color: 'var(--t4)', display: 'flex', alignItems: 'center', gap: 3 }}>{o.paymentMethod || '—'} · {o.paymentStatus === 'paid' ? <><Check size={8}/> Payé</> : 'En attente'}</div>
                   </div>
                 </div>

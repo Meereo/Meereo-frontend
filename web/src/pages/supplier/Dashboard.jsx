@@ -7,7 +7,7 @@ export default function Dashboard({ ctx }) {
     <>
       {/* Greeting */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {entreprise}</div>
+        <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {entreprise}</div>
         <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{uid.city ? ' · ' + uid.city : ''}</div>
       </div>
 
@@ -19,9 +19,9 @@ export default function Dashboard({ ctx }) {
             <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,.03) 0%, transparent 60%)', pointerEvents: 'none' }} />
             <div style={{ position: 'relative' }}>
               <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 14 }}>Bienvenue</div>
-              <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.5px', marginBottom: 8, lineHeight: 1.2 }}>Développez votre activité sur MEEREO</div>
+              <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 8, lineHeight: 1.2 }}>Développez votre activité sur MEEREO</div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,.45)', lineHeight: 1.7, maxWidth: 420, marginBottom: 28 }}>Ajoutez vos premiers produits, structurez votre catalogue et commencez à recevoir des demandes depuis votre espace.</div>
-              <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }} onClick={() => { setShowAddProduct(true); setNewProd(emptyProd) }}>+ Ajouter un produit</button>
+              <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }} onClick={() => { setShowAddProduct(true); setNewProd(emptyProd) }}>+ Ajouter un produit</button>
             </div>
           </div>
 
@@ -36,8 +36,8 @@ export default function Dashboard({ ctx }) {
                 { n: '04', title: 'Gérer les commandes', desc: 'Suivez vos ventes et livraisons.' },
               ].map(step => (
                 <div key={step.n} style={{ padding: '18px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-medium)' }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--t4)', letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--t4)', letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>{step.desc}</div>
                 </div>
               ))}
@@ -56,7 +56,7 @@ export default function Dashboard({ ctx }) {
                 <div key={btn.v} onClick={() => setView(btn.v)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-medium)', cursor: 'pointer', transition: 'all .15s' }}>
                   <div style={{ fontSize: 18, flexShrink: 0 }}>{btn.icon}</div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{btn.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{btn.label}</div>
                     <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{btn.desc}</div>
                   </div>
                 </div>
@@ -83,15 +83,15 @@ export default function Dashboard({ ctx }) {
           {/* Synthèse rapide */}
           <div className="rg-3" style={{ gap: 12, marginBottom: 28 }}>
             <div onClick={() => setView('catalogue')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer' }}>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: 'var(--tx)' }}>{activeProducts.length}</div>
+              <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-1px', color: 'var(--tx)' }}>{activeProducts.length}</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3 }}>produit{activeProducts.length > 1 ? 's' : ''} actif{activeProducts.length > 1 ? 's' : ''}</div>
             </div>
             <div onClick={() => setView('commandes')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer' }}>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: 'var(--tx)' }}>{sellerOrders.length}</div>
+              <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-1px', color: 'var(--tx)' }}>{sellerOrders.length}</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3 }}>commande{sellerOrders.length > 1 ? 's' : ''}</div>
             </div>
             <div onClick={() => setView('paiements')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--tx)' }}>{fmtMoney(caTotal)}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px', color: 'var(--tx)' }}>{fmtMoney(caTotal)}</div>
               <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3 }}>FCFA ce mois</div>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function Dashboard({ ctx }) {
       {pendingOrders.length > 0 && (
         <div className="card" style={{ padding: 0, marginBottom: 16, overflow: 'hidden' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 12, fontWeight: 700 }}>Commandes à traiter ({pendingOrders.length})</div>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>Commandes à traiter ({pendingOrders.length})</div>
             <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => setView('commandes')}>Voir tout →</button>
           </div>
           {pendingOrders.slice(0, 3).map(o => (
@@ -117,7 +117,7 @@ export default function Dashboard({ ctx }) {
                 <div style={{ fontSize: 12, fontWeight: 600 }}>{o.ref || o.buyer || 'Commande'}</div>
                 <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{o.items?.length || 0} article(s) · {o.total ? fmtMoney(o.total) : '—'}</div>
               </div>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: '#FF9500' }}>En attente</span>
+              <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: '#FF9500' }}>En attente</span>
             </div>
           ))}
         </div>
@@ -126,7 +126,7 @@ export default function Dashboard({ ctx }) {
       {/* Infos entreprise */}
       {(ob.rccm || ob.ncc || ob.email) && (
         <div className="card" style={{ padding: 20, marginTop: 8 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Informations entreprise</div>
+          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Informations entreprise</div>
           <div className="rg-2" style={{ gap: 10 }}>
             {ob.rccm && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>RCCM</div><div style={{ fontSize: 12, fontWeight: 600 }}>{ob.rccm}</div></div>}
             {ob.ncc && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>N° Contribuable</div><div style={{ fontSize: 12, fontWeight: 600 }}>{ob.ncc}</div></div>}
@@ -158,19 +158,19 @@ export default function Dashboard({ ctx }) {
       {products.length > 0 && (
         <div className="card" style={{ padding: 20, marginTop: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Mes produits ({products.length})</div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Mes produits ({products.length})</div>
             <button className="btn btn-secondary btn-sm" onClick={() => setView('catalogue')}>Voir tout →</button>
           </div>
           <div className="rg-3" style={{ gap: 10 }}>
             {products.slice(0, 6).map((p, i) => (
               <div key={i} style={{ background: 'var(--s2)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
-                {p.sponsored && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'var(--tx)', color: '#fff' }}>Sponsorise</span>}
-                {p.flash && <span style={{ position: 'absolute', top: 6, left: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, background: 'var(--wrn)', color: '#fff' }}>Flash</span>}
+                {p.sponsored && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: 'var(--tx)', color: '#fff' }}>Sponsorise</span>}
+                {p.flash && <span style={{ position: 'absolute', top: 6, left: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: 'var(--wrn)', color: '#fff' }}>Flash</span>}
                 {p.photoUrl
                   ? <img src={p.photoUrl} alt="" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 8 }} />
                   : <div style={{ width: '100%', height: 80, borderRadius: 8, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--t4)' }}><Package size={24}/></div>
                 }
-                <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)' }}>{p.price ? fmtMoney(p.price) : 'Sur devis'} {p.unit}</div>
               </div>
             ))}

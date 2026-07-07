@@ -117,16 +117,16 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   {f.logoUrl
                     ? <img src={f.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                     : <div style={{ width: 44, height: 44, borderRadius: 10, background: f.color || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{initials}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{initials}</span>
                       </div>
                   }
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>{f.nom}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{f.nom}</span>
                       {f.verified ? (
-                        <span style={{ fontSize: 9, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Vérifié</span>
+                        <span style={{ fontSize: 9, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '2px 6px', borderRadius: 100, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Vérifié</span>
                       ) : (
-                        <span style={{ fontSize: 9, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)', padding: '2px 6px', borderRadius: 100, fontWeight: 700, cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non vérifié</span>
+                        <span style={{ fontSize: 9, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)', padding: '2px 6px', borderRadius: 100, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non vérifié</span>
                       )}
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>{f.specialite}</div>
@@ -141,7 +141,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   {f.adresse && <div style={{ fontSize: 11, color: 'var(--t4)', display: 'flex', alignItems: 'center', gap: 6 }}><MapPin size={11}/> {f.adresse}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 12, color: '#F59E0B' }}>{stars(f.note)} <span style={{ fontWeight: 700, color: 'var(--t2)', marginLeft: 3 }}>{f.note}/5</span> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({f.nbAvis || 0})</span></div>
+                  <div style={{ fontSize: 12, color: '#F59E0B' }}>{stars(f.note)} <span style={{ fontWeight: 600, color: 'var(--t2)', marginLeft: 3 }}>{f.note}/5</span> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({f.nbAvis || 0})</span></div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => { setShowDevis(f); setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' }) }}>Devis</button>
                     {f.publicId && <button className="btn btn-primary btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => navigate(`/pro?uuid=${f.publicId}`)}>Profil</button>}
@@ -178,7 +178,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>Demander un devis</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Demander un devis</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{showDevis.nom} à {showDevis.specialite}</div>
                 </div>
                 <button onClick={() => setShowDevis(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -217,7 +217,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>Verification fournisseur</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Verification fournisseur</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{showVerif.nom}</div>
                 </div>
                 <button onClick={() => setShowVerif(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -228,7 +228,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               <div style={{ padding: '14px 16px', background: showVerif.verified ? 'rgba(52,199,89,.06)' : 'rgba(255,149,0,.06)', border: '1px solid ' + (showVerif.verified ? 'rgba(52,199,89,.12)' : 'rgba(255,149,0,.12)'), borderRadius: 10, marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }}>{showVerif.verified ? 'Fournisseur vérifié' : 'En attente de vérification'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: showVerif.verified ? 'var(--ok)' : 'var(--wrn)' }}>{showVerif.verified ? 'Fournisseur vérifié' : 'En attente de vérification'}</span>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>
                   {showVerif.verified ? 'Ce fournisseur a ete valide par l\'equipe MEEREO. Ses documents sont conformes.' : 'Ce fournisseur n\'a pas encore ete verifie. Les documents requis doivent etre soumis et valides par MEEREO.'}
@@ -236,7 +236,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               </div>
 
               {/* Documents requis */}
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Documents requis</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Documents requis</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                 {VERIF_DOCS.map(d => {
                   const submitted = showVerif.verified || Math.random() > 0.4
@@ -254,7 +254,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
               </div>
 
               {/* Infos fournisseur */}
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Informations</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Informations</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Nom</span><span style={{ fontWeight: 600 }}>{showVerif.nom}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--border)' }}><span style={{ color: 'var(--t3)' }}>Spécialité</span><span style={{ fontWeight: 600 }}>{showVerif.specialite}</span></div>
@@ -267,7 +267,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
               <button className="btn btn-sm" onClick={() => setShowVerif(null)}>Fermer</button>
               {!showVerif.verified && (
-                <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--ok)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => validerFournisseur(showVerif)}>Valider et approuver</button>
+                <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--ok)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => validerFournisseur(showVerif)}>Valider et approuver</button>
               )}
             </div>
           </div>

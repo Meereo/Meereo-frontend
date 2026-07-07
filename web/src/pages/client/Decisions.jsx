@@ -42,12 +42,12 @@ export default function Decisions({ ctx }) {
       {/* Pending payment requests from pro */}
       {pendingPaymentReqs.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiements en attente</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiements en attente</div>
           {pendingPaymentReqs.map(r => (
             <div key={r.id} className="card" style={{ padding: '14px 18px', marginBottom: 8, borderLeft: '3px solid var(--color-info)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{r.label}</div>
-                <span style={{ fontSize: 13, fontWeight: 800 }}>{fmtDevise(r.amount)}</span>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{r.label}</div>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{fmtDevise(r.amount)}</span>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button className="btn btn-primary btn-sm" onClick={() => { respondPayment(r.id, 'approved'); showToast('Paiement approuvé') }}>Approuver</button>
@@ -80,11 +80,11 @@ export default function Decisions({ ctx }) {
       {active.map(d => (
         <div key={d.id} className="card" style={{ padding: '16px 18px', marginBottom: 10, borderLeft: d.urgent ? '3px solid var(--wrn)' : d.statut === 'info_requested' ? '3px solid var(--color-info)' : 'none' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>{d.titre}</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{d.titre}</div>
             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
               {d.trade && <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 100, background: 'rgba(0,0,0,.04)', color: 'var(--t3)' }}>{d.trade}</span>}
-              {d.urgent && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)' }}>Urgent</span>}
-              {d.statut === 'info_requested' && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 100, background: 'rgba(0,122,255,.08)', color: 'var(--color-info)' }}>Info demandee</span>}
+              {d.urgent && <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: 'var(--wrn)' }}>Urgent</span>}
+              {d.statut === 'info_requested' && <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 100, background: 'rgba(0,122,255,.08)', color: 'var(--color-info)' }}>Info demandee</span>}
             </div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.5, marginBottom: 12 }}>{d.desc || ''}</div>
@@ -97,7 +97,7 @@ export default function Decisions({ ctx }) {
       ))}
       {resolved.length > 0 && (
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Decisions traitees</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Decisions traitees</div>
           {resolved.map(d => (
             <div key={d.id} className="card" style={{ padding: '12px 18px', marginBottom: 6, opacity: .6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -18,7 +18,7 @@ export default function RailRecommendation({ amount, type, context, onSelect }) 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>{RailIcon ? <RailIcon size={20}/> : meta.icon}</div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>{meta.label}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)' }}>{meta.label}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)' }}>{reason}</div>
         </div>
       </div>

@@ -46,7 +46,7 @@ const HIST_STATUS = {
   refunded: { label: 'Remboursé', color: '#8e8e93' },
 }
 
-const sectionTitle = { fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }
+const sectionTitle = { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }
 const cardStyle = { background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', borderRadius: 12, padding: '20px 22px', marginBottom: 16 }
 const labelStyle = { fontSize: 11, fontWeight: 600, color: 'var(--t3)', marginBottom: 4 }
 const valueStyle = { fontSize: 13, fontWeight: 600, color: 'var(--tx)' }
@@ -103,17 +103,17 @@ export default function KaiSubscription({ role = 'pro' }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: isGold ? '#7C3AED' : 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: isGold ? '#fff' : 'var(--t3)', fontSize: 16, fontWeight: 700 }}>K</span>
+              <span style={{ color: isGold ? '#fff' : 'var(--t3)', fontSize: 16, fontWeight: 600 }}>K</span>
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.3px' }}>{plan.name}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.3px' }}>{plan.name}</div>
               <div style={{ fontSize: 11, color: 'var(--t3)' }}>Espace {roleLabels[role]}</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             <div>
               <div style={labelStyle}>Statut</div>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: meta.bg, color: meta.color }}>{meta.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: meta.bg, color: meta.color }}>{meta.label}</span>
             </div>
             <div>
               <div style={labelStyle}>Tarif</div>
@@ -135,17 +135,17 @@ export default function KaiSubscription({ role = 'pro' }) {
         </div>
         <div style={{ flexShrink: 0 }}>
           {!isGold && (
-            <button onClick={() => setShowUpgrade(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
+            <button onClick={() => setShowUpgrade(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
               Passer à KAI Pro
             </button>
           )}
           {status === 'expired' && (
-            <button onClick={() => setShowUpgrade(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
+            <button onClick={() => setShowUpgrade(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
               Réactiver
             </button>
           )}
           {status === 'past_due' && (
-            <button onClick={() => setShowPayMethod(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#FF3B30', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
+            <button onClick={() => setShowPayMethod(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#FF3B30', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
               Régulariser
             </button>
           )}
@@ -157,9 +157,9 @@ export default function KaiSubscription({ role = 'pro' }) {
       <div className="rg-2" style={{ gap: 12, marginBottom: 24 }}>
         {Object.entries(PLANS).map(([key, p]) => (
           <div key={key} style={{ ...cardStyle, marginBottom: 0, border: planKey === key ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', position: 'relative' }}>
-            {planKey === key && <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>ACTUEL</div>}
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{p.name}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.5px', marginBottom: 12 }}>
+            {planKey === key && <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>ACTUEL</div>}
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{p.name}</div>
+            <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 12 }}>
               {p.price} <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--t3)' }}>{p.period}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -171,7 +171,7 @@ export default function KaiSubscription({ role = 'pro' }) {
               ))}
             </div>
             {key === 'gold' && !isGold && (
-              <button onClick={() => setShowUpgrade(true)} style={{ marginTop: 14, width: '100%', padding: '9px 16px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)' }}>
+              <button onClick={() => setShowUpgrade(true)} style={{ marginTop: 14, width: '100%', padding: '9px 16px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>
                 Souscrire
               </button>
             )}
@@ -221,7 +221,7 @@ export default function KaiSubscription({ role = 'pro' }) {
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 {['Date', 'Description', 'Montant', 'Statut', 'Réf.'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -232,9 +232,9 @@ export default function KaiSubscription({ role = 'pro' }) {
                   <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '10px 14px', color: 'var(--t2)' }}>{new Date(inv.date).toLocaleDateString('fr-FR')}</td>
                     <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--tx)' }}>{inv.label}</td>
-                    <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--tx)' }}>{inv.amount}</td>
+                    <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--tx)' }}>{inv.amount}</td>
                     <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: s.color + '10', color: s.color }}>{s.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: s.color + '10', color: s.color }}>{s.label}</span>
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--t3)', fontFamily: 'monospace', fontSize: 10 }}>{inv.ref}</td>
                   </tr>
@@ -251,18 +251,18 @@ export default function KaiSubscription({ role = 'pro' }) {
           <div style={{ background: '#fff', borderRadius: 16, width: 440, maxWidth: '90vw', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '28px 28px 20px', textAlign: 'center' }}>
               <div style={{ width: 48, height: 48, borderRadius: 12, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <span style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>K</span>
+                <span style={{ color: '#fff', fontSize: 22, fontWeight: 600 }}>K</span>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Passer à KAI Pro</div>
+              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Passer à KAI Pro</div>
               <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Copilote opérationnel pour {roleLabels[role]}s</div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px', marginBottom: 4 }}>9 900 FCFA <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--t3)' }}>/ mois</span></div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1px', marginBottom: 4 }}>9 900 FCFA <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--t3)' }}>/ mois</span></div>
             </div>
             <div style={{ padding: '0 28px 20px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Inclus dans Pro</div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Inclus dans Pro</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 20 }}>
                 {PLANS.gold.features.map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--tx)' }}>
-                    <span style={{ color: '#7C3AED', fontWeight: 700 }}><Check size={12}/></span> {f}
+                    <span style={{ color: '#7C3AED', fontWeight: 600 }}><Check size={12}/></span> {f}
                   </div>
                 ))}
               </div>
@@ -275,7 +275,7 @@ export default function KaiSubscription({ role = 'pro' }) {
               {upgraded ? (
                 <div style={{ textAlign: 'center', padding: '8px 0' }}>
                   <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center', color: '#34C759' }}><Check size={24}/></div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#34C759' }}>KAI Pro activé avec succès</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#34C759' }}>KAI Pro activé avec succès</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 4 }}>Actif dans tous vos espaces</div>
                 </div>
               ) : (
@@ -293,7 +293,7 @@ export default function KaiSubscription({ role = 'pro' }) {
       {showPayMethod && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowPayMethod(false)}>
           <div style={{ background: '#fff', borderRadius: 16, width: 420, maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', fontSize: 16, fontWeight: 700 }}>Moyen de paiement</div>
+            <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', fontSize: 16, fontWeight: 600 }}>Moyen de paiement</div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <div style={labelStyle}>Type</div>
@@ -301,7 +301,7 @@ export default function KaiSubscription({ role = 'pro' }) {
                   {[{ k: 'mobile', l: 'Mobile Money', icon: <Smartphone size={16}/> }, { k: 'carte', l: 'Carte bancaire', icon: <CreditCard size={16}/> }, { k: 'banque', l: 'Virement', icon: <Building2 size={16}/> }].map(t => (
                     <div key={t.k} onClick={() => setPayMethod(p => ({ ...p, type: t.k }))} style={{ flex: 1, padding: '10px 8px', borderRadius: 8, border: payMethod.type === t.k ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: payMethod.type === t.k ? 'rgba(0,0,0,.02)' : 'var(--surface-1)', cursor: 'pointer', textAlign: 'center' }}>
                       <div style={{ fontSize: 16, marginBottom: 2 }}>{t.icon}</div>
-                      <div style={{ fontSize: 9, fontWeight: 700 }}>{t.l}</div>
+                      <div style={{ fontSize: 9, fontWeight: 600 }}>{t.l}</div>
                     </div>
                   ))}
                 </div>
@@ -322,7 +322,7 @@ export default function KaiSubscription({ role = 'pro' }) {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowPayMethod(false)} style={{ padding: '9px 16px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-subtle)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', color: 'var(--tx)' }}>Annuler</button>
-              <button onClick={() => setShowPayMethod(false)} style={{ padding: '9px 16px', borderRadius: 8, background: 'var(--tx)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)' }}>Enregistrer</button>
+              <button onClick={() => setShowPayMethod(false)} style={{ padding: '9px 16px', borderRadius: 8, background: 'var(--tx)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }}>Enregistrer</button>
             </div>
           </div>
         </div>

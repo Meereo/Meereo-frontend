@@ -109,12 +109,12 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-      <div onClick={() => isPro && active.publicId && navigate(`/pro?uuid=${active.publicId}`)} style={{ width: 40, height: 40, borderRadius: active.isGroup ? 12 : 20, background: av?.type === 'color' ? av.value : (active.color || '#666') + '14', color: av?.type === 'color' ? '#fff' : (active.color || '#666'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: isPro && active.publicId ? 'pointer' : 'default', overflow: 'hidden' }}>
+      <div onClick={() => isPro && active.publicId && navigate(`/pro?uuid=${active.publicId}`)} style={{ width: 40, height: 40, borderRadius: active.isGroup ? 12 : 20, background: av?.type === 'color' ? av.value : (active.color || '#666') + '14', color: av?.type === 'color' ? '#fff' : (active.color || '#666'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0, cursor: isPro && active.publicId ? 'pointer' : 'default', overflow: 'hidden' }}>
         {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : av?.type === 'color' ? av.initials : active.avatar}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-.2px', cursor: isPro && active.publicId ? 'pointer' : 'default' }} onClick={() => isPro && active.publicId && navigate(`/pro?uuid=${active.publicId}`)}>{active.nom}</span>
+          <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-.2px', cursor: isPro && active.publicId ? 'pointer' : 'default' }} onClick={() => isPro && active.publicId && navigate(`/pro?uuid=${active.publicId}`)}>{active.nom}</span>
           {isPro && active.publicId && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate(`/pro?uuid=${active.publicId}`)}>→ profil</span>}
         </div>
         <div style={{ fontSize: 11, color: 'var(--t3)', cursor: active.isGroup ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 3 }} onClick={() => active.isGroup && setShowParticipants(true)}>
@@ -759,12 +759,12 @@ export default function Messages({ showToast }) {
     const isInvited = c.direct && !c.registered
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={onClick} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-        <div style={{ width: 36, height: 36, borderRadius: 18, background: !c.direct ? 'rgba(255,149,0,.1)' : isInvited ? 'rgba(107,114,128,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: !c.direct ? '#F59E0B' : isInvited ? '#9CA3AF' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+        <div style={{ width: 36, height: 36, borderRadius: 18, background: !c.direct ? 'rgba(255,149,0,.1)' : isInvited ? 'rgba(107,114,128,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: !c.direct ? '#F59E0B' : isInvited ? '#9CA3AF' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}{c.ville ? ' à ' + c.ville : ''}</div>
         </div>
-        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: srcColor(c.source) + '14', color: srcColor(c.source) }}>{srcLabel(c.source)}</span>
+        <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: srcColor(c.source) + '14', color: srcColor(c.source) }}>{srcLabel(c.source)}</span>
         {!c.direct && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.08)', color: '#F59E0B' }}>Demande</span>}
         {isInvited && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF' }}>Invité</span>}
       </div>
@@ -801,8 +801,8 @@ export default function Messages({ showToast }) {
           <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Messages</span>
-                {nonLus > 0 && <span style={{ padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{nonLus}</span>}
+                <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.3px' }}>Messages</span>
+                {nonLus > 0 && <span style={{ padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', fontSize: 10, fontWeight: 600 }}>{nonLus}</span>}
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 <button onClick={() => { setShowNewGroup(true); setGroupName(''); setGroupMembers([]); setGroupSearch('') }} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Créer un groupe">
@@ -849,7 +849,7 @@ export default function Messages({ showToast }) {
                 onClick={() => { setActiveId(c.id); if (c.unread) updateConv(c.id, cv => ({ ...cv, unread: 0 })) }}
                 onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ convId: c.id, x: e.clientX, y: e.clientY }) }}
               >
-                <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 700, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 600, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
                   {listPhoto
                     ? <img src={listPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
                     : av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar
@@ -866,9 +866,9 @@ export default function Messages({ showToast }) {
                     {c.lastMessage?.type === 'devis' ? <span style={{ color: '#2563EB', fontWeight: 600 }}>{c.dernier}</span> : c.dernier}
                   </div>
                 </div>
-                {c.pending && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: 'var(--wrn)', flexShrink: 0 }}>ATTENTE</span>}
-                {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVITé</span>}
-                {c.unread > 0 && !c.pending && !c.invited && <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>{c.unread}</div>}
+                {c.pending && <span style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: 'var(--wrn)', flexShrink: 0 }}>ATTENTE</span>}
+                {!c.pending && c.invited && <span style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(107,114,128,.08)', color: '#9CA3AF', flexShrink: 0 }}>INVITé</span>}
+                {c.unread > 0 && !c.pending && !c.invited && <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>{c.unread}</div>}
               </div>
             )
               return mainRow
@@ -881,7 +881,7 @@ export default function Messages({ showToast }) {
           {!active ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12 }}>
               <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MessageSquare size={24}/></div>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Vos messages</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Vos messages</div>
               <div style={{ fontSize: 12, color: 'var(--t3)', maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>Selectionnez une conversation ou demarrez-en une nouvelle</div>
               <button style={{ marginTop: 8, padding: '9px 18px', borderRadius: 10, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, color: '#fff' }} onClick={() => { setShowNewConv(true); setNewConvSearch('') }}>Nouvelle conversation</button>
             </div>
@@ -913,7 +913,7 @@ export default function Messages({ showToast }) {
                           <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(107,114,128,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
                           </div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)' }}>{active.nom}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)' }}>{active.nom}</div>
                           <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
                             Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour dûmarrer la conversation.
                           </div>
@@ -931,7 +931,7 @@ export default function Messages({ showToast }) {
                       {activeMsgs.map((m, i) => (
                         <div key={m.id || i}>
                           {active.isGroup && m.side === 'in' && m.from && (
-                            <div style={{ fontSize: 10, fontWeight: 700, color: m.from === 'Systeme' ? 'var(--t4)' : active.color, marginBottom: 3, marginLeft: 4 }}>{m.from}</div>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: m.from === 'Systeme' ? 'var(--t4)' : active.color, marginBottom: 3, marginLeft: 4 }}>{m.from}</div>
                           )}
                           {m.from === 'Systeme' ? (
                             <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--t4)', fontStyle: 'italic', padding: '4px 0' }}>{m.text}</div>
@@ -979,19 +979,19 @@ export default function Messages({ showToast }) {
                                       <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
                                       <div style={{ padding: '8px 14px 6px', background: isOut ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', gap: 7 }}>
                                         <span style={{ fontSize: 12 }}>“‹</span>
-                                        <span style={{ fontSize: 10, fontWeight: 700, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
+                                        <span style={{ fontSize: 10, fontWeight: 600, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
                                       </div>
                                       <div style={{ padding: '10px 14px 12px', background: isOut ? 'rgba(0,0,0,.6)' : 'var(--surface-1)', display: 'flex', gap: 24 }}>
                                         {d.montant && (
                                           <div>
-                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Montant</div>
-                                            <div style={{ fontSize: 15, fontWeight: 800, color: isOut ? '#fff' : 'var(--tx)', letterSpacing: '-.4px' }}>{Number(d.montant.toString().replace(/\D/g, '')).toLocaleString('fr-FR')} <span style={{ fontSize: 11, fontWeight: 500 }}>FCFA</span></div>
+                                            <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Montant</div>
+                                            <div style={{ fontSize: 15, fontWeight: 600, color: isOut ? '#fff' : 'var(--tx)', letterSpacing: '-.4px' }}>{Number(d.montant.toString().replace(/\D/g, '')).toLocaleString('fr-FR')} <span style={{ fontSize: 11, fontWeight: 500 }}>FCFA</span></div>
                                           </div>
                                         )}
                                         {d.delai && (
                                           <div>
-                                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Délai</div>
-                                            <div style={{ fontSize: 14, fontWeight: 700, color: isOut ? '#fff' : 'var(--tx)' }}>{d.delai}</div>
+                                            <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Délai</div>
+                                            <div style={{ fontSize: 14, fontWeight: 600, color: isOut ? '#fff' : 'var(--tx)' }}>{d.delai}</div>
                                           </div>
                                         )}
                                       </div>
@@ -1090,7 +1090,7 @@ export default function Messages({ showToast }) {
                     showSuggestPanel ? (
                       <div style={{ padding: '10px 20px 6px', background: 'var(--s2)', borderBottom: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>“‹ Proposition commerciale</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>“‹ Proposition commerciale</span>
                           <button onClick={() => { setShowSuggestPanel(false); setSuggestMontant(''); setSuggestDelai('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t4)', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
                         </div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1178,7 +1178,7 @@ export default function Messages({ showToast }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, maxHeight: '75vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Nouvelle conversation</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Nouvelle conversation</div>
                 <button onClick={() => setShowNewConv(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
               </div>
               <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
@@ -1200,7 +1200,7 @@ export default function Messages({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowInvite(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 440, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 22px 12px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Ajouter a la conversation</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Ajouter a la conversation</div>
               <button onClick={() => setShowInvite(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '0 22px 12px' }}>
@@ -1221,7 +1221,7 @@ export default function Messages({ showToast }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un groupe</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>Créer un groupe</div>
                 <button onClick={() => setShowNewGroup(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
               </div>
               <input placeholder="Nom du groupe..." value={groupName} onChange={e => setGroupName(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', marginBottom: 10 }} autoFocus />
@@ -1263,13 +1263,13 @@ export default function Messages({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowParticipants(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 380, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Participants ({(active.participants || []).length})</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Participants ({(active.participants || []).length})</div>
               <button onClick={() => setShowParticipants(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '8px 0' }}>
               {(active.participants || []).map((p, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 20px' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{(p || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
+                  <div style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{(p || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
                   <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{p}</div>
                   {active.isGroup && (active.participants || []).length > 2 && <button onClick={() => { updateConv(active.id, c => ({ ...c, participants: (c.participants || []).filter(x => x !== p), msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: p + ' retire', time: 'Maintenant' }] })); setShowParticipants(false); setTimeout(() => setShowParticipants(true), 0); showToast && showToast(p + ' retire') }} style={{ fontSize: 10, color: 'var(--err)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }}>Retirer</button>}
                 </div>
@@ -1331,7 +1331,7 @@ export default function Messages({ showToast }) {
               {confirmAction.type === 'quit' && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>}
             </div>
             {/* Title */}
-            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 8, color: 'var(--tx)' }}>
+            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 8, color: 'var(--tx)' }}>
               {confirmAction.type === 'delete' && 'Supprimer la conversation'}
               {confirmAction.type === 'archive' && 'Archiver la conversation'}
               {confirmAction.type === 'unarchive' && 'Restaurer la conversation'}
@@ -1348,7 +1348,7 @@ export default function Messages({ showToast }) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setConfirmAction(null)} style={{ padding: '9px 18px', fontSize: 12.5 }}>Annuler</button>
               <button onClick={executeAction} style={{
-                padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 700,
+                padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600,
                 background: confirmAction.type === 'delete' ? '#EF4444' : confirmAction.type === 'quit' ? '#F59E0B' : 'var(--tx)',
                 color: '#fff', transition: 'opacity .12s'
               }}

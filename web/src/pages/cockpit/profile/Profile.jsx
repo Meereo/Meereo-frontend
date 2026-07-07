@@ -371,7 +371,7 @@ export default function Profile() {
       {pubError && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 32, opacity: .3 }}>”é</div>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>Profil introuvable</div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Profil introuvable</div>
           <div style={{ fontSize: 13, color: '#666' }}>{pubError}</div>
           <button className="pp-btn-primary" onClick={() => navigate('/')}>Retour à l'accueil</button>
         </div>
@@ -455,10 +455,10 @@ export default function Profile() {
             {isVerified && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 100, background: 'rgba(22,163,74,.12)', backdropFilter: 'blur(8px)', marginBottom: 8, position: 'relative', cursor: 'pointer' }} onMouseEnter={() => setShowVerifTooltip(true)} onMouseLeave={() => setShowVerifTooltip(false)}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: '#16A34A', letterSpacing: '.02em' }}>Structure vérifiée MEEREO</span>
+                <span style={{ fontSize: 10.5, fontWeight: 600, color: '#16A34A', letterSpacing: '.02em' }}>Structure vérifiée MEEREO</span>
                 {showVerifTooltip && (
                   <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 8, padding: '12px 16px', background: '#fff', borderRadius: 12, boxShadow: '0 8px 28px rgba(0,0,0,.15)', width: 280, zIndex: 10, textAlign: 'left' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#111', marginBottom: 4 }}>Profil vérifié par MEEREO</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginBottom: 4 }}>Profil vérifié par MEEREO</div>
                     <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 8 }}>Cette structure a été contrôlée et validûe par MEEREO. Ses informations, son existence légale et sa conformité ont été vérifiées.</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       {['Identité de la structure vérifiée', 'Documents légaux conformes', 'Critéres de qualité MEEREO validûs'].map(t => (
@@ -636,7 +636,7 @@ export default function Profile() {
                       <div style={{ width: '100%', height: 200, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9a9a9a', fontSize: 11, fontWeight: 500 }}>{p.cap || 'Realisation'}</div>
                     )}
                     {extraCount > 0 && (
-                      <div style={{ position: 'absolute', bottom: 44, right: 10, background: 'rgba(0,0,0,.65)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 100, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ position: 'absolute', bottom: 44, right: 10, background: 'rgba(0,0,0,.65)', color: '#fff', fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         +{extraCount}
                       </div>
@@ -682,7 +682,7 @@ export default function Profile() {
                     ? <img className="pp-team-av" src={photoUrl} alt={t.name} onError={e => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex') }} />
                     : null
                   }
-                  {!photoUrl && <div className="pp-team-av" style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#474747' }}>{initials}</div>}
+                  {!photoUrl && <div className="pp-team-av" style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 600, color: '#474747' }}>{initials}</div>}
                   <div>
                     <div className="pp-team-name">{t.name}</div>
                     <div className="pp-team-role">{t.role}</div>
@@ -747,7 +747,7 @@ export default function Profile() {
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11.5 14.5 15.5 9.5"/></svg>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>Structure vérifiée par MEEREO</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Structure vérifiée par MEEREO</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 12 }}>Cette structure a été contrôlée et validûe par MEEREO. Son identité, ses documents légaux et sa conformité aux critéres de qualité ont été vérifiés.</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {['Identité vérifiée', 'Documents conformes', 'Critéres MEEREO validûs', 'Profil actif'].map(t => (
@@ -844,7 +844,7 @@ export default function Profile() {
                 ? <img src={ob.logoFileUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 : ob.photoUrl
                   ? <img src={ob.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{(epEntreprise || '?')[0]}</span>}
+                  : <span style={{ color: '#fff', fontSize: 22, fontWeight: 600 }}>{(epEntreprise || '?')[0]}</span>}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
@@ -1015,7 +1015,7 @@ export default function Profile() {
                         src={src} alt=""
                         style={{ width: 70, height: 70, borderRadius: 8, objectFit: 'cover', display: 'block', border: k === 0 ? '2px solid #3B82F6' : '1.5px solid var(--border-card)' }}
                       />
-                      {k === 0 && <span style={{ position: 'absolute', top: 3, left: 3, background: '#3B82F6', color: '#fff', fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, pointerEvents: 'none' }}>Cover</span>}
+                      {k === 0 && <span style={{ position: 'absolute', top: 3, left: 3, background: '#3B82F6', color: '#fff', fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, pointerEvents: 'none' }}>Cover</span>}
                       <button
                         onClick={() => setEditPortfolio(prev => prev.map((x, j) => j === i ? { ...x, imgs: x.imgs.filter((_, m) => m !== k) } : x))}
                         style={{ position: 'absolute', top: -5, right: -5, width: 17, height: 17, borderRadius: '50%', background: 'var(--err)', color: '#fff', border: '1.5px solid var(--surface-1)', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
@@ -1075,7 +1075,7 @@ export default function Profile() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <div
                   title="Cliquer pour ajouter une photo"
-                  style={{ width: 36, height: 36, borderRadius: '50%', background: m.photoUrl ? 'transparent' : 'var(--s3)', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#474747', border: '1.5px dashed var(--border)', position: 'relative' }}
+                  style={{ width: 36, height: 36, borderRadius: '50%', background: m.photoUrl ? 'transparent' : 'var(--s3)', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#474747', border: '1.5px dashed var(--border)', position: 'relative' }}
                   onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { default: compress } = await import('../../../utils/compressImage'); const url = await compress(f, 150, 0.7); setEditTeamList(prev => prev.map((x, j) => j === i ? { ...x, photoUrl: url, photo: url } : x)) } catch { } }; inp.click() }}
                 >
                   {m.photoUrl
@@ -1124,9 +1124,9 @@ export default function Profile() {
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#f3f4f5', borderRadius: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{proInitials}</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{proInitials}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>{proName}</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{proName}</div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} à {proVille}</div>
             </div>
           </div>
@@ -1155,9 +1155,9 @@ export default function Profile() {
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#f3f4f5', borderRadius: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{proInitials}</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{proInitials}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>{proName}</div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{proName}</div>
               <div style={{ fontSize: 10, color: '#6b7280' }}>{proSpecialite} à {proVille}</div>
             </div>
           </div>

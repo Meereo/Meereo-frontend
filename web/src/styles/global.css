@@ -274,7 +274,7 @@ select.form-input, select.inp {
 .kpi-strip-card.active { background: var(--surface-1); box-shadow: var(--shadow-xs); }
 .kpi-strip-val {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -.02em;
 }
@@ -493,7 +493,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--s3); color: var(--tx);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; font-family: var(--f);
+  font-size: 11px; font-weight: 600; font-family: var(--f);
   cursor: pointer; user-select: none; flex-shrink: 0;
   overflow: hidden;
   transition: opacity .15s;
@@ -536,7 +536,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   border-radius: 8px;
   background: #FF3B30;
   color: #fff;
-  font-size: 9px; font-weight: 700;
+  font-size: 9px; font-weight: 600;
   display: flex; align-items: center; justify-content: center;
   padding: 0 4px;
   line-height: 1;
@@ -618,7 +618,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
 }
 
 .kai-orb-k {
-  font-size: 18px; font-weight: 700; color: #7C3AED;
+  font-size: 18px; font-weight: 600; color: #7C3AED;
   font-family: var(--f); line-height: 1; position: relative; z-index: 1;
 }
 .kai-orb-dot {
@@ -632,7 +632,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   position: absolute; top: -3px; right: -3px;
   min-width: 16px; height: 16px; border-radius: 8px;
   background: #FF3B30; color: #fff;
-  font-size: 9px; font-weight: 700; font-family: var(--f);
+  font-size: 9px; font-weight: 600; font-family: var(--f);
   display: flex; align-items: center; justify-content: center;
   padding: 0 4px; border: 2px solid #fff;
   line-height: 1;
@@ -741,7 +741,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
 .kai-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 14px; border-bottom: 1px solid rgba(0,0,0,.04); user-select: none; }
 .kai-hdr:active { cursor: grabbing; }
 .kai-hdr-meta { flex: 1; }
-.kai-hdr-title { font-size: 14px; font-weight: 700; letter-spacing: .04em; color: #111; }
+.kai-hdr-title { font-size: 14px; font-weight: 600; letter-spacing: .04em; color: #111; }
 .kai-hdr-sub { font-size: 12px; color: #999; margin-top: 1px; }
 .kai-close {
   width: 28px; height: 28px; border-radius: 8px; border: none;
@@ -755,7 +755,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
 .kai-greet { margin-bottom: 14px; }
 .kai-greet-hi { font-size: 16px; font-weight: 600; color: #111; margin-bottom: 6px; }
 .kai-greet-text { font-size: 13px; line-height: 1.5; color: #555; margin-bottom: 4px; }
-.kai-greet-text strong { color: #7C3AED; font-weight: 700; }
+.kai-greet-text strong { color: #7C3AED; font-weight: 600; }
 .kai-greet-sub { font-size: 12.5px; line-height: 1.45; color: #888; margin-bottom: 6px; }
 .kai-greet-cta { font-size: 12.5px; line-height: 1.45; color: #111; font-weight: 500; }
 
@@ -802,7 +802,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   flex-shrink: 0;
 }
 .kai-input-orb span {
-  font-size: 9px; font-weight: 700; color: #7c3aed;
+  font-size: 9px; font-weight: 600; color: #7c3aed;
   font-family: var(--f); line-height: 1;
 }
 
@@ -896,7 +896,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   width: 18px; height: 18px; border-radius: 50%;
   background: #F0F0F0; color: #7c3aed;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 700;
+  font-size: 9px; font-weight: 600;
 }
 .kai-status-count {
   margin-left: auto;
@@ -910,7 +910,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   border-top: 1px solid rgba(0,0,0,.06);
 }
 .kai-pri-title {
-  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  font-size: 11px; font-weight: 600; letter-spacing: .08em;
   color: #aaa; margin-bottom: 10px;
   text-transform: uppercase;
 }
@@ -927,7 +927,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
 .kai-pri-content { flex: 1; min-width: 0; }
 .kai-pri-label { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 3px; }
 .kai-pri-tag {
-  display: inline-block; font-size: 9px; font-weight: 700;
+  display: inline-block; font-size: 9px; font-weight: 600;
   padding: 2px 6px; border-radius: 4px; letter-spacing: .04em;
   background: rgba(255,149,0,.1); color: #FF9500;
   margin-bottom: 3px;
@@ -977,7 +977,7 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   flex-shrink: 0; margin-top: 2px;
 }
 .kai-msg-orb span {
-  font-size: 9px; font-weight: 700; color: #7c3aed;
+  font-size: 9px; font-weight: 600; color: #7c3aed;
   font-family: var(--f); line-height: 1;
 }
 

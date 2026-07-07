@@ -29,7 +29,7 @@ function ProjectTimeline({ projectId }) {
   return (
     <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700 }}>Chronologie</div>
+        <div style={{ fontSize: 12, fontWeight: 600 }}>Chronologie</div>
       </div>
       {!timeline ? (
         <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Chargement...</div>
@@ -253,12 +253,12 @@ function ProjetModal({ isOpen, onClose, showToast }) {
                         style={{ padding: '9px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-subtle)' }}
                         onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'}
                         onMouseOut={e => e.currentTarget.style.background = ''}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{(p.name || '?')[0].toUpperCase()}</div>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(p.name || '?')[0].toUpperCase()}</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 600 }}>{p.name}</div>
                           {p.email && <div style={{ fontSize: 10, color: 'var(--t4)' }}>{p.email}</div>}
                         </div>
-                        {p.registered && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Inscrit</span>}
+                        {p.registered && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Inscrit</span>}
                       </div>
                     ))}
                   </div>
@@ -271,7 +271,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
 
             {proMode === 'kai' && (
               <div style={{ padding: '14px 16px', background: 'rgba(147,51,234,.04)', border: '1px solid rgba(147,51,234,.15)', borderRadius: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#9333EA', marginBottom: 6 }}>🤖 Accompagnement KAI</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#9333EA', marginBottom: 6 }}>🤖 Accompagnement KAI</div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
                   KAI analysera votre projet (type, localisation, besoins) et vous proposera une sélection de bureaux d'architecture adaptés.
                   Un appel d'offres sera publié automatiquement pour trouver le professionnel idéal.
@@ -281,7 +281,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
 
             {proMode === 'decouverte' && (
               <div style={{ padding: '14px 16px', background: 'rgba(37,99,235,.04)', border: '1px solid rgba(37,99,235,.15)', borderRadius: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', marginBottom: 6 }}>👀 Mode Découverte</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', marginBottom: 6 }}>👀 Mode Découverte</div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
                   Votre projet sera créé en mode préparatoire. Vous pourrez explorer l'annuaire, consulter les Pages Professionnelles, et démarrer une collaboration quand vous serez prêt.
                 </div>
@@ -449,8 +449,8 @@ export default function Projects({ onNavigate, openModal, showToast }) {
       {/* KPI strip */}
       <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Apercu</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Apercu</div>
+          <div style={{ fontSize: 44, fontWeight: 600, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginBottom: 14 }}>projets en portefeuille</div>
           <NewProjectButton onOpen={() => setShowCreateProject(true)} context="overview" variant="light" />
         </div>
@@ -460,7 +460,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             { v: allProjets.filter(p => p.phase === 'ACT' || p.phase === 'DET').length, l: 'En chantier' },
             { v: allProjets.filter(p => p.avancement >= 100).length, l: 'Termines' },
           ].map((k, i) => (
-            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
+            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}
         </div>
       </div>
@@ -480,8 +480,8 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div key={col.key} style={{ background: 'var(--s2)', borderRadius: 12, padding: 12, minHeight: 200 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--tx)' }}>{col.label}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', marginLeft: 'auto', background: 'var(--surface-1)', borderRadius: 100, padding: '1px 7px', border: '1px solid var(--border-card)' }}>{colProjects.length}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--tx)' }}>{col.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginLeft: 'auto', background: 'var(--surface-1)', borderRadius: 100, padding: '1px 7px', border: '1px solid var(--border-card)' }}>{colProjects.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {colProjects.map(p => (
@@ -491,17 +491,17 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                             <AoGear size={12} color={p.color || '#F59E0B'} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
                             <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{p.client || '—'}</div>
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <div className="prog-track" style={{ flex: 1, height: 3 }}><div className="prog-fill" style={{ width: p.avancement + '%', background: p.color || undefined }} /></div>
-                          <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t4)' }}>{p.avancement}%</span>
+                          <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--t4)' }}>{p.avancement}%</span>
                         </div>
                         <div style={{ display: 'flex', gap: 4 }}>
                           {COLS.map(c => (
-                            <button key={c.key} onClick={e => { e.stopPropagation(); updateProject(p.id, { kanbanStatus: c.key }) }} style={{ flex: 1, padding: '3px 0', borderRadius: 6, border: '1px solid var(--border-card)', background: (p.kanbanStatus || 'todo') === c.key ? col.color + '18' : 'transparent', cursor: 'pointer', fontSize: 9, fontWeight: 700, color: (p.kanbanStatus || 'todo') === c.key ? col.color : 'var(--t4)', fontFamily: 'var(--f)', transition: 'all .12s' }}>{c.label}</button>
+                            <button key={c.key} onClick={e => { e.stopPropagation(); updateProject(p.id, { kanbanStatus: c.key }) }} style={{ flex: 1, padding: '3px 0', borderRadius: 6, border: '1px solid var(--border-card)', background: (p.kanbanStatus || 'todo') === c.key ? col.color + '18' : 'transparent', cursor: 'pointer', fontSize: 9, fontWeight: 600, color: (p.kanbanStatus || 'todo') === c.key ? col.color : 'var(--t4)', fontFamily: 'var(--f)', transition: 'all .12s' }}>{c.label}</button>
                           ))}
                         </div>
                       </div>
@@ -538,15 +538,15 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               </div>
               <div className="list-item-right">
                 {p.status === 'stopped' ? (
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: '#FF9500' }}>Arrêté</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(255,149,0,.1)', color: '#FF9500' }}>Arrêté</span>
                 ) : p.status === 'archived' ? (
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>
                 ) : (
                   <span className="status-pill status-active" style={{ fontSize: 10 }}>{PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</span>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                   <div className="prog-track" style={{ width: 50, height: 3 }}><div className="prog-fill" style={{ width: p.avancement + '%', background: p.color || undefined }} /></div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: p.color || 'var(--tx)' }}>{p.avancement}%</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: p.color || 'var(--tx)' }}>{p.avancement}%</span>
                 </div>
               </div>
             </div>
@@ -558,7 +558,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
           {allProjets.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, opacity: .4 }}><HardHat size={28} /></div>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Votre portefeuille est vide</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Votre portefeuille est vide</div>
               <div style={{ fontSize: 12, color: 'var(--t3)' }}>Créez votre premier projet pour commencer.</div>
               <NewProjectButton onOpen={() => setShowCreateProject(true)} context="empty-state" style={{ marginTop: 4 }} />
             </div>
@@ -574,7 +574,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   <img src={selected.img} alt={selected.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.65))' }} />
                   <div style={{ position: 'absolute', bottom: 16, left: 24, right: 24 }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.4px' }}>{selected.nom}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-.4px' }}>{selected.nom}</div>
                     <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.75)', marginTop: 3 }}>{selected.type} à {selected.adresse}</div>
                   </div>
                 </div>
@@ -591,8 +591,8 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               <div className="rg-4" style={{ gap: 12, marginBottom: 20 }}>
                 {[['Budget', selected.budget ? fmtMoney(parseBgt(selected.budget)) : '—'], ['Phase', selected.phase], ['Avancement', selected.avancement + '%'], ['Livraison', formatDateFR(selected.livraison)]].map(([l, v]) => (
                   <div key={l} className="card" style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--t4)', marginBottom: 5 }}>{l}</div>
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>{v}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--t4)', marginBottom: 5 }}>{l}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600 }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -633,7 +633,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
                 return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 14 }}>Phases de mission</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 14 }}>Phases de mission</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: 14, left: 20, right: 20, height: 2, background: 'var(--s3)' }} />
                       <div style={{ position: 'absolute', top: 14, left: 20, height: 2, background: selected.color || 'linear-gradient(90deg, #F59E0B, #FBBF24)', width: Math.min(progressPct, 100) + '%', maxWidth: 'calc(100% - 40px)', transition: 'width .6s', borderRadius: 2 }} />
@@ -651,7 +651,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                               : e.current ? <div style={{ width: 8, height: 8, borderRadius: '50%', background: selected.color || 'var(--tx)' }} /> : null}
                           </div>
                           <div style={{ fontSize: 9, fontWeight: e.current ? 800 : e.done ? 700 : 400, color: e.done || e.current ? (selected.color || 'var(--tx)') : 'var(--t4)', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2, maxWidth: 70 }}>{e.label}</div>
-                          <div style={{ fontSize: 8, fontWeight: 700, color: e.done ? 'var(--ok)' : e.current ? (selected.color || '#F59E0B') : 'var(--t4)' }}>
+                          <div style={{ fontSize: 8, fontWeight: 600, color: e.done ? 'var(--ok)' : e.current ? (selected.color || '#F59E0B') : 'var(--t4)' }}>
                             {e.done ? <><Check size={8}/> Terminé</> : e.current ? 'En cours' : 'À venir'}
                           </div>
                         </div>
@@ -666,7 +666,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 const proofs = (store.proofDocuments || []).filter(d => projectOrders.some(o => o.id === d.payoutRequestId))
                 if (projectOrders.length === 0) return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financiére</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financiére</div>
                     <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Wallet size={18} color="var(--t3)"/></div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun flux financier</div>
@@ -684,12 +684,12 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 )
                 return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financiére</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financiére</div>
                     {projectOrders.map(o => (
                       <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                         <PaymentBadge status={o.status} size="small" />
                         <div style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{o.type === 'marche' ? 'Marché' : o.type === 'milestone' ? 'Milestone' : 'Paiement'}</div>
-                        <div style={{ fontSize: 12, fontWeight: 700 }}>{fmtMoney(o.amountGross || 0)}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{fmtMoney(o.amountGross || 0)}</div>
                       </div>
                     ))}
                     {proofs.length > 0 && (
@@ -705,7 +705,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700 }}>Marchés ({projMarkets.length})</div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>Marchés ({projMarkets.length})</div>
                       <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('marches')}>Voir tout →</button>
                     </div>
                     {projMarkets.length === 0 ? (
@@ -717,7 +717,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                           <div style={{ fontSize: 12, fontWeight: 600 }}>{m.lot || m.titre || 'Marché'}</div>
                           <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.entreprise || '—'} à {m.amount ? fmtMoney(m.amount) : '—'}</div>
                         </div>
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: m.statut === 'livre' ? 'rgba(52,199,89,.08)' : 'rgba(255,149,0,.08)', color: m.statut === 'livre' ? 'var(--ok)' : 'var(--wrn)' }}>{m.statut || m.status}</span>
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: m.statut === 'livre' ? 'rgba(52,199,89,.08)' : 'rgba(255,149,0,.08)', color: m.statut === 'livre' ? 'var(--ok)' : 'var(--wrn)' }}>{m.statut || m.status}</span>
                       </div>
                     ))}
                   </div>
@@ -730,7 +730,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700 }}>Documents ({projDocs.length})</div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>Documents ({projDocs.length})</div>
                       <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('documents')}>Voir tout →</button>
                     </div>
                     {projDocs.length === 0 ? (
@@ -752,7 +752,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700 }}>Missions ({projMissions.length})</div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>Missions ({projMissions.length})</div>
                       <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('missions')}>Voir tout →</button>
                     </div>
                     {projMissions.length === 0 ? (
@@ -772,7 +772,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                             <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--s3)', overflow: 'hidden' }}>
                               <div style={{ width: (m.avancement || 0) + '%', height: '100%', background: 'var(--blue)', borderRadius: 2 }} />
                             </div>
-                            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: (STATUS_C[m.status] || 'var(--t4)') + '14', color: STATUS_C[m.status] || 'var(--t4)' }}>{STATUS_L[m.status] || m.status}</span>
+                            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: (STATUS_C[m.status] || 'var(--t4)') + '14', color: STATUS_C[m.status] || 'var(--t4)' }}>{STATUS_L[m.status] || m.status}</span>
                           </div>
                         </div>
                       )
@@ -809,14 +809,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                           {photo ? (
                             <img src={photo} alt="" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                           ) : (
-                            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                            <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.nom}</div>
                             <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.role}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut}</span>
+                            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut}</span>
                             <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'var(--s2)', color: accessColor(m.access) }}>{ACCESS_LEVELS.find(a => a.id === m.access)?.label || m.access}</span>
                           </div>
                         </div>
@@ -827,7 +827,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
                 {/* Notes */}
                 <div className="card" style={{ padding: 18 }}>
-                  <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Notes</div>
                   <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{selected.notes || '—'}</div>
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px', marginTop: 10 }} onClick={() => openEdit('notes')}>Modifier</button>
                 </div>
@@ -844,7 +844,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             {/* Header */}
             <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>{editSection === 'projet' ? 'Editer le projet' : editSection === 'equipe' ? 'Gestion de l\'equipe' : 'Notes du projet'}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px' }}>{editSection === 'projet' ? 'Editer le projet' : editSection === 'equipe' ? 'Gestion de l\'equipe' : 'Notes du projet'}</div>
                 <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{editModal.nom}</div>
               </div>
               <button onClick={() => setEditModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -903,13 +903,13 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                         {mPhoto ? (
                           <img src={mPhoto} alt="" style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                         ) : (
-                          <div style={{ width: 34, height: 34, borderRadius: 8, background: m.type === 'externe' ? 'rgba(37,99,235,.08)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: m.type === 'externe' ? '#2563EB' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                          <div style={{ width: 34, height: 34, borderRadius: 8, background: m.type === 'externe' ? 'rgba(37,99,235,.08)' : 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: m.type === 'externe' ? '#2563EB' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.nom}</div>
                           <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.role}{m.entreprise ? ' à ' + m.entreprise : ''}</div>
                         </div>
-                        {m.type === 'externe' && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 100, background: 'rgba(37,99,235,.08)', color: '#2563EB' }}>Externe</span>}
+                        {m.type === 'externe' && <span style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(37,99,235,.08)', color: '#2563EB' }}>Externe</span>}
                         <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: statusColor(m.statut) + '18', color: statusColor(m.statut) }}>{m.statut}</span>
                         <button className="btn btn-sm" style={{ fontSize: 9, padding: '2px 7px' }} onClick={() => setEditMember({ idx, member: { ...m } })}>Modifier</button>
                         <button style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.06)', color: 'var(--err)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }} onClick={() => removeMember(idx)}>×</button>
@@ -920,7 +920,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     {/* Mon équipe interne */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>Mon équipe</div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>Mon équipe</div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{interne.length} membre{interne.length > 1 ? 's' : ''} de ma structure</div>
                       </div>
                       {!isClientUser && <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('existant'); setMemberSearch('') }}>+ Depuis mon équipe</button>}
@@ -936,7 +936,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     {/* Intervenants externes */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>Intervenants</div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>Intervenants</div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{externe.length} intervenant{externe.length > 1 ? 's' : ''} externe{externe.length > 1 ? 's' : ''}</div>
                       </div>
                       {!isClientUser && <button className="btn btn-primary btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAddMemberModal(true); setMemberTab('nouveau'); setMemberSearch('') }}>+ Intervenant</button>}
@@ -982,7 +982,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,59,48,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{deleteConfirm.isArchived ? 'Supprimer définitivement ?' : 'Arrêter ce projet ?'}</div>
+              <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>{deleteConfirm.isArchived ? 'Supprimer définitivement ?' : 'Arrêter ce projet ?'}</div>
               <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>
                 {deleteConfirm.isArchived
                   ? 'Ce projet archivé sera définitivement supprimé. Cette action est irréversible.'
@@ -1013,7 +1013,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,0,0,.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Archiver ce projet ?</div>
+              <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Archiver ce projet ?</div>
               <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>Le projet sera retiré de la liste active et dûplacé dans les archives. Vous pourrez le consulter depuis la section Archivés.</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>« {archiveConfirm.nom} »</div>
             </div>
@@ -1034,7 +1034,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '18px 20px 14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>Ajouter un membre</div>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>Ajouter un membre</div>
                 <button onClick={() => setAddMemberModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
               </div>
               {/* Tabs */}
@@ -1094,7 +1094,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                       const initials = (m.nom || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => addExistingMember(m)} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-                          <div style={{ width: 36, height: 36, borderRadius: 9, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: m.source === 'equipe' ? '#7C3AED' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                          <div style={{ width: 36, height: 36, borderRadius: 9, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: m.source === 'equipe' ? '#7C3AED' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
                             <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.role || m.poste || ''}</div>
@@ -1157,7 +1157,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2200, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setEditMember(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)', padding: 22 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Modifier — {editMember.member.nom}</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Modifier — {editMember.member.nom}</div>
               <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

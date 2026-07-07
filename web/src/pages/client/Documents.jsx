@@ -184,9 +184,9 @@ export default function Documents({ showToast }) {
                   <div style={{ height: 80, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: isImgDoc && d.url ? '#000' : tc.bg }}>
                     {isImgDoc && d.url
                       ? <img src={d.url} alt={d.nom} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: .92 }} />
-                      : <span style={{ fontSize: 16, fontWeight: 900, color: tc.color }}>{tc.label}</span>
+                      : <span style={{ fontSize: 16, fontWeight: 600, color: tc.color }}>{tc.label}</span>
                     }
-                    {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
+                    {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
                   </div>
                   <div className="doc-card-name">{d.nom}</div>
                   <div className="doc-card-meta">{d.projet} · {formatDateFR(d.date)} · {d.taille}</div>
@@ -206,7 +206,7 @@ export default function Documents({ showToast }) {
                   const tc = getTC(d.type)
                   return (
                     <tr key={d.id} style={{ cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
-                      <td><span style={{ fontSize: 9, fontWeight: 900, color: tc.color, background: tc.bg, padding: '3px 7px', borderRadius: 4 }}>{tc.label}</span></td>
+                      <td><span style={{ fontSize: 9, fontWeight: 600, color: tc.color, background: tc.bg, padding: '3px 7px', borderRadius: 4 }}>{tc.label}</span></td>
                       <td className="bold">{d.nom}{d.isNew && <span className="doc-card-new">NEW</span>}</td>
                       <td className="muted">{d.projet}</td>
                       <td className="muted">{formatDateFR(d.date)}</td>
@@ -256,11 +256,11 @@ export default function Documents({ showToast }) {
             <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(239,68,68,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Supprimer le document</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Supprimer le document</div>
             <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>Le document <strong>{confirmDelete.nom}</strong> sera définitivement supprimé. Cette action est irréversible.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setConfirmDelete(null)} style={{ padding: '9px 18px', fontSize: 12.5 }}>Annuler</button>
-              <button onClick={() => deleteDocument(confirmDelete.id)} style={{ padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 700, background: '#EF4444', color: '#fff' }}>Supprimer</button>
+              <button onClick={() => deleteDocument(confirmDelete.id)} style={{ padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, background: '#EF4444', color: '#fff' }}>Supprimer</button>
             </div>
           </div>
         </div>,
@@ -271,7 +271,7 @@ export default function Documents({ showToast }) {
       {renameModal && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setRenameModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 400, padding: '24px', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Renommer le document</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Renommer le document</div>
             <input autoFocus value={renameModal.nom} onChange={e => setRenameModal(p => ({ ...p, nom: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') renameDocument(renameModal.id, renameModal.nom) }} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setRenameModal(null)} style={{ padding: '9px 18px', fontSize: 12.5 }}>Annuler</button>
@@ -287,7 +287,7 @@ export default function Documents({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setImportModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Importer des documents</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px' }}>Importer des documents</div>
               <button onClick={() => setImportModal(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--t3)' }}><X size={14}/></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -313,13 +313,13 @@ export default function Documents({ showToast }) {
               </div>
               {importFiles.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{importFiles.length} fichier{importFiles.length > 1 ? 's' : ''} sélectionné{importFiles.length > 1 ? 's' : ''}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>{importFiles.length} fichier{importFiles.length > 1 ? 's' : ''} sélectionné{importFiles.length > 1 ? 's' : ''}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {importFiles.map((f, i) => {
                       const tc = getTC(f.docType)
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 7, background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 9, fontWeight: 900, color: tc.color }}>{tc.label}</span></div>
+                          <div style={{ width: 32, height: 32, borderRadius: 7, background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 9, fontWeight: 600, color: tc.color }}>{tc.label}</span></div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
                             <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 1 }}>{f.size} · {f.cat}</div>
@@ -375,7 +375,7 @@ export default function Documents({ showToast }) {
             <div style={{ position: 'relative', width: '90vw', maxWidth: 900, maxHeight: '85vh', background: 'var(--surface-1)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.35)' }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface-1)', flexShrink: 0 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{d.projet || '—'} · {formatDateFR(d.date)} · {d.taille}</div>
                 </div>
                 <a href={d.url} download={d.nom} onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--tx)', textDecoration: 'none', flexShrink: 0 }}><Download size={13} /> Télécharger</a>
@@ -392,7 +392,7 @@ export default function Documents({ showToast }) {
                     <FileText size={48} style={{ opacity: .3, marginBottom: 12 }} />
                     <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Aperçu non disponible</div>
                     <div style={{ fontSize: 12, marginBottom: 20 }}>Ce type de fichier ne peut pas être prévisualisé dans le navigateur.</div>
-                    <a href={d.url} download={d.nom} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700 }}><Download size={14} /> Télécharger</a>
+                    <a href={d.url} download={d.nom} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}><Download size={14} /> Télécharger</a>
                   </div>
                 )}
               </div>

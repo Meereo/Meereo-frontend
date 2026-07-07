@@ -1,69 +1,49 @@
 import { getStatusLabel, OFFER_STATUS, MARKET_STATUS, PAYMENT_STATUS, ORDER_STATUS, STATUS } from '../../domain/status'
 
 /**
- * DSStatusBadge — Unified status badge using the status registry.
- * Replaces all ad-hoc badge styling scattered across pages.
- *
- * @param {string} status - Raw status value (supports old FR values via compat maps)
- * @param {'offer'|'market'|'payment'|'order'|'project'|'task'} domain - Which domain for theming
- * @param {string} label - Override the display label
+ * DSStatusBadge — Unified status badge.
+ * Tailwind version — Monochrome constraint compliant.
  */
 
-const SEMANTIC_COLORS = {
-  success: { bg: 'rgba(52,199,89,.08)', color: 'var(--ok)' },
-  warning: { bg: 'rgba(255,149,0,.08)', color: '#E07B00' },
-  error:   { bg: 'rgba(220,38,38,.06)', color: 'var(--err)' },
-  info:    { bg: 'rgba(0,122,255,.06)', color: '#007AFF' },
-  neutral: { bg: 'rgba(0,0,0,.04)', color: 'var(--t3)' },
-  dark:    { bg: 'rgba(0,0,0,.06)', color: 'var(--tx)' },
+const SEMANTIC_STYLES = {
+  success: 'bg-[rgba(25,28,29,0.06)] text-[var(--tx)]',
+  warning: 'bg-[rgba(71,71,71,0.06)] text-[var(--t3)]',
+  error:   'bg-[rgba(186,26,26,0.06)] text-[var(--err)]',
+  info:    'bg-[rgba(71,71,71,0.06)] text-[var(--t3)]',
+  neutral: 'bg-[rgba(0,0,0,0.04)] text-[var(--t3)]',
+  dark:    'bg-[rgba(0,0,0,0.06)] text-[var(--tx)]',
 }
 
-function getSemanticColor(status) {
-  // Success states
+function getSemanticStyle(status) {
   if ([STATUS.COMPLETED, STATUS.APPROVED, OFFER_STATUS.ACCEPTED, MARKET_STATUS.SIGNED,
        PAYMENT_STATUS.CONFIRMED, PAYMENT_STATUS.PAID, ORDER_STATUS.DELIVERED,
        'acceptee', 'signe', 'livre', 'done', 'actif', 'confirmed'].includes(status)) {
-    return SEMANTIC_COLORS.success
+    return SEMANTIC_STYLES.success
   }
-  // Warning states
   if ([STATUS.PENDING, STATUS.IN_REVIEW, OFFER_STATUS.PENDING, PAYMENT_STATUS.PENDING,
        'en_attente', 'en attente', 'pending', 'active', 'todo', 'in_review'].includes(status)) {
-    return SEMANTIC_COLORS.warning
+    return SEMANTIC_STYLES.warning
   }
-  // Error states
   if ([STATUS.REJECTED, STATUS.CANCELLED, STATUS.BLOCKED, OFFER_STATUS.REJECTED,
        'refusee', 'rejected', 'cancelled', 'blocked', 'suspendu'].includes(status)) {
-    return SEMANTIC_COLORS.error
+    return SEMANTIC_STYLES.error
   }
-  // Info states
   if ([STATUS.IN_PROGRESS, STATUS.PUBLISHED, MARKET_STATUS.IN_PROGRESS, ORDER_STATUS.IN_TRANSIT,
        'en_cours', 'in_progress', 'published', 'in_transit'].includes(status)) {
-    return SEMANTIC_COLORS.info
+    return SEMANTIC_STYLES.info
   }
-  // Draft
   if ([STATUS.DRAFT, 'draft', 'brouillon'].includes(status)) {
-    return SEMANTIC_COLORS.neutral
+    return SEMANTIC_STYLES.neutral
   }
-  return SEMANTIC_COLORS.neutral
+  return SEMANTIC_STYLES.neutral
 }
 
-export default function DSStatusBadge({ status, label, style: customStyle }) {
-  const colors = getSemanticColor(status)
+export default function DSStatusBadge({ status, label, className = '' }) {
   const displayLabel = label || getStatusLabel(status) || status
+  const style = getSemanticStyle(status)
 
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 4,
-      fontSize: 10,
-      fontWeight: 600,
-      padding: '3px 9px',
-      borderRadius: 100,
-      whiteSpace: 'nowrap',
-      ...colors,
-      ...customStyle,
-    }}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${style} ${className}`}>
       {displayLabel}
     </span>
   )

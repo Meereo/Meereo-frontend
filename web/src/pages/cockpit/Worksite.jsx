@@ -399,7 +399,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       <div className="split" style={{ marginTop: 0, height: 'calc(100vh - var(--topbar-h) - 140px)' }}>
         {/* Project list sidebar */}
         <div className="split-left" style={{ width: 260 }}>
-          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--t4)' }}>Projets ({allChantierProjets.length})</div>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--t4)' }}>Projets ({allChantierProjets.length})</div>
           {allChantierProjets.map(p => {
             const isSel = selProjId === p.id
             return (
@@ -416,7 +416,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   <div className="list-item-sub">{p.client} à {PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</div>
                 </div>
                 <div style={{ width: 40, textAlign: 'right' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700 }}>{p.avancement}%</div>
+                  <div style={{ fontSize: 11, fontWeight: 600 }}>{p.avancement}%</div>
                 </div>
               </div>
             )
@@ -442,7 +442,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   <div key={i} className="card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: k.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: k.iconColor, flexShrink: 0 }}>{k.svg}</div>
                     <div>
-                      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.6px', lineHeight: 1 }}>{k.v}</div>
+                      <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.6px', lineHeight: 1 }}>{k.v}</div>
                       <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 2 }}>{k.l}</div>
                     </div>
                   </div>
@@ -455,11 +455,11 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(0,0,0,.75))' }} />
                 <div style={{ position: 'absolute', bottom: 14, left: 20, right: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-.2px' }}>{proj.nom}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', letterSpacing: '-.2px' }}>{proj.nom}</div>
                     <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', marginTop: 2 }}>{proj.client}{proj.adresse ? ' à ' + proj.adresse : ''}{proj.budget ? ' à ' + fmtMoney(Number(String(proj.budget).replace(/\D/g, ''))) : ''}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{globalPct}%</div>
+                    <div style={{ fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1 }}>{globalPct}%</div>
                     <div style={{ fontSize: 8, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.4px', marginTop: 2 }}>avancement</div>
                   </div>
                 </div>
@@ -472,20 +472,20 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 if (cs === 'CLOTURE_VALIDE_EXTERNE' || cs === 'CLOTURE_VALIDE_MEEREO') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.15)', borderRadius: 12 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <div><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ok)' }}>Clôturé — validû par le client</div></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Clôturé — validû par le client</div></div>
                   </div>
                 )
                 if (cs === 'DEMANDE_CLOTURE_ENVOYEE' || cs === 'EN_ATTENTE_VALIDATION_CLIENT') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(255,149,0,.04)', border: '1px solid rgba(255,149,0,.12)', borderRadius: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF9500', flexShrink: 0 }} />
-                    <div><div style={{ fontSize: 13, fontWeight: 700, color: '#FF9500' }}>Demande envoyée — en attente de validation client</div></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 600, color: '#FF9500' }}>Demande envoyée — en attente de validation client</div></div>
                   </div>
                 )
                 if (cs === 'CLOTURE_REFUSEE') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(255,59,48,.04)', border: '1px solid rgba(255,59,48,.12)', borderRadius: 12 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--err)' }}>Clôture refusée par le client</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--err)' }}>Clôture refusée par le client</div>
                       <button className="btn btn-sm" style={{ marginTop: 6, fontSize: 11 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client })}>Renvoyer une demande</button>
                     </div>
                   </div>
@@ -494,10 +494,10 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', marginBottom: 16, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>Clôture du projet</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>Clôture du projet</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Envoyez une demande de validation au client</div>
                     </div>
-                    <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, flexShrink: 0 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
+                    <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, flexShrink: 0 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
                       Demander la clôture
                     </button>
                   </div>
@@ -507,7 +507,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               {/* Té‚CHES CONTRACTUELLES (depuis le backend) */}
               {tasksByMarket.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 10 }}>Tâches contractuelles</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 10 }}>Tâches contractuelles</div>
                   {tasksByMarket.map((group, gi) => {
                     const mkt = group.market
                     const mktDone = group.tasks.filter(t => t.status === 'done' || t.status === 'completed').length
@@ -521,14 +521,14 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                               <HardHat size={14} color="#fff" />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.lot || mkt.titre || 'Marché'}</div>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.lot || mkt.titre || 'Marché'}</div>
                               <div style={{ fontSize: 10.5, color: 'var(--t3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mkt.entreprise || ''}</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <div className="prog-track" style={{ width: 60, height: 5 }}>
                                 <div className="prog-fill" style={{ width: mktPct + '%' }} />
                               </div>
-                              <span style={{ fontSize: 11, fontWeight: 700 }}>{mktPct}%</span>
+                              <span style={{ fontSize: 11, fontWeight: 600 }}>{mktPct}%</span>
                             </div>
                           </div>
                         )}
@@ -547,7 +547,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                                 <div style={{ fontSize: 12.5, fontWeight: isDone ? 400 : 600, color: isDone ? 'var(--t3)' : 'var(--tx)', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
                                 {t.description && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.description}</div>}
                               </div>
-                              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: stBg, color: stColor, flexShrink: 0 }}>{isDone ? 'Terminé' : isActive ? 'En cours' : 'à faire'}</span>
+                              <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: stBg, color: stColor, flexShrink: 0 }}>{isDone ? 'Terminé' : isActive ? 'En cours' : 'à faire'}</span>
                             </div>
                           )
                         })}
@@ -559,7 +559,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
               {/* Phase progress bars */}
               <div className="card" style={{ padding: 18, marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Avancement par phase</div>
+                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Avancement par phase</div>
                 {CHANTIER_PHASES.map((ph, i) => {
                   const phDone = ph.tasks.filter(t => getTaskState(t.id) === 'done').length
                   const pct = Math.round(phDone / ph.tasks.length * 100)
@@ -570,7 +570,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                       <div className="prog-track" style={{ flex: 1, height: 6 }}>
                         <div className="prog-fill" style={{ width: pct + '%', background: pct === 100 ? 'var(--tx)' : pct > 0 ? 'var(--tx)' : 'var(--s3)' }} />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, width: 30, textAlign: 'right' }}>{pct}%</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, width: 30, textAlign: 'right' }}>{pct}%</span>
                       <span style={{ fontSize: 9.5, fontWeight: 600, color: pct === 100 ? 'var(--ok)' : pct > 0 ? 'var(--tx)' : 'var(--t4)', width: 55, textAlign: 'right' }}>{label}</span>
                     </div>
                   )
@@ -579,7 +579,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
               {/* Horizontal timeline stepper */}
               <div className="card" style={{ padding: 18, marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 16 }}>Phases de mission</div>
+                <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 16 }}>Phases de mission</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                   {/* Connector line */}
                   <div style={{ position: 'absolute', top: 18, left: 30, right: 30, height: 2, background: 'var(--s3)' }} />
@@ -602,7 +602,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                               : null}
                         </div>
                         <div style={{ fontSize: 9, fontWeight: phAllDone || phStarted ? 800 : 500, color: phAllDone || phStarted ? (ph.color || 'var(--tx)') : 'var(--t4)', textAlign: 'center', lineHeight: 1.2, maxWidth: 80 }}>{ph.name.split(' & ')[0]}</div>
-                        <div style={{ fontSize: 8, fontWeight: 700, color: phAllDone ? 'var(--ok)' : phStarted ? (ph.color || 'var(--tx)') : 'var(--t4)' }}>
+                        <div style={{ fontSize: 8, fontWeight: 600, color: phAllDone ? 'var(--ok)' : phStarted ? (ph.color || 'var(--tx)') : 'var(--t4)' }}>
                           {phAllDone ? <><Check size={8}/> Terminé</> : phStarted ? Math.round(ph.tasks.filter(t => getTaskState(t.id) === 'done').length / ph.tasks.length * 100) + '%' : 'A venir'}
                         </div>
                       </div>
@@ -637,13 +637,13 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                         }
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: isDone || isAct ? 'var(--tx)' : 'var(--t4)' }}>{ph.name}</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: isDone || isAct ? 'var(--tx)' : 'var(--t4)' }}>{ph.name}</div>
                         <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{ph.description}</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                        {isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Terminé</span>}
-                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>é—é En cours</span>}
-                        <span style={{ fontSize: 10.5, fontWeight: 700 }}>{phPct}%</span>
+                        {isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Terminé</span>}
+                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>é—é En cours</span>}
+                        <span style={{ fontSize: 10.5, fontWeight: 600 }}>{phPct}%</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
                       </div>
                     </div>
@@ -658,7 +658,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                           return (
                             <div key={ti} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: ti < ph.tasks.length - 1 ? '1px solid var(--border)' : 'none', borderLeft: st === 'active' ? '3px solid var(--tx)' : '3px solid transparent', background: st === 'active' ? 'rgba(0,0,0,.02)' : undefined }}>
                               {/* Status cycle button */}
-                              <button onClick={() => cycleTask(t.id)} style={{ width: 28, height: 28, borderRadius: 8, background: s.bg, color: s.color, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 700, transition: 'all .15s' }}>{stIcon(st)}</button>
+                              <button onClick={() => cycleTask(t.id)} style={{ width: 28, height: 28, borderRadius: 8, background: s.bg, color: s.color, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 600, transition: 'all .15s' }}>{stIcon(st)}</button>
                               {/* Task info */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 12.5, fontWeight: st === 'done' ? 500 : 600, color: st === 'done' ? 'var(--t3)' : 'var(--tx)', textDecoration: st === 'done' ? 'line-through' : 'none' }}>{t.title}</div>
@@ -673,7 +673,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                                 )}
                               </div>
                               {/* Status badge */}
-                              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: s.bg, color: s.color }}>{st === 'done' ? 'Termine' : st === 'active' ? 'En cours' : 'A faire'}</span>
+                              <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: s.bg, color: s.color }}>{st === 'done' ? 'Termine' : st === 'active' ? 'En cours' : 'A faire'}</span>
                               {/* Assign button */}
                               <button onClick={() => { setAssignModal({ phaseIdx: phIdx, taskId: t.id }); setAssignTab('plateforme'); setAssignSearch('') }} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--s2)', border: '1px solid var(--border-card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Assigner un intervenant">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -707,8 +707,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             <div style={{ padding: '20px 22px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Assigner un intervenant</div>
-                  {assignModal.phaseIdx != null && <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: 'var(--s3)', marginTop: 6, display: 'inline-block' }}>{CHANTIER_PHASES[assignModal.phaseIdx]?.code} — {CHANTIER_PHASES[assignModal.phaseIdx]?.name}</span>}
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px' }}>Assigner un intervenant</div>
+                  {assignModal.phaseIdx != null && <span style={{ fontSize: 10.5, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: 'var(--s3)', marginTop: 6, display: 'inline-block' }}>{CHANTIER_PHASES[assignModal.phaseIdx]?.code} — {CHANTIER_PHASES[assignModal.phaseIdx]?.name}</span>}
                   {assignModal.taskId && <span style={{ fontSize: 10.5, color: 'var(--t3)', marginTop: 4, display: 'block' }}>Tache : {CHANTIER_PHASES[assignModal.phaseIdx]?.tasks.find(t => t.id === assignModal.taskId)?.title}</span>}
                 </div>
                 <button onClick={() => setAssignModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -740,12 +740,12 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                     return (
                       <div key={p.id + p.source} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 22px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => doAssign(p.nom, p.id)}>
                         <div style={{ width: 38, height: 38, borderRadius: 10, background: p.color || 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{initials}</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{initials}</span>
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700 }}>{p.nom}</span>
-                            {p.verified && <span style={{ background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 5px', borderRadius: 100, fontWeight: 700 }}><Check size={9}/></span>}
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{p.nom}</span>
+                            {p.verified && <span style={{ background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 5px', borderRadius: 100, fontWeight: 600 }}><Check size={9}/></span>}
                             <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: p.source === 'annuaire' ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: p.source === 'annuaire' ? '#2563EB' : '#7C3AED', fontWeight: 600 }}>{p.source === 'annuaire' ? 'Annuaire' : 'Equipe'}</span>
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{p.specialite}{p.ville ? ' à ' + p.ville : ''}</div>
@@ -811,14 +811,14 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEvalPresta(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.4px', marginBottom: 4 }}>Evaluer le prestataire</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>Evaluer le prestataire</div>
               <div style={{ fontSize: 12, color: 'var(--t3)' }}>{evalPresta.nom} à Mission terminee</div>
             </div>
             <div style={{ padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 16 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{evalPresta.nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{evalPresta.nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>{evalPresta.nom}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{evalPresta.nom}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>Prestataire</div>
                 </div>
               </div>
@@ -838,7 +838,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             </div>
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setEvalPresta(null)}>Plus tard</button>
-              <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
+              <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
                 if (evalPresta.ratings.stars > 0) {
                   updateStore(prev => ({
                     ...prev,
@@ -869,7 +869,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setConfirmModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px' }}>
-              <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-.3px', marginBottom: 4 }}>Clôture du projet</div>
+              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 4 }}>Clôture du projet</div>
               <div style={{ fontSize: 13, color: 'var(--t3)' }}>{confirmModal.projNom}</div>
               {!hasClientAccount && <div style={{ fontSize: 12, color: 'var(--t4)', marginTop: 8, lineHeight: 1.5 }}>Votre client n'est pas encore sur MEEREO. Choisissez comment finaliser la validation.</div>}
             </div>
@@ -884,8 +884,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>Envoyer un lien de validation au client</div>
-                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>RECOMMANDé</span>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Envoyer un lien de validation au client</div>
+                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>RECOMMANDé</span>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra un lien simple pour confirmer la réception du projet.</div>
               </div>
@@ -899,7 +899,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>Inviter le client à rejoindre MEEREO</div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Inviter le client à rejoindre MEEREO</div>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra une invitation et pourra valider depuis son espace.</div>
               </div>
@@ -920,7 +920,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>Valider avec preuve externe</div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Valider avec preuve externe</div>
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Vous avez dûjé obtenu la validation du client hors plateforme. Joignez une preuve (photo, PDF, message).</div>
               </div>
@@ -942,8 +942,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Confirmation client</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.4px' }}>Evaluer le prestataire</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Confirmation client</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Evaluer le prestataire</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{clientRatingModal.projNom} à {clientRatingModal.client}</div>
                 </div>
                 <button onClick={() => setClientRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -953,9 +953,9 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             {/* Rating form */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '14px 16px', background: 'var(--s2)', borderRadius: 10 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>AK</div>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#fff', flexShrink: 0 }}>AK</div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>{clientRatingModal.prestataire}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{clientRatingModal.prestataire}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>Maitre d'oeuvre</div>
                 </div>
               </div>

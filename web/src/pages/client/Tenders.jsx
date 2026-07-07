@@ -31,7 +31,7 @@ function CreateAOModal({ open, onClose, proj, createAO, showToast }) {
       <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800 }}>Publier un appel d'offres</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Publier un appel d'offres</div>
             {proj && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Projet : {proj.nom}</div>}
           </div>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: 'var(--t3)' }}>×</button>
@@ -53,7 +53,7 @@ function CreateAOModal({ open, onClose, proj, createAO, showToast }) {
           </div>
           {ao.metier && !precondCheck.allowed && (
             <div style={{ padding: '10px 14px', background: 'rgba(186,26,26,.05)', border: '1px solid rgba(186,26,26,.12)', borderRadius: 10, fontSize: 11, color: 'var(--err)', lineHeight: 1.5 }}>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>Flux bloqué</div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Flux bloqué</div>
               {precondCheck.message}
             </div>
           )}
@@ -91,7 +91,7 @@ export default function Tenders({ ctx }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>Mes appels d'offres</div>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Mes appels d'offres</div>
           <div style={{ fontSize: 12, color: 'var(--t3)' }}>Publiez un AO pour trouver un professionnel</div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>+ Publier un appel d'offres</button>
@@ -100,7 +100,7 @@ export default function Tenders({ ctx }) {
       {displayedAOs.length === 0 && (
         <div className="card" style={{ padding: '40px 24px', textAlign: 'center' }}>
           <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}><Radio size={32} /></div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Aucun appel d'offres</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Aucun appel d'offres</div>
           <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>
             Publiez un AO pour recevoir des propositions de professionnels qualifiés
           </div>
@@ -121,17 +121,17 @@ export default function Tenders({ ctx }) {
                 <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>Ma demande</span>
                 <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>·</span>
                 <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>{ao.ref}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: hasRep ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: hasRep ? '#34c759' : '#F59E0B' }}>
+                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: hasRep ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: hasRep ? '#34c759' : '#F59E0B' }}>
                   {hasRep ? nbRep + ' réponse' + (nbRep > 1 ? 's' : '') : 'En attente'}
                 </span>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7, lineHeight: 1.25 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7, lineHeight: 1.25 }}>
                 <AoGear size={14} color={getMetierColor(ao.metier || ao.lot)} />
                 {ao.titre || ao.title}
               </div>
               {ao.desc && <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)', lineHeight: 1.5, marginBottom: 10, maxHeight: 36, overflow: 'hidden' }}>{ao.desc}</div>}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: getMetierColor(ao.metier || ao.lot) + '22', color: getMetierColor(ao.metier || ao.lot) }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: getMetierColor(ao.metier || ao.lot) + '22', color: getMetierColor(ao.metier || ao.lot) }}>
                   {ao.metier || ao.lot}
                 </span>
                 {(ao.budget && ao.budget !== '—') && (

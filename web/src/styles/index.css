@@ -1,28 +1,87 @@
 @import "tailwindcss";
 
-/* ═══ MEEREO Design Tokens ═══ */
+/* ═══ MEEREO Design Tokens — Tailwind v4 @theme ═══ */
+@theme {
+  /* Surface Hierarchy — The Monochrome Constraint */
+  --color-surface-base: #f8f9fa;
+  --color-surface-section: #f3f4f5;
+  --color-surface-card: #ffffff;
+  --color-surface-high: #e7e8e9;
+  --color-surface-highest: #e1e3e4;
+
+  /* Primary */
+  --color-primary: #000000;
+  --color-primary-container: #3c3b3b;
+  --color-on-primary: #e5e2e1;
+
+  /* Text */
+  --color-text-primary: #191c1d;
+  --color-text-secondary: #3c3b3b;
+  --color-text-tertiary: #474747;
+  --color-text-muted: #777777;
+  --color-text-faint: #c6c6c6;
+
+  /* Status — Monochrome */
+  --color-status-ok: #191c1d;
+  --color-status-err: #ba1a1a;
+  --color-status-warn: #474747;
+  --color-status-info: #474747;
+
+  /* Borders — Ghost (10% opacity max) */
+  --color-border-ghost: rgba(0, 0, 0, 0.06);
+  --color-border-subtle: rgba(0, 0, 0, 0.04);
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 100px;
+
+  /* Shadow — Ambient Occlusion Only */
+  --shadow-ambient: 0 20px 40px rgba(0, 0, 0, 0.04);
+
+  /* Font */
+  --font-sans: 'Inter', -apple-system, 'SF Pro Text', BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Instrument Serif', serif;
+
+  /* Spacing */
+  --spacing-gallery: 5.5rem;
+}
+
+/* ═══ Legacy CSS Variables (rétrocompat avec le CSS existant) ═══ */
 :root {
   --f: 'Inter', system-ui, -apple-system, sans-serif;
   --f-serif: 'Instrument Serif', Georgia, serif;
-  --tx: #1d1d1f;
-  --t2: #3a3a3c;
-  --t3: #86868b;
-  --t4: #aeaeb2;
-  --surface-1: #fff;
-  --s2: #f5f5f7;
-  --s3: #e8e8ed;
-  --border: rgba(0,0,0,.08);
+  --tx: #191c1d;
+  --t2: #3c3b3b;
+  --t3: #474747;
+  --t4: #777777;
+  --t5: #c6c6c6;
+  --surface-1: #ffffff;
+  --s1: #f3f4f5;
+  --s2: #f3f4f5;
+  --s3: #e7e8e9;
+  --s4: #e1e3e4;
+  --bg: #f8f9fa;
+  --border: rgba(0,0,0,.06);
   --border-card: rgba(0,0,0,.06);
   --border-subtle: rgba(0,0,0,.04);
-  --ok: #34c759;
-  --wrn: #f59e0b;
-  --err: #dc2626;
-  --on-primary: #fff;
+  --ok: #191c1d;
+  --wrn: #474747;
+  --err: #ba1a1a;
+  --inf: #474747;
+  --on-primary: #e5e2e1;
+  --primary: #000000;
+  --gr: linear-gradient(145deg, #000000, #3c3b3b);
+  --accent: #191c1d;
+  --hover: rgba(25,28,29,.03);
 }
 
 body {
   font-family: var(--f);
   color: var(--tx);
-  background: var(--s2);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }

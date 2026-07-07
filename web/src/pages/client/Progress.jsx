@@ -17,7 +17,7 @@ export default function Progress({ ctx }) {
   if (!proj) return (
     <div style={{ padding: '60px 24px', textAlign: 'center' }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: .3 }}><HardHatIcon size={32}/></div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>Aucun projet actif</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--tx)', marginBottom: 6 }}>Aucun projet actif</div>
       <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 400, margin: '0 auto', marginBottom: 20 }}>Le suivi de projet démarre automatiquement quand vous acceptez une offre et qu'un marché est signé.</div>
       <button className="btn btn-primary btn-sm" onClick={() => setPage('ao')}>Publier un appel d'offres</button>
     </div>
@@ -43,21 +43,21 @@ export default function Progress({ ctx }) {
       <div className="card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
         {proj?.img && <img src={proj.img} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{proj?.nom}</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>{proj?.nom}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{proj?.adresse} · {({ ESQUISSE:'Esquisse', AVANT_PROJET:'Avant-projet', PROJET_DETAILLE:'Projet détaillé', PLANS_EXECUTION:'Plans d\'exécution', CONSULTATION_ENTREPRISES:'Consultation', ATTRIBUTION_MARCHES:'Attribution', SUIVI_CHANTIER:'Chantier', RECEPTION:'Réception' })[proj?.phase] || proj?.phase || '—'}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>{projProgress}%</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{projProgress}%</div>
           <div style={{ fontSize: 10, color: 'var(--t4)' }}>avancement</div>
         </div>
       </div>
 
       {/* Etapes projet — synced from pro */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Phases du projet</div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Phases du projet</div>
         {(proj?.etapes || []).map((e, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: e.done ? 'var(--tx)' : e.current ? '#fff' : 'var(--s2)', border: e.done ? 'none' : e.current ? '2px solid var(--tx)' : '1.5px solid var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: e.done ? '#fff' : 'var(--t4)', flexShrink: 0 }}>{e.done ? <Check size={10}/> : i + 1}</div>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: e.done ? 'var(--tx)' : e.current ? '#fff' : 'var(--s2)', border: e.done ? 'none' : e.current ? '2px solid var(--tx)' : '1.5px solid var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, color: e.done ? '#fff' : 'var(--t4)', flexShrink: 0 }}>{e.done ? <Check size={10}/> : i + 1}</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: e.done || e.current ? 700 : 400, color: e.done || e.current ? 'var(--tx)' : 'var(--t4)' }}>{e.label}</div>
             </div>
@@ -67,7 +67,7 @@ export default function Progress({ ctx }) {
       </div>
 
       {/* Suivi chantier — shows real task completion from pro */}
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Suivi chantier</div>
+      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Suivi chantier</div>
       {CHANTIER_PHASES.map((ph, phIdx) => {
         // Read task completion directly from taskStates saved by the pro
         const taskStates = (proj?.taskStates && typeof proj.taskStates === 'object') ? proj.taskStates : {}
@@ -82,11 +82,11 @@ export default function Progress({ ctx }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 16 }}>{PHASE_ICON_MAP[ph.icon] ?? ph.icon}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{ph.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{ph.name}</div>
                 <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 2 }}>{ph.desc}</div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 60 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: allDone ? 'var(--ok)' : anyActive ? 'var(--tx)' : 'var(--t4)' }}>{allDone ? 'Terminé' : anyActive ? pct + '%' : 'À venir'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: allDone ? 'var(--ok)' : anyActive ? 'var(--tx)' : 'var(--t4)' }}>{allDone ? 'Terminé' : anyActive ? pct + '%' : 'À venir'}</div>
                 <div style={{ fontSize: 9, color: 'var(--t4)' }}>{ph.tasks.length} tâches</div>
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function Progress({ ctx }) {
       {/* Projets arrêtés / archivés */}
       {stoppedProjects?.length > 0 && (
         <div style={{ marginTop: 32 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>Projets arrêtés</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 10 }}>Projets arrêtés</div>
           {stoppedProjects.map(p => (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', marginBottom: 6, background: 'var(--surface-1)', opacity: .7 }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,149,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

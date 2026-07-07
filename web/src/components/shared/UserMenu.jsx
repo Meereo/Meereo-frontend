@@ -55,7 +55,7 @@ export default function UserMenu({ onNavigate }) {
           <div style={{ position: 'fixed', inset: 0, zIndex: 99994 }} onClick={() => setOpen(false)} />
           <div className="um-dropdown" style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 99995 }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-              {id.displayName && <div style={{ fontSize: 13, fontWeight: 700 }}>{id.displayName}</div>}
+              {id.displayName && <div style={{ fontSize: 13, fontWeight: 600 }}>{id.displayName}</div>}
               {id.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{id.email}</div>}
               {!id.displayName && !id.email && <div style={{ fontSize: 12, color: 'var(--t4)' }}>Compte</div>}
             </div>

@@ -92,15 +92,15 @@ export default function Assets({ showToast }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                   <span style={{ fontSize: 20 }}>{cat?.icon || '⚙️'}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{a.name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{a.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--t3)' }}>{cat?.label || a.category}{a.localisation ? ' · ' + a.localisation : ''}</div>
                   </div>
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: statusColor + '14', color: statusColor }}>{ASSET_STATUS_LABELS[a.status] || a.status}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: statusColor + '14', color: statusColor }}>{ASSET_STATUS_LABELS[a.status] || a.status}</span>
                 </div>
                 {projectMap[a.projectId] && <div style={{ fontSize: 11, color: 'var(--t4)', marginBottom: 4 }}>Projet : {projectMap[a.projectId].nom}</div>}
                 {a.fabricant && <div style={{ fontSize: 11, color: 'var(--t3)' }}>Fabricant : {a.fabricant}{a.reference ? ' · Réf: ' + a.reference : ''}</div>}
                 {a.garantieFin && (
-                  <div style={{ fontSize: 10, marginTop: 6, fontWeight: 700, color: garantieExpired ? '#EF4444' : garantieSoon ? '#F59E0B' : 'var(--ok)' }}>
+                  <div style={{ fontSize: 10, marginTop: 6, fontWeight: 600, color: garantieExpired ? '#EF4444' : garantieSoon ? '#F59E0B' : 'var(--ok)' }}>
                     {garantieExpired ? '⚠️ Garantie expirée' : garantieSoon ? '⏳ Garantie expire bientôt' : '✅ Garantie jusqu\'au ' + formatDateFR(a.garantieFin)}
                   </div>
                 )}
@@ -146,7 +146,7 @@ export default function Assets({ showToast }) {
       {selected && (
         <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 440, background: 'var(--bg)', borderLeft: '1px solid var(--border)', zIndex: 100, overflowY: 'auto', padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{selected.name}</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>{selected.name}</div>
             <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--t3)' }}>✕</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12 }}>
@@ -156,7 +156,7 @@ export default function Assets({ showToast }) {
           </div>
           {Array.isArray(selected.maintenances) && selected.maintenances.length > 0 && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Maintenances ({selected.maintenances.length})</div>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Maintenances ({selected.maintenances.length})</div>
               {selected.maintenances.map((m, i) => (
                 <div key={m.id || i} style={{ padding: '8px 12px', background: 'var(--s1)', borderRadius: 8, marginBottom: 6, fontSize: 11 }}>
                   <div style={{ fontWeight: 600 }}>{m.description || 'Maintenance'}</div>

@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
-   MEEREO DESIGN TOKENS — Unified from all cockpits
-   Apple Premium · Linear · Stripe · Notion inspired
+   MEEREO DESIGN TOKENS — "The Monolithic Minimum"
+   Aligned with doc/DESIGN.md — Monochrome Constraint
 ══════════════════════════════════════════════════════════════ */
 
 :root {
@@ -12,16 +12,22 @@
   --sp-5: 24px;
   --sp-6: 32px;
   --sp-7: 48px;
+  --sp-gallery: 5.5rem; /* Top-level page margin — gallery feel */
 
   /* ── Typography ── */
   --f: 'Inter', -apple-system, 'SF Pro Text', BlinkMacSystemFont, sans-serif;
   --fs: 'Inter', sans-serif;
   --f-serif: 'Instrument Serif', serif;
 
-  /* ── Surface Hierarchy ── */
-  --bg: #f5f5f7;
+  /* ── Surface Hierarchy (The Monochrome Constraint) ──
+     Level 0 (Base):     #f8f9fa
+     Level 1 (Section):  #f3f4f5
+     Level 2 (Card):     #ffffff
+     Level 3 (Popover):  #f8f9fa + ambient occlusion
+  */
+  --bg: #f8f9fa;
   --surface: #ffffff;
-  --s1: #ffffff;
+  --s1: #f3f4f5;
   --s2: #f3f4f5;
   --s3: #e7e8e9;
   --s4: #e1e3e4;
@@ -29,16 +35,16 @@
   --surface-2: #f3f4f5;
   --surface-3: #e7e8e9;
 
-  /* ── Borders ──
-     RULE: all visible blocks use --border-card (the only standard)
-     --border-subtle is for internal separators only (lines, dividers)
+  /* ── Borders — Ghost Border Rule ──
+     10% opacity maximum. No 1px solid visible borders.
+     Use background color shifts instead.
   */
-  --border: rgba(0,0,0,.16);
-  --border2: rgba(0,0,0,.09);
-  --border-subtle: rgba(0,0,0,.09);
-  --border-medium: rgba(0,0,0,.16);
-  --border-card: rgba(0,0,0,.18);
-  --hover: rgba(25,28,29,.04);
+  --border: rgba(0,0,0,.06);
+  --border2: rgba(0,0,0,.04);
+  --border-subtle: rgba(0,0,0,.04);
+  --border-medium: rgba(0,0,0,.06);
+  --border-card: rgba(0,0,0,.06);
+  --hover: rgba(25,28,29,.03);
 
   /* ── Text Hierarchy ── */
   --tx: #191c1d;
@@ -61,55 +67,58 @@
   --acc-s: rgba(25,28,29,.06);
   --gr: linear-gradient(145deg, #000000, #3c3b3b);
 
-  /* ── Status / Semantic Colors ── */
-  --green: #16A34A;
-  --green-s: rgba(22,163,74,.08);
-  --amber: #F59E0B;
-  --amber-s: rgba(245,158,11,.08);
+  /* ── Status / Semantic — Monochrome Only ──
+     The design system prohibits bright colors.
+     Status is communicated through weight, icons, and tonal contrast.
+  */
+  --green: #191c1d;
+  --green-s: rgba(25,28,29,.06);
+  --amber: #474747;
+  --amber-s: rgba(71,71,71,.06);
   --red: #ba1a1a;
   --red-s: rgba(186,26,26,.07);
 
-  --ok: #16A34A;
-  --ok-s: rgba(22,163,74,.08);
+  --ok: #191c1d;
+  --ok-s: rgba(25,28,29,.06);
   --err: #ba1a1a;
   --err-s: rgba(186,26,26,.07);
-  --inf: #007AFF;
-  --inf-s: rgba(0,122,255,.08);
-  --wrn: #F59E0B;
-  --wrn-s: rgba(245,158,11,.08);
-  --prp: #AF52DE;
-  --prp-s: rgba(175,82,222,.08);
+  --inf: #474747;
+  --inf-s: rgba(71,71,71,.06);
+  --wrn: #474747;
+  --wrn-s: rgba(71,71,71,.06);
+  --prp: #3c3b3b;
+  --prp-s: rgba(60,59,59,.06);
 
-  --status-success: #16A34A;
+  --status-success: #191c1d;
   --status-active: #191c1d;
-  --status-warning: #F59E0B;
+  --status-warning: #474747;
   --status-danger: #ba1a1a;
   --status-neutral: #777777;
   --progress-bg: #e7e8e9;
 
-  --color-info: #007AFF;
-  --color-info-bg: rgba(0,122,255,.06);
-  --color-info-border: rgba(0,122,255,.12);
-  --color-ok: #34c759;
-  --color-ok-bg: rgba(52,199,89,.07);
-  --color-ok-border: rgba(52,199,89,.18);
-  --color-warn: #e07b00;
-  --color-warn-bg: rgba(224,123,0,.07);
-  --color-warn-border: rgba(224,123,0,.18);
+  --color-info: #474747;
+  --color-info-bg: rgba(71,71,71,.04);
+  --color-info-border: rgba(71,71,71,.08);
+  --color-ok: #191c1d;
+  --color-ok-bg: rgba(25,28,29,.04);
+  --color-ok-border: rgba(25,28,29,.08);
+  --color-warn: #474747;
+  --color-warn-bg: rgba(71,71,71,.04);
+  --color-warn-border: rgba(71,71,71,.08);
   --color-err: #ba1a1a;
-  --color-err-bg: rgba(186,26,26,.07);
-  --color-err-border: rgba(186,26,26,.18);
+  --color-err-bg: rgba(186,26,26,.04);
+  --color-err-border: rgba(186,26,26,.08);
   --color-neutral: #9ca3af;
 
-  /* ── Fournisseur semantic ── */
+  /* ── Fournisseur semantic — Monochrome ── */
   --er: #ba1a1a;
-  --eb: #ffdad6;
-  --wn: #8b5e00;
-  --wb: #ffddb3;
-  --ok-f: #2d6a4f;
-  --ob: #d8f3dc;
-  --in: #00497d;
-  --ib: #cce5ff;
+  --eb: #f3f4f5;
+  --wn: #474747;
+  --wb: #f3f4f5;
+  --ok-f: #191c1d;
+  --ob: #f3f4f5;
+  --in: #474747;
+  --ib: #f3f4f5;
 
   /* ── Radius ── */
   --r-xs: 4px;
@@ -128,29 +137,37 @@
   --radius-xl: 18px;
   --radius-full: 100px;
 
-  /* ── Shadows ── */
-  --shadow-xs: 0 2px 8px rgba(25,28,29,.04);
-  --shadow-sm: 0 4px 16px rgba(25,28,29,.04);
+  /* ── Shadows — Ambient Occlusion Only ──
+     Single shadow: 0 20px 40px rgba(0,0,0, 0.04)
+     For floating elements (modals/dropdowns) only.
+     Cards use tonal contrast, not shadows.
+  */
+  --shadow-xs: none;
+  --shadow-sm: none;
   --shadow-md: 0 20px 40px rgba(25,28,29,.04);
-  --shadow-lg: 0 20px 40px rgba(25,28,29,.06);
-  --shadow-card: 0 20px 40px rgba(25,28,29,.04);
+  --shadow-lg: 0 20px 40px rgba(25,28,29,.04);
+  --shadow-card: none;
   --shadow: 0 20px 40px rgba(0,0,0,.04);
-  --ring: 0 0 0 3px rgba(0,122,255,.2);
+  --ring: 0 0 0 2px rgba(25,28,29,.1);
 
   /* ── Layout ── */
   --sidebar-w: 220px;
   --topbar-h: 52px;
-  --sidebar-bg: #f0f0f2;
+  --sidebar-bg: #f3f4f5;
   --sidebar-text-active: #191c1d;
   --sidebar-text-inactive: #777777;
-  --sidebar-hover: rgba(25,28,29,.05);
-  --main-bg: #f5f5f7;
+  --sidebar-hover: rgba(25,28,29,.04);
+  --main-bg: #f8f9fa;
 
   /* ── Motion ── */
   --ease: cubic-bezier(.4,0,.2,1);
   --spring: cubic-bezier(.34,1.56,.64,1);
   --t: .14s;
   --dur: .14s;
+
+  /* ── Blue (kept for legacy compat — will be phased out) ── */
+  --blue: #191c1d;
+  --blue-bg: rgba(25,28,29,.04);
 }
 
 /* ── Dark Mode ── */
@@ -161,8 +178,10 @@
   --s2: #2C2C2E;
   --s3: #3A3A3C;
   --s4: #48484A;
-  --border: #38383A;
-  --border2: #48484A;
+  --border: rgba(255,255,255,.06);
+  --border2: rgba(255,255,255,.04);
+  --border-subtle: rgba(255,255,255,.04);
+  --border-card: rgba(255,255,255,.06);
   --hover: #2C2C2E;
   --tx: #FFFFFF;
   --t1: #FFFFFF;
@@ -171,9 +190,9 @@
   --t4: #636366;
   --t5: #3A3A3C;
   --surface-3: #3A3A3C;
-  --shadow-xs: 0 1px 3px rgba(0,0,0,.4);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.03);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.04);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.04);
-  --shadow-card: 0 2px 8px rgba(0,0,0,.4);
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 20px 40px rgba(0,0,0,.2);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,.2);
+  --shadow-card: none;
 }

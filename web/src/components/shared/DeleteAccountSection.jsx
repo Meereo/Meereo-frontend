@@ -93,7 +93,7 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
         background: 'rgba(186,26,26,.02)',
         marginTop: 24,
       }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#ba1a1a', marginBottom: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#ba1a1a', marginBottom: 8 }}>
           Supprimer mon compte
         </div>
         <p style={{ fontSize: 13, color: '#888', lineHeight: 1.6, margin: '0 0 16px', maxWidth: 520 }}>
@@ -154,7 +154,7 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
                   <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
                 </svg>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, textAlign: 'center', marginBottom: 8, color: '#111' }}>
+              <div style={{ fontSize: 18, fontWeight: 600, textAlign: 'center', marginBottom: 8, color: '#111' }}>
                 {texts.modal.title}
               </div>
               <div style={{ fontSize: 13, color: '#ba1a1a', fontWeight: 600, textAlign: 'center', marginBottom: 16 }}>
@@ -259,7 +259,7 @@ export default function DeleteAccountSection({ profileType = 'pro' }) {
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 8, letterSpacing: '-.3px' }}>Compte supprimé</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: '#111', marginBottom: 8, letterSpacing: '-.3px' }}>Compte supprimé</div>
             <div style={{ fontSize: 14, color: '#666', lineHeight: 1.6, marginBottom: 24 }}>
               Votre compte et toutes vos données ont été définitivement supprimés.
               Redirection dans quelques secondes…

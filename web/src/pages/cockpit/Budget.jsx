@@ -11,7 +11,7 @@ function PayBadge({ status }) {
   const m = PAY_STATUS_META[status] || { label: status || '—', color: 'var(--t4)', bg: 'var(--s2)' }
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 100,
+      fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 100,
       background: m.bg, color: m.color, whiteSpace: 'nowrap',
     }}>
       {m.icon} {m.label}
@@ -28,7 +28,7 @@ function MarketBadge({ statut }) {
   }
   const m = MAP[statut] || { label: statut || '—', color: 'var(--t4)', bg: 'var(--s2)' }
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 100, background: m.bg, color: m.color }}>
+    <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 100, background: m.bg, color: m.color }}>
       {m.label}
     </span>
   )
@@ -157,11 +157,11 @@ export default function Budget({ showToast, onNavigate }) {
           {/* Budget burn (client only) */}
           {isClient && stats.totalBudgetProjets > 0 && (
             <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16 }}>Consommation du budget</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16 }}>Consommation du budget</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 8 }}>
-                <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1.5px' }}>{formatShort(stats.totalContrats)}</span>
+                <span style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px' }}>{formatShort(stats.totalContrats)}</span>
                 <span style={{ fontSize: 13, color: 'var(--t3)', marginBottom: 4 }}>/ {formatShort(stats.totalBudgetProjets)}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 22, fontWeight: 800, color: stats.totalContrats / stats.totalBudgetProjets >= .9 ? 'var(--err)' : stats.totalContrats / stats.totalBudgetProjets >= .7 ? 'var(--wrn)' : 'var(--ok)' }}>
+                <span style={{ marginLeft: 'auto', fontSize: 22, fontWeight: 600, color: stats.totalContrats / stats.totalBudgetProjets >= .9 ? 'var(--err)' : stats.totalContrats / stats.totalBudgetProjets >= .7 ? 'var(--wrn)' : 'var(--ok)' }}>
                   {stats.totalBudgetProjets > 0 ? Math.round(stats.totalContrats / stats.totalBudgetProjets * 100) : 0}%
                 </span>
               </div>
@@ -177,7 +177,7 @@ export default function Budget({ showToast, onNavigate }) {
           {filteredMarkets.length > 0 ? (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                   {isClient ? 'Contrats validés' : 'Mes contrats'} · {filteredMarkets.length}
                 </div>
               </div>
@@ -186,18 +186,18 @@ export default function Budget({ showToast, onNavigate }) {
                 const amount = parseFloat(m.montant) || parseFloat(m.amount) || 0
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < filteredMarkets.slice(0,5).length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: 'var(--t2)', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>
                       {(m.lot || m.titre || '?').slice(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.titre || m.lot || 'Marché'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.titre || m.lot || 'Marché'}</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)' }}>
                         {isClient ? m.entreprise : proj?.nom || 'Projet'} · {formatDateFR(m.createdAt)}
                       </div>
                     </div>
                     {/* Amount + badge */}
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800 }}>{formatShort(amount)}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{formatShort(amount)}</div>
                       <MarketBadge statut={m.statut} />
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export default function Budget({ showToast, onNavigate }) {
           {filteredMarkets.filter(m => m.statut === MARKET_STATUS.COMPLETED).length > 0 && (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Paiements reçus</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Paiements reçus</div>
               </div>
               {filteredMarkets.filter(m => m.statut === MARKET_STATUS.COMPLETED).slice(0, 6).map((m, i, arr) => {
                 const proj = allProjects.find(p => p.id === m.projectId)
@@ -236,7 +236,7 @@ export default function Budget({ showToast, onNavigate }) {
                       <div style={{ fontSize: 10, color: 'var(--t4)' }}>{isClient ? m.entreprise : proj?.nom || '—'} · {formatDateFR(m.updatedAt || m.createdAt)}</div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--ok)' }}>{formatShort(amount)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>{formatShort(amount)}</div>
                       <MarketBadge statut={m.statut} />
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export default function Budget({ showToast, onNavigate }) {
           ) : (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               {/* Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 110px 110px', gap: 8, padding: '10px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 110px 110px', gap: 8, padding: '10px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
                 <span>Contrat</span>
                 <span style={{ textAlign: 'center' }}>Statut</span>
                 <span style={{ textAlign: 'right' }}>Montant</span>
@@ -268,16 +268,16 @@ export default function Budget({ showToast, onNavigate }) {
                 return (
                   <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 110px 110px', gap: 8, padding: '14px 20px', borderBottom: i < filteredMarkets.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.titre || m.lot || 'Marché'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.titre || m.lot || 'Marché'}</div>
                       <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>
                         {isClient ? m.entreprise : proj?.nom || '—'} · {m.delai || '—'}
                       </div>
                       {m.description && <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.description}</div>}
                     </div>
                     <div style={{ textAlign: 'center' }}><MarketBadge statut={m.statut} /></div>
-                    <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 800 }}>{formatShort(amount)}</div>
+                    <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 600 }}>{formatShort(amount)}</div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{avt}%</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{avt}%</div>
                       <ProgBar value={avt} max={100} color={avt >= 100 ? 'var(--ok)' : '#2563EB'} />
                     </div>
                   </div>
@@ -285,10 +285,10 @@ export default function Budget({ showToast, onNavigate }) {
               })}
               {/* Totaux */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 110px 110px', gap: 8, padding: '12px 20px', borderTop: '2px solid var(--border)', background: 'var(--s2)' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t3)' }}>TOTAL</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)' }}>TOTAL</span>
                 <span />
-                <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 800 }}>{formatShort(stats.totalContrats)}</span>
-                <span style={{ textAlign: 'right', fontSize: 12, fontWeight: 700, color: 'var(--t3)' }}>
+                <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 600 }}>{formatShort(stats.totalContrats)}</span>
+                <span style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: 'var(--t3)' }}>
                   {filteredMarkets.length > 0 ? Math.round(filteredMarkets.reduce((s, m) => s + (m.avancement || 0), 0) / filteredMarkets.length) : 0}% moy.
                 </span>
               </div>
@@ -319,8 +319,8 @@ export default function Budget({ showToast, onNavigate }) {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                          <div style={{ fontSize: 14, fontWeight: 700 }}>{m.titre || m.lot || 'Marché'}</div>
-                          <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', color: isCompleted ? 'var(--ok)' : 'inherit' }}>{formatShort(amount)}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{m.titre || m.lot || 'Marché'}</div>
+                          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.5px', color: isCompleted ? 'var(--ok)' : 'inherit' }}>{formatShort(amount)}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <MarketBadge statut={m.statut} />

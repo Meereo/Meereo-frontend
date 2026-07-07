@@ -311,10 +311,10 @@ export default function Exchange({ showToast, onNavigate }) {
             <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowDocsIntro(false)}>
               <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
                 <div style={{ padding: '28px 28px 20px', textAlign: 'center' }}>
-                  <div style={{ width: 56, height: 56, borderRadius: 16, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><span style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>K</span></div>
-                  <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.5px', marginBottom: 8 }}>Vos documents entreprise</div>
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><span style={{ fontSize: 24, fontWeight: 600, color: '#fff' }}>K</span></div>
+                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 8 }}>Vos documents entreprise</div>
                   <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto' }}>
-                    Integrez vos documents administratifs et juridiques ici. <span style={{ color: '#7C3AED', fontWeight: 700 }}>KAI</span> les utilisera automatiquement pour completer vos reponses aux appels d'offres — RCCM, attestations, references, bilans...
+                    Integrez vos documents administratifs et juridiques ici. <span style={{ color: '#7C3AED', fontWeight: 600 }}>KAI</span> les utilisera automatiquement pour completer vos reponses aux appels d'offres — RCCM, attestations, references, bilans...
                   </div>
                 </div>
                 <div style={{ padding: '0 28px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -325,7 +325,7 @@ export default function Exchange({ showToast, onNavigate }) {
                   ].map((f, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10 }}>
                       <span style={{ flexShrink: 0, display: 'flex' }}>{f.icon}</span>
-                      <div><div style={{ fontSize: 12, fontWeight: 700 }}>{f.title}</div><div style={{ fontSize: 11, color: 'var(--t3)' }}>{f.desc}</div></div>
+                      <div><div style={{ fontSize: 12, fontWeight: 600 }}>{f.title}</div><div style={{ fontSize: 11, color: 'var(--t3)' }}>{f.desc}</div></div>
                     </div>
                   ))}
                 </div>
@@ -340,9 +340,9 @@ export default function Exchange({ showToast, onNavigate }) {
 
           <div style={{ padding: '16px 20px', background: 'var(--s2)', borderRadius: 12, marginBottom: 20, border: '1px solid var(--border-card)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>K</span></div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 16, fontWeight: 600, color: '#fff' }}>K</span></div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Documents entreprise</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Documents entreprise</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)' }}>Ajoutez vos documents pour les joindre à vos réponses aux appels d'offres.</div>
               </div>
             </div>
@@ -356,9 +356,9 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{d.nom}</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)' }}>{d.type}</div>
                 </div>
-                {d.status === 'missing' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(186,26,26,.06)', color: 'var(--err)' }}>Non fourni</span>}
-                {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajouté</span>}
-                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAI</span>}
+                {d.status === 'missing' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(186,26,26,.06)', color: 'var(--err)' }}>Non fourni</span>}
+                {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajouté</span>}
+                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAI</span>}
                 {d.status === 'missing' ? (
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { const newEntry = { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }; const next = [...(store.entrepriseDocs || []), newEntry]; updateStore(prev => ({ ...prev, entrepriseDocs: next })); api.usersApi.updatePrefs({ entrepriseDocs: next }).catch(e => console.warn('[Exchange]', e.message)); showToast && showToast('Document ajouté') }}>Ajouter</button>
                 ) : (
@@ -381,8 +381,8 @@ export default function Exchange({ showToast, onNavigate }) {
           {/* KPI */}
           <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
             <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{tab === 'marche' ? 'Bourse des AO' : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}</div>
-              <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{tab === 'marche' ? marcheFiltered.length : tab === 'mesao' ? allMesAO.length : clientReceivedOffers.length}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{tab === 'marche' ? 'Bourse des AO' : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}</div>
+              <div style={{ fontSize: 44, fontWeight: 600, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{tab === 'marche' ? marcheFiltered.length : tab === 'mesao' ? allMesAO.length : clientReceivedOffers.length}</div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>{tab === 'marche' ? 'disponibles sur le marché' : tab === 'mesao' ? 'publiés par vous' : 'propositions de professionnels'}</div>
             </div>
             <div className="rg-2" style={{ gap: 12 }}>
@@ -396,7 +396,7 @@ export default function Exchange({ showToast, onNavigate }) {
                   ? [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'AO ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'Offres reçues' }, { v: (store.aoInvitations || []).filter(i => i.senderUserId === store.user?.id).length, l: 'Invitations' }, { v: allMesAO.length, l: 'Total' }]
                   : [{ v: allMesAO.filter(a => a.statut === 'ouvert').length, l: 'Ouverts' }, { v: allMesAO.reduce((s, a) => s + (a.reponses || 0), 0), l: 'Réponses' }, { v: [...new Set(allMesAO.map(a => a.metier))].length, l: 'Métiers' }, { v: allMesAO.length, l: 'Total' }]
               ).map((k, i) => (
-                <div key={i} className="card" style={{ padding: 16, background: '#fff', border: '1px solid #EAEAEA', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
+                <div key={i} className="card" style={{ padding: 16, background: '#fff', border: '1px solid #EAEAEA', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}><div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
               ))}
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function Exchange({ showToast, onNavigate }) {
                           const active = metierFilter.includes(m)
                           const mc = getMetierColor(m)
                           return (
-                            <button key={m} className={active ? '' : 'filter-pill'} onClick={() => setMetierFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])} style={active ? { fontSize: 10, padding: '4px 10px', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 700, background: mc, color: '#fff', transition: 'all .15s' } : { fontSize: 10 }}>{m}</button>
+                            <button key={m} className={active ? '' : 'filter-pill'} onClick={() => setMetierFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])} style={active ? { fontSize: 10, padding: '4px 10px', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600, background: mc, color: '#fff', transition: 'all .15s' } : { fontSize: 10 }}>{m}</button>
                           )
                         })}
                       </div>
@@ -536,7 +536,7 @@ export default function Exchange({ showToast, onNavigate }) {
                       <div className="list-item-sub">{ao.maoa} à {ao.lieu}</div>
                     </div>
                     <div className="list-item-right">
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: mc + '12', color: mc }}>{ao.metier}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: mc + '12', color: mc }}>{ao.metier}</span>
                       <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
                     </div>
                   </div>
@@ -558,7 +558,7 @@ export default function Exchange({ showToast, onNavigate }) {
                     <div className="list-item-sub">{ao.projet} à {ao.metier}</div>
                   </div>
                   <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
                     <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
                   </div>
                 </div>
@@ -579,7 +579,7 @@ export default function Exchange({ showToast, onNavigate }) {
                     <div className="list-item-sub">{formatBudgetDisplay(o.montant)} à {o.delai}</div>
                   </div>
                   <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: o.statut === 'accepted' ? 'rgba(52,199,89,.08)' : o.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: o.statut === 'accepted' ? 'var(--ok)' : o.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{o.statut === 'accepted' ? 'Acceptée' : o.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: o.statut === 'accepted' ? 'rgba(52,199,89,.08)' : o.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: o.statut === 'accepted' ? 'var(--ok)' : o.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{o.statut === 'accepted' ? 'Acceptée' : o.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
                     <div className="list-item-date">{o.soumis}</div>
                   </div>
                 </div>
@@ -601,35 +601,35 @@ export default function Exchange({ showToast, onNavigate }) {
                         <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>Appel d'offres</span>
                         <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>×</span>
                         <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>{selectedMarche.ref}</span>
-                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.15)', color: '#34c759' }}>Ouvert</span>
+                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.15)', color: '#34c759' }}>Ouvert</span>
                       </div>
                       {/* Titre */}
-                      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.25 }}><AoGear size={16} color={mc} />{selectedMarche.titre}</div>
+                      <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.25 }}><AoGear size={16} color={mc} />{selectedMarche.titre}</div>
                       {/* Meta */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: mc + '22', color: mc }}>{selectedMarche.metier}</span>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: mc + '22', color: mc }}>{selectedMarche.metier}</span>
                         <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)' }}>{selectedMarche.maoa}{selectedMarche.lieu ? ' à ' + selectedMarche.lieu : ''}</span>
-                        {selectedMarche.matching && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,255,255,.1)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={10}/> {selectedMarche.matching}%</span>}
+                        {selectedMarche.matching && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(255,255,255,.1)', color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={10}/> {selectedMarche.matching}%</span>}
                       </div>
                     </div>
                   </div>
                   <div className="rg-3" style={{ gap: 12, marginBottom: 20 }}>
                     {[['Budget', selectedMarche.budget], ['Cloture', selectedMarche.deadline], ['Categorie', selectedMarche.categorie]].map(([l, v]) => (
-                      <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v}</div></div>
+                      <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 600 }}>{v}</div></div>
                     ))}
                   </div>
                   {selectedMarche.matching && (
                     <div className="card" style={{ padding: 18, marginBottom: 20 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--t4)' }}>Score de pertinence</div>
-                        <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: selectedMarche.matching >= 85 ? 'rgba(52,199,89,.1)' : 'rgba(255,149,0,.1)', color: selectedMarche.matching >= 85 ? 'var(--ok)' : 'var(--wrn)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={10}/> {selectedMarche.matching}%</span>
+                        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--t4)' }}>Score de pertinence</div>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: selectedMarche.matching >= 85 ? 'rgba(52,199,89,.1)' : 'rgba(255,149,0,.1)', color: selectedMarche.matching >= 85 ? 'var(--ok)' : 'var(--wrn)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={10}/> {selectedMarche.matching}%</span>
                       </div>
                       <div className="prog-track" style={{ height: 4, marginBottom: 12 }}><div className="prog-fill" style={{ width: selectedMarche.matching + '%', background: selectedMarche.matching >= 85 ? 'var(--ok)' : 'var(--wrn)' }} /></div>
                       {selectedMarche.matching_raisons && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{selectedMarche.matching_raisons.map((r, i) => <span key={i} style={{ fontSize: 11, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '3px 10px', borderRadius: 100, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> {r}</span>)}</div>}
                     </div>
                   )}
                   <div className="card" style={{ padding: 18, marginBottom: 20 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 10 }}>Description</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 10 }}>Description</div>
                     <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.75 }}>{selectedMarche.desc}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 10 }}>
@@ -659,21 +659,21 @@ export default function Exchange({ showToast, onNavigate }) {
               {tab === 'offres' && selectedOffer && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{(selectedOffer.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+                    <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(selectedOffer.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 3 }}>{selectedOffer.entreprise}</div>
+                      <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 3 }}>{selectedOffer.entreprise}</div>
                       <div style={{ fontSize: 12, color: 'var(--t3)' }}>Soumis le {selectedOffer.soumis}</div>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.08)' : selectedOffer.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: selectedOffer.statut === 'accepted' ? 'var(--ok)' : selectedOffer.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{selectedOffer.statut === 'accepted' ? 'Acceptée' : selectedOffer.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.08)' : selectedOffer.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: selectedOffer.statut === 'accepted' ? 'var(--ok)' : selectedOffer.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{selectedOffer.statut === 'accepted' ? 'Acceptée' : selectedOffer.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
                   </div>
                   <div style={{ padding: '18px 20px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', borderRadius: 14, color: '#fff', marginBottom: 20 }}>
                     <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Montant proposé</div>
-                    <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatBudgetDisplay(selectedOffer.montant)}</div>
+                    <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatBudgetDisplay(selectedOffer.montant)}</div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selectedOffer.delai || '—'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {selectedOffer.statut === 'pending' && <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => { storeRejectOffer(selectedOffer.id) }}>Refuser</button>}
-                    {selectedOffer.statut === 'pending' && <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, fontWeight: 700, fontSize: 13 }} onClick={() => { storeAcceptOffer(selectedOffer.id) }}>Accepter l'offre</button>}
+                    {selectedOffer.statut === 'pending' && <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, fontWeight: 600, fontSize: 13 }} onClick={() => { storeAcceptOffer(selectedOffer.id) }}>Accepter l'offre</button>}
                     {selectedOffer.statut !== 'pending' && <div style={{ padding: '12px 16px', borderRadius: 10, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.06)' : 'rgba(220,38,38,.05)', border: `1px solid ${selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.12)' : 'rgba(220,38,38,.1)'}`, fontSize: 13, fontWeight: 600, flex: 1, textAlign: 'center' }}>Offre {selectedOffer.statut === 'accepted' ? 'acceptée' : 'refusée'}</div>}
                   </div>
                 </div>
@@ -691,24 +691,24 @@ export default function Exchange({ showToast, onNavigate }) {
                         <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>Mon appel d'offres</span>
                         <span style={{ fontSize: 9, color: 'rgba(255,255,255,.25)' }}>×</span>
                         <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,.3)', fontFamily: 'monospace' }}>{selectedMesAO.ref}</span>
-                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: selectedMesAO.reponses > 0 ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: selectedMesAO.reponses > 0 ? '#34c759' : '#F59E0B' }}>{selectedMesAO.reponses > 0 ? selectedMesAO.reponses + ' réponse' + (selectedMesAO.reponses > 1 ? 's' : '') : 'En attente'}</span>
+                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: selectedMesAO.reponses > 0 ? 'rgba(52,199,89,.15)' : 'rgba(245,158,11,.15)', color: selectedMesAO.reponses > 0 ? '#34c759' : '#F59E0B' }}>{selectedMesAO.reponses > 0 ? selectedMesAO.reponses + ' réponse' + (selectedMesAO.reponses > 1 ? 's' : '') : 'En attente'}</span>
                       </div>
                       {/* Titre */}
-                      <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.25 }}><AoGear size={16} color={mc} />{selectedMesAO.titre}</div>
+                      <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.25 }}><AoGear size={16} color={mc} />{selectedMesAO.titre}</div>
                       {/* Meta */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 100, background: mc + '22', color: mc }}>{selectedMesAO.metier}</span>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: mc + '22', color: mc }}>{selectedMesAO.metier}</span>
                         <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)' }}>{selectedMesAO.projet}</span>
                       </div>
                     </div>
                   </div>
                   <div className="rg-3" style={{ gap: 12, marginBottom: 20 }}>
                     {[['Budget', selectedMesAO.budget], ['Cloture', selectedMesAO.deadline], ['Reponses', selectedMesAO.reponses]].map(([l, v]) => (
-                      <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v}</div></div>
+                      <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 600 }}>{v}</div></div>
                     ))}
                   </div>
                   <div className="card" style={{ padding: 18, marginBottom: 20 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 10 }}>Description</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 10 }}>Description</div>
                     <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.75 }}>{selectedMesAO.desc}</div>
                   </div>
                   <div style={{ padding: '12px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 20, fontSize: 12, color: 'var(--t2)' }}>Publie le {selectedMesAO.publie} à Visible par les <strong>{selectedMesAO.metier}</strong></div>
@@ -743,7 +743,7 @@ export default function Exchange({ showToast, onNavigate }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowCreateAO(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>Créer un appel d'offres</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>Créer un appel d'offres</div>
               <button onClick={() => setShowCreateAO(false)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -778,11 +778,11 @@ export default function Exchange({ showToast, onNavigate }) {
                 <label className="form-label">Visibilite</label>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                   <div onClick={() => setNewAO(p => ({ ...p, prive: false, listeRestreinte: [] }))} style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: !newAO.prive ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: !newAO.prive ? 'rgba(0,0,0,.02)' : 'var(--surface-1)', cursor: 'pointer' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}><Globe size={14}/> Public</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}><Globe size={14}/> Public</div>
                     <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>Visible par tous les professionnels du metier selectionne</div>
                   </div>
                   <div onClick={() => setNewAO(p => ({ ...p, prive: true }))} style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: newAO.prive ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: newAO.prive ? 'rgba(0,0,0,.02)' : 'var(--surface-1)', cursor: 'pointer' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}><Lock size={14}/> Prive</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}><Lock size={14}/> Prive</div>
                     <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>Visible uniquement par les entreprises que vous choisissez</div>
                   </div>
                 </div>
@@ -826,7 +826,7 @@ export default function Exchange({ showToast, onNavigate }) {
                             onClick={() => { setNewAO(prev => ({ ...prev, listeRestreinte: [...prev.listeRestreinte, p] })); setAoInviteSearch('') }}
                             onMouseOver={e => { e.currentTarget.style.background = 'var(--s2)' }}
                             onMouseOut={e => { e.currentTarget.style.background = '' }}>
-                            <div style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
+                            <div style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--tx)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>
                               {(p.nom || '?').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
@@ -870,7 +870,7 @@ export default function Exchange({ showToast, onNavigate }) {
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>Repondre a l'appel d'offres</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>Repondre a l'appel d'offres</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{showRepondre.ref} à {showRepondre.titre}</div>
                 </div>
                 <button onClick={() => setShowRepondre(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -878,12 +878,12 @@ export default function Exchange({ showToast, onNavigate }) {
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Note technique */}
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Dossier technique</div>
+              <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Dossier technique</div>
               <div><label className="form-label">Memoire technique</label><textarea className="form-input" rows="4" value={reponse.technique} onChange={e => setReponse(p => ({ ...p, technique: e.target.value }))} placeholder="Methodologie, organisation, moyens humains et materiels, planning previsionnel, references similaires..." /></div>
               <div><label className="form-label">Message au maitre d'ouvrage</label><textarea className="form-input" rows="2" value={reponse.message} onChange={e => setReponse(p => ({ ...p, message: e.target.value }))} placeholder="Motivation, points forts de votre offre..." /></div>
 
               {/* Pièces jointes — vrai file picker */}
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Pièces jointes supplémentaires</div>
+              <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Pièces jointes supplémentaires</div>
               <div
                 style={{ padding: '18px 14px', border: '1.5px dashed var(--border-subtle)', borderRadius: 10, textAlign: 'center', cursor: 'pointer', background: 'var(--s2)', transition: 'border-color .15s, background .15s' }}
                 onClick={() => document.getElementById('ao-file-picker')?.click()}
@@ -911,14 +911,14 @@ export default function Exchange({ showToast, onNavigate }) {
                       <FileText size={14} color="var(--t3)"/>
                       <span style={{ flex: 1, fontWeight: 500 }}>{d.name || d}</span>
                       {d.size && <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0 }}>{d.size > 1e6 ? (d.size / 1e6).toFixed(1) + ' MB' : Math.round(d.size / 1024) + ' KB'}</span>}
-                      <button onClick={() => setReponse(p => ({ ...p, docsJoints: p.docsJoints.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: 'var(--err)', cursor: 'pointer', fontSize: 14, fontWeight: 700, lineHeight: 1, padding: 0 }}>×</button>
+                      <button onClick={() => setReponse(p => ({ ...p, docsJoints: p.docsJoints.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', color: 'var(--err)', cursor: 'pointer', fontSize: 14, fontWeight: 600, lineHeight: 1, padding: 0 }}>×</button>
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Documents entreprise — seuls les documents existants sont joinables */}
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>
                 Documents entreprise
               </div>
               {availableDocs.length === 0 ? (
@@ -972,7 +972,7 @@ export default function Exchange({ showToast, onNavigate }) {
                     : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" strokeWidth="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                   }
                 </div>
-                <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>
+                <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>
                   {hasMarket ? 'Suppression impossible' : hasResponses ? 'Annuler cet appel d\u2019offres\u00a0?' : 'Supprimer cet appel d\u2019offres\u00a0?'}
                 </div>
                 <div style={{ fontSize: 13, color: '#888', lineHeight: 1.55 }}>

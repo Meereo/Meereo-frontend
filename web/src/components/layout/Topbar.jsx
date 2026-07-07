@@ -128,17 +128,17 @@ export default function Topbar({ activePage, onOpenSidebar }) {
                 return (
                   <div ref={dropdownRef} style={{ position: 'fixed', top: rect.bottom + 6, left: rect.left, width: rect.width, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(0,0,0,.15)', maxHeight: 340, overflowY: 'auto', zIndex: 9999, fontFamily: 'var(--f)' }}>
                     {results.length > 0 ? (<>
-                      <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
+                      <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
                       {results.map(p => {
                         const initials = (p.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                         const mc = getMetierColor(p.metier)
                         return (
                           <div key={p.id} onClick={() => { setSearchOpen(false); setSearchQuery(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-                            <div style={{ width: 32, height: 32, borderRadius: 8, background: mc + '12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: mc, flexShrink: 0 }}>{initials}</div>
+                            <div style={{ width: 32, height: 32, borderRadius: 8, background: mc + '12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: mc, flexShrink: 0 }}>{initials}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
                                 {p.nom}
-                                {p.verified && <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, fontWeight: 700 }}>&#10003;</span>}
+                                {p.verified && <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, fontWeight: 600 }}>&#10003;</span>}
                               </div>
                               <div style={{ fontSize: 10.5, color: 'var(--t3)', display: 'flex', alignItems: 'center', gap: 3 }}>{p.metier}{p.ville ? ' · ' + p.ville : ''}{p.note ? <><span style={{margin:'0 2px'}}>·</span><Star size={9} fill="#F59E0B" strokeWidth={0}/> {p.note}</> : ''}</div>
                             </div>

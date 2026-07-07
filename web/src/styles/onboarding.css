@@ -42,7 +42,7 @@
 }
 .ob-hero-title {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -.03em;
   line-height: 1.15;
   color: var(--tx);
@@ -62,7 +62,7 @@
 }
 .ob-stat-n {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -.02em;
 }
@@ -78,7 +78,7 @@
 .ob-form-wrap { width: 100%; max-width: 380px; }
 .ob-form-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -.02em;
   margin-bottom: 6px;
 }
@@ -178,7 +178,7 @@
 }
 .ob-auth-headline {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -0.6px;
   line-height: 1.15;
@@ -213,7 +213,7 @@
 .ob-auth-card:has(.wiz-pt-grid):not(:has(.ob-inp-row)) { padding: 2rem 2rem 1.75rem; }
 .ob-auth-card-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.4px;
   margin-bottom: 0;
   color: var(--tx);
@@ -427,7 +427,7 @@
 }
 .ob-logo-name {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -0.5px;
 }
@@ -487,7 +487,7 @@
 .ob-headline-bold {
   display: block;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -.8px;
   line-height: 1.15;
@@ -496,7 +496,7 @@
   display: block;
   font-size: 22px;
   font-style: italic;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   letter-spacing: -.6px;
   line-height: 1.15;
@@ -590,7 +590,7 @@
 }
 .ob-left .ob-brand {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: #111;
   letter-spacing: -.3px;
 }
@@ -635,14 +635,14 @@
   flex-shrink: 0;
   margin: clamp(14px, 1.8vh, 24px) 0 clamp(16px, 2vh, 28px);
   color: #111;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.02;
   letter-spacing: -0.04em;
   font-size: clamp(30px, 4.2vh, 50px);
 }
 .ob-z4 em {
   font-style: italic;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--f-serif, 'Instrument Serif'), Georgia, serif;
   letter-spacing: -0.02em;
 }
@@ -748,7 +748,7 @@
 .ob-z7-title {
   color: #191c1d;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -.02em;
   margin-bottom: 5px;
@@ -805,7 +805,7 @@
 }
 .ob-step-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--t3);
@@ -814,7 +814,7 @@
 .ob-type-title {
   margin-top: 6px;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -.04em;
   color: var(--tx);
 }
@@ -917,7 +917,7 @@
 }
 .ob-role-step {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--t3);
@@ -925,7 +925,7 @@
 }
 .ob-role-title {
   margin-top: 4px;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 16px;
   letter-spacing: -.03em;
   color: var(--tx);
@@ -966,7 +966,7 @@
 }
 .ob-role-stat-label {
   font-size: 9.5px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--t3);
@@ -974,7 +974,7 @@
 }
 .ob-role-stat-value {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -.01em;
   margin: 2px 0 0;
 }
@@ -992,7 +992,7 @@
   margin: 0;
 }
 .ob-type-login-link {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tx);
   cursor: pointer;
 }
@@ -1005,7 +1005,7 @@
   border-radius: 8px;
   padding: 13px 40px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--f);
   letter-spacing: -.01em;
   cursor: pointer;
@@ -1045,7 +1045,7 @@
 }
 .wiz-left-content { position: relative; z-index: 2; display: flex; flex-direction: column; flex: 1; }
 .wiz-left-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-top: 2rem; }
-.wiz-left-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-bottom: 18px; }
+.wiz-left-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-bottom: 18px; }
 
 /* Steps sidebar */
 .wiz-steps-col { display: flex; flex-direction: column; gap: 4px; }
@@ -1059,12 +1059,12 @@
   width: 26px; height: 26px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   border: 1.5px solid var(--t3); background: transparent;
-  font-size: 10px; font-weight: 700; color: var(--t3);
+  font-size: 10px; font-weight: 600; color: var(--t3);
   transition: all .18s;
 }
 .wiz-step-num.filled { background: var(--tx); border-color: var(--tx); color: #fff; }
 .wiz-step-text { font-size: 12px; font-weight: 500; color: var(--t3); transition: all .18s; }
-.wiz-step-text.active { font-weight: 700; color: var(--tx); }
+.wiz-step-text.active { font-weight: 600; color: var(--tx); }
 .wiz-step-line { width: 1.5px; height: 10px; background: rgba(198,198,198,.40); margin-left: 22px; }
 
 /* Live recap sidebar */
@@ -1074,7 +1074,7 @@
   border-radius: 14px;
 }
 .wiz-live-recap-title {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
   letter-spacing: .08em; color: #34C759; margin-bottom: 10px;
 }
 .wiz-live-recap-row {
@@ -1087,13 +1087,13 @@
 
 /* Security card */
 .wiz-security-card { margin-top: 18px; padding: 11px 14px; background: #ffffff; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,.04); }
-.wiz-security-title { font-size: 10.5px; font-weight: 700; color: var(--tx); margin-bottom: 3px; }
+.wiz-security-title { font-size: 10.5px; font-weight: 600; color: var(--tx); margin-bottom: 3px; }
 .wiz-security-desc { font-size: 10.5px; color: var(--t3); line-height: 1.6; }
 
 /* Stats */
 .wiz-left-stats { display: flex; gap: 2rem; padding-top: 1.5rem; }
-.wiz-stat-n { font-size: 18px; font-weight: 700; letter-spacing: -0.6px; color: var(--tx); }
-.wiz-stat-l { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-top: 2px; }
+.wiz-stat-n { font-size: 18px; font-weight: 600; letter-spacing: -0.6px; color: var(--tx); }
+.wiz-stat-l { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-top: 2px; }
 
 /* ── Right panel — premium white, compact for laptop ── */
 .wiz-panel-right {
@@ -1108,7 +1108,7 @@
 
 /* Header — compact */
 .wiz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .85rem; gap: 12px; }
-.wiz-title { margin-top: 4px; font-size: 24px; font-weight: 700; letter-spacing: -.04em; color: var(--tx); line-height: 1.1; }
+.wiz-title { margin-top: 4px; font-size: 24px; font-weight: 600; letter-spacing: -.04em; color: var(--tx); line-height: 1.1; }
 .wiz-sub { margin-top: 5px; font-size: 12.5px; color: var(--t4); line-height: 1.55; max-width: 400px; }
 .wiz-secure-badge {
   background: var(--surface-2); border-radius: 100px; padding: 4px 10px;
@@ -1168,7 +1168,7 @@
 .wiz-pt-btn:hover { background: var(--surface-2); transform: translateY(-2px); }
 .wiz-pt-btn.sel { background: var(--surface-2); outline: 1px solid rgba(198,198,198,.30); }
 .wiz-pt-em { font-size: 22px; margin-bottom: 6px; }
-.wiz-pt-lbl { font-size: 11.5px; font-weight: 700; color: var(--tx); }
+.wiz-pt-lbl { font-size: 11.5px; font-weight: 600; color: var(--tx); }
 
 /* Situation cards */
 .wiz-sit-card {
@@ -1180,7 +1180,7 @@
 .wiz-sit-card:hover { transform: translateX(4px); box-shadow: 0 8px 32px rgba(0,0,0,.08); }
 .wiz-sit-card.sel { background: var(--surface-2); outline: 1px solid rgba(198,198,198,.30); }
 .wiz-sit-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
-.wiz-sit-title { font-size: 13.5px; font-weight: 700; color: var(--tx); margin-bottom: 5px; letter-spacing: -.25px; }
+.wiz-sit-title { font-size: 13.5px; font-weight: 600; color: var(--tx); margin-bottom: 5px; letter-spacing: -.25px; }
 .wiz-sit-desc { font-size: 12px; color: var(--t3); line-height: 1.65; }
 
 /* Services / Zones grid */
@@ -1223,15 +1223,15 @@
   background: rgba(52,199,89,.10); display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px;
 }
-.wiz-welcome-title { font-size: 22px; font-weight: 700; letter-spacing: -.6px; margin-bottom: 8px; color: var(--tx); }
+.wiz-welcome-title { font-size: 22px; font-weight: 600; letter-spacing: -.6px; margin-bottom: 8px; color: var(--tx); }
 .wiz-welcome-sub { font-size: 14px; color: var(--t3); margin-bottom: 12px; }
-.wiz-welcome-id { background: rgba(52,199,89,.10); color: #34C759; padding: 3px 12px; border-radius: 100px; font-size: 10.5px; font-weight: 700; }
+.wiz-welcome-id { background: rgba(52,199,89,.10); color: #34C759; padding: 3px 12px; border-radius: 100px; font-size: 10.5px; font-weight: 600; }
 
 /* Tabs */
 .wiz-tab-bar { display: flex; background: var(--surface-2); border-radius: 11px; padding: 3px; gap: 2px; margin-bottom: 18px; }
 .wiz-tab-btn {
   flex: 1; padding: 8px; border-radius: 9px; border: none;
-  font-size: 11.5px; font-weight: 700; font-family: var(--f);
+  font-size: 11.5px; font-weight: 600; font-family: var(--f);
   cursor: pointer; transition: all .18s; background: transparent; color: var(--t3);
 }
 .wiz-tab-btn.active { background: var(--tx); color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.10); }
@@ -1245,9 +1245,9 @@
 .wiz-proc-num {
   width: 32px; height: 32px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; flex-shrink: 0;
+  font-weight: 600; font-size: 13px; flex-shrink: 0;
 }
-.wiz-proc-title { font-size: 13px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.wiz-proc-title { font-size: 13px; font-weight: 600; color: var(--tx); margin-bottom: 4px; }
 .wiz-proc-desc { font-size: 11.5px; color: var(--t3); line-height: 1.65; }
 
 /* Bourse stats */
@@ -1257,16 +1257,16 @@
   box-shadow: 0 20px 40px rgba(0,0,0,.04);
 }
 .wiz-bourse-stat { padding: 14px 16px; background: #ffffff; border-radius: 12px; }
-.wiz-bourse-stat-n { font-size: 18px; font-weight: 700; letter-spacing: -.8px; }
-.wiz-bourse-stat-l { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-top: 3px; }
+.wiz-bourse-stat-n { font-size: 18px; font-weight: 600; letter-spacing: -.8px; }
+.wiz-bourse-stat-l { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); margin-top: 3px; }
 
 /* Bourse project */
 .wiz-bourse-project {
   padding: 13px 15px; background: rgba(52,199,89,.10); border-radius: 14px;
   margin-bottom: 10px; position: relative; outline: 1.5px dashed rgba(52,199,89,.35);
 }
-.wiz-bourse-badge { position: absolute; top: 11px; right: 12px; background: #34C759; color: #fff; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 700; }
-.wiz-bourse-project-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--tx); }
+.wiz-bourse-badge { position: absolute; top: 11px; right: 12px; background: #34C759; color: #fff; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 600; }
+.wiz-bourse-project-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--tx); }
 .wiz-bourse-project-desc { font-size: 11.5px; color: var(--t3); margin-bottom: 7px; line-height: 1.6; }
 .wiz-bourse-project-meta { display: flex; gap: 14px; flex-wrap: wrap; }
 .wiz-bourse-project-meta span { font-size: 11px; color: var(--t3); }
@@ -1280,8 +1280,8 @@
 .wiz-recap-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(198,198,198,.10); }
 .wiz-recap-row:last-child { border-bottom: none; }
 .wiz-recap-label { font-size: 12px; color: var(--t3); }
-.wiz-recap-label-green { color: var(--tx); font-weight: 700; }
-.wiz-recap-value { font-size: 12px; font-weight: 700; color: var(--tx); }
+.wiz-recap-label-green { color: var(--tx); font-weight: 600; }
+.wiz-recap-value { font-size: 12px; font-weight: 600; color: var(--tx); }
 .wiz-recap-green { color: #34C759; background: rgba(52,199,89,.08); padding: 2px 10px; border-radius: 100px; }
 
 /* ── Logo generator (Premium) ── */
@@ -1315,7 +1315,7 @@
 }
 .wiz-logo-hero-mark { display: flex; justify-content: center; margin-bottom: 16px; position: relative; z-index: 1; }
 .wiz-logo-hero-name {
-  font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -.4px;
+  font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -.4px;
   position: relative; z-index: 1; text-shadow: 0 1px 8px rgba(0,0,0,.15);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
 }
@@ -1329,7 +1329,7 @@
 .wiz-logo-controls { display: flex; flex-direction: column; gap: 18px; }
 .wiz-logo-ctrl-section { display: flex; flex-direction: column; gap: 8px; }
 .wiz-logo-ctrl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.wiz-logo-ctrl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); }
+.wiz-logo-ctrl-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); }
 
 /* Business card premium */
 .wiz-bcard-premium {
@@ -1360,7 +1360,7 @@
 .wiz-upload-formats { display: flex; gap: 6px; margin-top: 16px; }
 .wiz-upload-format {
   padding: 4px 12px; background: var(--surface-2); border-radius: 6px;
-  font-size: 10px; font-weight: 700; color: var(--t3); letter-spacing: .05em;
+  font-size: 10px; font-weight: 600; color: var(--t3); letter-spacing: .05em;
 }
 
 /* Info card */
@@ -1430,11 +1430,11 @@
   display: inline-block; position: relative; z-index: 1;
   background: rgba(255,255,255,.12); color: rgba(255,255,255,.8);
   padding: 3px 10px; border-radius: 100px;
-  font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
   margin-bottom: 10px;
 }
 .wiz-action-hero-title {
-  font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.4px;
+  font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -.4px;
   line-height: 1.2; margin-bottom: 8px; position: relative; z-index: 1;
 }
 .wiz-action-hero-desc {
@@ -1494,7 +1494,7 @@
 .wiz-team-av {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 11px; font-weight: 700;
+  color: #fff; font-size: 11px; font-weight: 600;
 }
 .wiz-team-add { display: flex; gap: 8px; }
 .wiz-team-add-card {
@@ -1562,7 +1562,7 @@
 .wiz-edit-header {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
 }
-.wiz-edit-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); }
+.wiz-edit-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--t3); }
 .wiz-edit-btn {
   display: inline-flex; align-items: center; gap: 5px;
   background: var(--surface-2); border: none; border-radius: 8px;

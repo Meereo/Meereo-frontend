@@ -103,7 +103,7 @@ function EventForm({ formRef }) {
               const initials = (inv.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
               return (
                 <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{inv.nom}</div>
                     <div style={{ fontSize: 10, color: '#888' }}>{inv.role}</div>
@@ -123,7 +123,7 @@ function EventForm({ formRef }) {
                 const initials = (c.nom || "").split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                 return (
                   <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }} onClick={() => addInvite(c)}>
-                    <div style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: 'var(--t3)', flexShrink: 0 }}>{initials}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600 }}>{c.nom}</div>
                       <div style={{ fontSize: 10, color: '#888' }}>{c.role}</div>

@@ -39,7 +39,7 @@ const STATUS_TO_STEP = {
 function Badge({ statut }) {
   const m = PAY_META[statut] || PAY_META.pending
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 100, background: m.bg, color: m.color, whiteSpace: 'nowrap' }}>
+    <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 100, background: m.bg, color: m.color, whiteSpace: 'nowrap' }}>
       {m.label}
     </span>
   )
@@ -182,11 +182,11 @@ export default function Payments({ showToast }) {
       {/* Breakdown par méthode (si payements reçus) */}
       {methodsBreakdown.length > 0 && (
         <div className="card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', flexShrink: 0 }}>Répartition</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', flexShrink: 0 }}>Répartition</span>
           {methodsBreakdown.map(m => (
             <div key={m.method} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <PayMethodBadge method={m.method} />
-              <span style={{ fontSize: 12, fontWeight: 700 }}>{formatShort(m.total)}</span>
+              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatShort(m.total)}</span>
               <span style={{ fontSize: 10, color: 'var(--t4)' }}>({m.count} cmd)</span>
             </div>
           ))}
@@ -199,7 +199,7 @@ export default function Payments({ showToast }) {
           <div style={{ marginBottom: 12, opacity: .3, display: 'flex', justifyContent: 'center' }}>
             <TrendingUp size={32} />
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', marginBottom: 6 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 6 }}>
             {tab === 'received' ? 'Aucun paiement encaissé' : tab === 'pending' ? 'Aucune commande en cours' : tab === 'cancelled' ? 'Aucune commande annulée' : 'Aucune commande'}
           </div>
           <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
@@ -209,7 +209,7 @@ export default function Payments({ showToast }) {
       ) : (
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {/* Header table */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 100px 130px 100px', gap: 8, padding: '10px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 100px 130px 100px', gap: 8, padding: '10px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
             <span>Commande</span>
             <span>Méthode</span>
             <span style={{ textAlign: 'right' }}>Montant</span>
@@ -232,7 +232,7 @@ export default function Payments({ showToast }) {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: m.dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{o.ref}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{o.ref}</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', paddingLeft: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {o.buyer} à {productNames}
@@ -241,7 +241,7 @@ export default function Payments({ showToast }) {
                 {/* Col 2: Méthode */}
                 <div><PayMethodBadge method={o.paymentMethod} /></div>
                 {/* Col 3: Montant */}
-                <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 800, color: (o.statut === 'completed' || o.statut === 'delivered') ? 'var(--ok)' : 'var(--tx)' }}>
+                <div style={{ textAlign: 'right', fontSize: 14, fontWeight: 600, color: (o.statut === 'completed' || o.statut === 'delivered') ? 'var(--ok)' : 'var(--tx)' }}>
                   {(o.statut === 'completed' || o.statut === 'delivered') ? '+' : ''}{fmt(o.total)}
                 </div>
                 {/* Col 4: Statut */}
@@ -257,9 +257,9 @@ export default function Payments({ showToast }) {
           {/* Totaux */}
           {displayed.length > 1 && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 100px 130px 100px', gap: 8, padding: '12px 20px', borderTop: '2px solid var(--border)', background: 'var(--s2)' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', paddingLeft: 14 }}>TOTAL ({displayed.length})</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t4)', paddingLeft: 14 }}>TOTAL ({displayed.length})</span>
               <span />
-              <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 800 }}>
+              <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 600 }}>
                 {formatShort(displayed.reduce((s, o) => s + o.total, 0))}
               </span>
               <span />
@@ -278,12 +278,12 @@ export default function Payments({ showToast }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', marginBottom: 4, letterSpacing: '.06em', textTransform: 'uppercase' }}>Commande</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.5px' }}>{detail.ref}</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.5px' }}>{detail.ref}</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>{detail.buyer}</div>
                 </div>
                 <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>×</button>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1.5px' }}>{fmt(detail.total)}</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px' }}>{fmt(detail.total)}</div>
               <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Badge statut={detail.statut} />
                 {detail.paymentMethod && <PayMethodBadge method={detail.paymentMethod} />}
@@ -300,7 +300,7 @@ export default function Payments({ showToast }) {
               {/* Produits */}
               {detail.items.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits commandûs</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits commandûs</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {detail.items.map((it, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--s2)', borderRadius: 8 }}>
@@ -311,7 +311,7 @@ export default function Payments({ showToast }) {
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           {it.qty && <div style={{ fontSize: 11, color: 'var(--t3)' }}>à {it.qty}</div>}
-                          {it.price && <div style={{ fontSize: 12, fontWeight: 700 }}>{fmt(parseFloat(it.price) * (it.qty || 1))}</div>}
+                          {it.price && <div style={{ fontSize: 12, fontWeight: 600 }}>{fmt(parseFloat(it.price) * (it.qty || 1))}</div>}
                         </div>
                       </div>
                     ))}
@@ -322,7 +322,7 @@ export default function Payments({ showToast }) {
               {/* Progression */}
               {!['cancelled', 'annulee', 'rejected'].includes(detail.statut) && (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Progression</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Progression</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {STEP_LABELS.map((label, idx) => {
                       const curStep = STATUS_TO_STEP[detail.statut] || 1
@@ -351,7 +351,7 @@ export default function Payments({ showToast }) {
               {/* Infos livraison */}
               {detail.address && (
                 <div style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 4 }}>Adresse de livraison</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 4 }}>Adresse de livraison</div>
                   <div style={{ fontSize: 12 }}>{detail.address}</div>
                 </div>
               )}
@@ -360,13 +360,13 @@ export default function Payments({ showToast }) {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {detail.createdAt && (
                   <div style={{ padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, flex: 1 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Passée le</div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Passée le</div>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{formatDateFR(detail.createdAt)}</div>
                   </div>
                 )}
                 {detail.updatedAt && detail.updatedAt !== detail.createdAt && (
                   <div style={{ padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, flex: 1 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Mise à jour</div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 2 }}>Mise à jour</div>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{formatDateFR(detail.updatedAt)}</div>
                   </div>
                 )}

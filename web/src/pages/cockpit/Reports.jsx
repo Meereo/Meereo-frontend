@@ -116,13 +116,13 @@ export default function Reports({ openModal, showToast }) {
 
       <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Rapports de chantier</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Rapports de chantier</div>
+          <div style={{ fontSize: 44, fontWeight: 600, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>rapports ce mois</div>
         </div>
         <div className="rg-2" style={{ gap: 12 }}>
           {[{ v: valides, l: 'Valides' }, { v: total - valides, l: 'En attente' }, { v: allRapports.filter(r => r.medias?.length > 0).length, l: 'Avec medias' }, { v: allRapports.filter(r => r.alertes?.length > 0).length, l: 'Alertes' }].map((k, i) => (
-            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
+            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}
         </div>
       </div>
@@ -169,9 +169,9 @@ export default function Reports({ openModal, showToast }) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontSize: 20 }}>{icons[selected.type] || <ClipboardList size={20}/>}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 100, background: slBg(selected.statut), color: slColor(selected.statut) }}>{slLabel(selected.statut)}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 100, background: slBg(selected.statut), color: slColor(selected.statut) }}>{slLabel(selected.statut)}</span>
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.4px', marginBottom: 4 }}>{selected.titre}</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>{selected.titre}</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>{formatDateFR(selected.date)}{selected.heure ? ' · ' + selected.heure : ''} · {selected.lieu || '—'}</div>
                   <div style={{ fontSize: 12, color: 'var(--t4)', marginTop: 2 }}>Redige par {selected.auteur}</div>
                 </div>
@@ -198,7 +198,7 @@ export default function Reports({ openModal, showToast }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--s2)', borderRadius: 10, marginBottom: 16 }}>
                   {getProjetImg(selected.projet, store) && <img src={getProjetImg(selected.projet, store)} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{selected.projet}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{selected.projet}</div>
                     <div style={{ fontSize: 11, color: 'var(--t3)' }}>Maitre d'ouvrage : {p ? p.client : '—'}</div>
                   </div>
                   {selected.statut === 'transmis' && <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 100, background: 'rgba(0,122,255,.08)', color: 'var(--inf)' }}>Transmis au MOA</span>}
@@ -209,7 +209,7 @@ export default function Reports({ openModal, showToast }) {
               {/* Participants */}
               {selected.participants?.length > 0 && (
                 <div className="card" style={{ padding: 16, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Participants ({selected.participants.length})</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Participants ({selected.participants.length})</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {selected.participants.map((p, i) => (
                       <span key={i} style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'var(--s2)', border: '1px solid var(--border-card)' }}>{p}</span>
@@ -221,7 +221,7 @@ export default function Reports({ openModal, showToast }) {
               {/* Points abordes */}
               {selected.points?.length > 0 && (
                 <div className="card" style={{ padding: 16, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Points abordes</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Points abordes</div>
                   {selected.points.map((p, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0', borderBottom: i < selected.points.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <span style={{ fontSize: 10, color: 'var(--t4)', flexShrink: 0, marginTop: 2 }}>{i + 1}.</span>
@@ -234,7 +234,7 @@ export default function Reports({ openModal, showToast }) {
               {/* Decisions */}
               {selected.decisions?.length > 0 && (
                 <div className="card" style={{ padding: 16, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Decisions prises</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Decisions prises</div>
                   {selected.decisions.map((d, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0' }}>
                       <span style={{ color: 'var(--ok)', flexShrink: 0, marginTop: 1 }}><Check size={10}/></span>
@@ -247,7 +247,7 @@ export default function Reports({ openModal, showToast }) {
               {/* Alertes */}
               {selected.alertes?.length > 0 && (
                 <div className="card" style={{ padding: 16, marginBottom: 12, borderLeft: '3px solid var(--err)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--err)', marginBottom: 8 }}>Points d'alerte</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--err)', marginBottom: 8 }}>Points d'alerte</div>
                   {selected.alertes.map((a, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0' }}>
                       <span style={{ color: 'var(--err)', flexShrink: 0, marginTop: 1 }}><AlertTriangle size={10}/></span>
@@ -260,7 +260,7 @@ export default function Reports({ openModal, showToast }) {
               {/* Medias — photos & videos */}
               <div className="card" style={{ padding: 16, marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Photos & Videos ({(selected.medias || []).length})</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Photos & Videos ({(selected.medias || []).length})</div>
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 10px' }} onClick={() => showToast && showToast('Selectionnez des fichiers a ajouter')}>+ Ajouter</button>
                 </div>
                 {(selected.medias || []).length > 0 ? (

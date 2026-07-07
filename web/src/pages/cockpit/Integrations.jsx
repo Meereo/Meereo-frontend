@@ -41,7 +41,7 @@ export default function Integrations({ showToast }) {
                 <img src={g.logo} alt={g.nom} style={{ width: 32, height: 32, objectFit: 'contain' }} onError={e => { e.target.style.display = 'none'; e.target.parentElement.textContent = g.nom[0] }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.nom}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.nom}</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{g.desc}</div>
               </div>
             </div>

@@ -80,7 +80,7 @@ export default function Agenda({ openModal, showToast }) {
               {weekDates.map(d => (
                 <div key={d.full} style={{ padding: '10px 8px', textAlign: 'center', borderBottom: '1px solid var(--s2)', borderLeft: '1px solid var(--s2)' }}>
                   <div style={{ fontSize: 11, color: 'var(--t4)' }}>{d.day}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{d.num}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600 }}>{d.num}</div>
                 </div>
               ))}
               {HOURS.map(h => (
@@ -177,7 +177,7 @@ export default function Agenda({ openModal, showToast }) {
 
       {/* Événements à venir */}
       <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Événements à venir</div>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Événements à venir</div>
         <div className="card" style={{ padding: 0 }}>
           {allEvents.slice(0, 6).map((e, i) => (
             <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px', borderBottom: i < 5 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }} onClick={() => setEditEvent({ ...e })}>
@@ -197,7 +197,7 @@ export default function Agenda({ openModal, showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEditEvent(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>Modifier l'événement</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>Modifier l'événement</div>
               <button onClick={() => setEditEvent(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>À</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>

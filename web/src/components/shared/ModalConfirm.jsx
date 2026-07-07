@@ -61,7 +61,7 @@ export default function ModalConfirm({
               : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             }
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8, color: '#111' }}>{title}</div>
+          <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8, color: '#111' }}>{title}</div>
           {message && <div style={{ fontSize: 13, color: '#888', lineHeight: 1.5 }}>{message}</div>}
         </div>
         {/* Actions */}

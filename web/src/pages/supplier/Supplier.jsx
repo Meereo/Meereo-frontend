@@ -300,7 +300,7 @@ export default function Supplier() {
 
         <div style={{ margin: '8px 10px', padding: '10px 12px', background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10 }}>
           <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>Marketplace</div>
-          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.5px' }}>{visibleMarketplace.length}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.5px' }}>{visibleMarketplace.length}</div>
           <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 2 }}>produit{visibleMarketplace.length > 1 ? 's' : ''} visibles</div>
           {sponsoredProducts.length > 0 && <div style={{ fontSize: 9, color: 'var(--ok)', marginTop: 3 }}>{sponsoredProducts.length} sponsorise{sponsoredProducts.length > 1 ? 's' : ''}</div>}
         </div>
@@ -395,19 +395,19 @@ export default function Supplier() {
         </>
       }>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Identite produit</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Identite produit</div>
           <div><label className="form-label">Nom du produit *</label><input className="form-input" value={newProd.name} onChange={e => setNewProd(p => ({ ...p, name: e.target.value }))} placeholder="ex: Beton XR45, Carrelage 60x60..." /></div>
           <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Categorie *</label><select className="form-input" value={newProd.category} onChange={e => setNewProd(p => ({ ...p, category: e.target.value }))}><option value="">Choisir une categorie</option>{MKT_CATS.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.ico} {c.label}</option>)}</select></div>
             <div><label className="form-label">Unite</label><select className="form-input" value={newProd.unit} onChange={e => setNewProd(p => ({ ...p, unit: e.target.value }))}><option>unité</option><option>m²</option><option>m³</option><option>ml</option><option>kg</option><option>tonne</option><option>lot</option><option>sac</option><option>rouleau</option></select></div>
           </div>
           <div><label className="form-label">Description</label><textarea className="form-input" value={newProd.description} onChange={e => setNewProd(p => ({ ...p, description: e.target.value }))} placeholder="Description du produit..." /></div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Prix & stock</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Prix & stock</div>
           <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Prix (FCFA)</label><MoneyInput value={newProd.price} onChange={v => setNewProd(p => ({ ...p, price: v }))} placeholder="0 = sur devis" /></div>
             <div><label className="form-label">Stock disponible</label><input className="form-input" type="number" value={newProd.stock} onChange={e => setNewProd(p => ({ ...p, stock: e.target.value }))} placeholder="Quantite" /></div>
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Image produit</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 4 }}>Image produit</div>
           {newProd.imageUrl ? (
             <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', background: 'var(--s2)' }}>
               <img src={newProd.imageUrl} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
@@ -422,7 +422,7 @@ export default function Supplier() {
             </label>
           )}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Publication marketplace</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Publication marketplace</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 12 }}>Visible dans le Marketplace</span>
               <div onClick={() => setNewProd(p => ({ ...p, isPublished: !p.isPublished }))} style={{ width: 36, height: 20, borderRadius: 100, background: newProd.isPublished ? 'var(--tx)' : 'var(--s3)', cursor: 'pointer', position: 'relative', transition: 'background .15s' }}>
@@ -470,7 +470,7 @@ export default function Supplier() {
               <div><label className="form-label">Stock</label><input className="form-input" type="number" value={editProduct.stock || ''} onChange={e => setEditProduct(p => ({ ...p, stock: e.target.value }))} /></div>
             </div>
             <div><label className="form-label">Description</label><textarea className="form-input" value={editProduct.description || ''} onChange={e => setEditProduct(p => ({ ...p, description: e.target.value }))} /></div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Image</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Image</div>
             {(editProduct.photoUrl || editProduct.imageUrl) ? (
               <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', background: 'var(--s2)' }}>
                 <img src={editProduct.photoUrl || editProduct.imageUrl} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
@@ -510,7 +510,7 @@ export default function Supplier() {
           </div>
           <div style={{ padding: '10px 14px', background: 'var(--s2)', borderRadius: 10 }}>
             <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>Estimation visibilite</div>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>{sponsorDuration === '24h' ? '~200' : sponsorDuration === '72h' ? '~600' : '~2 000'} vues estimees</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{sponsorDuration === '24h' ? '~200' : sponsorDuration === '72h' ? '~600' : '~2 000'} vues estimees</div>
           </div>
         </div>
       </Modal>
@@ -552,20 +552,20 @@ export default function Supplier() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                 {o.livMode === 'retrait' ? <Store size={14}/> : <Truck size={14}/>}
                 <span style={{ fontSize: 12, fontWeight: 600 }}>{o.livMode === 'retrait' ? 'Retrait par le client' : 'Livraison'}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: (STATUS_COLORS[o.statut] || 'var(--t4)') + '14', color: STATUS_COLORS[o.statut] || 'var(--t4)' }}>{STATUS_LABELS[o.statut] || o.statut}</span>
+                <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 7px', borderRadius: 100, background: (STATUS_COLORS[o.statut] || 'var(--t4)') + '14', color: STATUS_COLORS[o.statut] || 'var(--t4)' }}>{STATUS_LABELS[o.statut] || o.statut}</span>
               </div>
               <div className="rg-2" style={{ gap: 12 }}>
-                <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Client</div><div style={{ fontSize: 13, fontWeight: 700 }}>{o.buyer}</div></div>
-                <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Montant</div><div style={{ fontSize: 13, fontWeight: 700 }}>{fmtMoney(o.total)}</div></div>
+                <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Client</div><div style={{ fontSize: 13, fontWeight: 600 }}>{o.buyer}</div></div>
+                <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Montant</div><div style={{ fontSize: 13, fontWeight: 600 }}>{fmtMoney(o.total)}</div></div>
                 {o.address && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Adresse</div><div style={{ fontSize: 12 }}>{o.address}</div></div>}
                 {o.paymentMethod && <div><div style={{ fontSize: 10, color: 'var(--t4)' }}>Paiement</div><div style={{ fontSize: 12 }}>{o.paymentMethod}</div></div>}
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 8 }}>Articles</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 8 }}>Articles</div>
                 {(o.items || []).map((it, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12 }}>
                     <span>{it.name} × {it.qty}</span>
-                    <span style={{ fontWeight: 700 }}>{fmtMoney(it.price * it.qty)}</span>
+                    <span style={{ fontWeight: 600 }}>{fmtMoney(it.price * it.qty)}</span>
                   </div>
                 ))}
               </div>

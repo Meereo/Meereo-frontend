@@ -31,9 +31,9 @@ export default function ProSearch({ ctx }) {
               <ProAvatar nom={p.nom} size={42} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{p.nom}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{p.nom}</span>
                   {p.verified && (
-                    <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 5px', borderRadius: 100, fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 8, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 5px', borderRadius: 100, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
                       <Check size={8} />
                     </span>
                   )}
@@ -45,7 +45,7 @@ export default function ProSearch({ ctx }) {
               {Array.from({ length: 5 }, (_, i) => (
                 <Star key={i} size={12} fill={i < Math.round(p.note) ? '#F59E0B' : 'none'} color="#F59E0B" strokeWidth={1.5} />
               ))}
-              <span style={{ fontWeight: 700, color: 'var(--t2)', fontSize: 12, marginLeft: 4 }}>{p.note}/5</span>
+              <span style={{ fontWeight: 600, color: 'var(--t2)', fontSize: 12, marginLeft: 4 }}>{p.note}/5</span>
               <span style={{ fontSize: 10, color: 'var(--t4)' }}>({p.nbAvis} avis)</span>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>

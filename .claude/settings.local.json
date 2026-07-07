@@ -5,7 +5,10 @@
       "Bash(npx vite:*)",
       "Bash(npx prisma:*)",
       "Bash(npx prisma@5 migrate dev --name add_missions)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(xargs sed:*)",
+      "Bash(grep -l \"@media\" *.css)",
+      "Bash(npm install:*)"
     ]
   }
 }

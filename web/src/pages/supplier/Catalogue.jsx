@@ -24,16 +24,16 @@ export default function Catalogue({ ctx }) {
         <div className="rg-3" style={{ gap: 14 }}>
           {filteredProducts.map((p, i) => (
             <div key={i} className="card" style={{ overflow: 'hidden', position: 'relative' }}>
-              {p.sponsored && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--tx)', color: '#fff', zIndex: 2 }}>Sponsorise</span>}
-              {p.flash && <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--wrn)', color: '#fff', zIndex: 2 }}>Flash</span>}
+              {p.sponsored && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'var(--tx)', color: '#fff', zIndex: 2 }}>Sponsorise</span>}
+              {p.flash && <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'var(--wrn)', color: '#fff', zIndex: 2 }}>Flash</span>}
               {p.photoUrl
                 ? <img src={p.photoUrl} alt="" style={{ width: '100%', height: 130, objectFit: 'cover' }} />
                 : <div style={{ width: '100%', height: 130, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--t4)' }}><Package size={32}/></div>
               }
               <div style={{ padding: 14 }}>
-                {p.category && <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 4 }}>{p.category}</div>}
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
+                {p.category && <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 4 }}>{p.category}</div>}
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
                   {p.flash && p.flashPrice ? <><span style={{ textDecoration: 'line-through', color: 'var(--t4)', fontSize: 12 }}>{fmtMoney(p.price)}</span> {fmtMoney(p.flashPrice)}</> : fmtMoney(p.price)}
                   <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--t3)', marginLeft: 4 }}>{p.unit}</span>
                 </div>

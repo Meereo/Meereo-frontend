@@ -18,7 +18,7 @@ function Avatar({ nom, logoUrl, size = 44 }) {
     )
   }
   return (
-    <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+    <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
       {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || initials)}
     </div>
   )
@@ -81,7 +81,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.3px' }}>Annuaire des professionnels</div>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>Annuaire des professionnels</div>
             <div style={{ fontSize: 11.5, color: 'var(--t3)', marginTop: 2 }}>
               {loading ? 'Chargement…' : `${allPros.length} professionnel${allPros.length > 1 ? 's' : ''} sur MEEREO`}
             </div>
@@ -124,20 +124,20 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
                       <Avatar nom={p.nom} logoUrl={p.logoUrl} size={44} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom || 'Professionnel'}</span>
-                          {p.verified && <span style={{ fontWeight: 700, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, flexShrink: 0, display: 'inline-flex' }}><Check size={7}/></span>}
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom || 'Professionnel'}</span>
+                          {p.verified && <span style={{ fontWeight: 600, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, flexShrink: 0, display: 'inline-flex' }}><Check size={7}/></span>}
                         </div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{p.ville || "Côte d'Ivoire"}</div>
                       </div>
                     </div>
                     <div>
-                      {(() => { const mc = p.logoColor || '#6B7280'; return <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: p.slogan ? 4 : 0 }}>{p.metier}</span> })()
+                      {(() => { const mc = p.logoColor || '#6B7280'; return <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: p.slogan ? 4 : 0 }}>{p.metier}</span> })()
                       }
                       {p.slogan && <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>{p.slogan}</div>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {p.note > 0 && <><Star size={11} fill="#F59E0B" strokeWidth={0}/><span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx)' }}>{p.note}</span></>}
+                        {p.note > 0 && <><Star size={11} fill="#F59E0B" strokeWidth={0}/><span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>{p.note}</span></>}
                         {p.projets > 0 && <span style={{ fontSize: 10, color: 'var(--t4)', marginLeft: 6 }}>{p.projets} projets</span>}
                       </div>
                       <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)' }}>Voir →</span>

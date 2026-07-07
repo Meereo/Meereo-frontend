@@ -257,7 +257,7 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
       {/* Title — typing */}
       {phase >= 1 && (
         <div style={{ marginBottom: introTyping.displayed ? 10 : 4 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tx)', letterSpacing: '-.3px', lineHeight: 1.35 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--tx)', letterSpacing: '-.3px', lineHeight: 1.35 }}>
             {titleTyping.displayed}<span style={{ opacity: titleTyping.done ? 0 : .6, transition: 'opacity .2s' }}>|</span>
           </div>
         </div>
@@ -707,7 +707,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
               }
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, pointerEvents: 'none' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#111', letterSpacing: '.04em' }}>KAI</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#111', letterSpacing: '.04em' }}>KAI</span>
               <span style={{ fontSize: 10, color: '#999' }}>Assistant personnel IA</span>
             </div>
           </div>
@@ -756,10 +756,10 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 <div style={{ margin: '0 16px 12px', padding: '12px 14px', borderRadius: 10, background: 'rgba(186,26,26,.06)', border: '1px solid rgba(186,26,26,.15)', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#ba1a1a' }}>Quota mensuel épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#ba1a1a' }}>Quota mensuel épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses</div>
                     <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour des analyses illimitées.</div>
                   </div>
-                  <button onClick={() => setShowGoldModal(true)} style={{ padding: '6px 12px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAI Pro</button>
+                  <button onClick={() => setShowGoldModal(true)} style={{ padding: '6px 12px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAI Pro</button>
                 </div>
               )}
 
@@ -852,7 +852,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 <div className="kai-orb" style={{ width: 26, height: 26 }}>
                   <span className="kai-orb-k" style={{ fontSize: 11 }}>K</span>
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#111', flex: 1 }}>KAI</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#111', flex: 1 }}>KAI</span>
                 {conversations.length > 0 && (
                   <button className="kai-conv-btn" onClick={() => setKaiView('history')} title="Historique">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -884,10 +884,10 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 {kaiQuota.isExhausted ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#ba1a1a' }}>Quota épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses ce mois</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#ba1a1a' }}>Quota épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses ce mois</div>
                       <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour continuer sans limite.</div>
                     </div>
-                    <button onClick={() => setShowGoldModal(true)} style={{ padding: '7px 14px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', flexShrink: 0 }}>KAI Pro →</button>
+                    <button onClick={() => setShowGoldModal(true)} style={{ padding: '7px 14px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', flexShrink: 0 }}>KAI Pro →</button>
                   </div>
                 ) : (
                   <>

@@ -205,7 +205,7 @@ export default function Settings({ showToast }) {
 
         <div className="param-content">
           <div style={{ maxWidth: tab === 'equipe' ? 700 : 560 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.3px', marginBottom: 20 }}>{TABS.find(t => t.id === tab)?.label}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 20 }}>{TABS.find(t => t.id === tab)?.label}</div>
 
             {tab === 'profil' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -217,13 +217,13 @@ export default function Settings({ showToast }) {
                     ) : ob.photoUrl ? (
                       <img src={ob.photoUrl} alt="" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover' }} />
                     ) : (
-                      <div style={{ width: 64, height: 64, borderRadius: 14, background: ob.logoColor || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, fontWeight: 800 }}>
+                      <div style={{ width: 64, height: 64, borderRadius: 14, background: ob.logoColor || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, fontWeight: 600 }}>
                         {(pEntreprise || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{ob.prenom ? `${ob.prenom} ${ob.nom || ''}`.trim() : store.user?.name || pEntreprise || ''}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{ob.prenom ? `${ob.prenom} ${ob.nom || ''}`.trim() : store.user?.name || pEntreprise || ''}</div>
                     <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 10 }}>{pEntreprise || 'Votre structure'}</div>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '5px 12px' }} onClick={() => {
@@ -353,7 +353,7 @@ export default function Settings({ showToast }) {
                     <div style={{ padding: 20, background: isActive ? 'rgba(124,58,237,.03)' : 'var(--s2)', borderRadius: 12, border: isActive ? '1px solid rgba(124,58,237,.1)' : '1px solid var(--border-subtle)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: isActive ? '#7C3AED' : 'var(--t4)', flexShrink: 0 }} />
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>KAI {isActive ? 'Pro' : 'Standard'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>KAI {isActive ? 'Pro' : 'Standard'}</div>
                       </div>
                       {isActive
                         ? <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>KAI Pro est actif jusqu'au {formatDateFR(ent.goldEndDate)}</div>
@@ -369,7 +369,7 @@ export default function Settings({ showToast }) {
                   <div style={{ padding: 20, background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Commissions MEEREO</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Commissions MEEREO</div>
                         <div style={{ fontSize: 11, color: 'var(--t3)' }}>Mises en relation via MEEREO — commission 5%</div>
                       </div>
                       {!hasAcceptedCommissionTerms() && (
@@ -385,7 +385,7 @@ export default function Settings({ showToast }) {
                             <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>Base : {fmtMoney(c.montantBase || 0)} à 5%</div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(c.montantCommission || 0)}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)' }}>{fmtMoney(c.montantCommission || 0)}</div>
                             <div style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 100, background: c.status === 'paid' ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: c.status === 'paid' ? 'var(--ok)' : 'var(--wrn)', display: 'inline-block' }}>
                               {c.status === 'potential' ? 'Potentielle' : c.status === 'due' ? 'Due' : c.status === 'invoiced' ? 'Facturée' : c.status === 'paid' ? 'Réglée' : c.status === 'overdue' ? 'En retard' : c.status}
                             </div>
@@ -397,12 +397,12 @@ export default function Settings({ showToast }) {
                 )}
 
                 <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Réinitialiser toutes les données</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Réinitialiser toutes les données</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Cette action supprime toutes les données locales : projets, clients, offres, marchés, commandes, messages, documents, équipe, notifications et paramètres. La plateforme reviendra à son état initial vierge.</div>
                   <button className="btn btn-danger btn-sm" onClick={() => { setResetText(''); setShowResetModal(true) }}>Réinitialiser et revenir à l'accueil</button>
                 </div>
                 <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Exporter les donnees</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Exporter les donnees</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Telechargez un export JSON de toutes vos donnees MEEREO.</div>
                   <button className="btn btn-sm" onClick={() => {
                     showToast && showToast('Export des données non disponible en mode API')
@@ -428,7 +428,7 @@ export default function Settings({ showToast }) {
                 <div className="rg-4" style={{ gap: 8, marginBottom: 20 }}>
                   {ROLES.map(r => (
                     <div key={r.id} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8, border: '1px solid var(--border-card)' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{r.label}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>{r.label}</div>
                       <div style={{ fontSize: 10, color: 'var(--t4)', lineHeight: 1.4 }}>{r.desc}</div>
                     </div>
                   ))}
@@ -440,7 +440,7 @@ export default function Settings({ showToast }) {
                     const initials = (m.nom || m.name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                     return (
                       <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10 }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 19, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--t2)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 19, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--t2)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
                           {(m.photo || m.photoUrl) ? <img src={m.photo || m.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} /> : initials}
                           <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: m.online ? 'var(--ok)' : 'var(--t4)', border: '2px solid var(--surface-1)' }} />
                         </div>
@@ -470,7 +470,7 @@ export default function Settings({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setInviteModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px' }}>Ajouter un membre</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px' }}>Ajouter un membre</div>
               <button onClick={() => setInviteModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -514,7 +514,7 @@ export default function Settings({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowResetModal(false)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--err)' }}>Réinitialiser toutes les données ?</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px', color: 'var(--err)' }}>Réinitialiser toutes les données ?</div>
               <button onClick={() => setShowResetModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -549,7 +549,7 @@ export default function Settings({ showToast }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setEditMember(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)', padding: 22 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>Modifier — {editMember.nom}</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>Modifier — {editMember.nom}</div>
               <button onClick={() => setEditMember(null)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

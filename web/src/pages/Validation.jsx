@@ -34,7 +34,7 @@ export default function Validation() {
         <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 20, boxShadow: '0 12px 40px rgba(0,0,0,.08)', overflow: 'hidden' }}>
           <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
             <MeereoLogo size={28} />
-            <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>MEEREO</div>
+            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.2px' }}>MEEREO</div>
           </div>
           <div style={{ padding: '48px 28px', textAlign: 'center' }}>
             {emailLoading ? (
@@ -47,7 +47,7 @@ export default function Validation() {
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Email vérifié</div>
+                <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Email vérifié</div>
                 <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5, marginBottom: 20 }}>Votre adresse <strong>{verifyEmail}</strong> a été vérifiée avec succès.</div>
                 <button onClick={() => window.location.href = '/'} style={{ padding: '12px 24px', borderRadius: 10, background: '#191c1d', color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Accéder à mon espace</button>
               </>
@@ -56,7 +56,7 @@ export default function Validation() {
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(186,26,26,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Lien invalide ou expiré</div>
+                <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Lien invalide ou expiré</div>
                 <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5 }}>{emailError || 'Ce lien de vérification n\'est plus valide. Connectez-vous à votre espace pour demander un nouveau lien.'}</div>
               </>
             )}
@@ -90,7 +90,7 @@ export default function Validation() {
         {/* Header */}
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <MeereoLogo size={28} />
-          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>MEEREO</div>
+          <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.2px' }}>MEEREO</div>
         </div>
 
         {done ? (
@@ -98,7 +98,7 @@ export default function Validation() {
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,199,89,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Réception confirmée</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Réception confirmée</div>
             <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5 }}>Merci pour votre confirmation. Le projet est maintenant clôturé.</div>
           </div>
         ) : refused ? (
@@ -106,23 +106,23 @@ export default function Validation() {
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,149,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Signalement enregistré</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Signalement enregistré</div>
             <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5 }}>Le prestataire a été informé de votre retour.</div>
           </div>
         ) : !req ? (
           <div style={{ padding: '48px 28px', textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Lien invalide ou expiré</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Lien invalide ou expiré</div>
             <div style={{ fontSize: 13, color: '#777' }}>Cette demande de validation n'existe pas ou a déjà été traitée.</div>
           </div>
         ) : (
           <>
             {/* Contenu */}
             <div style={{ padding: '28px 28px 20px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 16 }}>Validation de réception</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 16 }}>Validation de réception</div>
 
               <div style={{ padding: '16px 18px', background: '#f8f8f9', borderRadius: 12, marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>Projet</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{project?.nom || project?.name || 'Projet'}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{project?.nom || project?.name || 'Projet'}</div>
                 <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#666' }}>
                   <span>Prestataire : <strong style={{ color: '#111' }}>{req.requestedByName}</strong></span>
                   {project?.adresse && <span>{project.adresse}</span>}
@@ -154,7 +154,7 @@ export default function Validation() {
 
             {/* Actions */}
             <div style={{ padding: '16px 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={handleAccept} style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: '#111', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+              <button onClick={handleAccept} style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: '#111', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, -apple-system, sans-serif' }}>
                 Confirmer la réception
               </button>
               <button onClick={handleRefuse} style={{ width: '100%', padding: '14px 20px', borderRadius: 12, background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,.12)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, -apple-system, sans-serif' }}>

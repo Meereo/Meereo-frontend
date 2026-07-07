@@ -1,55 +1,38 @@
+import { motion } from 'framer-motion'
+
 /**
  * DSEmptyState — Unified empty state for all pages.
- * Inspired by Procore/Monday: clean, centered, single CTA, no clutter.
- *
- * @param {string} icon - Emoji or icon
- * @param {string} title - Main message
- * @param {string} description - Supporting text
- * @param {string} actionLabel - CTA text
- * @param {Function} onAction - CTA handler
+ * Tailwind + Framer Motion version.
  */
 export default function DSEmptyState({ icon, title, description, actionLabel, onAction }) {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '56px 24px',
-      textAlign: 'center',
-    }}>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center justify-center py-14 px-6 text-center"
+    >
       {icon && (
-        <div style={{
-          width: 56, height: 56, borderRadius: 16,
-          background: 'var(--s2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24,
-          marginBottom: 16,
-        }}>{icon}</div>
+        <div className="w-14 h-14 rounded-2xl bg-[var(--s2)] flex items-center justify-center text-2xl mb-4">
+          {icon}
+        </div>
       )}
-      <div style={{
-        fontSize: 15,
-        fontWeight: 700,
-        color: 'var(--tx)',
-        marginBottom: 4,
-        letterSpacing: '-.2px',
-      }}>{title}</div>
+      <div className="text-[15px] font-semibold text-[var(--tx)] mb-1 tracking-[-0.2px]">{title}</div>
       {description && (
-        <div style={{
-          fontSize: 12.5,
-          color: 'var(--t3)',
-          lineHeight: 1.5,
-          maxWidth: 320,
-          marginBottom: actionLabel ? 20 : 0,
-        }}>{description}</div>
+        <div className="text-xs text-[var(--t3)] leading-relaxed max-w-xs mb-5">
+          {description}
+        </div>
       )}
       {actionLabel && onAction && (
-        <button
-          className="btn btn-primary btn-sm"
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          className="btn btn-primary btn-sm text-xs"
           onClick={onAction}
-          style={{ fontSize: 12 }}
-        >{actionLabel}</button>
+        >
+          {actionLabel}
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   )
 }

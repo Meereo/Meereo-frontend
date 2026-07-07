@@ -119,7 +119,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
       <div style={{ maxWidth: 640, margin: '0 auto', paddingTop: 20 }}>
         {/* Greeting */}
         <div style={{ marginBottom: 40 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {userFirstName}</div>
+          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {userFirstName}</div>
           <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>Espace professionnel</div>
           <div style={{ fontSize: 13, color: 'var(--t3)', marginTop: 4 }}>{ob.entreprise || 'Votre espace MEEREO est prêt.'}</div>
         </div>
@@ -129,9 +129,9 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
           <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,.03) 0%, transparent 60%)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative' }}>
             <div style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 14 }}>Commencer</div>
-            <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.5px', marginBottom: 8, lineHeight: 1.2 }}>Créez votre premier projet</div>
+            <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 8, lineHeight: 1.2 }}>Créez votre premier projet</div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,.45)', lineHeight: 1.6, marginBottom: 28, maxWidth: 400 }}>Pilotez votre chantier, coordonnez vos intervenants et suivez chaque étape depuis un seul espace.</div>
-            <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }} onClick={() => onNavigate('projets')}>+ Créer un projet</button>
+            <button className="btn" style={{ background: '#fff', color: '#111', padding: '11px 22px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }} onClick={() => onNavigate('projets')}>+ Créer un projet</button>
           </div>
         </div>
 
@@ -146,8 +146,8 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
               { n: '04', title: 'Livrer en confiance', desc: 'Validez les étapes et sécurisez les paiements.', color: 'var(--t4)' },
             ].map(step => (
               <div key={step.n} style={{ padding: '18px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: step.color, letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: step.color, letterSpacing: '-1px', marginBottom: 10, lineHeight: 1 }}>{step.n}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>{step.title}</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>{step.desc}</div>
               </div>
             ))}
@@ -167,7 +167,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
               <div key={btn.page || btn.label} onClick={() => btn.page ? onNavigate(btn.page) : openProDir?.()} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .15s' }}>
                 <div style={{ fontSize: 18, flexShrink: 0 }}>{btn.icon}</div>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tx)' }}>{btn.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{btn.label}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{btn.desc}</div>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
     <div>
       {/* Greeting — compact */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {userFirstName}</div>
+        <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {userFirstName}</div>
         <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{ob.entreprise ? ob.entreprise + ' · ' : ''}{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
       </div>
 
@@ -235,7 +235,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
           <div style={{ marginBottom: 28 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', fontWeight: 500 }}>Avancement global</span>
-              <span style={{ fontSize: 26, fontWeight: 800, color: mainProj.color || progressColor(mainProj.avancement), letterSpacing: '-1px', lineHeight: 1 }}>{mainProj.avancement}<span style={{ fontSize: 13, fontWeight: 500, opacity: .6 }}>%</span></span>
+              <span style={{ fontSize: 26, fontWeight: 600, color: mainProj.color || progressColor(mainProj.avancement), letterSpacing: '-1px', lineHeight: 1 }}>{mainProj.avancement}<span style={{ fontSize: 13, fontWeight: 500, opacity: .6 }}>%</span></span>
             </div>
             <div className="dash-hero-v2-track" style={{ height: 3 }}>
               <div className="dash-hero-v2-fill" style={{ width: mainProj.avancement + '%', background: mainProj.color || undefined }} />
@@ -252,7 +252,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
             ].map(([l, v]) => (
               <div key={l} style={{ padding: '12px 14px', background: 'rgba(255,255,255,.04)', borderRadius: 9, border: '1px solid rgba(255,255,255,.06)' }}>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 5 }}>{l}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{v}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{v}</div>
               </div>
             ))}
           </div>
@@ -262,15 +262,15 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
       {/* Synthèse portefeuille — compact, pas de KPI géants redondants */}
       <div className="rg-3" style={{ gap: 12, marginBottom: 28 }}>
         <div onClick={() => onNavigate('projets')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .12s' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-1px', color: 'var(--tx)' }}>{allProjets.length}</div>
+          <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-1px', color: 'var(--tx)' }}>{allProjets.length}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3, textTransform: 'uppercase', letterSpacing: '.03em' }}>projet{allProjets.length > 1 ? 's' : ''} actif{allProjets.length > 1 ? 's' : ''}</div>
         </div>
         <div onClick={() => onNavigate('finance')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .12s' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--tx)' }}>{formatShort(totalBudget)}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px', color: 'var(--tx)' }}>{formatShort(totalBudget)}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3, textTransform: 'uppercase', letterSpacing: '.03em' }}>budget total</div>
         </div>
         <div onClick={() => onNavigate('chantier')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', cursor: 'pointer', transition: 'all .12s' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--tx)' }}>{Math.round(allProjets.reduce((s, p) => s + (p.avancement || 0), 0) / allProjets.length)}%</div>
+          <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px', color: 'var(--tx)' }}>{Math.round(allProjets.reduce((s, p) => s + (p.avancement || 0), 0) / allProjets.length)}%</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.3, textTransform: 'uppercase', letterSpacing: '.03em' }}>avancement moyen</div>
         </div>
       </div>
@@ -299,7 +299,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
                 <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(0,0,0,.04)', color: 'var(--t2)', flexShrink: 0 }}>{PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</span>
                 <div style={{ width: 80, flexShrink: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 3 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: p.color || progressColor(p.avancement) }}>{p.avancement}%</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: p.color || progressColor(p.avancement) }}>{p.avancement}%</span>
                   </div>
                   <div className="prog-track" style={{ height: 2 }}><div className="prog-fill" style={{ width: p.avancement + '%', background: p.color || undefined }} /></div>
                 </div>
@@ -401,7 +401,7 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
                 return (
                   <button key={t.id} onClick={() => setActTab(t.id)} style={{ flexShrink: 0, fontSize: 10.5, fontWeight: active ? 700 : 500, padding: '4px 10px', borderRadius: 20, border: active ? `1.5px solid ${col}` : '1px solid var(--border-card)', background: active ? col + '18' : 'var(--surface-1)', color: active ? col : 'var(--t3)', cursor: 'pointer', transition: 'all .12s', display: 'flex', alignItems: 'center', gap: 4 }}>
                     {t.label}
-                    {count > 0 && <span style={{ fontSize: 9, fontWeight: 700, background: active ? col + '30' : 'var(--border-card)', color: active ? col : 'var(--t4)', borderRadius: 10, padding: '1px 5px' }}>{count}</span>}
+                    {count > 0 && <span style={{ fontSize: 9, fontWeight: 600, background: active ? col + '30' : 'var(--border-card)', color: active ? col : 'var(--t4)', borderRadius: 10, padding: '1px 5px' }}>{count}</span>}
                   </button>
                 )
               })}

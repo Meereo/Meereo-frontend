@@ -71,13 +71,13 @@ export default function Contractors({ showToast, openModal }) {
 
       <div className="rg-2" style={{ gap: 20, marginBottom: 24 }}>
         <div style={{ background: 'linear-gradient(145deg,#191c1d,#3c3b3b)', borderRadius: 12, padding: 22, color: '#fff' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Prestataires externes</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Prestataires externes</div>
+          <div style={{ fontSize: 44, fontWeight: 600, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)' }}>intervenants references</div>
         </div>
         <div className="rg-2" style={{ gap: 12 }}>
           {[{ v: entreprises, l: 'Entreprises' }, { v: independants, l: 'Independants' }, { v: allIntervenants.filter(i => i.statut === 'actif').length, l: 'Actifs' }, { v: [...new Set(allIntervenants.flatMap(i => i.projets || []))].length, l: 'Projets' }].map((k, i) => (
-            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
+            <div key={i} className="card" style={{ padding: 16 }}><div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.8px', marginBottom: 4 }}>{k.v}</div><div style={{ fontSize: 12, color: 'var(--t3)' }}>{k.l}</div></div>
           ))}
         </div>
       </div>
@@ -112,20 +112,20 @@ export default function Contractors({ showToast, openModal }) {
                 {displayPhoto ? (
                   <img src={displayPhoto} alt="" style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 ) : (
-                  <div style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                  <div style={{ width: 46, height: 46, borderRadius: m.entreprise ? 10 : 23, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{m.nom}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{m.nom}</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>{m.role}{m.ville ? ' à ' + m.ville : ''}</div>
                 </div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: m.entreprise ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: m.entreprise ? '#2563EB' : '#7C3AED' }}>{m.entreprise ? 'Entreprise' : 'Independant'}</span>
+                <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: m.entreprise ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: m.entreprise ? '#2563EB' : '#7C3AED' }}>{m.entreprise ? 'Entreprise' : 'Independant'}</span>
               </div>
 
               {/* Note */}
               {m.note > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                   <span style={{ fontSize: 12, color: '#F59E0B' }}>{stars(m.note)}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{m.note}/5</span>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{m.note}/5</span>
                   <span style={{ fontSize: 10, color: 'var(--t4)' }}>({m.nbAvis || 0} avis)</span>
                 </div>
               )}

@@ -70,7 +70,7 @@ function MissionCard({ mission, project, onSelect }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mission.title}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mission.title}</div>
           <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>{typeLabel}</div>
         </div>
         <StatusBadge status={mission.status} />
@@ -106,7 +106,7 @@ function JalonStepper({ jalons, onToggle, readOnly }) {
                 width: 24, height: 24, borderRadius: '50%', border: '2px solid ' + (statusColors[j.status] || 'var(--t4)'),
                 background: j.status === 'completed' || j.status === 'validated' ? statusColors[j.status] : 'transparent',
                 color: j.status === 'completed' || j.status === 'validated' ? '#fff' : statusColors[j.status],
-                fontSize: 12, fontWeight: 700, cursor: readOnly ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 600, cursor: readOnly ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >{statusIcons[j.status] || '○'}</button>
@@ -221,7 +221,7 @@ function MissionDetail({ mission, onClose, onUpdate, onUpdateJalons }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 24 }}>{icon}</span>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx)' }}>{mission.title}</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--tx)' }}>{mission.title}</div>
             <div style={{ fontSize: 12, color: 'var(--t3)' }}>{typeLabel}</div>
           </div>
         </div>
@@ -247,7 +247,7 @@ function MissionDetail({ mission, onClose, onUpdate, onUpdateJalons }) {
         <div style={{ marginTop: 16, fontSize: 13, color: 'var(--t3)', lineHeight: 1.5 }}>{mission.description}</div>
       )}
 
-      <div style={{ marginTop: 24, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--tx)' }}>Jalons</div>
+      <div style={{ marginTop: 24, marginBottom: 12, fontSize: 13, fontWeight: 600, color: 'var(--tx)' }}>Jalons</div>
       {jalons.length > 0 ? (
         <JalonStepper jalons={jalons} onToggle={toggleJalon} readOnly={!canAdvance} />
       ) : (

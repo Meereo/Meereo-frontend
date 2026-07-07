@@ -4,8 +4,9 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { MeereoProvider } from './hooks/useMeereoStore'
 import { DeviseProvider } from './hooks/useDevise'
-import './styles/global.css'
+import './styles/index.css'
 import './styles/tokens.css'
+import './styles/global.css'
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null } }

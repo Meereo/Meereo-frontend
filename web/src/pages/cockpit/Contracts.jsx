@@ -112,24 +112,24 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,.6))' }} />
             <div style={{ position: 'absolute', bottom: 6, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{m.projet}</span>
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>{m.avancement}%</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{m.avancement}%</span>
             </div>
           </div>
         )}
         <div style={{ padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             {(() => { const av = getEntrepriseAvatar(m.entreprise); return (
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
                 {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
               </div>
             )})()}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.entreprise}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.entreprise}</div>
               <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.lot}</div>
             </div>
             {inter?.note > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11, color: '#F59E0B', fontWeight: 600 }}><Star size={11} fill="#F59E0B" strokeWidth={0}/> {inter.note}</span>}
           </div>
-          <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-1px', marginBottom: 6 }}>{formatShort(parseBudget(m.montant))}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-1px', marginBottom: 6 }}>{formatShort(parseBudget(m.montant))}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--t3)' }}>
             <span>{m.delai}</span>
             <span>{formatDateFR(m.dateSig)}</span>
@@ -171,7 +171,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
             <div key={col.key}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, paddingBottom: 8, borderBottom: '2px solid ' + col.color }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: col.color }} />
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>{col.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em' }}>{col.label}</span>
                 <span style={{ fontSize: 11, color: 'var(--t4)', fontWeight: 600 }}>{col.data.length}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -200,21 +200,21 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {(() => { const av = getEntrepriseAvatar(detail.entreprise); return (
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0, overflow: 'hidden' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flexShrink: 0, overflow: 'hidden' }}>
                       {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                     </div>
                   )})()}
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2 }}>{detail.entreprise}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{detail.entreprise}</div>
                     <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot} à {getStatusLabel(detail.statut)}</div>
                   </div>
                 </div>
                 <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>×</button>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant))}</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant))}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)' }}>Avancement</span>
-                <span style={{ fontSize: 16, fontWeight: 800 }}>{detail.avancement}%</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>{detail.avancement}%</span>
               </div>
               <div style={{ marginTop: 6, height: 4, background: 'rgba(255,255,255,.1)', borderRadius: 100, overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: '#F59E0B', borderRadius: 100, width: detail.avancement + '%' }} />
@@ -223,13 +223,13 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.3px' }}>{detail.titre}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px' }}>{detail.titre}</div>
 
               <div className="rg-3" style={{ gap: 8 }}>
                 {[['Signature', formatDateFR(detail.dateSig)], ['Délai', detail.delai], ['échéance', formatDateFR(detail.dateFin)]].map(([l, v]) => (
                   <div key={l} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>{l}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{v}</div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>{l}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -238,7 +238,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, cursor: 'pointer' }} onClick={() => { setDetail(null); onNavigate && onNavigate('projets') }}>
                   {proj.img && <img src={proj.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{proj.nom}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{proj.nom}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{proj.client} à {PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase}</div>
                   </div>
                   <span style={{ fontSize: 10, color: 'var(--t4)' }}>Projet →</span>
@@ -247,9 +247,9 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
               {inter && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, cursor: 'pointer' }} onClick={() => { setDetail(null); onNavigate && onNavigate('intervenants') }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{inter.nom}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{inter.nom}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{inter.role} à {inter.note > 0 ? <><Star size={10} fill="#F59E0B" strokeWidth={0}/> {inter.note}/5</> : 'Pas de note'}</div>
                   </div>
                   <span style={{ fontSize: 10, color: 'var(--t4)' }}>Profil →</span>
@@ -273,7 +273,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               const commission = calculateCommission('services', amount)
               return (
                 <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiement & sécurisation</div>
+                  <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiement & sécurisation</div>
                   {po ? (
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -336,7 +336,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
             {/* Historique */}
             <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Historique du marché</div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Historique du marché</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', flexShrink: 0 }} />

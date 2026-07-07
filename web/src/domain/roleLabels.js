@@ -61,7 +61,7 @@ export function getRoleBadgeStyle(role) {
     background: colors.bg,
     color: colors.color,
     fontSize: 10,
-    fontWeight: 700,
+    fontWeight: 600,
     padding: '2px 8px',
     borderRadius: 100,
     display: 'inline-flex',
