@@ -2310,6 +2310,22 @@ export function MeereoProvider({ children }) {
     })
   }, [store.user, updateStore, log, emitEvent])
 
+  // Nouvelle version d'un document
+  const uploadNewVersion = useCallback(async (docId, file) => {
+    try {
+      const newDoc = await api.documents.uploadNewVersion(docId, file)
+      updateStore(prev => ({
+        ...prev,
+        documents: [...prev.documents, { ...newDoc, nom: newDoc.name, isNew: true }],
+      }))
+      showToast('Nouvelle version ajoutée (v' + newDoc.version + ')', 'green')
+      return newDoc
+    } catch (e) {
+      showToast(e.message || 'Erreur lors de la mise à jour', 'red')
+      return null
+    }
+  }, [updateStore, showToast])
+
   // Partager un document avec le client
   const shareDocumentWithClient = useCallback((docId) => {
     updateStore(prev => ({
@@ -2652,6 +2668,7 @@ export function MeereoProvider({ children }) {
     respondPayment,
     shareDocumentWithClient,
     addChantierPhoto,
+    uploadNewVersion,
     // Fintech
     createPaymentOrder,
     updatePaymentStatus,

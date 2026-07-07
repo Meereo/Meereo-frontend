@@ -208,6 +208,49 @@ export const DOC_STATUS = {
   ARCHIVED: 'archived',
 }
 
+// ── Catégories de documents entreprise ──
+export const ENTREPRISE_DOC_CATEGORIES = {
+  RCCM: 'rccm',
+  ATTESTATION_FISCALE: 'attestation_fiscale',
+  ASSURANCE: 'assurance',
+  CERTIFICATION: 'certification',
+  PRESENTATION: 'presentation',
+  PORTFOLIO: 'portfolio',
+}
+
+export const ENTREPRISE_DOC_CATEGORY_LABELS = {
+  rccm: 'RCCM',
+  attestation_fiscale: 'Attestation Fiscale',
+  assurance: 'Assurance',
+  certification: 'Certification',
+  presentation: 'Présentation',
+  portfolio: 'Portfolio',
+}
+
+// ── Expiration des documents ──
+export function getDocExpirationStatus(expiresAt) {
+  if (!expiresAt) return null
+  const now = new Date()
+  const exp = new Date(expiresAt)
+  const daysLeft = Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
+  if (daysLeft < 0) return 'expired'
+  if (daysLeft <= 30) return 'expiring_soon'
+  return 'valid'
+}
+
+export function getDocExpirationDays(expiresAt) {
+  if (!expiresAt) return null
+  const now = new Date()
+  const exp = new Date(expiresAt)
+  return Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
+}
+
+export const DOC_EXPIRATION_LABELS = {
+  expired: 'Expiré',
+  expiring_soon: 'Expire bientôt',
+  valid: 'Valide',
+}
+
 // ── Statuts décision ──
 export const DECISION_STATUS = {
   PENDING: 'pending',

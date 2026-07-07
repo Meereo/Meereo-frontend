@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { FileText, LayoutGrid, List, X, Download, ExternalLink } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -6,6 +6,7 @@ import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader , DSEmptyState } from '../../design/components'
 import { formatDateFR } from '../../utils/helpers'
 import { api } from '../../services/api/client'
+import { ENTREPRISE_DOC_CATEGORY_LABELS, getDocExpirationStatus, getDocExpirationDays } from '../../domain/status'
 
 const typeConf = {
   plan: { color: '#007AFF', bg: 'rgba(0,122,255,.07)', label: 'PLAN' },
@@ -25,6 +26,13 @@ const typeConf = {
   doc: { color: '#FF9500', bg: 'rgba(255,149,0,.07)', label: 'DOC' },
   img: { color: '#BE185D', bg: 'rgba(190,24,93,.07)', label: 'IMG' },
   video: { color: '#7C3AED', bg: 'rgba(124,58,237,.07)', label: 'VIDEO' },
+  // Enterprise document categories
+  rccm: { color: '#059669', bg: 'rgba(5,150,105,.07)', label: 'RCCM' },
+  attestation_fiscale: { color: '#D97706', bg: 'rgba(217,119,6,.07)', label: 'ATT.F' },
+  assurance: { color: '#7C3AED', bg: 'rgba(124,58,237,.07)', label: 'ASSUR' },
+  certification: { color: '#2563EB', bg: 'rgba(37,99,235,.07)', label: 'CERT' },
+  presentation: { color: '#EC4899', bg: 'rgba(236,72,153,.07)', label: 'PRES' },
+  portfolio: { color: '#F59E0B', bg: 'rgba(245,158,11,.07)', label: 'PORT' },
 }
 const getTC = t => typeConf[t] || { color: 'var(--t2)', bg: 'rgba(0,0,0,.04)', label: (t || '?').toUpperCase() }
 
@@ -72,12 +80,29 @@ const detectDocType = (filename) => {
   return detectType(filename)
 }
 
+// ── Expiration Badge ──
+function ExpirationBadge({ expiresAt }) {
+  const status = getDocExpirationStatus(expiresAt)
+  if (!status || status === 'valid') return null
+  const days = getDocExpirationDays(expiresAt)
+  if (status === 'expired') return <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: '#EF4444', color: '#fff', marginLeft: 4 }}>EXPIRÉ</span>
+  return <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: '#F59E0B', color: '#fff', marginLeft: 4 }}>J-{days}</span>
+}
+
+// ── Version Badge ──
+function VersionBadge({ version }) {
+  if (!version || version <= 1) return null
+  return <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: 'var(--blue)', color: '#fff', marginLeft: 4 }}>v{version}</span>
+}
+
 export default function Documents({ showToast }) {
-  const { store, updateStore, emitEvent } = useMeereo()
+  const { store, updateStore, emitEvent, uploadNewVersion } = useMeereo()
   const { documents: allDocs, markets: allMarches } = useMergedData()
+  const [mainTab, setMainTab] = useState('projets') // 'projets' | 'entreprise' | 'expiration'
   const [typeFilter, setTypeFilter] = useState('all')
   const [projetFilter, setProjetFilter] = useState('all')
   const [marcheFilter, setMarcheFilter] = useState('all')
+  const [entrepriseCategory, setEntrepriseCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
   const [importModal, setImportModal] = useState(false)
@@ -85,11 +110,15 @@ export default function Documents({ showToast }) {
   const [importProjet, setImportProjet] = useState('')
   const [importAttempted, setImportAttempted] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [importCategory, setImportCategory] = useState('')
+  const [importExpiresAt, setImportExpiresAt] = useState('')
   // Document actions
   const [docMenu, setDocMenu] = useState(null) // { id, x, y }
   const [confirmDelete, setConfirmDelete] = useState(null) // { id, nom }
   const [renameModal, setRenameModal] = useState(null) // { id, nom }
   const [viewerDoc, setViewerDoc] = useState(null) // doc object for inline viewer
+  const [versionUpload, setVersionUpload] = useState(null) // { id } for new version upload
+  const [versionsModal, setVersionsModal] = useState(null) // [versions] for versions list
   const menuRef = useRef(null)
 
   // Fetch documents from backend on mount so shared project docs are visible
@@ -156,15 +185,33 @@ export default function Documents({ showToast }) {
   }
 
   const isEntrepriseMode = importProjet === '__entreprise__'
+
+  // Expiration stats
+  const expiringDocs = useMemo(() => allDocs.filter(d => getDocExpirationStatus(d.expiresAt) === 'expiring_soon'), [allDocs])
+  const expiredDocs = useMemo(() => allDocs.filter(d => getDocExpirationStatus(d.expiresAt) === 'expired'), [allDocs])
+  const entrepriseDocs = useMemo(() => allDocs.filter(d => d.isEntreprise || d.category === 'entreprise'), [allDocs])
+
   const filtered = allDocs.filter(d => {
-    const tOk = typeFilter === 'all' || d.type === typeFilter
-    const pOk = projetFilter === 'all' || projetFilter === '__entreprise__'
-      ? (projetFilter === '__entreprise__' ? (d.isEntreprise || d.category === 'entreprise') : true)
-      : d.projet === projetFilter
-    const mOk = marcheFilter === 'all' || d.marketId === marcheFilter
+    // Main tab filter
+    if (mainTab === 'entreprise') {
+      if (!d.isEntreprise && d.category !== 'entreprise') return false
+      if (entrepriseCategory !== 'all' && d.category !== entrepriseCategory) return false
+    } else if (mainTab === 'expiration') {
+      const expStatus = getDocExpirationStatus(d.expiresAt)
+      if (!expStatus || expStatus === 'valid') return false
+    } else {
+      // Projets tab — existing filters
+      const pOk = projetFilter === 'all' || projetFilter === '__entreprise__'
+        ? (projetFilter === '__entreprise__' ? (d.isEntreprise || d.category === 'entreprise') : true)
+        : d.projet === projetFilter
+      if (!pOk) return false
+      const mOk = marcheFilter === 'all' || d.marketId === marcheFilter
+      if (!mOk) return false
+    }
+    const tOk = typeFilter === 'all' || d.type === typeFilter || d.category === typeFilter
     const q = search.toLowerCase()
-    const sOk = !q || ((d.nom || '') + (d.projet || '') + (d.auteur || '') + (d.cat || '')).toLowerCase().includes(q)
-    return tOk && pOk && mOk && sOk
+    const sOk = !q || ((d.nom || '') + (d.projet || '') + (d.auteur || '') + (d.cat || '') + (d.category || '')).toLowerCase().includes(q)
+    return tOk && sOk
   })
 
   const recentDocs = allDocs.filter(d => d.isNew).slice(0, 4)
@@ -182,8 +229,50 @@ export default function Documents({ showToast }) {
             <button key={v} className={`filter-pill ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => { setImportModal(true); setImportFiles([]); setImportAttempted(false); setImportProjet(projetFilter !== 'all' ? projetFilter : '') }}>+ Importer</button>
+        <button className="btn btn-primary btn-sm" onClick={() => { setImportModal(true); setImportFiles([]); setImportAttempted(false); setImportProjet(projetFilter !== 'all' ? projetFilter : ''); setImportCategory(''); setImportExpiresAt('') }}>+ Importer</button>
       </DSPageHeader>
+
+      {/* Main tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+        {[
+          ['projets', 'Projets', allDocs.length],
+          ['entreprise', `Référentiel Entreprise`, entrepriseDocs.length],
+          ['expiration', `Alertes Expiration`, expiringDocs.length + expiredDocs.length],
+        ].map(([key, label, count]) => (
+          <button
+            key={key}
+            onClick={() => { setMainTab(key); setTypeFilter('all'); setSearch('') }}
+            style={{
+              padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: 'none',
+              background: mainTab === key ? 'var(--tx)' : 'var(--s2)',
+              color: mainTab === key ? '#fff' : 'var(--t3)',
+              cursor: 'pointer',
+            }}
+          >
+            {label} ({count})
+            {key === 'expiration' && expiredDocs.length > 0 && mainTab !== key && (
+              <span style={{ marginLeft: 4, width: 6, height: 6, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Expiration summary banner */}
+      {mainTab === 'expiration' && (expiringDocs.length > 0 || expiredDocs.length > 0) && (
+        <div style={{ padding: '10px 16px', background: expiredDocs.length > 0 ? 'rgba(239,68,68,.06)' : 'rgba(245,158,11,.06)', borderRadius: 10, marginBottom: 16, fontSize: 12, display: 'flex', gap: 16, alignItems: 'center', border: '1px solid ' + (expiredDocs.length > 0 ? 'rgba(239,68,68,.15)' : 'rgba(245,158,11,.15)') }}>
+          {expiredDocs.length > 0 && <span style={{ fontWeight: 700, color: '#EF4444' }}>{expiredDocs.length} expiré{expiredDocs.length > 1 ? 's' : ''}</span>}
+          {expiringDocs.length > 0 && <span style={{ fontWeight: 700, color: '#F59E0B' }}>{expiringDocs.length} expire{expiringDocs.length > 1 ? 'nt' : ''} bientôt</span>}
+        </div>
+      )}
+
+      {/* Enterprise category filter */}
+      {mainTab === 'entreprise' && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+          {[['all', 'Tous'], ...Object.entries(ENTREPRISE_DOC_CATEGORY_LABELS)].map(([k, l]) => (
+            <button key={k} className={`filter-pill ${entrepriseCategory === k ? 'active' : ''}`} onClick={() => setEntrepriseCategory(k)}>{l}</button>
+          ))}
+        </div>
+      )}
 
       <div>
         {/* Filters — compact, all in one row */}
@@ -233,7 +322,7 @@ export default function Documents({ showToast }) {
                       }
                       {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
                     </div>
-                    <div className="doc-card-name">{d.nom}</div>
+                    <div className="doc-card-name">{d.nom}<VersionBadge version={d.version} /><ExpirationBadge expiresAt={d.expiresAt} /></div>
                     <div className="doc-card-meta">{d.projet} à {formatDateFR(d.date)} à {d.taille}</div>
                     {/* Menu actions */}
                     <button onClick={(e) => { e.stopPropagation(); setDocMenu(docMenu?.id === d.id ? null : { id: d.id, x: e.clientX, y: e.clientY }) }} style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 7, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(4px)', border: '1px solid var(--border-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity .12s' }} className="doc-action-btn">
@@ -253,7 +342,7 @@ export default function Documents({ showToast }) {
                     return (
                       <tr key={d.id} style={{ cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
                         <td><span style={{ fontSize: 9, fontWeight: 900, color: tc.color, background: tc.bg, padding: '3px 7px', borderRadius: 4 }}>{tc.label}</span></td>
-                        <td className="bold">{d.nom}{d.isNew && <span className="doc-card-new">NEW</span>}</td>
+                        <td className="bold">{d.nom}{d.isNew && <span className="doc-card-new">NEW</span>}<VersionBadge version={d.version} /><ExpirationBadge expiresAt={d.expiresAt} /></td>
                         <td className="muted">{d.projet}</td>
                         <td className="muted">{d.auteur}</td>
                         <td className="muted">{formatDateFR(d.date)}</td>
@@ -285,6 +374,14 @@ export default function Documents({ showToast }) {
             <button onClick={() => { setRenameModal({ id: doc.id, nom: doc.nom }); setDocMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
               Renommer
+            </button>
+            <button onClick={() => { setVersionUpload({ id: doc.id }); setDocMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Nouvelle version
+            </button>
+            <button onClick={async () => { const v = await api.documents.getVersions(doc.id); setVersionsModal(v); setDocMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: 'var(--tx)', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Historique ({doc.version || 1} version{(doc.version || 1) > 1 ? 's' : ''})
             </button>
             <div style={{ height: 1, background: 'var(--border-subtle)', margin: '2px 0' }} />
             <button onClick={() => { setConfirmDelete({ id: doc.id, nom: doc.nom }); setDocMenu(null) }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12, fontWeight: 500, color: '#EF4444', textAlign: 'left' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(239,68,68,.04)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
@@ -351,6 +448,25 @@ export default function Documents({ showToast }) {
                   {(store.projects || []).map(p => <option key={p.id} value={p.nom}>{p.nom}</option>)}
                 </select>
               </div>
+
+              {/* Enterprise fields — shown when Dossier Entreprise selected */}
+              {isEntrepriseMode && (
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>Catégorie</label>
+                    <select value={importCategory} onChange={e => setImportCategory(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
+                      <option value="">— Aucune —</option>
+                      {Object.entries(ENTREPRISE_DOC_CATEGORY_LABELS).map(([k, l]) => (
+                        <option key={k} value={k}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>Date d'expiration</label>
+                    <input type="date" value={importExpiresAt} onChange={e => setImportExpiresAt(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }} />
+                  </div>
+                </div>
+              )}
 
               {/* Drop zone */}
               <div
@@ -423,6 +539,8 @@ export default function Documents({ showToast }) {
                           type: f.docType,
                           projectId,
                           isEntreprise,
+                          category: isEntreprise && importCategory ? importCategory : undefined,
+                          expiresAt: isEntreprise && importExpiresAt ? importExpiresAt : undefined,
                         })
                         uploaded.push({ ...doc, nom: doc.name, projet: isEntreprise ? 'Dossier Entreprise' : importProjet, cat: f.cat, taille: f.size, isNew: true, isEntreprise, category: isEntreprise ? 'entreprise' : undefined })
                       } catch (err) {
@@ -457,6 +575,61 @@ export default function Documents({ showToast }) {
                   ) : 'Importer'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* MODAL: Nouvelle version */}
+      {versionUpload && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setVersionUpload(null)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 420, padding: '24px', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Nouvelle version</div>
+            <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Sélectionnez le fichier de remplacement. Le document conservera son nom et ses métadonnées.</div>
+            <input type="file" id="version-file-input" style={{ marginBottom: 16 }} />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-sm" onClick={() => setVersionUpload(null)}>Annuler</button>
+              <button className="btn btn-primary btn-sm" onClick={async () => {
+                const fileInput = document.getElementById('version-file-input')
+                const file = fileInput?.files?.[0]
+                if (!file) return
+                await uploadNewVersion(versionUpload.id, file)
+                setVersionUpload(null)
+                // Refresh docs
+                api.documents.getAll().then(docs => { if (docs) updateStore(prev => ({ ...prev, documents: docs })) }).catch(() => {})
+              }}>Envoyer</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* MODAL: Historique des versions */}
+      {versionsModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setVersionsModal(null)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 480, maxHeight: '70vh', overflow: 'auto', padding: '24px', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Historique des versions</div>
+            {versionsModal.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--t3)' }}>Aucune version trouvée</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {versionsModal.map(v => (
+                  <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: v.parentId ? 'var(--blue)' : 'var(--ok)', color: '#fff' }}>v{v.version}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.name}</div>
+                      <div style={{ fontSize: 10, color: 'var(--t4)' }}>{formatDateFR(v.createdAt)}</div>
+                    </div>
+                    {v.url && (
+                      <a href={v.url} download={v.name} onClick={e => e.stopPropagation()} style={{ fontSize: 11, fontWeight: 600, color: 'var(--blue)', textDecoration: 'none' }}>Télécharger</a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button className="btn btn-sm" onClick={() => setVersionsModal(null)}>Fermer</button>
             </div>
           </div>
         </div>,

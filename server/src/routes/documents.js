@@ -33,8 +33,18 @@ async function userCanAccessProject(prisma, userId, projectId) {
   return !!isSupplier
 }
 
+// ─── Helper: save file to disk ────────────────────────────────────────────────
+function saveFileToDisk(fileBuffer, originalname, subfolder) {
+  const dir = path.join(UPLOADS_BASE, subfolder)
+  fs.mkdirSync(dir, { recursive: true })
+  const ext = path.extname(originalname) || ''
+  const filename = `${randomUUID()}${ext}`
+  const filePath = path.join(dir, filename)
+  fs.writeFileSync(filePath, fileBuffer)
+  return `/uploads/documents/${subfolder}/${filename}`
+}
+
 // ─── GET /api/documents ───────────────────────────────────────────────────────
-// Retourne tous les documents des projets accessibles à l'utilisateur
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
@@ -83,11 +93,99 @@ router.get('/', requireAuth, async (req, res, next) => {
       where = { ...where, type: req.query.type }
     }
 
+    // Filtre : dernières versions uniquement (par défaut, exclure les anciennes versions)
+    if (req.query.latestOnly !== 'false') {
+      where = { ...where, parentId: null }
+    }
+
+    // Filtre : documents entreprise uniquement
+    if (req.query.isEntreprise === 'true') {
+      where = { ...where, isEntreprise: true }
+    }
+
+    // Filtre : catégorie entreprise
+    if (req.query.category) {
+      where = { ...where, category: req.query.category }
+    }
+
+    // Filtre : documents expirant dans les 30 jours
+    if (req.query.expiring === 'true') {
+      const now = new Date()
+      const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      where = { ...where, expiresAt: { gte: now, lte: in30 } }
+    }
+
+    // Filtre : documents déjà expirés
+    if (req.query.expired === 'true') {
+      where = { ...where, expiresAt: { lt: new Date() } }
+    }
+
     const docs = await prisma.document.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     })
     res.json(docs)
+  } catch (e) { next(e) }
+})
+
+// ─── GET /api/documents/:id/versions ──────────────────────────────────────────
+router.get('/:id/versions', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const doc = await prisma.document.findUnique({ where: { id: req.params.id } })
+    if (!doc) throw createError('Document introuvable', 404)
+
+    // Trouver le document racine (version 1)
+    const rootId = doc.parentId || doc.id
+
+    const versions = await prisma.document.findMany({
+      where: { OR: [{ id: rootId }, { parentId: rootId }] },
+      orderBy: { version: 'desc' },
+    })
+    res.json(versions)
+  } catch (e) { next(e) }
+})
+
+// ─── POST /api/documents/:id/new-version ──────────────────────────────────────
+router.post('/:id/new-version', requireAuth, upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) throw createError('Aucun fichier reçu', 400)
+
+    const prisma = getPrisma()
+    const original = await prisma.document.findUnique({ where: { id: req.params.id } })
+    if (!original) throw createError('Document introuvable', 404)
+
+    // Déterminer le document racine
+    const rootId = original.parentId || original.id
+
+    // Récupérer le numéro de version le plus élevé
+    const latest = await prisma.document.findFirst({
+      where: { OR: [{ id: rootId }, { parentId: rootId }] },
+      orderBy: { version: 'desc' },
+      select: { version: true },
+    })
+    const newVersion = (latest?.version || 1) + 1
+
+    // Sauvegarder le fichier sur disque
+    const subfolder = original.projectId || '_general'
+    const url = saveFileToDisk(req.file.buffer, req.file.originalname, subfolder)
+
+    const doc = await prisma.document.create({
+      data: {
+        name:         original.name,
+        type:         original.type,
+        url,
+        projectId:    original.projectId,
+        missionId:    original.missionId,
+        userId:       req.user.id,
+        isEntreprise: original.isEntreprise,
+        category:     original.category,
+        version:      newVersion,
+        parentId:     rootId,
+        expiresAt:    req.body.expiresAt ? new Date(req.body.expiresAt) : original.expiresAt,
+      },
+    })
+    res.status(201).json(doc)
   } catch (e) { next(e) }
 })
 
@@ -99,6 +197,8 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
     const prisma = getPrisma()
     const { name, type, projectId, missionId } = req.body
     const isEntreprise = req.body.isEntreprise === 'true' || req.body.isEntreprise === true
+    const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null
+    const category = req.body.category || null
     const userId = req.user.id
 
     // Check project access if projectId is given
@@ -107,18 +207,9 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
       if (!canAccess) throw createError('Accès non autorisé à ce projet', 403)
     }
 
-    // Save file to disk: uploads/documents/{projectId|_general}/{uuid}{ext}
+    // Save file to disk
     const subfolder = projectId || '_general'
-    const dir = path.join(UPLOADS_BASE, subfolder)
-    fs.mkdirSync(dir, { recursive: true })
-
-    const ext = path.extname(req.file.originalname) || ''
-    const filename = `${randomUUID()}${ext}`
-    const filePath = path.join(dir, filename)
-    fs.writeFileSync(filePath, req.file.buffer)
-
-    // URL served statically
-    const url = `/uploads/documents/${subfolder}/${filename}`
+    const url = saveFileToDisk(req.file.buffer, req.file.originalname, subfolder)
     const docName = name || req.file.originalname.replace(/\.[^.]+$/, '')
 
     const doc = await prisma.document.create({
@@ -130,6 +221,8 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
         missionId:    missionId || null,
         userId,
         isEntreprise: isEntreprise || (!projectId),
+        expiresAt,
+        category,
       },
     })
     res.status(201).json(doc)
@@ -140,7 +233,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { name, type, url, projectId, missionId, isEntreprise } = req.body
+    const { name, type, url, projectId, missionId, isEntreprise, expiresAt, category } = req.body
     if (!name) throw createError('name requis', 400)
 
     const doc = await prisma.document.create({
@@ -152,6 +245,8 @@ router.post('/', requireAuth, async (req, res, next) => {
         missionId:    missionId   || null,
         userId:       req.user.id,
         isEntreprise: isEntreprise === true || isEntreprise === 'true' || (!projectId),
+        expiresAt:    expiresAt ? new Date(expiresAt) : null,
+        category:     category || null,
       },
     })
     res.status(201).json(doc)
@@ -165,7 +260,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     const doc = await prisma.document.findUnique({ where: { id: req.params.id } })
     if (!doc) throw createError('Document introuvable', 404)
     if (doc.userId !== req.user.id) throw createError('Accès non autorisé', 403)
-    const { name, type, url, projectId, missionId } = req.body
+    const { name, type, url, projectId, missionId, expiresAt, category } = req.body
     const updated = await prisma.document.update({
       where: { id: req.params.id },
       data: {
@@ -174,6 +269,8 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         ...(url       !== undefined ? { url }       : {}),
         ...(projectId !== undefined ? { projectId } : {}),
         ...(missionId !== undefined ? { missionId } : {}),
+        ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
+        ...(category  !== undefined ? { category }  : {}),
       },
     })
     res.json(updated)
@@ -187,6 +284,21 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     const doc = await prisma.document.findUnique({ where: { id: req.params.id } })
     if (!doc) throw createError('Document introuvable', 404)
     if (doc.userId !== req.user.id) throw createError('Accès non autorisé', 403)
+
+    // Si c'est un document racine, supprimer aussi toutes ses versions enfants
+    if (!doc.parentId) {
+      const childVersions = await prisma.document.findMany({
+        where: { parentId: doc.id },
+        select: { id: true, url: true },
+      })
+      for (const child of childVersions) {
+        if (child.url && child.url.startsWith('/uploads/')) {
+          fs.unlink(path.join(__dirname, '../../', child.url), () => {})
+        }
+      }
+      await prisma.document.deleteMany({ where: { parentId: doc.id } })
+    }
+
     await prisma.document.delete({ where: { id: req.params.id } })
 
     // Delete physical file if it was stored locally
@@ -200,4 +312,3 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
 })
 
 module.exports = router
-

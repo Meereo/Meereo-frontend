@@ -4,7 +4,8 @@
       "Bash(xargs grep:*)",
       "Bash(npx vite:*)",
       "Bash(npx prisma:*)",
-      "Bash(npx prisma@5 migrate dev --name add_missions)"
+      "Bash(npx prisma@5 migrate dev --name add_missions)",
+      "Bash(find:*)"
     ]
   }
 }

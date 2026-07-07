@@ -473,14 +473,25 @@ const documentsApi = {
   update:  (id, data) => apiFetch(`/documents/${id}`, 'PATCH', data, true),
   delete:  (id)       => apiFetch(`/documents/${id}`, 'DELETE', null, true),
   /** Upload a real File object to the server (saves to /uploads/documents/) */
-  upload: (file, { name, type, projectId, isEntreprise } = {}) => {
+  upload: (file, { name, type, projectId, isEntreprise, expiresAt, category } = {}) => {
     const form = new FormData()
     form.append('file', file)
     if (name)         form.append('name',         name)
     if (type)         form.append('type',         type)
     if (projectId)    form.append('projectId',    projectId)
     if (isEntreprise) form.append('isEntreprise', 'true')
+    if (expiresAt)    form.append('expiresAt',    expiresAt)
+    if (category)     form.append('category',     category)
     return apiFetchForm('/documents/upload', 'POST', form)
+  },
+  /** Get all versions of a document */
+  getVersions: (id) => apiFetch(`/documents/${id}/versions`, 'GET', null, true),
+  /** Upload a new version of an existing document */
+  uploadNewVersion: (id, file, { expiresAt } = {}) => {
+    const form = new FormData()
+    form.append('file', file)
+    if (expiresAt) form.append('expiresAt', expiresAt)
+    return apiFetchForm(`/documents/${id}/new-version`, 'POST', form)
   },
 }
 
