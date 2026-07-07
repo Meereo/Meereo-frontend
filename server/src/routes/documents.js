@@ -73,6 +73,11 @@ router.get('/', requireAuth, async (req, res, next) => {
         ? { OR: [{ userId }, { projectId: { in: accessibleIds } }] }
         : { userId }
 
+    // Filtre optionnel par missionId
+    if (req.query.missionId) {
+      where = { ...where, missionId: req.query.missionId }
+    }
+
     // Filtre optionnel par type (ex: type=photo pour la galerie)
     if (req.query.type) {
       where = { ...where, type: req.query.type }
@@ -92,7 +97,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
     if (!req.file) throw createError('Aucun fichier reçu', 400)
 
     const prisma = getPrisma()
-    const { name, type, projectId } = req.body
+    const { name, type, projectId, missionId } = req.body
     const isEntreprise = req.body.isEntreprise === 'true' || req.body.isEntreprise === true
     const userId = req.user.id
 
@@ -122,6 +127,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
         type:         type || '',
         url,
         projectId:    projectId || null,
+        missionId:    missionId || null,
         userId,
         isEntreprise: isEntreprise || (!projectId),
       },
@@ -134,7 +140,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { name, type, url, projectId, isEntreprise } = req.body
+    const { name, type, url, projectId, missionId, isEntreprise } = req.body
     if (!name) throw createError('name requis', 400)
 
     const doc = await prisma.document.create({
@@ -143,6 +149,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         type:         type        || '',
         url:          url         || '',
         projectId:    projectId   || null,
+        missionId:    missionId   || null,
         userId:       req.user.id,
         isEntreprise: isEntreprise === true || isEntreprise === 'true' || (!projectId),
       },
@@ -158,7 +165,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     const doc = await prisma.document.findUnique({ where: { id: req.params.id } })
     if (!doc) throw createError('Document introuvable', 404)
     if (doc.userId !== req.user.id) throw createError('Accès non autorisé', 403)
-    const { name, type, url, projectId } = req.body
+    const { name, type, url, projectId, missionId } = req.body
     const updated = await prisma.document.update({
       where: { id: req.params.id },
       data: {
@@ -166,6 +173,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         ...(type      !== undefined ? { type }      : {}),
         ...(url       !== undefined ? { url }       : {}),
         ...(projectId !== undefined ? { projectId } : {}),
+        ...(missionId !== undefined ? { missionId } : {}),
       },
     })
     res.json(updated)

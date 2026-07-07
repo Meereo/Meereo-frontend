@@ -52,6 +52,13 @@ export const ACTION_PERMISSIONS = {
   create_decision:   [ROLES.PRO_ADMIN, ROLES.ARCHITECTE],
   respond_decision:  [ROLES.CLIENT],
 
+  // Missions
+  create_mission:   [ROLES.PRO_ADMIN, ROLES.ARCHITECTE, ROLES.CLIENT],
+  assign_mission:   [ROLES.PRO_ADMIN, ROLES.ARCHITECTE],
+  advance_mission:  [ROLES.PRO_ADMIN, ROLES.ARCHITECTE, ROLES.ENTREPRISE, ROLES.BET],
+  validate_mission: [ROLES.CLIENT, ROLES.ARCHITECTE],
+  archive_mission:  [ROLES.PRO_ADMIN, ROLES.CLIENT],
+
   // Projet
   create_project:  [ROLES.PRO_ADMIN, ROLES.CLIENT, ROLES.ARCHITECTE],
   edit_project:    [ROLES.PRO_ADMIN, ROLES.ARCHITECTE],

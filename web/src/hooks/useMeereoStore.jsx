@@ -48,6 +48,7 @@ const defaultStore = {
   aos: [],
   offers: [],
   markets: [],
+  missions: [],
   tasks: [],
   documents: [],
   products: [],
@@ -220,11 +221,12 @@ export function MeereoProvider({ children }) {
         }
 
         // 2. Fetch business data from PostgreSQL (source of truth)
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding, apiActivities, apiRapports, apiNotifications, apiEvents, apiTasks, apiCommandes, apiDecisions, apiTransactions, apiPaymentRequests, apiRegisteredUsers] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiMissions, apiDocuments, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding, apiActivities, apiRapports, apiNotifications, apiEvents, apiTasks, apiCommandes, apiDecisions, apiTransactions, apiPaymentRequests, apiRegisteredUsers] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
           api.markets.getAll().catch(() => []),
+          api.missions.getAll().catch(() => []),
           api.documents.getAll().catch(() => []),
           api.projectMembers.getAll().catch(() => []),
           api.usersApi.getFournisseurs().catch(() => []),
@@ -263,6 +265,7 @@ export function MeereoProvider({ children }) {
             offers: apiOffers,
             projects: apiProjects,
             markets: apiMarkets,
+            missions: apiMissions,
             documents: apiDocuments,
             projectMembers: apiProjectMembers,
             fournisseurs: apiFournisseurs,
@@ -416,10 +419,11 @@ export function MeereoProvider({ children }) {
       const currentStore = storeRef.current
       if (!currentStore.user) return
       try {
-        const [apiAos, apiOffers, apiMarkets, apiProjects, apiDocuments, apiConversations, apiMembers, apiDecisions, apiTasks, apiEvents, apiNotifications, apiContacts, apiRapports, apiTransactions, apiRegisteredUsers] = await Promise.all([
+        const [apiAos, apiOffers, apiMarkets, apiMissions, apiProjects, apiDocuments, apiConversations, apiMembers, apiDecisions, apiTasks, apiEvents, apiNotifications, apiContacts, apiRapports, apiTransactions, apiRegisteredUsers] = await Promise.all([
           api.aos.getAll().catch(() => null),
           api.offers.getAll().catch(() => null),
           api.markets.getAll().catch(() => null),
+          api.missions.getAll().catch(() => null),
           api.projects.getAll().catch(() => null),
           api.documents.getAll().catch(() => null),
           api.conversations.getAll().catch(() => null),
@@ -462,11 +466,19 @@ export function MeereoProvider({ children }) {
           const backendAoIds = new Set(apiAos.map(a => a.id))
           const localOnlyAOs = mergedAOs.filter(a => !backendAoIds.has(a.id) && String(a.id).startsWith('ao_'))
           mergedAOs = [...apiAos, ...localOnlyAOs]
+          // Merge missions: keep local-only msn_ entries pending backend sync
+          let mergedMissions = prev.missions || []
+          if (apiMissions) {
+            const backendMsnIds = new Set(apiMissions.map(m => m.id))
+            const localOnlyMissions = mergedMissions.filter(m => !backendMsnIds.has(m.id) && String(m.id).startsWith('msn_'))
+            mergedMissions = [...apiMissions, ...localOnlyMissions]
+          }
           const next = {
             ...prev,
             aos: mergedAOs,
             offers: apiOffers || prev.offers,
             markets: mergedMarkets,
+            missions: mergedMissions,
             projects: mergedProjects,
             documents: apiDocuments || prev.documents,
             projectMembers: apiMembers || prev.projectMembers,
@@ -684,11 +696,12 @@ export function MeereoProvider({ children }) {
           wallet: 0,
         }
         // 2. Hydrate business data from PostgreSQL
-        const [apiAos, apiOffers, apiProjects, apiMarkets, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding] = await Promise.all([
+        const [apiAos, apiOffers, apiProjects, apiMarkets, apiMissions, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding] = await Promise.all([
           api.aos.getAll().catch(() => []),
           api.offers.getAll().catch(() => []),
           api.projects.getAll().catch(() => []),
           api.markets.getAll().catch(() => []),
+          api.missions.getAll().catch(() => []),
           api.projectMembers.getAll().catch(() => []),
           api.usersApi.getFournisseurs().catch(() => []),
           api.contacts.getAll().catch(() => []),
@@ -732,6 +745,7 @@ export function MeereoProvider({ children }) {
             offers: apiOffers,
             projects: apiProjects,
             markets: apiMarkets,
+            missions: apiMissions,
             projectMembers: apiProjectMembers,
             fournisseurs: apiFournisseurs,
             contacts: apiContacts,
@@ -1173,6 +1187,63 @@ export function MeereoProvider({ children }) {
     addNotif(accept ? 'Vous avez accepté le projet' : 'Vous avez refusé l\'invitation', accept ? 'green' : 'orange')
     showToast(accept ? 'Projet accepté' : 'Invitation refusée', accept ? 'green' : 'orange')
   }, [store.user, store.projectInvitations, updateStore, addNotif, showToast, addProjectMember])
+
+  // ── Missions ──
+  const createMission = useCallback(async (missionData) => {
+    const tempId = 'msn_' + Date.now()
+    const optimistic = { id: tempId, ...missionData, createdBy: store.user?.id, createdAt: new Date().toISOString(), avancement: 0, jalons: [] }
+    updateStore(prev => ({ ...prev, missions: [...(prev.missions || []), optimistic] }))
+    try {
+      const created = await api.missions.create(missionData)
+      updateStore(prev => ({ ...prev, missions: (prev.missions || []).map(m => m.id === tempId ? { ...m, ...created } : m) }))
+      log('MISSION_CREATED', { type: missionData.type, title: missionData.title })
+      addNotif('Mission « ' + missionData.title + ' » créée', 'green', null, 'missions')
+      showToast('Mission créée', 'green')
+      return created
+    } catch (e) {
+      updateStore(prev => ({ ...prev, missions: (prev.missions || []).filter(m => m.id !== tempId) }))
+      showToast(e.message || 'Erreur création mission', 'red')
+      return null
+    }
+  }, [store.user, updateStore, log, addNotif, showToast])
+
+  const updateMission = useCallback(async (missionId, data) => {
+    updateStore(prev => ({
+      ...prev,
+      missions: (prev.missions || []).map(m => m.id === missionId ? { ...m, ...data } : m),
+    }))
+    try {
+      const updated = await api.missions.update(missionId, data)
+      updateStore(prev => ({
+        ...prev,
+        missions: (prev.missions || []).map(m => m.id === missionId ? { ...m, ...updated } : m),
+      }))
+      return updated
+    } catch (e) {
+      showToast(e.message || 'Erreur mise à jour mission', 'red')
+      return null
+    }
+  }, [updateStore, showToast])
+
+  const deleteMission = useCallback(async (missionId) => {
+    updateStore(prev => ({
+      ...prev,
+      missions: (prev.missions || []).filter(m => m.id !== missionId),
+    }))
+    sync(api.missions.delete(missionId))
+    log('MISSION_DELETED', { missionId })
+    showToast('Mission supprimée')
+  }, [updateStore, log, showToast])
+
+  const updateMissionJalons = useCallback(async (missionId, jalons) => {
+    const completed = jalons.filter(j => j.status === 'completed' || j.status === 'validated').length
+    const avancement = jalons.length ? Math.round(completed / jalons.length * 100) : 0
+    updateStore(prev => ({
+      ...prev,
+      missions: (prev.missions || []).map(m => m.id === missionId ? { ...m, jalons, avancement } : m),
+    }))
+    sync(api.missions.update(missionId, { jalons, avancement }))
+  }, [updateStore])
 
   // ── Clôture projet ──
   const requestCloture = useCallback((data) => {
@@ -2557,6 +2628,10 @@ export function MeereoProvider({ children }) {
     respondProjectInvitation,
     requestCloture,
     respondCloture,
+    createMission,
+    updateMission,
+    deleteMission,
+    updateMissionJalons,
     createAO,
     submitOffer,
     acceptOffer,

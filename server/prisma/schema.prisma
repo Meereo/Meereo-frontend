@@ -71,6 +71,10 @@ model User {
   uploadedDocuments Document[]    @relation("UploadedDocuments")
   createdDecisions Decision[]     @relation("CreatedDecisions")
 
+  // Missions
+  responsibleMissions Mission[] @relation("MissionResponsible")
+  createdMissions     Mission[] @relation("CreatedMissions")
+
   // Notifications & activités
   notifications Notification[] @relation("UserNotifications")
   activities    Activity[]     @relation("UserActivities")
@@ -477,8 +481,37 @@ model Project {
   expenses      Expense[]
   invoices      Invoice[]
   paymentOrders PaymentOrder[]
+  missions      Mission[]
 
   @@map("projects")
+}
+
+// ─── Mission ─────────────────────────────────────────────────────────────────
+
+model Mission {
+  id                String   @id @default(cuid())
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type              String   // conception_architecturale | etudes_structure | etudes_fluides | construction | architecture_interieur
+  title             String
+  description       String   @default("")
+  status            String   @default("created") // created | invitation_sent | accepted | in_preparation | in_progress | pending_validation | validated | completed | archived
+  avancement        Int      @default(0)
+  responsibleUserId String?
+  responsibleUser   User?    @relation("MissionResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  responsibleName   String   @default("")
+  responsibleEmail  String   @default("")
+  conversationId    String?
+  jalons            Json     @default("[]")  // [{id, title, status, order, tasks:[], documents:[]}]
+  createdBy         String
+  creator           User     @relation("CreatedMissions", fields: [createdBy], references: [id], onDelete: Cascade)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  archivedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("missions")
 }
 
 // ─── Membre de projet ─────────────────────────────────────────────────────────
@@ -510,6 +543,7 @@ model Task {
   dueDate     DateTime?
   comment     String   @default("")
   marketId    String?
+  missionId   String?
   projectId   String?
   project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   createdBy   String
@@ -549,6 +583,7 @@ model Document {
   url          String   @default("")
   projectId    String?
   project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  missionId    String?
   userId       String
   uploader     User     @relation("UploadedDocuments", fields: [userId], references: [id], onDelete: Cascade)
   isEntreprise Boolean  @default(false)

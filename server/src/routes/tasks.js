@@ -24,7 +24,7 @@ router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const userId = req.user.id
-    const { projectId, assignedToMe } = req.query
+    const { projectId, assignedToMe, missionId } = req.query
     const where = {}
 
     if (projectId) {
@@ -32,6 +32,8 @@ router.get('/', requireAuth, async (req, res, next) => {
       const canAccess = await userCanAccessProject(prisma, userId, projectId)
       if (!canAccess) throw createError('Accès non autorisé à ce projet', 403)
       where.projectId = projectId
+    } else if (missionId) {
+      where.missionId = missionId
     } else {
       // Sans filtre projet : uniquement les tâches créées par ou assignées à l'utilisateur
       where.OR = [{ createdBy: userId }, { assignedTo: userId }]
@@ -51,7 +53,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { title, description, status, priority, assignedTo, dueDate, projectId, marketId } = req.body
+    const { title, description, status, priority, assignedTo, dueDate, projectId, marketId, missionId } = req.body
     if (!title) throw createError('title requis', 400)
 
     // Vérifier l'accès au projet si fourni
@@ -70,6 +72,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         dueDate:     dueDate     ? new Date(dueDate) : null,
         projectId:   projectId   || null,
         marketId:    marketId    || null,
+        missionId:   missionId   || null,
         createdBy:   req.user.id,
       },
     })
@@ -91,7 +94,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       : false
     if (!isCreator && !hasProjectAccess) throw createError('Accès non autorisé', 403)
 
-    const allowed = ['title', 'description', 'status', 'priority', 'assignedTo', 'dueDate', 'comment', 'projectId']
+    const allowed = ['title', 'description', 'status', 'priority', 'assignedTo', 'dueDate', 'comment', 'projectId', 'missionId']
     const data = {}
     for (const key of allowed) {
       if (req.body[key] !== undefined) {

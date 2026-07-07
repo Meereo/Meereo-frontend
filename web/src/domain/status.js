@@ -236,6 +236,110 @@ export const ORDER_STATUS_COMPAT = {
   'confirmee': ORDER_STATUS.CONFIRMED,
 }
 
+// ── Types de mission ──
+export const MISSION_TYPES = {
+  CONCEPTION_ARCHITECTURALE: 'conception_architecturale',
+  ETUDES_STRUCTURE: 'etudes_structure',
+  ETUDES_FLUIDES: 'etudes_fluides',
+  CONSTRUCTION: 'construction',
+  ARCHITECTURE_INTERIEUR: 'architecture_interieur',
+}
+
+export const MISSION_TYPE_LABELS = {
+  conception_architecturale: 'Conception Architecturale',
+  etudes_structure: 'Études Structure',
+  etudes_fluides: 'Études Fluides',
+  construction: 'Construction',
+  architecture_interieur: 'Architecture d\'Intérieur',
+}
+
+export const MISSION_TYPE_ICONS = {
+  conception_architecturale: '📐',
+  etudes_structure: '🔩',
+  etudes_fluides: '🚿',
+  construction: '🏗️',
+  architecture_interieur: '🛋️',
+}
+
+export const MISSION_TYPE_RESPONSIBLE = {
+  conception_architecturale: 'Bureau d\'Architecture',
+  etudes_structure: 'Bureau d\'Études Structure',
+  etudes_fluides: 'Bureau d\'Études Fluides',
+  construction: 'Entreprise de Construction',
+  architecture_interieur: 'Architecte d\'Intérieur',
+}
+
+// ── Statuts mission ──
+export const MISSION_STATUS = {
+  CREATED: 'created',
+  INVITATION_SENT: 'invitation_sent',
+  ACCEPTED: 'accepted',
+  IN_PREPARATION: 'in_preparation',
+  IN_PROGRESS: 'in_progress',
+  PENDING_VALIDATION: 'pending_validation',
+  VALIDATED: 'validated',
+  COMPLETED: 'completed',
+  ARCHIVED: 'archived',
+}
+
+export const MISSION_STATUS_LABELS = {
+  created: 'Créée',
+  invitation_sent: 'Invitation envoyée',
+  accepted: 'Acceptée',
+  in_preparation: 'En préparation',
+  in_progress: 'En cours',
+  pending_validation: 'En attente de validation',
+  validated: 'Validée',
+  completed: 'Terminée',
+  archived: 'Archivée',
+}
+
+export const MISSION_STATUS_COLORS = {
+  created: 'var(--t4)',
+  invitation_sent: 'var(--wrn)',
+  accepted: 'var(--info)',
+  in_preparation: 'var(--info)',
+  in_progress: 'var(--blue)',
+  pending_validation: 'var(--wrn)',
+  validated: 'var(--ok)',
+  completed: 'var(--ok)',
+  archived: 'var(--t4)',
+}
+
+// ── Jalons prédéfinis par type de mission ──
+export const MISSION_JALONS = {
+  conception_architecturale: [
+    'Relevé & diagnostic', 'Esquisse', 'Avant-projet sommaire', 'Avant-projet détaillé',
+    'Projet', 'Plans d\'exécution', 'Dossier de consultation', 'Suivi architectural', 'Réception',
+  ],
+  etudes_structure: [
+    'Diagnostic structurel', 'Note de calcul', 'Plans de fondation', 'Plans de structure',
+    'Plans d\'exécution', 'Suivi chantier structure', 'Réception structure',
+  ],
+  etudes_fluides: [
+    'Diagnostic fluides', 'Conception CVC', 'Conception plomberie', 'Conception électricité',
+    'Plans d\'exécution', 'Suivi chantier fluides', 'Réception fluides',
+  ],
+  construction: [
+    'Préparation chantier', 'Terrassement', 'Fondations', 'Gros œuvre', 'Charpente',
+    'Couverture', 'Second œuvre', 'Finitions', 'Réception',
+  ],
+  architecture_interieur: [
+    'Brief & concept', 'Moodboard & planches', 'Plans d\'aménagement', 'Choix matériaux',
+    'Suivi de réalisation', 'Installation mobilier', 'Réception',
+  ],
+}
+
+export function buildInitialJalons(missionType) {
+  const titles = MISSION_JALONS[missionType] || []
+  return titles.map((title, i) => ({
+    id: `jalon_${i}`,
+    title,
+    status: 'not_started',
+    order: i,
+  }))
+}
+
 // ── Labels affichage (français) ──
 export const STATUS_LABELS = {
   [STATUS.DRAFT]: 'Brouillon',
@@ -260,6 +364,15 @@ export const STATUS_LABELS = {
   [ORDER_STATUS.DELIVERED]: 'Livré',
   [ORDER_STATUS.CONFIRMED]: 'Confirmée',
   [PAYMENT_STATUS.CONFIRMED]: 'Confirmé',
+  // Missions
+  [MISSION_STATUS.CREATED]: 'Créée',
+  [MISSION_STATUS.INVITATION_SENT]: 'Invitation envoyée',
+  [MISSION_STATUS.ACCEPTED]: 'Acceptée',
+  [MISSION_STATUS.IN_PREPARATION]: 'En préparation',
+  [MISSION_STATUS.IN_PROGRESS]: 'En cours',
+  [MISSION_STATUS.PENDING_VALIDATION]: 'En attente de validation',
+  [MISSION_STATUS.VALIDATED]: 'Validée',
+  [MISSION_STATUS.COMPLETED]: 'Terminée',
 }
 
 export const getStatusLabel = (s) => STATUS_LABELS[s] || s

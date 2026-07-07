@@ -41,6 +41,7 @@ const rapportsRouter      = require('./routes/rapports')
 const transactionsRouter  = require('./routes/transactions')
 const introductionsRouter = require('./routes/introductions')
 const paymentRequestsRouter = require('./routes/paymentRequests')
+const missionsRouter = require('./routes/missions')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -159,6 +160,7 @@ app.use('/api/rapports',          rapportsRouter)
 app.use('/api/transactions',      transactionsRouter)
 app.use('/api/introductions',     introductionsRouter)
 app.use('/api/payment-requests',  paymentRequestsRouter)
+app.use('/api/missions',          missionsRouter)
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 

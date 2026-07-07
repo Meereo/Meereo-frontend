@@ -520,6 +520,19 @@ const marketsApi = {
   delete:  (id)      => apiFetch(`/markets/${id}`, 'DELETE', null, true),
 }
 
+// ─── Missions API (real HTTP → PostgreSQL) ───────────────────────────────────
+const missionsApi = {
+  getAll: (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+    return apiFetch(`/missions${qs ? '?' + qs : ''}`, 'GET', null, true)
+  },
+  getByProject: (projectId) => apiFetch(`/missions?projectId=${encodeURIComponent(projectId)}`, 'GET', null, true),
+  getById: (id)      => apiFetch(`/missions/${id}`, 'GET', null, true),
+  create:  (data)    => apiFetch('/missions', 'POST', data, true),
+  update:  (id, data) => apiFetch(`/missions/${id}`, 'PATCH', data, true),
+  delete:  (id)      => apiFetch(`/missions/${id}`, 'DELETE', null, true),
+}
+
 // ─── Orders API (real HTTP → PostgreSQL) ─────────────────────────────────────
 const ordersApi = {
   getAll: () => apiFetch('/orders', 'GET', null, true),
@@ -660,6 +673,7 @@ export const api = {
   aos:                 aosApi,
   offers:              offersApi,
   markets:             marketsApi,
+  missions:            missionsApi,
   documents:           documentsApi,
   tasks,
   events:              eventsApi,
