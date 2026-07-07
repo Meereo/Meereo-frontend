@@ -10,6 +10,7 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 import { recommendRail, RAIL_META, RAILS } from '../../domain/fintech'
 import { formatDateFR } from '../../utils/helpers'
 import { HAS_LOGISTICS_PARTNER } from '../../config/featureFlags'
+import { onOrderUpdated, offOrderUpdated } from '../../services/socket'
 
 const RAIL_ICONS = {
   [RAILS.VIREMENT]: Building2,
@@ -106,6 +107,12 @@ export default function Marketplace({ showToast, commerceScope }) {
         sponsorise: p.sponsored || false,
         flash: p.flash || false,
         flashPrice: p.flashPrice,
+        ficheUrl: p.ficheUrl || null,
+        noticeUrl: p.noticeUrl || null,
+        certificatUrl: p.certificatUrl || null,
+        garantieUrl: p.garantieUrl || null,
+        garantieDuree: p.garantieDuree || null,
+        supplierId: p.supplierId || null,
         fromStore: true,
       }))
     // Produits locaux (offline / pas encore synchro) — dédupliqués
@@ -146,7 +153,10 @@ export default function Marketplace({ showToast, commerceScope }) {
   const [activeCat, setActiveCat] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('pertinence')
-  const [cart, setCart] = useState([])
+  const [cart, setCart] = useState(() => {
+    try { const s = sessionStorage.getItem('meereo_cart'); return s ? JSON.parse(s) : [] } catch { return [] }
+  })
+  useEffect(() => { try { sessionStorage.setItem('meereo_cart', JSON.stringify(cart)) } catch {} }, [cart])
   const [showCart, setShowCart] = useState(false)
   const [detail, setDetail] = useState(null)
   const [detailQty, setDetailQty] = useState(1)
@@ -190,6 +200,15 @@ export default function Marketplace({ showToast, commerceScope }) {
         setCommandesLoaded(true)
       })
       .catch(() => setCommandesLoaded(true))
+  }, [])
+
+  // Écouter les mises à jour de commande en temps réel (depuis le vendeur)
+  useEffect(() => {
+    const handler = (data) => {
+      setCommandes(prev => prev.map(c => c.id === data.id ? { ...c, step: data.step, statut: data.statut } : c))
+    }
+    onOrderUpdated(handler)
+    return () => offOrderUpdated(handler)
   }, [])
 
   // Filter — utilise allProducts (statiques + store)
@@ -236,7 +255,7 @@ export default function Marketplace({ showToast, commerceScope }) {
       return
     }
     const cmdRef = genRef('CMD')
-    const activeProject = (store.projects || [])[0]
+    const selectedProject = (store.projects || []).find(p => p.nom === livProjet || p.id === livProjet) || (store.projects || [])[0]
     const resolvedAddress = livAdresse ? livAdresse : (livDest === 'chantier' ? 'Chantier' : 'Domicile')
 
     // Trouver l'id vendeur depuis le premier produit du panier (backend)
@@ -258,7 +277,8 @@ export default function Marketplace({ showToast, commerceScope }) {
       statut: 'confirmee',
       livMode,
       step: 1,
-      projet: activeProject?.nom || activeProject?.name || '',
+      projet: selectedProject?.nom || selectedProject?.name || '',
+      projectId: selectedProject?.id || null,
       address: resolvedAddress,
       paymentMethod: prov?.name || 'Plateforme',
       img: cart[0]?.img || '',
@@ -582,6 +602,19 @@ export default function Marketplace({ showToast, commerceScope }) {
                     <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'var(--t3)' }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span></div>
                   ))}
                 </div>
+                {/* Documentation technique */}
+                {(detail.ficheUrl || detail.noticeUrl || detail.certificatUrl || detail.garantieUrl) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5, background: 'var(--s2)', borderRadius: 8, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 4 }}>Documentation</div>
+                    {detail.ficheUrl && <a href={detail.ficheUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>📄 Fiche technique</a>}
+                    {detail.noticeUrl && <a href={detail.noticeUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>📋 Notice d'installation</a>}
+                    {detail.certificatUrl && <a href={detail.certificatUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>✅ Certificat de conformité</a>}
+                    {detail.garantieUrl && <a href={detail.garantieUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>🛡️ Garantie{detail.garantieDuree ? ` (${detail.garantieDuree})` : ''}</a>}
+                  </div>
+                )}
+                {detail.garantieDuree && !detail.garantieUrl && (
+                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>🛡️ Garantie : {detail.garantieDuree}</div>
+                )}
                 {/* Qty */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 12, color: 'var(--t2)' }}>Qte :</span>

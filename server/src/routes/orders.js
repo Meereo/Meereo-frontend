@@ -2,6 +2,7 @@ const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
 const { createError } = require('../middleware/errorHandler')
+const { getIo } = require('../socket')
 
 const router = Router()
 
@@ -13,18 +14,27 @@ router.get('/', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const user = req.user
 
+    const extraWhere = {}
+    if (req.query.projectId) extraWhere.projectId = req.query.projectId
+
     let orders
     if (user.type === 'fournisseur') {
       orders = await prisma.order.findMany({
-        where: { sellerId: user.id },
-        include: { buyer: { select: { id: true, name: true, company: true, type: true } } },
+        where: { sellerId: user.id, ...extraWhere },
+        include: {
+          buyer: { select: { id: true, name: true, company: true, type: true } },
+          project: { select: { id: true, nom: true } },
+        },
         orderBy: { createdAt: 'desc' },
       })
     } else {
       // pro ou client — commandes passées
       orders = await prisma.order.findMany({
-        where: { buyerId: user.id },
-        include: { seller: { select: { id: true, name: true, company: true, fournisseurProfile: { select: { entreprise: true } } } } },
+        where: { buyerId: user.id, ...extraWhere },
+        include: {
+          seller: { select: { id: true, name: true, company: true, fournisseurProfile: { select: { entreprise: true } } } },
+          project: { select: { id: true, nom: true } },
+        },
         orderBy: { createdAt: 'desc' },
       })
     }
@@ -39,7 +49,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { ref, designation, fournisseur, sellerId, items, total, statut, livMode, step, projet, address, paymentMethod, img } = req.body
+    const { ref, designation, fournisseur, sellerId, items, total, statut, livMode, step, projet, projectId, missionId, address, paymentMethod, img } = req.body
     if (!ref) throw createError('ref requis', 400)
     if (!total && total !== 0) throw createError('total requis', 400)
 
@@ -56,12 +66,42 @@ router.post('/', requireAuth, async (req, res, next) => {
         livMode: livMode || 'retrait',
         step: step || 1,
         projet: projet || '',
+        projectId: projectId || null,
+        missionId: missionId || null,
         address: address || '',
         paymentMethod: paymentMethod || '',
         img: img || null,
       },
-      include: { seller: { select: { id: true, name: true, company: true, fournisseurProfile: { select: { entreprise: true } } } } },
+      include: {
+        seller: { select: { id: true, name: true, company: true, fournisseurProfile: { select: { entreprise: true } } } },
+        project: { select: { id: true, nom: true } },
+      },
     })
+
+    // Notifier le vendeur en temps réel
+    if (order.sellerId) {
+      const io = getIo()
+      if (io) {
+        io.to(`user:${order.sellerId}`).emit('notification:new', {
+          id: 'order_new_' + order.id,
+          msg: (req.user.company || req.user.name || 'Un acheteur') + ' a passé la commande ' + order.ref,
+          type: 'blue',
+          read: false,
+          createdAt: new Date().toISOString(),
+          page: 'orders',
+        })
+      }
+      // Persister la notification en DB
+      await prisma.notification.create({
+        data: {
+          msg: (req.user.company || req.user.name || 'Un acheteur') + ' a passé la commande ' + order.ref,
+          type: 'blue',
+          userId: order.sellerId,
+          page: 'orders',
+        },
+      }).catch(() => {})
+    }
+
     res.status(201).json(order)
   } catch (e) {
     next(e)
@@ -95,6 +135,31 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     if (Object.keys(allowed).length === 0) throw createError('Aucune modification autorisée', 400)
 
     const updated = await prisma.order.update({ where: { id: req.params.id }, data: allowed })
+
+    // Notifier l'acheteur quand le vendeur met à jour
+    if (isSeller && (allowed.step || allowed.statut)) {
+      const io = getIo()
+      if (io) {
+        const stepLabel = allowed.statut === 'annulee' ? 'Annulée'
+          : allowed.statut === 'livre' ? 'Livrée'
+          : 'Étape ' + updated.step + '/5'
+        io.to(`user:${existing.buyerId}`).emit('notification:new', {
+          id: 'order_update_' + updated.id + '_' + Date.now(),
+          msg: 'Commande ' + updated.ref + ' : ' + stepLabel,
+          type: allowed.statut === 'annulee' ? 'orange' : 'green',
+          read: false,
+          createdAt: new Date().toISOString(),
+          page: 'orders',
+        })
+        // Event dédié pour le tracking temps réel
+        io.to(`user:${existing.buyerId}`).emit('order:updated', {
+          id: updated.id,
+          step: updated.step,
+          statut: updated.statut,
+        })
+      }
+    }
+
     res.json(updated)
   } catch (e) {
     next(e)

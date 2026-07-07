@@ -1,5 +1,6 @@
 ﻿import { Package, Store, Truck, Check } from 'lucide-react'
 import { formatDateFR } from '../../utils/helpers'
+import { api } from '../../services/api/client'
 
 const DELIVERY_STEPS = ['Commande confirmée', 'En préparation', 'Remise au transport', 'En cours de livraison', 'Livrée']
 const PICKUP_STEPS = ['Commande confirmée', 'En préparation', 'Prête pour retrait', 'Récupérée par le client', 'Terminée']
@@ -53,6 +54,24 @@ export default function Orders({ ctx }) {
                     </div>
                   ))}
                 </div>
+                {/* Bouton avancer étape */}
+                {currentStep < 5 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        const nextStep = currentStep + 1
+                        try {
+                          await api.commandes.update(o.id, { step: nextStep })
+                          if (ctx.refreshOrders) ctx.refreshOrders()
+                        } catch (err) { console.warn('Erreur avancement:', err) }
+                      }}
+                      style={{ padding: '5px 14px', borderRadius: 7, border: '1px solid var(--border-card)', background: 'var(--surface-1)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', color: 'var(--tx)', display: 'flex', alignItems: 'center', gap: 5 }}
+                    >
+                      <Check size={11} /> Étape suivante
+                    </button>
+                  </div>
+                )}
                 {/* Partenaire livraison */}
                 {o.livMode === 'livraison' && o.partner && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, padding: '6px 10px', background: 'var(--s2)', borderRadius: 6 }}>

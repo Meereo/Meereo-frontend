@@ -89,6 +89,15 @@ export function offConversationUpdated(handler) {
   socket?.off('conversation:updated', handler)
 }
 
+/** Écouter les mises à jour de commande (tracking temps réel). */
+export function onOrderUpdated(handler) {
+  socket?.on('order:updated', handler)
+}
+
+export function offOrderUpdated(handler) {
+  socket?.off('order:updated', handler)
+}
+
 /** Écouter les indicateurs de frappe. */
 export function onTyping(handler) {
   socket?.on('typing', handler)

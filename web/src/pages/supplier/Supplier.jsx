@@ -101,6 +101,25 @@ export default function Supplier() {
       .catch(() => setOrdersLoaded(true))
   }, [])
 
+  const refreshOrders = () => {
+    api.commandes.getAll()
+      .then(orders => {
+        if (Array.isArray(orders)) setSellerOrders(orders.map(o => ({
+          id: o.id, ref: o.ref,
+          buyer: o.buyer?.name || o.buyer?.company || 'Client',
+          fournisseur: o.fournisseur || '',
+          items: Array.isArray(o.items) ? o.items : [],
+          total: o.total || 0,
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+          statut: o.statut === 'confirmee' ? 'pending' : o.statut,
+          livMode: o.livMode || 'retrait',
+          step: o.step || 1,
+          address: o.address || '',
+          paymentMethod: o.paymentMethod || '',
+        })))
+      }).catch(() => {})
+  }
+
   const sellerPayments = sellerOrders.filter(o => o.statut === 'completed' || o.statut === 'delivered')
   const pendingOrders = sellerOrders.filter(o => o.statut === 'pending')
   const caTotal = sellerPayments.reduce((s, o) => s + (o.total || 0), 0)
@@ -247,7 +266,7 @@ export default function Supplier() {
   // Shared context passed to all view components
   const ctx = {
     products, activeProducts, sponsoredProducts, flashProducts, filteredProducts, visibleMarketplace,
-    sellerOrders, pendingOrders, sellerPayments, caTotal, ordersLoaded,
+    sellerOrders, pendingOrders, sellerPayments, caTotal, ordersLoaded, refreshOrders,
     ob, user, entreprise, categories, zones, uid,
     fmtMoney, setView,
     catalogFilter, setCatalogFilter,

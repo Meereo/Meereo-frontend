@@ -7,6 +7,7 @@ import { useDevise } from '../../hooks/useDevise'
 import { formatDateFR } from '../../utils/helpers'
 import { DSPageHeader, DSKpiStrip, DSFilterBar , DSEmptyState } from '../../design/components'
 import { Package, Truck, Home, Store, Check, Star, MapPin, Phone } from 'lucide-react'
+import { onOrderUpdated, offOrderUpdated } from '../../services/socket'
 
 const fmt = n => new Intl.NumberFormat('fr-FR').format(n || 0)
 const STEPS = [
@@ -97,6 +98,15 @@ export default function Orders({ onNavigate, showToast, openModal }) {
         })))
       })
       .catch(() => {})
+  }, [])
+
+  // Écouter les mises à jour de commande en temps réel
+  useEffect(() => {
+    const handler = (data) => {
+      setAllCommandes(prev => prev.map(c => c.id === data.id ? { ...c, step: data.step, statut: data.statut } : c))
+    }
+    onOrderUpdated(handler)
+    return () => offOrderUpdated(handler)
   }, [])
 
   const total = allCommandes.length

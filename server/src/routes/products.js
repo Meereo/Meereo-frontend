@@ -46,7 +46,7 @@ router.get('/mine', requireAuth, async (req, res, next) => {
 // POST /api/products — créer un produit (fournisseur connecté)
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { name, category, price, unit, description, photoUrl, sponsored, flash, flashPrice } = req.body
+    const { name, category, price, unit, description, photoUrl, sponsored, flash, flashPrice, ficheUrl, noticeUrl, certificatUrl, garantieUrl, garantieDuree } = req.body
     if (!name || !name.trim()) throw createError('Le nom du produit est requis', 400)
     const prisma = getPrisma()
     const product = await prisma.product.create({
@@ -58,6 +58,11 @@ router.post('/', requireAuth, async (req, res, next) => {
         unit: unit || 'unité',
         description: description || '',
         photoUrl: photoUrl || null,
+        ficheUrl: ficheUrl || null,
+        noticeUrl: noticeUrl || null,
+        certificatUrl: certificatUrl || null,
+        garantieUrl: garantieUrl || null,
+        garantieDuree: garantieDuree || null,
         sponsored: sponsored || false,
         flash: flash || false,
         flashPrice: flashPrice ? parseFloat(flashPrice) : null,
@@ -85,6 +90,11 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         unit: req.body.unit ?? existing.unit,
         description: req.body.description ?? existing.description,
         photoUrl: req.body.photoUrl !== undefined ? req.body.photoUrl : existing.photoUrl,
+        ficheUrl: req.body.ficheUrl !== undefined ? req.body.ficheUrl : existing.ficheUrl,
+        noticeUrl: req.body.noticeUrl !== undefined ? req.body.noticeUrl : existing.noticeUrl,
+        certificatUrl: req.body.certificatUrl !== undefined ? req.body.certificatUrl : existing.certificatUrl,
+        garantieUrl: req.body.garantieUrl !== undefined ? req.body.garantieUrl : existing.garantieUrl,
+        garantieDuree: req.body.garantieDuree !== undefined ? req.body.garantieDuree : existing.garantieDuree,
         isPublished: req.body.isPublished !== undefined ? req.body.isPublished : existing.isPublished,
         sponsored: req.body.sponsored ?? existing.sponsored,
         flash: req.body.flash ?? existing.flash,
