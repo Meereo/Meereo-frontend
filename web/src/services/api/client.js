@@ -728,6 +728,27 @@ export const api = {
     getVerifications: () => apiFetch('/admin/verifications', 'GET', null, true),
     verify: (userId, data) => apiFetch(`/admin/verify/${userId}`, 'PATCH', data, true),
   },
+  assets: {
+    getAll: (params = {}) => { const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v))).toString(); return apiFetch(`/assets${qs ? '?' + qs : ''}`, 'GET', null, true) },
+    getByProject: (pid) => apiFetch(`/assets?projectId=${encodeURIComponent(pid)}`, 'GET', null, true),
+    create: (data) => apiFetch('/assets', 'POST', data, true),
+    update: (id, data) => apiFetch(`/assets/${id}`, 'PATCH', data, true),
+    addMaintenance: (id, data) => apiFetch(`/assets/${id}/maintenance`, 'POST', data, true),
+    delete: (id) => apiFetch(`/assets/${id}`, 'DELETE', null, true),
+  },
+  passports: {
+    getAll: () => apiFetch('/passports', 'GET', null, true),
+    getById: (id) => apiFetch(`/passports/${id}`, 'GET', null, true),
+    generate: (projectId) => apiFetch(`/passports/generate/${projectId}`, 'POST', {}, true),
+    transfer: (id, data) => apiFetch(`/passports/${id}`, 'PATCH', data, true),
+  },
+  knowledge: {
+    search: (query, type) => apiFetch(`/knowledge/search?query=${encodeURIComponent(query)}${type ? '&type=' + type : ''}`, 'GET', null, true),
+    getNode: (type, refId) => apiFetch(`/knowledge/node/${type}/${refId}`, 'GET', null, true),
+    getProjectGraph: (pid) => apiFetch(`/knowledge/graph/${pid}`, 'GET', null, true),
+    createNode: (data) => apiFetch('/knowledge/node', 'POST', data, true),
+    createEdge: (data) => apiFetch('/knowledge/edge', 'POST', data, true),
+  },
   engines: {
     /** Workflow : transitions possibles depuis un état */
     getTransitions: (workflow, state) => apiFetch(`/engines/workflow/${workflow}/${state}`, 'GET', null, true),

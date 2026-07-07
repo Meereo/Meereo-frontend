@@ -132,4 +132,49 @@ const EVENT_TYPES = {
   PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
 }
 
-module.exports = { on, emit, getProjectLog, EVENT_TYPES }
+// ── Auto-alimentation du Knowledge Graph depuis les événements ──
+function setupKnowledgeGraphListeners() {
+  const prisma = getPrisma()
+
+  on(EVENT_TYPES.PROJECT_CREATED, async (event) => {
+    const d = event.data || {}
+    await prisma.knowledgeNode.upsert({
+      where: { type_refId: { type: 'project', refId: d.projectId || event.context?.projectId || '' } },
+      update: { label: d.name || d.nom || 'Projet' },
+      create: { type: 'project', refId: d.projectId || event.context?.projectId || '', label: d.name || d.nom || 'Projet' },
+    }).catch(() => {})
+  })
+
+  on(EVENT_TYPES.MISSION_CREATED, async (event) => {
+    const d = event.data || {}
+    const missionId = d.missionId || ''
+    const projectId = event.context?.projectId || ''
+    await prisma.knowledgeNode.upsert({
+      where: { type_refId: { type: 'mission', refId: missionId } },
+      update: { label: d.title || 'Mission' },
+      create: { type: 'mission', refId: missionId, label: d.title || 'Mission' },
+    }).catch(() => {})
+    if (projectId && missionId) {
+      await prisma.knowledgeEdge.create({
+        data: { sourceType: 'mission', sourceId: missionId, relation: 'FAIT_PARTIE_DE', targetType: 'project', targetId: projectId },
+      }).catch(() => {})
+    }
+  })
+
+  on(EVENT_TYPES.DOCUMENT_UPLOADED, async (event) => {
+    const d = event.data || {}
+    const docId = d.documentId || ''
+    await prisma.knowledgeNode.upsert({
+      where: { type_refId: { type: 'document', refId: docId } },
+      update: { label: d.name || 'Document' },
+      create: { type: 'document', refId: docId, label: d.name || 'Document' },
+    }).catch(() => {})
+    if (d.projectId && docId) {
+      await prisma.knowledgeEdge.create({
+        data: { sourceType: 'document', sourceId: docId, relation: 'ASSOCIE_A', targetType: 'project', targetId: d.projectId },
+      }).catch(() => {})
+    }
+  })
+}
+
+module.exports = { on, emit, getProjectLog, EVENT_TYPES, setupKnowledgeGraphListeners }

@@ -19,6 +19,7 @@ const NAV_GROUPS = [
     label: 'Opération',
     items: [
       { id: 'missions',      label: 'Missions',          icon: 'target' },
+      { id: 'actifs',        label: 'Actifs',            icon: 'box' },
       { id: 'chantier',      label: 'Avancement',       icon: 'hardhat' },
       { id: 'taches-board',  label: 'Tâches',            icon: 'kanban' },
       { id: 'budget',        label: 'Budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
@@ -61,7 +62,7 @@ const ICON_TINTS = {
   // Core
   'grid': '#191c1d', 'folder': '#191c1d',
   // Opération
-  'target': '#9333EA', 'hardhat': '#EA580C', 'kanban': '#2563EB', 'trending-up': '#16A34A',
+  'target': '#9333EA', 'box': '#0891B2', 'hardhat': '#EA580C', 'kanban': '#2563EB', 'trending-up': '#16A34A',
   // Collaboration
   'message': '#7C3AED', 'archive': '#0891B2', 'user-check': '#2563EB', 'users': '#2563EB',
   // Business
@@ -78,6 +79,7 @@ function NavIcon({ name }) {
     'grid': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
     'folder': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>,
     'target': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+    'box': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
     'hardhat': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 18h20M4 18v-4a8 8 0 0116 0v4M12 2v4"/></svg>,
     'calendar': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     'file-text': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,

@@ -49,6 +49,8 @@ const defaultStore = {
   offers: [],
   markets: [],
   missions: [],
+  assets: [],
+  passports: [],
   tasks: [],
   documents: [],
   products: [],
@@ -1264,6 +1266,41 @@ export function MeereoProvider({ children }) {
     }))
     sync(api.missions.update(missionId, { jalons, avancement }))
   }, [updateStore])
+
+  // ── Assets (Actifs du bâtiment) ──
+  const createAsset = useCallback(async (data) => {
+    try {
+      const created = await api.assets.create(data)
+      updateStore(prev => ({ ...prev, assets: [...(prev.assets || []), created] }))
+      showToast('Actif créé', 'green')
+      return created
+    } catch (e) { showToast(e.message || 'Erreur', 'red'); return null }
+  }, [updateStore, showToast])
+
+  const updateAsset = useCallback(async (id, data) => {
+    updateStore(prev => ({ ...prev, assets: (prev.assets || []).map(a => a.id === id ? { ...a, ...data } : a) }))
+    sync(api.assets.update(id, data))
+  }, [updateStore])
+
+  const addMaintenance = useCallback(async (assetId, data) => {
+    try {
+      const updated = await api.assets.addMaintenance(assetId, data)
+      updateStore(prev => ({ ...prev, assets: (prev.assets || []).map(a => a.id === assetId ? updated : a) }))
+      showToast('Maintenance enregistrée', 'green')
+      return updated
+    } catch (e) { showToast(e.message || 'Erreur', 'red'); return null }
+  }, [updateStore, showToast])
+
+  // ── Passeport Numérique ──
+  const generatePassport = useCallback(async (projectId) => {
+    try {
+      const passport = await api.passports.generate(projectId)
+      updateStore(prev => ({ ...prev, passports: [...(prev.passports || []), passport] }))
+      showToast('Passeport Numérique généré', 'green')
+      addNotif('Passeport Numérique généré pour le projet', 'green', null, 'passport')
+      return passport
+    } catch (e) { showToast(e.message || 'Erreur', 'red'); return null }
+  }, [updateStore, showToast, addNotif])
 
   // ── Clôture projet ──
   const requestCloture = useCallback((data) => {
@@ -2689,6 +2726,10 @@ export function MeereoProvider({ children }) {
     shareDocumentWithClient,
     addChantierPhoto,
     uploadNewVersion,
+    createAsset,
+    updateAsset,
+    addMaintenance,
+    generatePassport,
     // Fintech
     createPaymentOrder,
     updatePaymentStatus,

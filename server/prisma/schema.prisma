@@ -122,6 +122,10 @@ model User {
   receivedReviews Review[] @relation("ReviewTarget")
   givenReviews    Review[] @relation("ReviewAuthor")
 
+  // Assets & Passeports
+  createdAssets    Asset[]    @relation("CreatedAssets")
+  ownedPassports   Passport[] @relation("OwnedPassports")
+
   @@map("users")
 }
 
@@ -522,6 +526,8 @@ model Project {
   paymentOrders PaymentOrder[]
   missions      Mission[]
   orders        Order[]
+  assets        Asset[]
+  passport      Passport?
 
   @@map("projects")
 }
@@ -936,5 +942,85 @@ model PaymentRequest {
   updatedAt       DateTime  @updatedAt
 
   @@map("payment_requests")
+}
+
+// ─── Actif du Bâtiment (Asset Engine) ────────────────────────────────────────
+
+model Asset {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  category       String    // fondations | structure | toiture | facades | menuiseries | electricite | plomberie | climatisation | ascenseurs | solaire | groupe_electrogene | incendie | espaces_verts | mobilier_fixe | equipements
+  localisation   String    @default("")
+  status         String    @default("planifie") // planifie | en_conception | en_realisation | installe | receptionne | en_exploitation | en_maintenance | renove | remplace | archive
+  fabricant      String?
+  fournisseur    String?
+  reference      String?
+  garantieDebut  DateTime?
+  garantieFin    DateTime?
+  garantieDoc    String?   // URL du document de garantie
+  dureeVie       String?   // ex: "15 ans"
+  installDate    DateTime?
+  installateurId String?   // userId de l'installateur
+  notes          String    @default("")
+  documents      Json      @default("[]")  // [{id, name, url}]
+  maintenances   Json      @default("[]")  // [{id, date, entreprise, description, pieces, rapport}]
+  missionId      String?
+  createdBy      String
+  creator        User      @relation("CreatedAssets", fields: [createdBy], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("assets")
+}
+
+// ─── Passeport Numérique du Bâtiment ─────────────────────────────────────────
+
+model Passport {
+  id            String    @id @default(cuid())
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ownerId       String
+  owner         User      @relation("OwnedPassports", fields: [ownerId], references: [id])
+  nom           String
+  adresse       String    @default("")
+  type          String    @default("")   // type de bâtiment
+  surface       String?
+  dateLivraison DateTime?
+  status        String    @default("active") // active | transferred | archived
+  transferredTo String?   // userId du nouveau propriétaire
+  snapshot      Json      @default("{}") // snapshot figé du projet à la clôture
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("passports")
+}
+
+// ─── Knowledge Graph ─────────────────────────────────────────────────────────
+
+model KnowledgeNode {
+  id        String   @id @default(cuid())
+  type      String   // project | mission | user | document | asset | product | order | decision | conversation | passport
+  refId     String   // ID de l'objet référencé
+  label     String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@unique([type, refId])
+  @@map("knowledge_nodes")
+}
+
+model KnowledgeEdge {
+  id         String   @id @default(cuid())
+  sourceType String
+  sourceId   String
+  relation   String   // POSSEDE | CONTIENT | ASSOCIE_A | INTERVIENT_SUR | INSTALLE_DANS | CONCERNE | FAIT_PARTIE_DE | CREE_PAR
+  targetType String
+  targetId   String
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@map("knowledge_edges")
 }
 

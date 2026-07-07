@@ -45,6 +45,9 @@ const missionsRouter = require('./routes/missions')
 const reviewsRouter = require('./routes/reviews')
 const adminRouter = require('./routes/admin')
 const enginesRouter = require('./routes/engines')
+const assetsRouter = require('./routes/assets')
+const passportsRouter = require('./routes/passports')
+const knowledgeRouter = require('./routes/knowledge')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -167,6 +170,9 @@ app.use('/api/missions',          missionsRouter)
 app.use('/api/reviews',           reviewsRouter)
 app.use('/api/admin',             adminRouter)
 app.use('/api/engines',           enginesRouter)
+app.use('/api/assets',            assetsRouter)
+app.use('/api/passports',         passportsRouter)
+app.use('/api/knowledge',         knowledgeRouter)
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 

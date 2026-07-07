@@ -383,6 +383,50 @@ export function buildInitialJalons(missionType) {
   }))
 }
 
+// ── Statuts actif (Asset Engine) ──
+export const ASSET_STATUS = {
+  PLANIFIE: 'planifie',
+  EN_CONCEPTION: 'en_conception',
+  EN_REALISATION: 'en_realisation',
+  INSTALLE: 'installe',
+  RECEPTIONNE: 'receptionne',
+  EN_EXPLOITATION: 'en_exploitation',
+  EN_MAINTENANCE: 'en_maintenance',
+  RENOVE: 'renove',
+  REMPLACE: 'remplace',
+  ARCHIVE: 'archive',
+}
+
+export const ASSET_STATUS_LABELS = {
+  planifie: 'Planifié',
+  en_conception: 'En conception',
+  en_realisation: 'En réalisation',
+  installe: 'Installé',
+  receptionne: 'Réceptionné',
+  en_exploitation: 'En exploitation',
+  en_maintenance: 'En maintenance',
+  renove: 'Rénové',
+  remplace: 'Remplacé',
+  archive: 'Archivé',
+}
+
+export const ASSET_CATEGORIES = [
+  { id: 'fondations', label: 'Fondations', icon: '🏗️' },
+  { id: 'structure', label: 'Structure', icon: '🔩' },
+  { id: 'toiture', label: 'Toiture', icon: '🏠' },
+  { id: 'facades', label: 'Façades', icon: '🧱' },
+  { id: 'menuiseries', label: 'Menuiseries', icon: '🪟' },
+  { id: 'electricite', label: 'Électricité', icon: '⚡' },
+  { id: 'plomberie', label: 'Plomberie', icon: '🚿' },
+  { id: 'climatisation', label: 'Climatisation', icon: '❄️' },
+  { id: 'ascenseurs', label: 'Ascenseurs', icon: '🛗' },
+  { id: 'solaire', label: 'Production solaire', icon: '☀️' },
+  { id: 'incendie', label: 'Réseau incendie', icon: '🧯' },
+  { id: 'espaces_verts', label: 'Espaces verts', icon: '🌳' },
+  { id: 'mobilier_fixe', label: 'Mobilier fixe', icon: '🪑' },
+  { id: 'equipements', label: 'Équipements techniques', icon: '⚙️' },
+]
+
 // ── Labels affichage (français) ──
 export const STATUS_LABELS = {
   [STATUS.DRAFT]: 'Brouillon',
