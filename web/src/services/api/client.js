@@ -656,6 +656,10 @@ const contactsApi = {
   create:  (data)     => apiFetch('/contacts', 'POST', data, true),
   update:  (id, data) => apiFetch(`/contacts/${id}`, 'PATCH', data, true),
   delete:  (id)       => apiFetch(`/contacts/${id}`, 'DELETE', null, true),
+  /** Historique unifié projets/AO/marchés/commandes avec un contact */
+  getHistory: (id)    => apiFetch(`/contacts/${id}/history`, 'GET', null, true),
+  /** Réseau professionnel (graphe de relations) */
+  getNetwork: ()      => apiFetch('/contacts/network/graph', 'GET', null, true),
 }
 
 const conversationsApi = {
@@ -723,5 +727,17 @@ export const api = {
   admin: {
     getVerifications: () => apiFetch('/admin/verifications', 'GET', null, true),
     verify: (userId, data) => apiFetch(`/admin/verify/${userId}`, 'PATCH', data, true),
+  },
+  engines: {
+    /** Workflow : transitions possibles depuis un état */
+    getTransitions: (workflow, state) => apiFetch(`/engines/workflow/${workflow}/${state}`, 'GET', null, true),
+    /** Rules : évaluer des règles métier */
+    evaluateRules: (rules, context) => apiFetch('/engines/rules/evaluate', 'POST', { rules, context }, true),
+    /** Rules : lister toutes les règles */
+    listRules: () => apiFetch('/engines/rules', 'GET', null, true),
+    /** Permissions : vérifier une permission */
+    checkPermission: (data) => apiFetch('/engines/permissions/check', 'POST', data, true),
+    /** Permissions : actions disponibles pour un rôle */
+    getActions: (params) => { const qs = new URLSearchParams(params).toString(); return apiFetch(`/engines/permissions/actions?${qs}`, 'GET', null, true) },
   },
 }

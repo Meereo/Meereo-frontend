@@ -44,6 +44,7 @@ const paymentRequestsRouter = require('./routes/paymentRequests')
 const missionsRouter = require('./routes/missions')
 const reviewsRouter = require('./routes/reviews')
 const adminRouter = require('./routes/admin')
+const enginesRouter = require('./routes/engines')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,7 @@ app.use('/api/payment-requests',  paymentRequestsRouter)
 app.use('/api/missions',          missionsRouter)
 app.use('/api/reviews',           reviewsRouter)
 app.use('/api/admin',             adminRouter)
+app.use('/api/engines',           enginesRouter)
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 

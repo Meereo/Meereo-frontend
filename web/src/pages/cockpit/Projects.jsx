@@ -110,7 +110,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
   }
 
   const proDesignated = isClient && (selectedPro || (proEmail.trim() && proEmail.includes('@')))
-  const canSubmit = f.nom.trim() && (!isClient || proDesignated)
+  const canSubmit = f.nom.trim() && (!isClient || proDesignated || proMode === 'kai' || proMode === 'decouverte')
 
   const submit = () => {
     setSubmitted(true)
@@ -118,7 +118,15 @@ function ProjetModal({ isOpen, onClose, showToast }) {
     setSubmitting(true)
 
     const projId = 'proj_' + Date.now()
-    createProject({ id: projId, name: f.nom, type: f.type, budget: f.budget, address: f.localisation, phase: 'ESQUISSE', livraison: f.livraison, priorite: f.priorite, description: f.description, client: f.client, clientEmail: f.clientEmail })
+    createProject({
+      id: projId, name: f.nom, type: f.type, budget: f.budget, address: f.localisation,
+      phase: 'ESQUISSE', livraison: f.livraison, priorite: f.priorite, description: f.description,
+      client: f.client, clientEmail: f.clientEmail,
+      // Parcours d'accompagnement
+      accompagnement: proMode === 'kai' ? 'recherche' : proMode === 'decouverte' ? 'decouverte' : undefined,
+      searchArchitect: proMode === 'kai',
+      status: proMode === 'decouverte' ? 'draft' : 'active',
+    })
 
     if (!isClient && f.client) {
       api.contacts.create({ type: 'client', nom: f.client, email: f.clientEmail || null })
@@ -207,11 +215,11 @@ function ProjetModal({ isOpen, onClose, showToast }) {
             <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5, marginBottom: 10 }}>
               Désignez le professionnel qui suivra votre projet et gérera son avancement.
             </div>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-              {[['email', 'Par email'], ['annuaire', "Depuis l'annuaire"]].map(([k, l]) => (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+              {[['email', '✉️ Par email'], ['annuaire', "🔍 Depuis l'annuaire"], ['kai', '🤖 KAI me recommande'], ['decouverte', '👀 Découvrir MEEREO']].map(([k, l]) => (
                 <button key={k} type="button"
                   onClick={() => { setProMode(k); setSelectedPro(null); setProSearch('') }}
-                  style={{ flex: 1, padding: '7px 10px', borderRadius: 8, border: proMode === k ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: proMode === k ? 'rgba(0,0,0,.03)' : 'var(--surface-1)', fontFamily: 'var(--f)', fontSize: 12, fontWeight: proMode === k ? 700 : 400, cursor: 'pointer', color: 'var(--tx)' }}>
+                  style={{ flex: '1 1 45%', padding: '7px 10px', borderRadius: 8, border: proMode === k ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: proMode === k ? 'rgba(0,0,0,.03)' : 'var(--surface-1)', fontFamily: 'var(--f)', fontSize: 12, fontWeight: proMode === k ? 700 : 400, cursor: 'pointer', color: 'var(--tx)' }}>
                   {l}
                 </button>
               ))}
@@ -261,7 +269,26 @@ function ProjetModal({ isOpen, onClose, showToast }) {
               </div>
             )}
 
-            {submitted && isClient && !proDesignated && (
+            {proMode === 'kai' && (
+              <div style={{ padding: '14px 16px', background: 'rgba(147,51,234,.04)', border: '1px solid rgba(147,51,234,.15)', borderRadius: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#9333EA', marginBottom: 6 }}>🤖 Accompagnement KAI</div>
+                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
+                  KAI analysera votre projet (type, localisation, besoins) et vous proposera une sélection de bureaux d'architecture adaptés.
+                  Un appel d'offres sera publié automatiquement pour trouver le professionnel idéal.
+                </div>
+              </div>
+            )}
+
+            {proMode === 'decouverte' && (
+              <div style={{ padding: '14px 16px', background: 'rgba(37,99,235,.04)', border: '1px solid rgba(37,99,235,.15)', borderRadius: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', marginBottom: 6 }}>👀 Mode Découverte</div>
+                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
+                  Votre projet sera créé en mode préparatoire. Vous pourrez explorer l'annuaire, consulter les Pages Professionnelles, et démarrer une collaboration quand vous serez prêt.
+                </div>
+              </div>
+            )}
+
+            {submitted && isClient && !proDesignated && proMode !== 'kai' && proMode !== 'decouverte' && (
               <p style={{ color: 'var(--err)', fontSize: 11, marginTop: 6, fontWeight: 500 }}>Un professionnel d'accompagnement est requis pour créer un projet.</p>
             )}
             {proDesignated && (

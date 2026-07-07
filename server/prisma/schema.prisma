@@ -473,7 +473,9 @@ model Contact {
   role       String?                        // spécialité / rôle (intervenant)
   poste      String?                        // poste dans l'organisation (client)
   statut     String?                        // actif | prospect | inactif (client)
-  entreprise String?                        // société du contact
+  entreprise         String?                // société du contact
+  relationshipStatus String   @default("premier_contact") // premier_contact | qualification | collaboration | projet_termine | recurrent | partenaire_privilegie
+  linkedUserId       String?               // ID de l'utilisateur MEEREO correspondant (si inscrit)
   ownerId    String
   owner      User     @relation("OwnedContacts", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
