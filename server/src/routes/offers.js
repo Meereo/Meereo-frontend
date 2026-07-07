@@ -49,6 +49,42 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 })
 
+// GET /api/offers/compare/:aoId — vue comparative des candidatures pour un AO
+router.get('/compare/:aoId', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const ao = await prisma.aO.findUnique({ where: { id: req.params.aoId } })
+    if (!ao) throw createError('AO introuvable', 404)
+    if (ao.ownerUserId !== req.user.id) throw createError('Accès non autorisé', 403)
+
+    const offers = await prisma.offer.findMany({
+      where: { aoId: req.params.aoId },
+      include: {
+        supplier: {
+          select: {
+            id: true, name: true, company: true, publicId: true, verified: true,
+            onboardingData: true,
+            proProfile: { select: { entreprise: true, ville: true, pays: true, bio: true, secteurs: true, services: true, effectif: true, annee: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    // Enrichir avec les documents entreprise de chaque candidat
+    const enriched = await Promise.all(offers.map(async (offer) => {
+      const docs = await prisma.document.findMany({
+        where: { userId: offer.supplierId, isEntreprise: true, parentId: null },
+        select: { id: true, name: true, type: true, category: true, url: true, expiresAt: true },
+        orderBy: { createdAt: 'desc' },
+      })
+      return { ...offer, entrepriseDocs: docs }
+    }))
+
+    res.json({ ao, offers: enriched })
+  } catch (e) { next(e) }
+})
+
 // POST /api/offers — pro/fournisseur soumet une offre
 router.post('/', requireAuth, async (req, res, next) => {
   try {

@@ -88,6 +88,16 @@ router.post('/register', async (req, res, next) => {
 
     await prisma.$transaction(async (tx) => {
       // Créer le compte
+      // Générer un slug SEO-friendly à partir du nom d'entreprise ou du nom
+      const slugBase = (base.company || base.name || 'pro')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50)
+      const slugSuffix = Math.random().toString(36).slice(2, 6)
+      const slug = slugBase + '-' + slugSuffix
+
       user = await tx.user.create({
         data: {
           email: base.email,
@@ -99,6 +109,7 @@ router.post('/register', async (req, res, next) => {
           avatar: base.avatar || null,
           metier: base.metier || null,
           ville: base.ville || null,
+          slug,
         },
       })
 

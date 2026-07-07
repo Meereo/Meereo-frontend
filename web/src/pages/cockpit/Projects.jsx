@@ -18,6 +18,37 @@ import { PHASE_LABELS, normalizePhase } from '../../domain/status'
 import { formatDateFR } from '../../utils/helpers'
 import { CHANTIER_PHASES } from '../../data/chantier'
 
+// ── Chronologie du projet ──
+function ProjectTimeline({ projectId }) {
+  const [timeline, setTimeline] = useState(null)
+  useEffect(() => {
+    if (projectId) api.projects.getTimeline(projectId).then(setTimeline).catch(() => setTimeline([]))
+  }, [projectId])
+  const ICONS = { event: '📅', mission: '🎯', decision: '⚖️', document: '📄', market: '🤝', activity: '📝' }
+  const LABELS = { event: 'Événement', mission: 'Mission', decision: 'Décision', document: 'Document', market: 'Marché', activity: 'Activité' }
+  return (
+    <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700 }}>Chronologie</div>
+      </div>
+      {!timeline ? (
+        <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Chargement...</div>
+      ) : timeline.length === 0 ? (
+        <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun événement</div>
+      ) : timeline.slice(0, 15).map((item, i) => (
+        <div key={item.id || i} style={{ display: 'flex', gap: 10, padding: '8px 18px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>{ICONS[item._type] || '•'}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.titre || item.title || item.name || item.action || '—'}</div>
+            <div style={{ fontSize: 10, color: 'var(--t4)' }}>{LABELS[item._type] || item._type} · {formatDateFR(item._date)}</div>
+          </div>
+          {item.statut && <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--t3)', alignSelf: 'center' }}>{item.statut}</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const ACCESS_LEVELS = [
   { id: 'admin', label: 'Complet' },
   { id: 'edition', label: 'Edition' },
@@ -687,6 +718,44 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   </div>
                 )
               })()}
+
+              {/* Missions du projet */}
+              {(() => {
+                const projMissions = (store.missions || []).filter(m => m.projectId === selected.id)
+                return (
+                  <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700 }}>Missions ({projMissions.length})</div>
+                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('missions')}>Voir tout →</button>
+                    </div>
+                    {projMissions.length === 0 ? (
+                      <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucune mission — créez des missions depuis l'onglet Missions</div>
+                    ) : projMissions.slice(0, 5).map(m => {
+                      const ICONS = { conception_architecturale: '📐', etudes_structure: '🔩', etudes_fluides: '🚿', construction: '🏗️', architecture_interieur: '🛋️' }
+                      const STATUS_C = { created: 'var(--t4)', invitation_sent: 'var(--wrn)', accepted: 'var(--info)', in_progress: 'var(--blue)', pending_validation: 'var(--wrn)', validated: 'var(--ok)', completed: 'var(--ok)' }
+                      const STATUS_L = { created: 'Créée', invitation_sent: 'Invité', accepted: 'Acceptée', in_preparation: 'Préparation', in_progress: 'En cours', pending_validation: 'Validation', validated: 'Validée', completed: 'Terminée' }
+                      return (
+                        <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 16 }}>{ICONS[m.type] || '📋'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600 }}>{m.title}</div>
+                            <div style={{ fontSize: 10.5, color: 'var(--t3)' }}>{m.responsibleName || '—'}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--s3)', overflow: 'hidden' }}>
+                              <div style={{ width: (m.avancement || 0) + '%', height: '100%', background: 'var(--blue)', borderRadius: 2 }} />
+                            </div>
+                            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 100, background: (STATUS_C[m.status] || 'var(--t4)') + '14', color: STATUS_C[m.status] || 'var(--t4)' }}>{STATUS_L[m.status] || m.status}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+
+              {/* Chronologie du projet */}
+              <ProjectTimeline projectId={selected.id} />
 
               {/* Equipe + Notes */}
               <div className="two-col">

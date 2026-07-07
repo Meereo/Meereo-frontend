@@ -620,7 +620,11 @@ const aosApi = {
 const offersApi = {
   getAll: () => apiFetch('/offers', 'GET', null, true),
   create: (data) => apiFetch('/offers', 'POST', data, true),
-  update: (id, data) => apiFetch(`/offers/${id}`, 'PATCH', data, true),  delete: (id) => apiFetch(`/offers/${id}`, 'DELETE', null, true),}
+  update: (id, data) => apiFetch(`/offers/${id}`, 'PATCH', data, true),
+  delete: (id) => apiFetch(`/offers/${id}`, 'DELETE', null, true),
+  /** Vue comparative des candidatures pour un AO */
+  compare: (aoId) => apiFetch(`/offers/compare/${aoId}`, 'GET', null, true),
+}
 
 // ─── Products API (real HTTP → PostgreSQL) ────────────────────────────────────
 const productsApi = {
@@ -712,4 +716,12 @@ export const api = {
   payments,
   integrations,
   kai,
+  reviews: {
+    getAll: (params = {}) => { const qs = new URLSearchParams(params).toString(); return apiFetch(`/reviews${qs ? '?' + qs : ''}`, 'GET', null, true) },
+    create: (data) => apiFetch('/reviews', 'POST', data, true),
+  },
+  admin: {
+    getVerifications: () => apiFetch('/admin/verifications', 'GET', null, true),
+    verify: (userId, data) => apiFetch(`/admin/verify/${userId}`, 'PATCH', data, true),
+  },
 }

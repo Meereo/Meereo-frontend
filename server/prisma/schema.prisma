@@ -38,6 +38,7 @@ model User {
   // Identifiant public unique pour les pages de profil public (/pro?uuid=XXX)
   // Nullable pour les comptes existants — généré à l'inscription pour les nouveaux
   publicId      String?  @unique @default(uuid())
+  slug          String?  @unique   // URL SEO-friendly (ex: "raw-design")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -117,7 +118,31 @@ model User {
   // Données du wizard d'onboarding (profil complet : entreprise, logo, bio, secteurs…)
   onboardingData Json @default("{}")
 
+  // Avis reçus / donnés
+  receivedReviews Review[] @relation("ReviewTarget")
+  givenReviews    Review[] @relation("ReviewAuthor")
+
   @@map("users")
+}
+
+// ─── Avis client vérifié ─────────────────────────────────────────────────────
+
+model Review {
+  id          String   @id @default(cuid())
+  authorId    String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  targetId    String
+  target      User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  projectId   String?
+  note        Int      @default(5)   // 1-5 étoiles
+  qualite     Int?     // 1-5
+  delais      Int?     // 1-5
+  communication Int?   // 1-5
+  comment     String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@unique([authorId, targetId, projectId])
+  @@map("reviews")
 }
 
 // ─── Profil Client (Maître d'Ouvrage) ────────────────────────────────────────
