@@ -49,14 +49,12 @@ const FEATURES = [
   { num:'04', dot:'#7C3AED', title:'KAI — Assistant personnel IA', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets avec précision.' },
 ]
 
-/* ── Client data ── */
-const CLIENT_STEPS = [{n:1,label:'Mon profil'},{n:2,label:'Mon projet'},{n:3,label:'Ma situation'},{n:4,label:'Prêt à démarrer'}]
-const CLIENT_TITLES = ['Vos informations','Votre projet','Votre situation','Prêt à démarrer']
+/* ── Client data (SIMPLIFIED — 2 steps) ── */
+const CLIENT_STEPS = [{n:1,label:'Mon compte'},{n:2,label:'Prêt à démarrer'}]
+const CLIENT_TITLES = ['Créez votre compte','Bienvenue sur MEEREO']
 const CLIENT_SUBS = [
-  'Ces informations vous permettront de recevoir des devis et de communiquer plus facilement avec les professionnels adaptés à votre projet.',
-  'Décrivez votre projet pour que les professionnels puissent vous faire des offres adaptées.',
-  'Cela nous permettra de vous guider vers les prochaines étapes les plus adaptées.',
-  'Votre profil est prêt. Lancez votre premier projet sur Meereo.',
+  'Renseignez vos informations essentielles. Vous pourrez compléter votre profil et créer votre premier projet depuis votre cockpit.',
+  'Votre espace est prêt. Créez votre premier projet en quelques clics.',
 ]
 const PT_TYPES = [
   {em:<Home size={20}/>,label:'Villa / Maison'},
@@ -79,14 +77,12 @@ const CLIENT_PROC = [
 ]
 
 /* ── Pro data ── */
-const PRO_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon logo'},{n:3,label:'Services & Bio'},{n:4,label:'Portfolio & Équipe'},{n:5,label:'Mon profil public'}]
-const PRO_TITLES = ['Votre structure','Votre identité visuelle','Services & Présentation','Portfolio & Équipe','Votre profil est prêt']
+/* ── Pro data (SIMPLIFIED — 2 steps) ── */
+const PRO_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon espace pro'}]
+const PRO_TITLES = ['Créez votre espace professionnel','Votre cockpit est prêt']
 const PRO_SUBS = [
-  'Ces informations apparaîtront sur votre profil public et dans la Bourse des Appels d\'Offres.',
-  'Personnalisez votre marque ou chargez un logo existant. Cette identité apparaîtra sur votre profil public et dans toutes vos communications.',
-  'Ces informations construisent votre page publique. Plus vous êtes précis, plus vous recevrez des missions adaptées à votre expertise.',
-  'Les photos de réalisations augmentent de 4× vos chances d\'être sélectionné sur un appel d\'offres.',
-  'Votre page publique professionnelle est créée et indexée. Partagez-la pour recevoir des demandes directes.',
+  'Renseignez votre entreprise et vos coordonnées. Logo, portfolio, services et équipe pourront être complétés depuis votre cockpit.',
+  'Accédez à votre espace et commencez à recevoir des appels d\'offres.',
 ]
 const PRO_SECTEURS = [
   'Architecte & Design',
@@ -126,15 +122,12 @@ function logoContentStyle(shape) {
 const LOGO_TYPOS = ['Gras','Serif','Léger']
 
 /* ── Fournisseur data ── */
-const FRN_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon logo'},{n:3,label:'Mon catalogue'},{n:4,label:'Mes produits'},{n:5,label:'Ma livraison'},{n:6,label:'Prêt à démarrer'}]
-const FRN_TITLES = ['Votre structure','Votre identité visuelle','Votre catalogue','Vos premiers produits','Zones de livraison','Prêt à démarrer']
+/* ── Fournisseur data (SIMPLIFIED — 2 steps) ── */
+const FRN_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon espace fournisseur'}]
+const FRN_TITLES = ['Créez votre espace fournisseur','Votre marketplace est prête']
 const FRN_SUBS = [
-  'Ces informations apparaîtront sur votre page fournisseur et dans le Marketplace.',
-  'Personnalisez votre marque ou chargez un logo existant.',
-  'Sélectionnez les catégories de produits que vous proposez.',
-  'Ajoutez vos premiers produits pour commencer à vendre sur le Marketplace.',
-  'Où livrez-vous vos produits ? Sélectionnez les zones couvertes.',
-  'Votre espace fournisseur est prêt. Vos produits sont sur le Marketplace.',
+  'Renseignez votre entreprise et vos coordonnées. Catalogue, produits et zones de livraison pourront être complétés depuis votre espace.',
+  'Accédez à votre espace et commencez à vendre sur le Marketplace MEEREO.',
 ]
 const FRN_CAT_SECTIONS = [
   {title:'Matériaux de construction',cats:[
@@ -408,62 +401,29 @@ export default function Onboarding() {
   // ── Validation par étape — retourne un message d'erreur ou null si OK ──
   const validateStep = (step, type, f) => {
     const isEmail = (v) => v && v.includes('@') && v.includes('.')
+    // SIMPLIFIED: Only step 1 is validated (account creation essentials)
+    if (step !== 1) return null
+
+    // Common validation for all types
+    if (!isEmail(f.email)) return 'Adresse email valide requise'
+    if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
+    if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+    if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
+    if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+
     if (type === 'client') {
-      if (step === 1) {
-        if (!f.prenom?.trim()) return 'Le prénom est requis'
-        if (!f.nom?.trim()) return 'Le nom de famille est requis'
-        if (!isEmail(f.email)) return 'Adresse email valide requise'
-        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
-        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
-        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
-        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
-      }
-      if (step === 2) {
-        if (!f.projectType) return 'Veuillez sélectionner un type de projet'
-        if (!f.location?.trim()) return 'La localisation du projet est requise'
-        if (!f.budget || f.budget === '— Choisir —') return 'Veuillez estimer votre budget'
-      }
-      if (step === 3) {
-        if (!f.situation) return 'Veuillez choisir votre situation actuelle'
-      }
+      if (!f.prenom?.trim()) return 'Le prénom est requis'
+      if (!f.nom?.trim()) return 'Le nom de famille est requis'
     }
     if (type === 'pro') {
-      if (step === 1) {
-        if (!f.entreprise?.trim()) return 'Le nom de la structure est requis'
-        if (!f.secteurs?.length) return "Sélectionnez au moins un secteur d'activité"
-        if (!f.ville?.trim()) return 'La ville est requise'
-        if (!isEmail(f.email)) return 'Adresse email professionnelle valide requise'
-        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
-        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
-        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
-        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
-        if (rccmError) return rccmError
-        if (nccError) return nccError
-      }
-      if (step === 3) {
-        if (!f.services?.length) return 'Sélectionnez au moins un service proposé'
-        if (!f.bio?.trim()) return 'La présentation de votre structure est requise'
-      }
+      if (!f.entreprise?.trim()) return 'Le nom de la structure est requis'
+      if (rccmError) return rccmError
+      if (nccError) return nccError
     }
     if (type === 'fournisseur') {
-      if (step === 1) {
-        if (!f.entreprise?.trim()) return "Le nom de l'entreprise est requis"
-        if (!f.ville?.trim()) return 'La ville est requise'
-        if (!isEmail(f.email)) return 'Adresse email professionnelle valide requise'
-        if (!f.tel?.trim()) return 'Le numéro de téléphone est requis'
-        if (!f.password || f.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
-        if (!f.passwordConfirm) return 'Veuillez confirmer votre mot de passe'
-        if (f.password !== f.passwordConfirm) return 'Les mots de passe ne correspondent pas'
-        if (rccmError) return rccmError
-        if (nccError) return nccError
-      }
-      if (step === 3) {
-        if (!f.categories?.length) return 'Sélectionnez au moins une catégorie de produits'
-      }
-      if (step === 5) {
-        if (!f.zones?.length) return 'Sélectionnez au moins une zone de livraison'
-        if (!f.delaiLivraison?.trim()) return 'Le délai de livraison est requis'
-      }
+      if (!f.entreprise?.trim()) return "Le nom de l'entreprise est requis"
+      if (rccmError) return rccmError
+      if (nccError) return nccError
     }
     return null
   }
