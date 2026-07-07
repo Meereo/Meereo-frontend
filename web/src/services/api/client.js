@@ -438,6 +438,8 @@ const projectsApi = {
   create:  (data)     => apiFetch('/projects', 'POST', data, true),
   update:  (id, data) => apiFetch(`/projects/${id}`, 'PATCH', data, true),
   delete:  (id)       => apiFetch(`/projects/${id}`, 'DELETE', null, true),
+  /** Timeline complète du projet (événements, missions, décisions, documents, marchés) */
+  getTimeline: (id)   => apiFetch(`/projects/${id}/timeline`, 'GET', null, true),
 }
 
 // ─── ProjectMembers API (real HTTP → PostgreSQL) ──────────────────────────────
@@ -610,6 +612,8 @@ const aosApi = {
   update: (id, data) => apiFetch(`/aos/${id}`, 'PATCH', data, true),
   delete: (id) => apiFetch(`/aos/${id}`, 'DELETE', null, true),
   getById: (id) => apiFetch(`/aos/${id}`, 'GET', null, true),
+  /** Récupérer le dossier auto-constitué depuis le référentiel entreprise */
+  getDossier: (id) => apiFetch(`/aos/${id}/dossier`, 'GET', null, true),
 }
 
 // ─── Offers API (real HTTP → PostgreSQL) ─────────────────────────────────────

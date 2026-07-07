@@ -78,15 +78,31 @@ router.get('/:publicId', async (req, res, next) => {
       throw createError('Ce profil n\'est pas accessible publiquement', 403)
     }
 
+    // Statistiques supplémentaires
+    const [offersCount, aosAnswered, certifications] = await Promise.all([
+      prisma.offer.count({ where: { supplierId: user.id } }),
+      prisma.offer.count({ where: { supplierId: user.id, statut: 'accepted' } }),
+      prisma.document.findMany({
+        where: { userId: user.id, isEntreprise: true, category: 'certification', parentId: null },
+        select: { id: true, name: true, expiresAt: true, createdAt: true },
+      }),
+    ])
+
     // Calculer les statistiques publiques
     const projects = user.ownedProjects || []
     const markets  = user.supplierMarkets || []
+    const anciennete = Math.max(1, Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30)))
     const stats = {
       projectsCount:      projects.length,
       projectsActive:     projects.filter(p => p.avancement > 0 && p.avancement < 100).length,
       projectsCompleted:  projects.filter(p => p.avancement >= 100).length,
       missionsCompleted:  markets.filter(m => m.statut === 'completed' || m.statut === 'livre').length,
       missionsActive:     markets.filter(m => m.statut === 'signed' || m.statut === 'ongoing' || m.statut === 'IN_PROGRESS').length,
+      offersSubmitted:    offersCount,
+      offersAccepted:     aosAnswered,
+      tauxReponse:        offersCount > 0 ? Math.round(aosAnswered / offersCount * 100) : 0,
+      ancienneteMois:     anciennete,
+      certifications:     certifications,
     }
 
     // Fusionner proProfile + onboardingData → profil public cohérent

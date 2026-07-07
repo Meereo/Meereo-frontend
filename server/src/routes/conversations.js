@@ -91,7 +91,7 @@ router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const myId = req.user.id
-    const { participantId, participantIds, title, aoId, offerId } = req.body
+    const { participantId, participantIds, title, aoId, offerId, type, projectId, missionId } = req.body
 
     if (participantId) {
       // ─── 1:1 : chercher si elle existe déjà ───────────────────────────────
@@ -125,8 +125,11 @@ router.post('/', requireAuth, async (req, res, next) => {
         conv = await prisma.conversation.create({
           data: {
             isGroup: false,
+            type: type || 'libre',
             aoId: aoId || null,
             offerId: offerId || null,
+            projectId: projectId || null,
+            missionId: missionId || null,
             participants: {
               create: [
                 { userId: myId },

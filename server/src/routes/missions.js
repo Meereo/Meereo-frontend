@@ -213,7 +213,10 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       const conversation = await prisma.conversation.create({
         data: {
           isGroup: false,
-          nom: 'Mission : ' + (mission.title || ''),
+          title: 'Mission : ' + (mission.title || ''),
+          type: 'mission',
+          projectId: mission.projectId,
+          missionId: mission.id,
           participants: {
             create: participants.map(uid => ({ userId: uid })),
           },
@@ -221,6 +224,20 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       })
       data.conversationId = conversation.id
       data.startedAt = new Date()
+
+      // Auto-créer un contact CRM intervenant
+      if (mission.responsibleUserId && mission.responsibleUserId !== mission.createdBy) {
+        await prisma.contact.create({
+          data: {
+            type: 'intervenant',
+            nom: mission.responsibleName || 'Intervenant',
+            email: mission.responsibleEmail || '',
+            role: mission.type || '',
+            statut: 'actif',
+            ownerId: mission.createdBy,
+          },
+        }).catch(() => {}) // ignore si doublon
+      }
 
       // Ajouter le responsable comme membre du projet si nécessaire
       if (mission.responsibleUserId) {

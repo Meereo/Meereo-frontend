@@ -48,6 +48,10 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     if (!title || !title.trim()) throw createError("Le titre de l'AO est requis", 400)
 
+    // Règle métier : le client ne peut créer un AO que pour un Bureau d'Architecture
+    const isClient = req.user.type === 'client'
+    const resolvedTrade = isClient ? "Bureau d'Architecture" : (requestedTrade || lot || '')
+
     const prisma = getPrisma()
     const ao = await prisma.aO.create({
       data: {
@@ -56,7 +60,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         budget: budget || '',
         lot: lot || '',
         status: 'open',
-        requestedTrade: requestedTrade || lot || '',
+        requestedTrade: resolvedTrade,
         visibilityScope: visibilityScope || 'public',
         ownerUserId: req.user.id,
         ownerProfileType: ownerProfileType || req.user.type,
@@ -95,6 +99,41 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
   } catch (e) {
     next(e)
   }
+})
+
+// GET /api/aos/:id/dossier — récupérer le dossier auto-constitué depuis le référentiel entreprise
+// Utilisé par un pro qui veut répondre à un AO — prépare automatiquement son dossier
+router.get('/:id/dossier', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const ao = await prisma.aO.findUnique({ where: { id: req.params.id } })
+    if (!ao) throw createError('AO introuvable', 404)
+
+    // Récupérer les documents entreprise du professionnel
+    const entrepriseDocs = await prisma.document.findMany({
+      where: { userId: req.user.id, isEntreprise: true, parentId: null },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Récupérer le profil professionnel
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, name: true, company: true, publicId: true, onboardingData: true },
+    })
+
+    // Grouper les documents par catégorie
+    const dossier = {
+      entreprise: user,
+      documents: {
+        administratifs: entrepriseDocs.filter(d => ['rccm', 'attestation_fiscale', 'assurance', 'admin'].includes(d.category || d.type)),
+        certifications: entrepriseDocs.filter(d => d.category === 'certification'),
+        presentations: entrepriseDocs.filter(d => ['presentation', 'portfolio'].includes(d.category)),
+        autres: entrepriseDocs.filter(d => !['rccm', 'attestation_fiscale', 'assurance', 'admin', 'certification', 'presentation', 'portfolio'].includes(d.category || d.type)),
+      },
+      totalDocuments: entrepriseDocs.length,
+    }
+    res.json(dossier)
+  } catch (e) { next(e) }
 })
 
 // DELETE /api/aos/:id — supprimer un AO (hard delete si sans offres, sinon annulation)

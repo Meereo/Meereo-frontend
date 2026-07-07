@@ -2,6 +2,7 @@ const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
 const { createError } = require('../middleware/errorHandler')
+const { getIo } = require('../socket')
 
 const router = Router()
 
@@ -98,7 +99,79 @@ router.post('/', requireAuth, async (req, res, next) => {
         taskStates:  taskStates  || null,
       },
     })
+
+    // Auto-créer une conversation de type "projet"
+    await prisma.conversation.create({
+      data: {
+        title: 'Projet : ' + nom,
+        isGroup: true,
+        type: 'projet',
+        projectId: project.id,
+        participants: { create: [{ userId: req.user.id }] },
+      },
+    }).catch(() => {}) // non-blocking
+
+    // Auto-créer un contact CRM si un client est désigné
+    if (clientId && clientId !== req.user.id) {
+      const clientUser = await prisma.user.findUnique({ where: { id: clientId }, select: { name: true, email: true, phone: true, company: true } }).catch(() => null)
+      if (clientUser) {
+        await prisma.contact.upsert({
+          where: { id: 'auto_' + req.user.id + '_' + clientId }, // dummy — upsert par critère custom ci-dessous
+          update: {},
+          create: {
+            type: 'client',
+            nom: clientUser.company || clientUser.name || client || 'Client',
+            email: clientUser.email || clientEmail || '',
+            tel: clientUser.phone || '',
+            statut: 'actif',
+            ownerId: req.user.id,
+          },
+        }).catch(() => {
+          // Si upsert échoue (pas de contrainte unique), essayer create simple en ignorant les doublons
+          prisma.contact.create({
+            data: {
+              type: 'client',
+              nom: clientUser.company || clientUser.name || client || 'Client',
+              email: clientUser.email || clientEmail || '',
+              tel: clientUser.phone || '',
+              statut: 'actif',
+              ownerId: req.user.id,
+            },
+          }).catch(() => {})
+        })
+      }
+    }
+
     res.status(201).json(project)
+  } catch (e) { next(e) }
+})
+
+// ─── GET /api/projects/:id/timeline — chronologie complète du projet ─────────
+router.get('/:id/timeline', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const projectId = req.params.id
+
+    const [events, missions, decisions, documents, markets, activities] = await Promise.all([
+      prisma.event.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, select: { id: true, titre: true, type: true, date: true, createdAt: true } }),
+      prisma.mission.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, select: { id: true, title: true, type: true, status: true, createdAt: true, startedAt: true, completedAt: true } }),
+      prisma.decision.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, select: { id: true, titre: true, statut: true, urgent: true, createdAt: true } }),
+      prisma.document.findMany({ where: { projectId, parentId: null }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, name: true, type: true, createdAt: true } }),
+      prisma.market.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, select: { id: true, titre: true, lot: true, entreprise: true, statut: true, createdAt: true } }),
+      prisma.activity.findMany({ where: { data: { path: ['projectId'], equals: projectId } }, orderBy: { createdAt: 'desc' }, take: 50, select: { id: true, action: true, data: true, createdAt: true } }).catch(() => []),
+    ])
+
+    // Fusionner en timeline unique triée par date
+    const timeline = [
+      ...events.map(e => ({ ...e, _type: 'event', _date: e.createdAt })),
+      ...missions.map(m => ({ ...m, _type: 'mission', _date: m.createdAt })),
+      ...decisions.map(d => ({ ...d, _type: 'decision', _date: d.createdAt })),
+      ...documents.map(d => ({ ...d, _type: 'document', _date: d.createdAt })),
+      ...markets.map(m => ({ ...m, _type: 'market', _date: m.createdAt })),
+      ...activities.map(a => ({ ...a, _type: 'activity', _date: a.createdAt })),
+    ].sort((a, b) => new Date(b._date) - new Date(a._date))
+
+    res.json(timeline)
   } catch (e) { next(e) }
 })
 
