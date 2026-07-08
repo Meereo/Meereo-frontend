@@ -968,7 +968,7 @@ model Asset {
   maintenances   Json      @default("[]")  // [{id, date, entreprise, description, pieces, rapport}]
   missionId      String?
   createdBy      String
-  creator        User      @relation("CreatedAssets", fields: [createdBy], references: [id])
+  creator        User      @relation("CreatedAssets", fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -982,7 +982,7 @@ model Passport {
   projectId     String    @unique
   project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   ownerId       String
-  owner         User      @relation("OwnedPassports", fields: [ownerId], references: [id])
+  owner         User      @relation("OwnedPassports", fields: [ownerId], references: [id], onDelete: Cascade)
   nom           String
   adresse       String    @default("")
   type          String    @default("")   // type de bâtiment

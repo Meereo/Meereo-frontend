@@ -551,17 +551,9 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: 'Mot de passe incorrect' })
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: 'Compte supprimé',
-        email: `deleted_${userId}@meereo.ci`,
-        passwordHash: 'DELETED',
-        avatar: null,
-        phone: null,
-        company: null,
-      },
-    })
+    // Hard delete — Prisma onDelete:Cascade removes all related records
+    // (profiles, projects, AOs, offers, messages, orders, tasks, documents, etc.)
+    await prisma.user.delete({ where: { id: userId } })
 
     // Clear the session cookie so the user is immediately unauthenticated
     res.clearCookie('meereo_token', { path: '/', sameSite: 'strict' })
