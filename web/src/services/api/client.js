@@ -644,6 +644,8 @@ const usersApi = {
   getOnboardingData:   () => apiFetch('/users/me/onboarding', 'GET', null, true),
   updateOnboardingData:(data) => apiFetch('/users/me/onboarding', 'PATCH', data, true),
   getProProfile:       (publicId) => apiFetch(`/pro/${publicId}`, 'GET', null, false),
+  getPageSections:     () => apiFetch('/pro/page-sections/me', 'GET', null, true),
+  savePageSections:    (sections) => apiFetch('/pro/page-sections', 'PUT', { sections }, true),
 }
 
 // ─── Conversations API (real HTTP → PostgreSQL) ───────────────────────────────

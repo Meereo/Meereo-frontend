@@ -52,6 +52,7 @@ const NAV_GROUPS = [
   {
     label: 'Système',
     items: [
+      { id: 'page-builder', label: 'Ma page pro', icon: 'layers' },
       { id: 'parametres', label: 'Paramètres', icon: 'settings' },
     ]
   }

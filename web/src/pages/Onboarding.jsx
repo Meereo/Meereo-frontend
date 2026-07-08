@@ -1,5 +1,6 @@
 ﻿import { useState, useRef, useEffect, memo } from 'react'
 import Modal from '../components/shared/Modal'
+import SectionsBuilder from '../components/sections-builder'
 import {
   Home, HardHat, Store, Hammer, Pencil,
   Search, CheckCircle2, Trophy,
@@ -329,6 +330,8 @@ export default function Onboarding() {
   const [prodCat, setProdCat] = useState('')
   const [prodPhoto, setProdPhoto] = useState(null)
   const [showAOConfirm, setShowAOConfirm] = useState(false)
+  const [showPageBuilder, setShowPageBuilder] = useState(false)
+  const [pageSections, setPageSections] = useState([])
   const [showForgot, setShowForgot] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
@@ -465,6 +468,11 @@ export default function Onboarding() {
 
     // Clear wizard progress — account created successfully
     try { sessionStorage.removeItem('meereo_onboarding') } catch {}
+
+    // Save page builder sections if any (pro only)
+    if (userType === 'pro' && pageSections.length > 0) {
+      api.usersApi.savePageSections(pageSections).catch(() => {})
+    }
 
     // 2. Register products for fournisseur
     if(userType==='fournisseur' && form.products.length>0) {
@@ -1750,9 +1758,16 @@ export default function Onboarding() {
                     ))}
                   </div>
 
-                  {/* Share */}
+                  {/* Share + Page Builder */}
                   <div style={{display:'flex',gap:8,marginTop:8}}>
                     <button className="ob-btn-out" style={{flex:1,fontSize:11,padding:'8px 0'}} onClick={()=>{navigator.clipboard.writeText('meereo.com/pro/'+((form.entreprise||'structure').toLowerCase().replace(/\s+/g,'-')));showToast('Lien copié !','green')}}>Copier le lien</button>
+                  </div>
+                  <div style={{marginTop:12}}>
+                    <button className="ob-btn-blk" style={{width:'100%',padding:'12px 0',fontSize:12,background:'linear-gradient(135deg,#7C3AED,#6D28D9)'}} onClick={()=>setShowPageBuilder(true)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:6,display:'inline'}}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                      Personnaliser ma page avec le Builder
+                    </button>
+                    {pageSections.length > 0 && <div style={{fontSize:10,color:'var(--t3)',textAlign:'center',marginTop:6}}>{pageSections.length} section{pageSections.length>1?'s':''} configurée{pageSections.length>1?'s':''}</div>}
                   </div>
                 </>})()}
 
@@ -1797,6 +1812,18 @@ export default function Onboarding() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Page Builder fullscreen */}
+      {showPageBuilder && (
+        <div style={{position:'fixed',inset:0,zIndex:9999}}>
+          <SectionsBuilder
+            initialSections={pageSections}
+            pageTitle={(form.entreprise || 'Ma page pro')}
+            onSave={async (sections) => { setPageSections(sections); showToast('Page sauvegardée !','green') }}
+            onClose={() => setShowPageBuilder(false)}
+          />
         </div>
       )}
 

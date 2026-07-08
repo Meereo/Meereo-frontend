@@ -9,6 +9,7 @@ import { formatBudgetDisplay } from '../../../utils/helpers'
 import Modal from '../../../components/shared/Modal'
 import MeereoLogo from '../../../components/shared/MeereoLogo'
 import { api } from '../../../services/api/client'
+import SectionRenderer from '../../../components/sections-builder/SectionRenderer'
 import '../../../styles/profile.css'
 
 // Services par dûfaut proposés aux pros si aucun service n'est encore renseigné
@@ -1211,6 +1212,15 @@ export default function Profile() {
           )}
         </div>,
         document.body
+      )}
+
+      {/* PAGE BUILDER SECTIONS */}
+      {(pubData?.pageSections || []).length > 0 && (
+        <div className="pp-builder-sections">
+          {pubData.pageSections.map((section) => (
+            <SectionRenderer key={section.id} section={section} />
+          ))}
+        </div>
       )}
 
       {/* FOOTER */}

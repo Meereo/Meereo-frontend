@@ -31,6 +31,7 @@ const TasksBoard = lazy(() => import('./TasksBoard'))
 const Budget = lazy(() => import('./Budget'))
 const Missions = lazy(() => import('./Missions'))
 const Assets = lazy(() => import('./Assets'))
+const PageBuilder = lazy(() => import('./PageBuilder'))
 const PAGES = {
   dashboard: Dashboard, projets: Projects, clients: Clients, messages: Messages,
   chantier: Worksite, intervenants: Contractors, paiements: Payments,
@@ -38,7 +39,7 @@ const PAGES = {
   documents: Documents, integrations: Integrations, parametres: Settings,
   marches: Contracts, rapports: Reports, commandes: Orders,
   fournisseurs: Suppliers, finance: Finance, 'taches-board': TasksBoard,
-  budget: Budget, missions: Missions, actifs: Assets,
+  budget: Budget, missions: Missions, actifs: Assets, 'page-builder': PageBuilder,
 }
 
 // Suspense fallback — minimal loading indicator

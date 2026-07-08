@@ -596,9 +596,20 @@ export function MeereoProvider({ children }) {
     })
   }, [updateStore])
 
-  // ═══ REGISTER — Creates account on backend, then logs out immediately.
-  // The caller (Onboarding) redirects to the login page; the user must log in manually.
+  // ═══ REGISTER — Creates account on backend, keeps user logged in and redirects.
   const createUser = useCallback(async (data) => {
+    justCreated.current = true // Skip boot hydration for fresh accounts
+    const user = {
+      id: 'u_' + Date.now(),
+      type: data.type || 'pro',
+      name: data.name || data.nom || '',
+      company: data.company || data.entreprise || data.societe || '',
+      email: data.email || '',
+      phone: data.phone || data.tel || '',
+      avatar: data.avatar || '',
+      wallet: 0,
+      createdAt: new Date().toISOString()
+    }
     // Build onboardingData — keep only serializable, reasonably-sized fields
     const obData = {}
     const textKeys = ['userType','prenom','nom','civilite','entreprise','metier','ville','annee','rccm','ncc',
@@ -627,57 +638,161 @@ export function MeereoProvider({ children }) {
     else if (data.portfolioFiles) obData.portfolio = (data.portfolioFiles || []).filter(u => typeof u === 'string').map((url, i) => ({ img: safeImg(url), cap: 'Réalisation ' + (i+1), feat: i === 0 })).filter(p => p.img)
     if (data.products) obData.products = data.products.map(p => ({ name: p.name, price: p.price, unit: p.unit, category: p.category, photoUrl: safeImg(p.photoUrl) }))
 
-    // Only MinIO URLs (no base64) in the register payload to stay within size limits
-    const safeImgUrl = (v) => (v && typeof v === 'string' && !v.startsWith('data:')) ? v : undefined
-
-    // Register account on backend — throws on error (caller shows toast)
-    const res = await api.auth.register({
-      email: data.email || 'user_' + Date.now() + '@meereo.ci',
-      password: data.password || '',
-      name: data.name || data.nom || '',
-      type: data.type || 'pro',
-      ...(data.company || data.entreprise ? { company: data.company || data.entreprise } : {}),
-      ...(data.phone || obData.tel || obData.telPro ? { phone: data.phone || obData.tel || obData.telPro } : {}),
-      ...(data.ville  ? { ville: data.ville }  : {}),
-      ...(data.pays   ? { pays: data.pays }    : {}),
-      ...(data.metier ? { metier: data.metier } : obData.secteurs?.[0] ? { metier: obData.secteurs[0] } : {}),
-      ...(obData.entreprise ? { entreprise: obData.entreprise } : {}),
-      ...(obData.rccm       ? { rccm: obData.rccm }             : {}),
-      ...(obData.ncc        ? { ncc: obData.ncc }               : {}),
-      ...(obData.annee      ? { annee: obData.annee }           : {}),
-      ...(obData.slogan     ? { slogan: obData.slogan }         : {}),
-      ...(obData.bio        ? { bio: obData.bio }               : {}),
-      ...(obData.projetsN   ? { projetsN: obData.projetsN }     : {}),
-      ...(obData.effectif   ? { effectif: obData.effectif }     : {}),
-      ...(obData.logoColor  ? { logoColor: obData.logoColor }   : {}),
-      ...(obData.logoShape  ? { logoShape: obData.logoShape }   : {}),
-      ...(obData.logoTypo   ? { logoTypo: obData.logoTypo }     : {}),
-      ...(obData.secteurs?.length   ? { secteurs: obData.secteurs }   : {}),
-      ...(obData.services?.length   ? { services: obData.services }   : {}),
-      ...(obData.zones?.length      ? { zones: obData.zones }         : {}),
-      ...(obData.categories?.length ? { categories: obData.categories } : {}),
-      ...(safeImgUrl(obData.logoFileUrl)  ? { logoFileUrl: obData.logoFileUrl }   : {}),
-      ...(safeImgUrl(obData.photoUrl)     ? { photoUrl: obData.photoUrl }         : {}),
-      ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
+    updateStore(prev => {
+      const exists = prev.users.find(u => u && u.email === user.email)
+      const savedObs = { ...(prev._onboardingByUser || {}) }
+      if (prev.user?.id && prev.onboardingData) {
+        savedObs[prev.user.id] = prev.onboardingData
+      }
+      return {
+        ...prev,
+        user,
+        users: exists ? prev.users : [...prev.users, user],
+        onboardingData: obData,
+        _onboardingByUser: savedObs,
+        ...buildKaiState([], [], []),
+        notifications: [],
+        activities: [],
+        messages: [],
+        conversations: [],
+      }
     })
 
-    if (res?.token) {
-      // Temporarily activate session to persist full onboarding data to DB
-      setInMemoryToken(res.token)
-      if (obData && Object.keys(obData).length > 0) {
-        // Normaliser la bannière : l'onboarding la stocke sous 'coverUrl',
-        // mais Profile.jsx et le proMap backend l'attendent sous 'bannerUrl'
-        if (obData.coverUrl && !obData.bannerUrl) obData.bannerUrl = obData.coverUrl
-        await api.usersApi.updateOnboardingData(obData).catch(() => {})
+    // Register on backend to get a JWT token
+    const userPassword = data.password || user.id
+    const safeImgUrl = (v) => (v && typeof v === 'string' && !v.startsWith('data:')) ? v : undefined
+    try {
+      const res = await api.auth.register({
+        email: user.email || 'user_' + user.id + '@meereo.ci',
+        password: userPassword,
+        name: user.name,
+        type: user.type,
+        ...(user.company    ? { company: user.company }    : {}),
+        ...(user.phone      ? { phone: user.phone }        : {}),
+        ...(data.ville      ? { ville: data.ville }        : {}),
+        ...(data.pays       ? { pays: data.pays }          : {}),
+        ...(data.metier     ? { metier: data.metier }      : obData.secteurs?.[0] ? { metier: obData.secteurs[0] } : {}),
+        ...(obData.entreprise ? { entreprise: obData.entreprise } : {}),
+        ...(obData.rccm       ? { rccm: obData.rccm }             : {}),
+        ...(obData.ncc        ? { ncc: obData.ncc }               : {}),
+        ...(obData.annee      ? { annee: obData.annee }           : {}),
+        ...(obData.slogan     ? { slogan: obData.slogan }         : {}),
+        ...(obData.bio        ? { bio: obData.bio }               : {}),
+        ...(obData.projetsN   ? { projetsN: obData.projetsN }     : {}),
+        ...(obData.effectif   ? { effectif: obData.effectif }     : {}),
+        ...(obData.tel || obData.telPro ? { tel: obData.tel || obData.telPro } : {}),
+        ...(obData.logoColor  ? { logoColor: obData.logoColor }   : {}),
+        ...(obData.logoShape  ? { logoShape: obData.logoShape }   : {}),
+        ...(obData.logoTypo   ? { logoTypo: obData.logoTypo }     : {}),
+        ...(obData.secteurs?.length   ? { secteurs: obData.secteurs }   : {}),
+        ...(obData.services?.length   ? { services: obData.services }   : {}),
+        ...(obData.zones?.length      ? { zones: obData.zones }         : {}),
+        ...(obData.categories?.length ? { categories: obData.categories } : {}),
+        ...(safeImgUrl(obData.logoFileUrl)  ? { logoFileUrl: obData.logoFileUrl }   : {}),
+        ...(safeImgUrl(obData.photoUrl)     ? { photoUrl: obData.photoUrl }         : {}),
+        ...(safeImgUrl(obData.coverUrl)     ? { coverUrl: obData.coverUrl }         : {}),
+      })
+      if (res?.token) {
+        // Store token + hydrate shared business data from PostgreSQL
+        const [apiAos, apiOffers, apiProjects, apiMarkets] = await Promise.all([
+          api.aos.getAll().catch(() => []),
+          api.offers.getAll().catch(() => []),
+          api.projects.getAll().catch(() => []),
+          api.markets.getAll().catch(() => []),
+        ])
+        const realUser = {
+          ...user,
+          id: res.user?.id || user.id,
+          name: res.user?.name || user.name,
+          type: res.user?.type || user.type,
+          company: res.user?.company || user.company,
+        }
+        setInMemoryToken(res.token)
+        storeRef.current = { ...storeRef.current, user: realUser, _token: res.token }
+        updateStore(prev => {
+          const updatedObs = { ...(prev._onboardingByUser || {}) }
+          if (res.user?.id && user.id !== res.user.id) {
+            if (prev.onboardingData) updatedObs[res.user.id] = prev.onboardingData
+            delete updatedObs[user.id]
+          }
+          return {
+            ...prev,
+            user: realUser,
+            users: mergeById(prev.users || [], [realUser]),
+            _onboardingByUser: updatedObs,
+            _token: res.token,
+            _hydrated: true,
+            aos: apiAos,
+            offers: apiOffers,
+            projects: apiProjects,
+            markets: apiMarkets,
+          }
+        })
+        // Persister onboardingData en BD
+        if (obData && Object.keys(obData).length > 0) {
+          if (obData.coverUrl && !obData.bannerUrl) obData.bannerUrl = obData.coverUrl
+          api.usersApi.updateOnboardingData(obData).catch(() => {})
+        }
       }
-      setInMemoryToken(null)
+    } catch (e) {
+      // Register failed (409 = email exists) → try login instead
+      console.warn('[MEEREO] Register failed:', e.message, '— trying login')
+      try {
+        const loginRes = await api.auth.login({ email: user.email, password: userPassword })
+        if (loginRes?.token) {
+          const realUser = {
+            ...user,
+            id: loginRes.user.id,
+            name: loginRes.user.name || user.name,
+            type: loginRes.user.type || user.type,
+            company: loginRes.user.company || user.company,
+          }
+          const [apiAos, apiOffers, apiProjects, apiMarkets] = await Promise.all([
+            api.aos.getAll().catch(() => []),
+            api.offers.getAll().catch(() => []),
+            api.projects.getAll().catch(() => []),
+            api.markets.getAll().catch(() => []),
+          ])
+          setInMemoryToken(loginRes.token)
+          storeRef.current = { ...storeRef.current, user: realUser, _token: loginRes.token }
+          updateStore(prev => {
+            const updatedObs = { ...(prev._onboardingByUser || {}) }
+            if (loginRes.user?.id && user.id !== loginRes.user.id) {
+              if (prev.onboardingData) updatedObs[loginRes.user.id] = prev.onboardingData
+              delete updatedObs[user.id]
+            }
+            return {
+              ...prev,
+              user: realUser,
+              users: mergeById(prev.users || [], [realUser]),
+              _onboardingByUser: updatedObs,
+              _token: loginRes.token,
+              _hydrated: true,
+              aos: apiAos,
+              offers: apiOffers,
+              projects: apiProjects,
+              markets: apiMarkets,
+            }
+          })
+        }
+      } catch (loginErr) {
+        // Both register and login failed — clean up and throw
+        if (loginErr?.response?.status === 401) {
+          updateStore(prev => ({
+            ...prev,
+            user: null,
+            users: (prev.users || []).filter(u => u.id !== user.id),
+            onboardingData: null,
+          }))
+          throw new Error('Un compte existe déjà avec cet email. Connectez-vous ou réinitialisez votre mot de passe.')
+        }
+        console.warn('[MEEREO] Login fallback also failed:', loginErr.message)
+      }
     }
-
-    // Immediately log out — user must explicitly log in after registration
-    await api.auth.logout().catch(() => {})
-
-    return { type: data.type || 'pro', email: data.email || '' }
-  }, [])
+    log('USER_CREATED', { name: user.name, type: user.type })
+    addNotif('Bienvenue sur MEEREO, ' + (user.name || user.company) + '\u00a0!', 'green', null, 'dashboard')
+    return user
+  }, [updateStore, log, addNotif])
 
   // ═══ LOGIN — API-first, PostgreSQL is source of truth ═══
   // Returns: { user object } on success, or throws Error with user-facing message

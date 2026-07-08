@@ -219,6 +219,9 @@ model ProProfile {
   cockpitTeam    Json @default("[]")
   coverUrl       String?
 
+  // Page builder sections (JSON array of {id, type, data})
+  pageSections   Json   @default("[]")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

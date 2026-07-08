@@ -1,6 +1,7 @@
 const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { createError } = require('../middleware/errorHandler')
+const { requireAuth } = require('../middleware/auth')
 
 const router = Router()
 
@@ -29,6 +30,7 @@ router.get('/:identifier', async (req, res, next) => {
           rccm: true, secteurs: true, services: true, logoColor: true, logoShape: true,
           logoTypo: true, logoFileUrl: true, slogan: true, bio: true, projetsN: true,
           effectif: true, portfolioFiles: true, cockpitTeam: true, coverUrl: true,
+          pageSections: true,
         },
       },
       ownedProjects: {
@@ -125,6 +127,7 @@ router.get('/:identifier', async (req, res, next) => {
       verified: user.verified,
       createdAt: user.createdAt,
       profile,
+      pageSections: pro.pageSections || [],
       stats,
       reviews: reviews.map(r => ({
         id: r.id,
@@ -137,6 +140,44 @@ router.get('/:identifier', async (req, res, next) => {
         author: { name: r.author?.name, company: r.author?.company },
       })),
     })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// ─── PUT /api/pro/page-sections ──────────────────────────────────────────────
+// Sauvegarde les sections de la page builder du pro connecté.
+router.put('/page-sections', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const userId = req.user.id
+    const { sections } = req.body
+
+    if (!Array.isArray(sections)) {
+      throw createError('sections doit être un tableau', 400)
+    }
+
+    await prisma.proProfile.update({
+      where: { userId },
+      data: { pageSections: sections },
+    })
+
+    res.json({ success: true })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// ─── GET /api/pro/page-sections/me ──────────────────────────────────────────
+// Récupère les sections de la page builder du pro connecté.
+router.get('/page-sections/me', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const profile = await prisma.proProfile.findUnique({
+      where: { userId: req.user.id },
+      select: { pageSections: true },
+    })
+    res.json({ sections: profile?.pageSections || [] })
   } catch (e) {
     next(e)
   }
