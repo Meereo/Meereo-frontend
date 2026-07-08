@@ -1,17 +1,27 @@
 import Icon from "./ui/Icon";
 import HeroEditor from "./editors/HeroEditor";
-import FeaturesEditor from "./editors/FeaturesEditor";
+import ServicesEditor from "./editors/ServicesEditor";
+import PortfolioEditor from "./editors/PortfolioEditor";
+import StatsEditor from "./editors/StatsEditor";
+import TeamEditor from "./editors/TeamEditor";
 import TestimonialEditor from "./editors/TestimonialEditor";
 import CTAEditor from "./editors/CTAEditor";
-import PricingEditor from "./editors/PricingEditor";
 import FAQEditor from "./editors/FAQEditor";
-import FooterEditor from "./editors/FooterEditor";
-import GalleryEditor from "./editors/GalleryEditor";
 import ContactEditor from "./editors/ContactEditor";
+import FooterEditor from "./editors/FooterEditor";
 
 const EDITOR_MAP = {
-  "hero": HeroEditor, "features": FeaturesEditor, "testimonial": TestimonialEditor, "testimonials": TestimonialEditor,
-  "cta": CTAEditor, "pricing": PricingEditor, "faq": FAQEditor, "footer": FooterEditor, "gallery": GalleryEditor, "contact": ContactEditor,
+  "hero": HeroEditor,
+  "services": ServicesEditor,
+  "portfolio": PortfolioEditor,
+  "stats": StatsEditor,
+  "team": TeamEditor,
+  "testimonial": TestimonialEditor,
+  "testimonials": TestimonialEditor,
+  "cta": CTAEditor,
+  "faq": FAQEditor,
+  "contact": ContactEditor,
+  "footer": FooterEditor,
 };
 
 function resolveEditor(type) {
