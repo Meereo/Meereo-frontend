@@ -1,6 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
    MEEREO GLOBAL STYLES — Shared across all modules
+   Wrapped in @layer base so Tailwind v4 utilities can override.
 ══════════════════════════════════════════════════════════════ */
+
+@layer base {
 
 /* DS Utilities */
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -1111,3 +1114,5 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
 .fourni-ni.on > span:first-child {
   opacity: 1;
 }
+
+} /* end @layer base */

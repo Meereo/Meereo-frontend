@@ -1,6 +1,8 @@
 /* ══════════════════════════════════════════════════════════════
-   COCKPIT PAGE STYLES
+   COCKPIT PAGE STYLES — @layer base for Tailwind v4 compat
 ══════════════════════════════════════════════════════════════ */
+
+@layer base {
 
 @keyframes cartSlideIn {
   from { transform: translateX(100%); }
@@ -1285,3 +1287,5 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   .split-left { width: 260px; }
   .split-right { padding: 20px 24px; }
 }
+
+} /* end @layer base */
