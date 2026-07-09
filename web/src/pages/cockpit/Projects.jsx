@@ -17,6 +17,7 @@ import { computeProjectAvancement } from '../../domain/projectAggregates'
 import { PHASE_LABELS, normalizePhase } from '../../domain/status'
 import { formatDateFR } from '../../utils/helpers'
 import { CHANTIER_PHASES } from '../../data/chantier'
+import compressImage from '../../utils/compressImage'
 
 // ── Chronologie du projet ──
 function ProjectTimeline({ projectId }) {
@@ -78,7 +79,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, createProject } = useMeereo()
   const isClient = store.user?.type === 'client'
 
-  const blank = { nom: '', type: 'Maison / Villa', phase: 'ESQUISSE', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' }
+  const blank = { nom: '', type: 'Maison / Villa', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' }
   const [f, setF] = useState(blank)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -174,21 +175,6 @@ function ProjetModal({ isOpen, onClose, showToast }) {
               <option>Maison / Villa</option><option>Magasin / Activité</option><option>Usage mixte</option><option>Bureaux / Entreprise</option><option>Autre</option>
             </select>
           </div>
-          {!isClient && (
-            <div>
-              <label className="form-label">Phase du projet</label>
-              <select className="form-input" value={f.phase} onChange={e => setF(p => ({ ...p, phase: e.target.value }))}>
-                <option value="ESQUISSE">Esquisse</option>
-                <option value="AVANT_PROJET">Avant-projet</option>
-                <option value="PROJET_DETAILLE">Projet détaillé</option>
-                <option value="PLANS_EXECUTION">Plans d'exécution</option>
-                <option value="CONSULTATION_ENTREPRISES">Consultation des entreprises</option>
-                <option value="ATTRIBUTION_MARCHES">Attribution des marchés</option>
-                <option value="SUIVI_CHANTIER">Suivi de chantier</option>
-                <option value="RECEPTION">Réception du projet</option>
-              </select>
-            </div>
-          )}
         </div>
 
         {!isClient && (
@@ -377,7 +363,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   }
   const saveEdit = () => {
     if (!editModal) return
-    updateProject(editModal.id, { nom: editModal.nom, name: editModal.nom, client: editModal.client, phase: editModal.phase, budget: editModal.budget, livraison: editModal.livraison, type: editModal.type, adresse: editModal.adresse, localisation: editModal.adresse, description: editModal.description, avancement: editModal.avancement, priorite: editModal.priorite, equipe: editModal.equipe, notes: editModal.notes, clientEmail: editModal.clientEmail })
+    updateProject(editModal.id, { nom: editModal.nom, name: editModal.nom, client: editModal.client, phase: editModal.phase, budget: editModal.budget, livraison: editModal.livraison, type: editModal.type, adresse: editModal.adresse, localisation: editModal.adresse, description: editModal.description, avancement: editModal.avancement, priorite: editModal.priorite, equipe: editModal.equipe, notes: editModal.notes, clientEmail: editModal.clientEmail, img: editModal.img || null })
     setEditModal(null)
     showToast && showToast('Projet mis à jour')
     setSelectedId(null); setTimeout(() => setSelectedId(editModal.id), 0)
@@ -862,6 +848,51 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
               {/* ── Section: Projet ── */}
               {editSection === 'projet' && (<>
+                {/* Banner / photo banderole */}
+                <div>
+                  <label className="form-label">Photo banderole</label>
+                  <div
+                    style={{ position: 'relative', height: 120, borderRadius: 12, overflow: 'hidden', border: editModal.img ? 'none' : '2px dashed var(--border-card)', background: editModal.img ? 'transparent' : 'var(--s2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => document.getElementById('edit-project-banner-input')?.click()}
+                  >
+                    {editModal.img ? (
+                      <>
+                        <img src={editModal.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity .15s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', background: 'rgba(0,0,0,.5)', padding: '6px 14px', borderRadius: 8 }}>Changer la photo</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 22, marginBottom: 4, opacity: .3 }}>📷</div>
+                        <div style={{ fontSize: 11, color: 'var(--t4)', fontWeight: 500 }}>Cliquez pour ajouter une photo banderole</div>
+                      </div>
+                    )}
+                  </div>
+                  <input id="edit-project-banner-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                    const file = e.target.files?.[0]; if (!file) return
+                    try {
+                      const compressed = await compressImage(file, 1200, 0.7)
+                      setEditModal(p => ({ ...p, img: compressed }))
+                      // Upload to MinIO in background
+                      try {
+                        const { uploadFile } = await import('../../utils/upload')
+                        const url = await uploadFile(file, 'banners', 'project-cover')
+                        setEditModal(p => ({ ...p, img: url }))
+                      } catch { /* keep compressed base64 */ }
+                    } catch {
+                      // Fallback: raw base64
+                      const reader = new FileReader()
+                      reader.onload = () => setEditModal(p => ({ ...p, img: reader.result }))
+                      reader.readAsDataURL(file)
+                    }
+                    e.target.value = ''
+                  }} />
+                  {editModal.img && (
+                    <button style={{ marginTop: 6, fontSize: 11, color: 'var(--err)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 500, padding: 0 }} onClick={() => setEditModal(p => ({ ...p, img: null }))}>Supprimer la photo</button>
+                  )}
+                </div>
+
                 <div><label className="form-label">Nom du projet</label><input className="form-input" value={editModal.nom} onChange={e => setEditModal(p => ({ ...p, nom: e.target.value }))} /></div>
                 <div className="modal-row">
                   <div><label className="form-label">Client</label><input className="form-input" value={editModal.client} onChange={e => setEditModal(p => ({ ...p, client: e.target.value }))} /></div>

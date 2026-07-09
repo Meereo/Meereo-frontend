@@ -79,7 +79,7 @@ function NoteModal({ isOpen, onClose, showToast }) {
       createDecision({ titre: f.tache, desc: f.texte, urgent: f.statut === 'Bloque', projectId: (store.projects || [])[0]?.id || null, sourceType: 'note_chantier', sourceId: noteId, decisionType: 'validation' })
     }
     try {
-      const created = await api.rapports.create({ titre: f.tache || 'Note chantier', type: 'note_chantier', statut: f.statut, avancement: f.avancement, texte: f.texte, alertType: f.type, projectId: (store.projects || [])[0]?.id || null })
+      const created = await api.rapports.create({ titre: f.tache || 'Note chantier', type: 'note_chantier', statut: f.statut, avancement: f.avancement, texte: f.texte, alertType: f.type, projectId: (store.projects || [])[0]?.id || null, visibility: 'client_visible', auteur: store.user?.name || '' })
       updateStore(prev => ({ ...prev, notes: prev.notes.map(n => n.id === noteId ? { ...n, id: created.id } : n), rapports: [...(prev.rapports || []), created] }))
     } catch (e) { console.warn('[NoteModal]', e.message) }
     showToast('Note enregistrée')
@@ -838,23 +838,19 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             </div>
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setEvalPresta(null)}>Plus tard</button>
-              <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
-                if (evalPresta.ratings.stars > 0) {
-                  updateStore(prev => ({
-                    ...prev,
-                    reviews: [...(prev.reviews || []), {
-                      id: 'rev_' + Date.now(),
-                      intervenant: evalPresta.nom,
-                      taskId: evalPresta.taskId,
-                      stars: evalPresta.ratings.stars,
-                      comment: evalPresta.ratings.comment || '',
-                      createdAt: new Date().toISOString(),
-                    }]
-                  }))
+              <button style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={async () => {
+                const r = evalPresta.ratings
+                if (r.stars > 0) {
+                  const review = { id: 'rev_' + Date.now(), intervenant: evalPresta.nom, taskId: evalPresta.taskId, stars: r.stars, note: r.stars, qualite: r.qualite, delais: r.delais, communication: r.communication, comment: r.comment || '', createdAt: new Date().toISOString() }
+                  updateStore(prev => ({ ...prev, reviews: [...(prev.reviews || []), review] }))
+                  // Persist to backend
+                  if (evalPresta.targetId) {
+                    try { await api.reviews.create({ targetId: evalPresta.targetId, projectId: selProjId, note: r.stars, qualite: r.qualite, delais: r.delais, communication: r.communication, comment: r.comment }) } catch (e) { console.warn('[Worksite] review API:', e.message) }
+                  }
                 }
                 setEvalDone(prev => [...prev, evalPresta.taskId])
                 setEvalPresta(null)
-                showToast && showToast('évaluation enregistrée à Note mise à jour pour ' + evalPresta.nom)
+                showToast && showToast('Évaluation enregistrée pour ' + evalPresta.nom)
               }}>Envoyer l'evaluation</button>
             </div>
           </div>
@@ -980,7 +976,17 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             {/* Footer */}
             <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
               <button className="btn btn-sm" onClick={() => { setClientRatingModal(null); showToast && showToast('Evaluation ignoree') }}>Plus tard</button>
-              <button className="btn btn-primary btn-sm" onClick={() => { setClientRatingModal(null); showToast && showToast('Merci ! évaluation enregistrée à Le ranking du prestataire a été mis à jour') }}>Envoyer mon évaluation</button>
+              <button className="btn btn-primary btn-sm" disabled={clientRatingModal.ratings.stars < 1} style={{ opacity: clientRatingModal.ratings.stars < 1 ? .5 : 1 }} onClick={async () => {
+                const r = clientRatingModal.ratings
+                if (r.stars < 1) return
+                // Save to store
+                const review = { id: 'rev_' + Date.now(), targetId: clientRatingModal.prestaId || null, projectId: clientRatingModal.projId, note: r.stars, stars: r.stars, qualite: r.qualite, delais: r.delais, communication: r.communication, comment: r.comment || '', createdAt: new Date().toISOString() }
+                updateStore(prev => ({ ...prev, reviews: [...(prev.reviews || []), review] }))
+                // Persist to backend
+                try { await api.reviews.create({ targetId: clientRatingModal.prestaId, projectId: clientRatingModal.projId, note: r.stars, qualite: r.qualite, delais: r.delais, communication: r.communication, comment: r.comment }) } catch (e) { console.warn('[Worksite] review API:', e.message) }
+                setClientRatingModal(null)
+                showToast && showToast('Merci ! Votre avis a été publié sur le profil du prestataire')
+              }}>Envoyer mon évaluation</button>
             </div>
           </div>
         </div>

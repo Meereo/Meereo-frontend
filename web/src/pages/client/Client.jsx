@@ -81,7 +81,7 @@ const computeSmartProgress = (project) => {
 
 export default function Client() {
   const navigate = useNavigate()
-  const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation, stopProject } = useMeereo()
+  const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation, stopProject, respondCloture } = useMeereo()
   const { conversations: mergedConversations, documents: mergedDocuments } = useMergedData()
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
   const [page, setPage] = useState('home')
@@ -405,7 +405,7 @@ export default function Client() {
           {/* HOME */}
           {page === 'home' && <Home ctx={{ proj, projProgress, projBudget, projMarkets, projDocs, totalEngage, totalPendingActions, pendingPaymentReqs, displayedAOs, nonLus, setPage, respondProjectInvitation, ob, store, clientName, fmtDevise, formatShort, getMemberPhoto, setShowProDirectory }} />}
           {/* AVANCEMENT */}
-          {page === 'avancement' && <Progress ctx={{ proj, clientProjects: activeClientProjects, stoppedProjects: stoppedClientProjects, projProgress, setSelProjId, setPage, onStopProject: () => setStopConfirm(true) }} />}
+          {page === 'avancement' && <Progress ctx={{ proj, clientProjects: activeClientProjects, stoppedProjects: stoppedClientProjects, projProgress, setSelProjId, setPage, onStopProject: () => setStopConfirm(true), store, respondCloture, showToast, updateStore }} />}
           {/* BUDGET */}
           {page === 'budget' && <Budget showToast={showToast} onNavigate={p => setPage(p)} />}
 
