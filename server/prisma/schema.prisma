@@ -126,6 +126,9 @@ model User {
   createdAssets    Asset[]    @relation("CreatedAssets")
   ownedPassports   Passport[] @relation("OwnedPassports")
 
+  // Project Missions (responsable)
+  projectMissionResponsibilities ProjectMission[] @relation("ProjectMissionResponsible")
+
   @@map("users")
 }
 
@@ -531,6 +534,7 @@ model Project {
   orders        Order[]
   assets        Asset[]
   passport      Passport?
+  projectMissions ProjectMission[]
 
   @@map("projects")
 }
@@ -998,6 +1002,125 @@ model Passport {
   updatedAt     DateTime  @updatedAt
 
   @@map("passports")
+}
+
+// ─── Enums — Missions / Jalons / Tâches (référentiel + instances) ────────────
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  IN_VALIDATION
+  VALIDATED
+  REOPENED
+}
+
+enum ProjectTaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  IN_VALIDATION
+  DONE
+}
+
+// ─── Templates (immuables — référentiel métier) ─────────────────────────────
+
+model MissionTemplate {
+  id          String   @id @default(cuid())
+  code        String   @unique              // ex: "M1", "M2"…
+  title       String
+  description String   @default("")
+  responsible String   @default("")         // ex: "Bureau d'architecture"
+  order       Int      @default(0)
+  isOptional  Boolean  @default(false)      // true pour Mission 5
+  createdAt   DateTime @default(now())
+
+  milestones MilestoneTemplate[]
+  projectMissions ProjectMission[]
+
+  @@map("mission_templates")
+}
+
+model MilestoneTemplate {
+  id          String   @id @default(cuid())
+  code        String   @unique              // ex: "J1.1", "J4.9"
+  title       String
+  order       Int      @default(0)
+  missionId   String
+  mission     MissionTemplate @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  tasks      TaskTemplate[]
+  projectMilestones ProjectMilestone[]
+
+  @@map("milestone_templates")
+}
+
+model TaskTemplate {
+  id          String   @id @default(cuid())
+  code        String   @unique              // ex: "T1.1.1"
+  title       String
+  order       Int      @default(0)
+  milestoneId String
+  milestone   MilestoneTemplate @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  projectTasks ProjectTask[]
+
+  @@map("task_templates")
+}
+
+// ─── Instances projet (créées à l'activation) ───────────────────────────────
+
+model ProjectMission {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId  String
+  template    MissionTemplate @relation(fields: [templateId], references: [id])
+  isActive    Boolean  @default(true)
+  responsibleUserId String?
+  responsibleUser   User?   @relation("ProjectMissionResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  milestones  ProjectMilestone[]
+
+  @@unique([projectId, templateId])
+  @@map("project_missions")
+}
+
+model ProjectMilestone {
+  id          String          @id @default(cuid())
+  projectMissionId String
+  projectMission   ProjectMission @relation(fields: [projectMissionId], references: [id], onDelete: Cascade)
+  templateId  String
+  template    MilestoneTemplate @relation(fields: [templateId], references: [id])
+  status      MilestoneStatus @default(NOT_STARTED)
+  validatedByPro    Boolean @default(false)
+  validatedByClient Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks       ProjectTask[]
+
+  @@unique([projectMissionId, templateId])
+  @@map("project_milestones")
+}
+
+model ProjectTask {
+  id          String            @id @default(cuid())
+  projectMilestoneId String
+  projectMilestone   ProjectMilestone @relation(fields: [projectMilestoneId], references: [id], onDelete: Cascade)
+  templateId  String
+  template    TaskTemplate @relation(fields: [templateId], references: [id])
+  status      ProjectTaskStatus @default(TODO)
+  blockReason String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([projectMilestoneId, templateId])
+  @@map("project_tasks")
 }
 
 // ─── Knowledge Graph ─────────────────────────────────────────────────────────

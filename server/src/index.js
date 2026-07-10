@@ -48,6 +48,7 @@ const enginesRouter = require('./routes/engines')
 const assetsRouter = require('./routes/assets')
 const passportsRouter = require('./routes/passports')
 const knowledgeRouter = require('./routes/knowledge')
+const projectMissionsRouter = require('./routes/projectMissions')
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,7 @@ app.use('/api/engines',           enginesRouter)
 app.use('/api/assets',            assetsRouter)
 app.use('/api/passports',         passportsRouter)
 app.use('/api/knowledge',         knowledgeRouter)
+app.use('/api/project-missions',  projectMissionsRouter)
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 
