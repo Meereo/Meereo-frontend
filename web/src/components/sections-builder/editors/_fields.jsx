@@ -22,6 +22,33 @@ export function ImageField({ label, value, onChange }) {
   );
 }
 
+export function CheckboxField({ label, checked, onChange }) {
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 rounded border-gray-300" />
+      <label className="text-xs font-medium text-gray-500">{label}</label>
+    </div>
+  );
+}
+
 export function Divider() {
   return <div className="border-t border-gray-100 my-5" />;
+}
+
+export function ListHeader({ label, onAdd }) {
+  return (
+    <div className="flex items-center justify-between mb-2 mt-1">
+      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</span>
+      <button onClick={onAdd} className="text-xs text-blue-500 hover:text-blue-700 font-medium">+ Ajouter</button>
+    </div>
+  );
+}
+
+export function ListItemWrapper({ children, onRemove }) {
+  return (
+    <div className="relative bg-gray-50 rounded-lg p-3 mb-2 border border-gray-100">
+      <button onClick={onRemove} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 text-xs font-bold">✕</button>
+      {children}
+    </div>
+  );
 }

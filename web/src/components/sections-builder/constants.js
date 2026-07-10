@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// constants.js — Section templates for BTP/Construction professional pages
+// constants.js — Section templates based on MEEREO Page Pro doc (33 variants)
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _id = 1;
@@ -7,216 +7,474 @@ export const genId = () => `section-${_id++}`;
 
 // ── Categories shown in the left sidebar ─────────────────────────────────────
 export const SECTION_CATEGORIES = [
-  { id: "hero", label: "Présentation" },
-  { id: "services", label: "Services" },
-  { id: "portfolio", label: "Réalisations" },
-  { id: "stats", label: "Chiffres clés" },
-  { id: "team", label: "Équipe" },
-  { id: "testimonials", label: "Témoignages" },
-  { id: "cta", label: "Appel à l'action" },
-  { id: "faq", label: "FAQ" },
-  { id: "contact", label: "Contact" },
-  { id: "footer", label: "Pied de page" },
+  { id: "hero",           label: "En-tete" },
+  { id: "presentation",   label: "Presentation" },
+  { id: "kpi",            label: "Chiffres cles" },
+  { id: "expertise",      label: "Domaines d'expertise" },
+  { id: "portfolio",      label: "Portfolio" },
+  { id: "team",           label: "Equipe" },
+  { id: "certifications", label: "Certifications" },
+  { id: "references",     label: "References" },
+  { id: "reviews",        label: "Avis" },
+  { id: "coordinates",    label: "Coordonnees" },
+  { id: "contact",        label: "Contact" },
 ];
 
 // ── Section templates ────────────────────────────────────────────────────────
 export const SECTION_TEMPLATES = [
-  // ── HERO ──────────────────────────────────────────────────────────────────
+
+  // ── 01 EN-TETE ───────────────────────────────────────────────────────────
   {
-    type: "hero-pro",
+    type: "hero-banner",
     category: "hero",
-    name: "Présentation — Entreprise",
+    name: "En-tete — Banniere",
     defaultData: {
-      companyName: "Nom de votre entreprise",
-      tagline: "Construisons ensemble vos projets d'exception",
-      description: "Bureau d'architecture et de construction basé à Abidjan, spécialisé dans les projets résidentiels et commerciaux depuis plus de 15 ans.",
-      badge: "Architecture · Construction",
-      ctaText: "Demander un devis",
-      ctaLink: "#contact",
-      secondaryText: "Voir nos réalisations",
-      secondaryLink: "#realisations",
-      imageSrc: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=80",
-      imageAlt: "Chantier de construction",
+      companyName: "Raw Design",
+      category: "Bureau d'architecture",
+      location: "ABIDJAN \u00B7 COTE D'IVOIRE",
+      verified: true,
+      coverSrc: "",
+      ctaText: "Contacter",
+      secondaryText: "Inviter dans un projet",
     },
   },
   {
-    type: "hero-centered",
+    type: "hero-editorial",
     category: "hero",
-    name: "Présentation — Centrée",
+    name: "En-tete — Editorial",
     defaultData: {
-      companyName: "Nom de votre entreprise",
-      tagline: "L'excellence au service de vos projets",
-      description: "Nous accompagnons particuliers et professionnels dans la conception et la réalisation de projets immobiliers de qualité.",
-      badge: "Ingénierie · BTP",
-      ctaText: "Nous contacter",
-      ctaLink: "#contact",
-      secondaryText: "Découvrir nos services",
-      secondaryLink: "#services",
-      imageSrc: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80",
-      imageAlt: "Projet architectural",
+      companyName: "Raw Design",
+      category: "Bureau d'architecture",
+      location: "Abidjan, Cote d'Ivoire",
+      verified: true,
+      slogan: "Architecture residentielle et tertiaire en Afrique de l'Ouest.",
+      url: "meereo.com/pro/raw-design",
+      ctaText: "Contacter",
+      secondaryText: "Inviter dans un projet",
+    },
+  },
+  {
+    type: "hero-compact",
+    category: "hero",
+    name: "En-tete — Compact",
+    defaultData: {
+      companyName: "Raw Design",
+      category: "Bureau d'architecture",
+      location: "ABIDJAN \u00B7 COTE D'IVOIRE",
+      verified: true,
+      ctaText: "Contacter",
+      secondaryText: "Inviter dans un projet",
     },
   },
 
-  // ── SERVICES ──────────────────────────────────────────────────────────────
+  // ── 02 PRESENTATION ──────────────────────────────────────────────────────
   {
-    type: "services-grid",
-    category: "services",
-    name: "Services — Grille",
+    type: "pres-essay",
+    category: "presentation",
+    name: "Presentation — Essai",
     defaultData: {
-      title: "Nos services",
-      subtitle: "Un accompagnement complet pour chaque étape de votre projet.",
-      services: [
-        { id: "s1", icon: "ruler", title: "Conception architecturale", description: "Plans, maquettes 3D et permis de construire pour des espaces qui vous ressemblent." },
-        { id: "s2", icon: "building", title: "Construction & Gros œuvre", description: "Réalisation complète de vos projets, du terrassement aux finitions." },
-        { id: "s3", icon: "hardhat", title: "Suivi de chantier", description: "Pilotage et coordination des travaux pour garantir qualité, délais et budget." },
-        { id: "s4", icon: "paintbrush", title: "Rénovation & Aménagement", description: "Transformation et modernisation de vos espaces existants." },
-        { id: "s5", icon: "compass", title: "Études techniques", description: "Études de sol, structure et fluides pour des fondations solides." },
-        { id: "s6", icon: "clipboard", title: "Conseil & Expertise", description: "Accompagnement dans vos choix techniques, réglementaires et budgétaires." },
+      title: "Une architecture ancree dans son climat et son usage",
+      paragraphs: [
+        "Fonde a Abidjan en 2014, Raw Design concoit des batiments residentiels et tertiaires penses pour le climat ouest-africain : ventilation naturelle, protection solaire, materiaux locaux.",
+        "L'agence accompagne ses clients de l'esquisse a la reception, avec une methode documentee a chaque etape.",
+      ],
+      values: [
+        { id: "v1", label: "Vision", text: "Faire de chaque contrainte de site un parti architectural." },
+        { id: "v2", label: "Valeurs", text: "Rigueur documentaire, sobriete des moyens, durabilite des ouvrages." },
+        { id: "v3", label: "Specialites", text: "Logement collectif, villas, sieges d'entreprise, renovation lourde." },
+      ],
+    },
+  },
+  {
+    type: "pres-manifesto",
+    category: "presentation",
+    name: "Presentation — Manifeste",
+    defaultData: {
+      lead: "Nous concevons des batiments <b>simples a vivre et durables a entretenir</b>, du premier trait a la reception.",
+      columns: [
+        { id: "c1", label: "Histoire", text: "Agence fondee a Abidjan en 2014, active en Cote d'Ivoire, au Ghana et au Senegal." },
+        { id: "c2", label: "Vision", text: "Une architecture climatique, econome et documentee, au service de l'usage." },
+        { id: "c3", label: "Valeurs", text: "Rigueur, sobriete, tracabilite des decisions sur toute la duree du projet." },
+      ],
+    },
+  },
+  {
+    type: "pres-dossier",
+    category: "presentation",
+    name: "Presentation — Dossier",
+    defaultData: {
+      sections: [
+        { id: "s1", title: "Histoire", text: "Creee en 2014 par deux architectes, l'agence a livre 47 projets en Cote d'Ivoire et dans la sous-region." },
+        { id: "s2", title: "Vision", text: "Concevoir avec le climat plutot que contre lui : orientation, inertie, ombrage et ventilation naturelle." },
+        { id: "s3", title: "Valeurs", text: "Chaque projet est documente de bout en bout ; chaque engagement est trace et verifiable." },
       ],
     },
   },
 
-  // ── PORTFOLIO ─────────────────────────────────────────────────────────────
+  // ── 03 CHIFFRES CLES ─────────────────────────────────────────────────────
   {
-    type: "portfolio-grid",
+    type: "kpi-band",
+    category: "kpi",
+    name: "Chiffres cles — Bandeau",
+    defaultData: {
+      items: [
+        { id: "k1", value: "2014", label: "Annee de creation" },
+        { id: "k2", value: "18", label: "Collaborateurs" },
+        { id: "k3", value: "47", label: "Projets realises" },
+        { id: "k4", value: "3", label: "Pays d'intervention" },
+        { id: "k5", value: "6", label: "Domaines d'expertise" },
+      ],
+    },
+  },
+  {
+    type: "kpi-cards",
+    category: "kpi",
+    name: "Chiffres cles — Cartouches",
+    defaultData: {
+      items: [
+        { id: "k1", value: "2014", label: "Creation", note: "Abidjan, Cote d'Ivoire" },
+        { id: "k2", value: "18", label: "Equipe", note: "architectes et techniciens" },
+        { id: "k3", value: "47", label: "Projets", note: "livres depuis la creation" },
+        { id: "k4", value: "3", label: "Pays", note: "Cote d'Ivoire, Ghana, Senegal" },
+        { id: "k5", value: "6", label: "Domaines", note: "du logement au tertiaire" },
+      ],
+    },
+  },
+  {
+    type: "kpi-prose",
+    category: "kpi",
+    name: "Chiffres cles — Phrase augmentee",
+    defaultData: {
+      prose: 'Depuis <span class="pp-kpi-c-n">2014</span>, une equipe de <span class="pp-kpi-c-n">18</span> collaborateurs a livre <span class="pp-kpi-c-n">47</span> projets dans <span class="pp-kpi-c-n">3</span> pays, sur <span class="pp-kpi-c-n">6</span> domaines d\'expertise.',
+    },
+  },
+
+  // ── 04 DOMAINES D'EXPERTISE ──────────────────────────────────────────────
+  {
+    type: "expertise-table",
+    category: "expertise",
+    name: "Expertise — Nomenclature",
+    defaultData: {
+      domains: [
+        { id: "d1", name: "Logements individuels", scope: "Conception, extension, permis de construire, suivi de chantier." },
+        { id: "d2", name: "Immeubles residentiels", scope: "Programmation, conception, coordination des etudes techniques." },
+        { id: "d3", name: "Batiments tertiaires", scope: "Sieges d'entreprise, plateaux de bureaux, amenagements." },
+        { id: "d4", name: "Renovation", scope: "Renovation lourde, mise aux normes, rehabilitation." },
+        { id: "d5", name: "Extension", scope: "Surelevations et extensions en site occupe." },
+        { id: "d6", name: "Amenagement interieur", scope: "Conception des espaces interieurs." },
+      ],
+    },
+  },
+  {
+    type: "expertise-mosaic",
+    category: "expertise",
+    name: "Expertise — Mosaique",
+    defaultData: {
+      domains: [
+        { id: "d1", name: "Logements individuels" },
+        { id: "d2", name: "Immeubles residentiels" },
+        { id: "d3", name: "Batiments tertiaires" },
+        { id: "d4", name: "Batiments industriels" },
+        { id: "d5", name: "Renovation" },
+        { id: "d6", name: "Extension" },
+        { id: "d7", name: "Amenagement interieur" },
+      ],
+    },
+  },
+  {
+    type: "expertise-bars",
+    category: "expertise",
+    name: "Expertise — Repartition",
+    defaultData: {
+      note: "Repartition des 47 projets realises.",
+      domains: [
+        { id: "d1", name: "Logements individuels", percent: 30, count: "14" },
+        { id: "d2", name: "Immeubles residentiels", percent: 23, count: "11" },
+        { id: "d3", name: "Batiments tertiaires", percent: 19, count: "9" },
+        { id: "d4", name: "Renovation", percent: 13, count: "6" },
+        { id: "d5", name: "Extension", percent: 9, count: "4" },
+        { id: "d6", name: "Amenagement interieur", percent: 6, count: "3" },
+      ],
+    },
+  },
+
+  // ── 05 PORTFOLIO ─────────────────────────────────────────────────────────
+  {
+    type: "portfolio-magazine",
     category: "portfolio",
-    name: "Réalisations — Grille",
+    name: "Portfolio — Grille magazine",
     defaultData: {
-      title: "Nos réalisations",
-      subtitle: "Découvrez une sélection de projets livrés avec succès.",
+      title: "Realisations",
+      subtitle: "47 PROJETS \u00B7 2014\u20132025",
       projects: [
-        { id: "p1", src: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80", alt: "Villa Cocody", title: "Villa moderne Cocody", location: "Abidjan, Cocody", year: "2024" },
-        { id: "p2", src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80", alt: "Immeuble Plateau", title: "Immeuble de bureaux", location: "Abidjan, Plateau", year: "2023" },
-        { id: "p3", src: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80", alt: "Résidence Riviera", title: "Résidence Riviera Golf", location: "Abidjan, Riviera", year: "2023" },
-        { id: "p4", src: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80", alt: "Villa Assinie", title: "Villa balnéaire", location: "Assinie", year: "2022" },
-        { id: "p5", src: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=600&q=80", alt: "Centre commercial", title: "Centre commercial", location: "Abidjan, Marcory", year: "2022" },
-        { id: "p6", src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80", alt: "Villa Bingerville", title: "Villa contemporaine", location: "Bingerville", year: "2021" },
+        { id: "p1", title: "Villa Palmeraie", location: "Assinie", year: "2025", mission: "Conception architecturale", src: "" },
+        { id: "p2", title: "Residence Ivoire", location: "Cocody", year: "2024", mission: "Conception architecturale", src: "" },
+        { id: "p3", title: "Immeuble Lagune", location: "Plateau", year: "2023", mission: "Conception architecturale", src: "" },
       ],
     },
   },
-
-  // ── STATS ─────────────────────────────────────────────────────────────────
   {
-    type: "stats-bar",
-    category: "stats",
-    name: "Chiffres clés",
+    type: "portfolio-planches",
+    category: "portfolio",
+    name: "Portfolio — Planches",
     defaultData: {
-      title: "Notre expérience en chiffres",
-      subtitle: "",
-      stats: [
-        { id: "st1", value: "15+", label: "Années d'expérience" },
-        { id: "st2", value: "120", label: "Projets livrés" },
-        { id: "st3", value: "35", label: "Collaborateurs" },
-        { id: "st4", value: "45 000", label: "m² construits" },
+      title: "Realisations",
+      projects: [
+        { id: "p1", title: "Residence Ivoire", location: "Cocody, Abidjan", year: "2024", mission: "Conception architecturale", description: "Trente-deux logements traversants organises autour d'un coeur d'ilot plante.", src: "" },
+        { id: "p2", title: "Siege Horizon", location: "Marcory, Abidjan", year: "2022", mission: "Conception et suivi de chantier", description: "Siege d'entreprise de 4 200 m2 : double peau brise-soleil, plateaux libres.", src: "" },
+      ],
+    },
+  },
+  {
+    type: "portfolio-asymmetric",
+    category: "portfolio",
+    name: "Portfolio — Mur asymetrique",
+    defaultData: {
+      title: "Realisations",
+      projects: [
+        { id: "p1", title: "Villa Palmeraie", location: "Assinie", year: "2025", src: "" },
+        { id: "p2", title: "Residence Ivoire", location: "Cocody", year: "2024", src: "" },
+        { id: "p3", title: "Immeuble Lagune", location: "Plateau", year: "2023", src: "" },
       ],
     },
   },
 
-  // ── TEAM ──────────────────────────────────────────────────────────────────
+  // ── 06 EQUIPE ────────────────────────────────────────────────────────────
   {
-    type: "team-grid",
+    type: "team-portraits",
     category: "team",
-    name: "Équipe — Grille",
+    name: "Equipe — Portraits",
     defaultData: {
-      title: "Notre équipe",
-      subtitle: "Des professionnels passionnés au service de vos projets.",
+      title: "L'equipe",
       members: [
-        { id: "m1", name: "Kouamé Yao", role: "Directeur Général", photoSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" },
-        { id: "m2", name: "Aminata Diallo", role: "Architecte principal", photoSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80" },
-        { id: "m3", name: "Jean-Marc Konan", role: "Chef de chantier", photoSrc: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80" },
-        { id: "m4", name: "Fatou Bamba", role: "Ingénieur structure", photoSrc: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80" },
+        { id: "m1", name: "Aicha Kone", role: "Architecte associee", specialties: "LOGEMENT COLLECTIF \u00B7 CLIMAT", photoSrc: "" },
+        { id: "m2", name: "Yao N'Guessan", role: "Directeur de projets", specialties: "COORDINATION \u00B7 EXECUTION", photoSrc: "" },
+        { id: "m3", name: "Mariam Diabate", role: "Architecte d'interieur", specialties: "AMENAGEMENT \u00B7 MOBILIER", photoSrc: "" },
+        { id: "m4", name: "Serge Kouame", role: "Economiste de la construction", specialties: "CHIFFRAGE \u00B7 MARCHES", photoSrc: "" },
+      ],
+    },
+  },
+  {
+    type: "team-directory",
+    category: "team",
+    name: "Equipe — Annuaire",
+    defaultData: {
+      title: "L'equipe",
+      members: [
+        { id: "m1", name: "Aicha Kone", role: "Architecte associee", bio: "Quinze ans de pratique du logement collectif en climat tropical humide.", specialties: "LOGEMENT \u00B7 CLIMAT", photoSrc: "" },
+        { id: "m2", name: "Yao N'Guessan", role: "Directeur de projets", bio: "Pilote la coordination des etudes et le suivi d'execution.", specialties: "COORDINATION", photoSrc: "" },
+      ],
+    },
+  },
+  {
+    type: "team-leadership",
+    category: "team",
+    name: "Equipe — Direction + equipe",
+    defaultData: {
+      title: "L'equipe",
+      members: [
+        { id: "m1", name: "Aicha Kone", role: "Architecte associee \u00B7 cofondatrice", bio: "Diplomee de l'EAMAU, elle dirige la conception et porte l'approche climatique de l'agence.", photoSrc: "" },
+        { id: "m2", name: "Yao N'Guessan", role: "Directeur de projets \u00B7 cofondateur", bio: "Responsable de la coordination technique et du suivi d'execution.", photoSrc: "" },
+        { id: "m3", name: "Mariam Diabate", role: "Architecte d'interieur", photoSrc: "" },
+        { id: "m4", name: "Serge Kouame", role: "Economiste de la construction", photoSrc: "" },
       ],
     },
   },
 
-  // ── TESTIMONIALS ──────────────────────────────────────────────────────────
+  // ── 07 CERTIFICATIONS ────────────────────────────────────────────────────
   {
-    type: "testimonial-single",
-    category: "testimonials",
-    name: "Témoignage — Unique",
+    type: "cert-register",
+    category: "certifications",
+    name: "Certifications — Registre",
     defaultData: {
-      quote: "Une équipe professionnelle et à l'écoute. Notre villa a été livrée dans les délais avec une qualité de finition remarquable. Je recommande vivement.",
-      name: "M. Ouattara",
-      role: "Propriétaire à Cocody",
-      avatarSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
-      rating: 5,
+      certs: [
+        { id: "c1", name: "Inscription a l'Ordre des Architectes", issuer: "Ordre des Architectes de Cote d'Ivoire", year: "2014" },
+        { id: "c2", name: "Agrement technique", issuer: "Ministere de la Construction", year: "2016" },
+        { id: "c3", name: "Certification ISO 9001:2015", issuer: "Organisme certificateur accredite", year: "2022" },
+      ],
     },
   },
   {
-    type: "testimonials-grid",
-    category: "testimonials",
-    name: "Témoignages — Grille",
+    type: "cert-seals",
+    category: "certifications",
+    name: "Certifications — Sceaux",
     defaultData: {
-      title: "Ce que disent nos clients",
-      subtitle: "La satisfaction de nos clients est notre meilleure référence.",
-      testimonials: [
-        { id: "t1", quote: "Suivi de chantier impeccable, respect des délais et du budget. Un partenaire de confiance pour nos projets immobiliers.", name: "Mme Koffi", role: "Promoteur immobilier", avatarSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80", rating: 5 },
-        { id: "t2", quote: "Leur expertise en architecture contemporaine a transformé notre vision en réalité. Le résultat dépasse nos attentes.", name: "M. Traoré", role: "Investisseur", avatarSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80", rating: 5 },
-        { id: "t3", quote: "Professionnalisme et créativité au rendez-vous. Notre bureau a été conçu et livré en un temps record.", name: "Mme Aka", role: "Directrice, Société ABI", avatarSrc: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80", rating: 5 },
+      certs: [
+        { id: "c1", name: "Inscription a l'Ordre des Architectes de Cote d'Ivoire", mark: "OA", year: "2014" },
+        { id: "c2", name: "Agrement technique du Ministere de la Construction", mark: "AG", year: "2016" },
+        { id: "c3", name: "Certification ISO 9001:2015 — management de la qualite", mark: "ISO", year: "2022" },
+      ],
+    },
+  },
+  {
+    type: "cert-line",
+    category: "certifications",
+    name: "Certifications — Ligne",
+    defaultData: {
+      certs: [
+        { id: "c1", name: "Ordre des Architectes de Cote d'Ivoire", year: "2014" },
+        { id: "c2", name: "Agrement technique MCLU", year: "2016" },
+        { id: "c3", name: "ISO 9001:2015", year: "2022" },
       ],
     },
   },
 
-  // ── CTA ───────────────────────────────────────────────────────────────────
+  // ── 08 REFERENCES ────────────────────────────────────────────────────────
   {
-    type: "cta-devis",
-    category: "cta",
-    name: "CTA — Demande de devis",
+    type: "ref-casestudy",
+    category: "references",
+    name: "References — Etude de cas",
     defaultData: {
-      title: "Un projet en tête ?",
-      subtitle: "Contactez-nous pour une étude gratuite et un devis personnalisé. Notre équipe vous répond sous 48h.",
-      ctaText: "Demander un devis gratuit",
-      ctaLink: "#contact",
-      secondaryText: "Voir nos réalisations",
-      secondaryLink: "#realisations",
+      references: [
+        { id: "r1", project: "Residence Ivoire", location: "Cocody", year: "2024", mission: "Conception architecturale", origin: "Projet MEEREO", description: "Trente-deux logements livres dans les delais, coordination complete des etudes.", src: "" },
+        { id: "r2", project: "Siege Horizon", location: "Marcory", year: "2022", mission: "Conception + suivi" },
+        { id: "r3", project: "Immeuble Lagune", location: "Plateau", year: "2023", mission: "Conception" },
+      ],
     },
   },
-
-  // ── FAQ ───────────────────────────────────────────────────────────────────
   {
-    type: "faq-simple",
-    category: "faq",
-    name: "FAQ — Questions fréquentes",
+    type: "ref-table",
+    category: "references",
+    name: "References — Table",
     defaultData: {
-      title: "Questions fréquentes",
-      subtitle: "Retrouvez les réponses aux questions les plus courantes.",
-      faqs: [
-        { id: "q1", question: "Quels types de projets réalisez-vous ?", answer: "Nous intervenons sur des projets résidentiels (villas, appartements), commerciaux (bureaux, commerces), et institutionnels (écoles, centres de santé). Chaque projet est étudié sur mesure." },
-        { id: "q2", question: "Quelle est la durée moyenne d'un projet ?", answer: "La durée dépend de l'envergure du projet. Une villa individuelle prend en moyenne 8 à 12 mois, un immeuble de bureaux 14 à 18 mois. Nous établissons un planning détaillé dès le démarrage." },
-        { id: "q3", question: "Comment se déroule le suivi de chantier ?", answer: "Nous assurons un suivi hebdomadaire avec des rapports photos et des réunions de chantier régulières. Vous avez un interlocuteur dédié tout au long du projet." },
-        { id: "q4", question: "Proposez-vous des facilités de paiement ?", answer: "Oui, nous proposons un échéancier de paiement adapté à l'avancement des travaux. Les modalités sont définies dans le contrat initial." },
-        { id: "q5", question: "Intervenez-vous hors d'Abidjan ?", answer: "Oui, nous intervenons sur l'ensemble du territoire ivoirien. Nous avons réalisé des projets à Yamoussoukro, Bouaké, San Pedro et Assinie." },
+      references: [
+        { id: "r1", project: "Villa Palmeraie", location: "Assinie", year: "2025", mission: "Conception architecturale" },
+        { id: "r2", project: "Residence Ivoire", location: "Cocody, Abidjan", year: "2024", mission: "Conception architecturale" },
+        { id: "r3", project: "Immeuble Lagune", location: "Plateau, Abidjan", year: "2023", mission: "Conception architecturale" },
+        { id: "r4", project: "Siege Horizon", location: "Marcory, Abidjan", year: "2022", mission: "Conception et suivi de chantier" },
+      ],
+    },
+  },
+  {
+    type: "ref-cards",
+    category: "references",
+    name: "References — Cartes contexte",
+    defaultData: {
+      references: [
+        { id: "r1", project: "Residence Ivoire", description: "32 logements traversants, livres en 14 mois.", location: "Cocody", year: "2024", origin: "Projet MEEREO" },
+        { id: "r2", project: "Siege Horizon", description: "4 200 m2 de bureaux, double peau brise-soleil.", location: "Marcory", year: "2022", origin: "Projet MEEREO" },
+        { id: "r3", project: "Ateliers Beton", description: "Renovation lourde d'un ensemble industriel.", location: "Yopougon", year: "2020", origin: "HORS PLATEFORME" },
       ],
     },
   },
 
-  // ── CONTACT ───────────────────────────────────────────────────────────────
+  // ── 09 AVIS ET SATISFACTION ──────────────────────────────────────────────
   {
-    type: "contact-pro",
+    type: "review-testimony",
+    category: "reviews",
+    name: "Avis — Temoignage",
+    defaultData: {
+      quote: "Chaque decision a ete documentee et validee avant d'avancer : nous savions a tout moment ou en etait le projet.",
+      author: "K. Toure — maitre d'ouvrage",
+      project: "RESIDENCE IVOIRE \u00B7 LIVREE 2024",
+      verified: true,
+    },
+  },
+  {
+    type: "review-journal",
+    category: "reviews",
+    name: "Avis — Journal",
+    defaultData: {
+      reviews: [
+        { id: "a1", date: "JANV. 2025", quote: "Livraison dans les delais annonces, reserves levees en trois semaines.", author: "K. Toure", project: "Residence Ivoire", verified: true },
+        { id: "a2", date: "SEPT. 2023", quote: "La coordination des bureaux d'etudes a ete prise en main de bout en bout.", author: "Societe Horizon", project: "Siege Horizon", verified: true },
+        { id: "a3", date: "MARS 2023", quote: "Des choix de materiaux adaptes au climat, un budget tenu.", author: "A. Kouassi", project: "Immeuble Lagune", verified: true },
+      ],
+    },
+  },
+  {
+    type: "review-structured",
+    category: "reviews",
+    name: "Avis — Retour structure",
+    defaultData: {
+      context: "Residence de 32 logements a Cocody, mission de conception architecturale confiee en 2022 via un appel d'offres MEEREO.",
+      delivered: "Esquisses, permis de construire, dossiers de consultation, coordination des etudes, assistance a la reception.",
+      feedback: "Un deroulement sans surprise : chaque jalon valide, chaque document au bon endroit, une equipe qui repond.",
+      author: "K. Toure — maitre d'ouvrage \u00B7 Residence Ivoire, livree 2024",
+      verified: true,
+    },
+  },
+
+  // ── 10 COORDONNEES ───────────────────────────────────────────────────────
+  {
+    type: "coord-map",
+    category: "coordinates",
+    name: "Coordonnees — Bloc carte",
+    defaultData: {
+      address: "Rue des Jardins, Cocody Danga\nAbidjan, Cote d'Ivoire",
+      phone: "+225 27 22 00 00 00",
+      email: "contact@rawdesign.ci",
+      url: "meereo.com/pro/raw-design",
+    },
+  },
+  {
+    type: "coord-sheet",
+    category: "coordinates",
+    name: "Coordonnees — Fiche",
+    defaultData: {
+      address: "Rue des Jardins, Cocody Danga — Abidjan, Cote d'Ivoire",
+      phone: "+225 27 22 00 00 00",
+      email: "contact@rawdesign.ci",
+      website: "rawdesign.ci",
+      socials: "LinkedIn \u00B7 Instagram",
+    },
+  },
+  {
+    type: "coord-footer",
+    category: "coordinates",
+    name: "Coordonnees — Pied de page",
+    defaultData: {
+      companyName: "Raw Design",
+      category: "Bureau d'architecture — Abidjan",
+      address: "Rue des Jardins, Cocody Danga\nAbidjan, Cote d'Ivoire",
+      phone: "+225 27 22 00 00 00",
+      email: "contact@rawdesign.ci",
+      website: "rawdesign.ci",
+      url: "meereo.com/pro/raw-design",
+    },
+  },
+
+  // ── 11 CONTACT ───────────────────────────────────────────────────────────
+  {
+    type: "contact-actions",
     category: "contact",
-    name: "Contact — Professionnel",
+    name: "Contact — Panneau d'actions",
     defaultData: {
-      title: "Contactez-nous",
-      subtitle: "Parlons de votre projet. Notre équipe est disponible pour vous accompagner.",
-      email: "contact@entreprise.ci",
-      phone: "+225 07 00 00 00 00",
-      address: "Abidjan, Cocody Riviera Bonoumin",
-      hours: "Lun — Ven · 8h à 18h",
+      eyebrow: "Travailler avec Raw Design",
+      actions: [
+        { id: "a1", title: "Envoyer un message", description: "Ouvre une conversation privee avec l'agence dans le Communication Hub.", meta: "REPONSE SOUS 24 H OUVREES" },
+        { id: "a2", title: "Demander un rendez-vous", description: "Proposez un creneau ; l'agence confirme depuis son Cockpit.", meta: "EN AGENCE OU A DISTANCE" },
+        { id: "a3", title: "Inviter dans un projet", description: "Associez l'agence a l'un de vos projets MEEREO existants.", meta: "INVITATION HISTORISEE" },
+      ],
+      links: [
+        { id: "l1", label: "Enregistrer en favoris" },
+        { id: "l2", label: "Partager la page" },
+        { id: "l3", label: "Copier le lien" },
+      ],
     },
   },
-
-  // ── FOOTER ────────────────────────────────────────────────────────────────
   {
-    type: "footer-pro",
-    category: "footer",
-    name: "Pied de page — Pro",
+    type: "contact-form",
+    category: "contact",
+    name: "Contact — Formulaire",
     defaultData: {
-      companyName: "Nom de votre entreprise",
-      tagline: "Construire avec excellence.",
-      email: "contact@entreprise.ci",
-      phone: "+225 07 00 00 00 00",
-      address: "Abidjan, Cocody",
-      copyright: `© ${new Date().getFullYear()} Votre Entreprise. Tous droits réservés.`,
+      title: "Ecrire a Raw Design",
+      note: "Votre message ouvre une conversation « Prise de contact » dans le Communication Hub.",
+      submitText: "Envoyer le message",
+      altLinks: [
+        { id: "l1", label: "Demander un rendez-vous" },
+        { id: "l2", label: "Inviter dans un projet" },
+      ],
+    },
+  },
+  {
+    type: "contact-band",
+    category: "contact",
+    name: "Contact — Bande",
+    defaultData: {
+      headline: "Un projet a Abidjan ou dans la sous-region ? <b>Parlons-en.</b>",
+      ctaText: "Envoyer un message",
+      secondaryText: "Inviter dans un projet",
     },
   },
 ];
@@ -225,12 +483,12 @@ export const SECTION_TEMPLATES = [
 export const DEFAULT_PAGE = [
   {
     id: "section-d1",
-    type: "hero-pro",
-    data: { ...SECTION_TEMPLATES.find((t) => t.type === "hero-pro").defaultData },
+    type: "hero-banner",
+    data: { ...SECTION_TEMPLATES.find((t) => t.type === "hero-banner").defaultData },
   },
   {
     id: "section-d2",
-    type: "services-grid",
-    data: { ...SECTION_TEMPLATES.find((t) => t.type === "services-grid").defaultData },
+    type: "pres-manifesto",
+    data: { ...SECTION_TEMPLATES.find((t) => t.type === "pres-manifesto").defaultData },
   },
 ];

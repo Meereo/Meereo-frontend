@@ -1,27 +1,49 @@
-import { HeroPro, HeroCentered } from "./sections/HeroSection";
-import { ServicesGrid } from "./sections/ServicesSection";
-import { PortfolioGrid } from "./sections/PortfolioSection";
-import { StatsBar } from "./sections/StatsSection";
-import { TeamGrid } from "./sections/TeamSection";
-import { TestimonialSingle, TestimonialsGrid } from "./sections/TestimonialSection";
-import { CTADevis } from "./sections/CTASection";
-import { FAQSimple } from "./sections/FAQSection";
-import { ContactPro } from "./sections/ContactSection";
-import { FooterPro } from "./sections/FooterSection";
+import { HeroBanner, HeroEditorial, HeroCompact } from "./sections/HeroSection";
+import { PresEssay, PresManifesto, PresDossier } from "./sections/PresentationSection";
+import { KpiBand, KpiCards, KpiProse } from "./sections/KpiSection";
+import { ExpertiseTable, ExpertiseMosaic, ExpertiseBars } from "./sections/ExpertiseSection";
+import { PortfolioMagazine, PortfolioPlanches, PortfolioAsymmetric } from "./sections/PortfolioSection";
+import { TeamPortraits, TeamDirectory, TeamLeadership } from "./sections/TeamSection";
+import { CertRegister, CertSeals, CertLine } from "./sections/CertificationsSection";
+import { RefCaseStudy, RefTable, RefCards } from "./sections/ReferencesSection";
+import { ReviewTestimony, ReviewJournal, ReviewStructured } from "./sections/ReviewsSection";
+import { CoordMap, CoordSheet, CoordFooter } from "./sections/CoordinatesSection";
+import { ContactActions, ContactForm, ContactBand } from "./sections/ContactSection";
 
 const REGISTRY = {
-  "hero-pro": HeroPro,
-  "hero-centered": HeroCentered,
-  "services-grid": ServicesGrid,
-  "portfolio-grid": PortfolioGrid,
-  "stats-bar": StatsBar,
-  "team-grid": TeamGrid,
-  "testimonial-single": TestimonialSingle,
-  "testimonials-grid": TestimonialsGrid,
-  "cta-devis": CTADevis,
-  "faq-simple": FAQSimple,
-  "contact-pro": ContactPro,
-  "footer-pro": FooterPro,
+  "hero-banner": HeroBanner,
+  "hero-editorial": HeroEditorial,
+  "hero-compact": HeroCompact,
+  "pres-essay": PresEssay,
+  "pres-manifesto": PresManifesto,
+  "pres-dossier": PresDossier,
+  "kpi-band": KpiBand,
+  "kpi-cards": KpiCards,
+  "kpi-prose": KpiProse,
+  "expertise-table": ExpertiseTable,
+  "expertise-mosaic": ExpertiseMosaic,
+  "expertise-bars": ExpertiseBars,
+  "portfolio-magazine": PortfolioMagazine,
+  "portfolio-planches": PortfolioPlanches,
+  "portfolio-asymmetric": PortfolioAsymmetric,
+  "team-portraits": TeamPortraits,
+  "team-directory": TeamDirectory,
+  "team-leadership": TeamLeadership,
+  "cert-register": CertRegister,
+  "cert-seals": CertSeals,
+  "cert-line": CertLine,
+  "ref-casestudy": RefCaseStudy,
+  "ref-table": RefTable,
+  "ref-cards": RefCards,
+  "review-testimony": ReviewTestimony,
+  "review-journal": ReviewJournal,
+  "review-structured": ReviewStructured,
+  "coord-map": CoordMap,
+  "coord-sheet": CoordSheet,
+  "coord-footer": CoordFooter,
+  "contact-actions": ContactActions,
+  "contact-form": ContactForm,
+  "contact-band": ContactBand,
 };
 
 export default function SectionRenderer({ section }) {

@@ -6,6 +6,7 @@ import RightSidebar from "./RightSidebar";
 import Toast from "./ui/Toast";
 import SectionRenderer from "./SectionRenderer";
 import { DEFAULT_PAGE, genId } from "./constants";
+import "./pp-foundations.css";
 
 const deepClone = (x) => JSON.parse(JSON.stringify(x));
 const reorder = (arr, from, to) => { const next = [...arr]; const [item] = next.splice(from, 1); next.splice(to, 0, item); return next; };
@@ -18,7 +19,7 @@ function PreviewModal({ sections, onClose }) {
         <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400" /><span className="text-sm font-medium text-gray-300">Aperçu</span></div>
         <button onClick={onClose} className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition-colors">✕ Fermer</button>
       </div>
-      <div className="flex-1 overflow-auto bg-white">{sections.map((s) => <SectionRenderer key={s.id} section={s} />)}</div>
+      <div className="flex-1 overflow-auto bg-white pp-page">{sections.map((s) => <SectionRenderer key={s.id} section={s} />)}</div>
     </div>
   );
 }

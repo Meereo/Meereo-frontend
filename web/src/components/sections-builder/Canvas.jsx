@@ -61,8 +61,9 @@ export default function Canvas({ sections, selectedId, onSelect, onUpdate, onMov
     <main className="flex-1 min-w-0 min-h-0 bg-gray-100 overflow-y-auto overflow-x-hidden" style={{ backgroundImage: "radial-gradient(circle, #d1d5db 1px, transparent 1px)", backgroundSize: "20px 20px" }}
       onClick={() => onSelect(null)} onDragOver={handleCanvasDragOver} onDragLeave={handleCanvasDragLeave} onDrop={handleCanvasDrop}>
       <div className="flex justify-center min-h-full">
-        <div ref={canvasRef} className={`relative bg-white shadow-xl my-8 transition-all duration-300 ease-in-out w-full ${isDragOver && sections.length === 0 ? "ring-4 ring-blue-400 ring-offset-4" : ""}`}
-          style={{ maxWidth: DEVICE_WIDTH[device] ?? "100%", minHeight: "100vh", borderRadius: DEVICE_RADIUS[device] ?? "0", overflow: "hidden" }}>
+        <div ref={canvasRef} className={`relative bg-white shadow-xl my-8 transition-all duration-300 ease-in-out w-full pp-page ${isDragOver && sections.length === 0 ? "ring-4 ring-blue-400 ring-offset-4" : ""}`}
+          style={{ maxWidth: DEVICE_WIDTH[device] ?? "100%", minHeight: "100vh", borderRadius: DEVICE_RADIUS[device] ?? "0", overflow: "hidden" }}
+          id="pp-canvas">
           {sections.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-screen text-center px-8">
               <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-5"><Icon name="layers" size={28} className="text-gray-400" /></div>

@@ -702,10 +702,13 @@ export function MeereoProvider({ children }) {
         ])
         const realUser = {
           ...user,
+          ...res.user,
           id: res.user?.id || user.id,
           name: res.user?.name || user.name,
           type: res.user?.type || user.type,
           company: res.user?.company || user.company,
+          publicId: res.user?.publicId || null,
+          slug: res.user?.slug || null,
         }
         setInMemoryToken(res.token)
         storeRef.current = { ...storeRef.current, user: realUser, _token: res.token }
@@ -742,10 +745,13 @@ export function MeereoProvider({ children }) {
         if (loginRes?.token) {
           const realUser = {
             ...user,
+            ...loginRes.user,
             id: loginRes.user.id,
             name: loginRes.user.name || user.name,
             type: loginRes.user.type || user.type,
             company: loginRes.user.company || user.company,
+            publicId: loginRes.user.publicId || null,
+            slug: loginRes.user.slug || null,
           }
           const [apiAos, apiOffers, apiProjects, apiMarkets] = await Promise.all([
             api.aos.getAll().catch(() => []),
