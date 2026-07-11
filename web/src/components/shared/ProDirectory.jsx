@@ -119,7 +119,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
             <div className="rg-2" style={{ gap: 10 }}>
               {filtered.map(p => {
                 return (
-                  <div key={p.id} onClick={() => { onClose(); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
+                  <div key={p.id} onClick={() => { onClose(); navigate(p.publicId ? `/pro/${p.slug || p.publicId}` : '/pro') }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <Avatar nom={p.nom} logoUrl={p.logoUrl} size={44} />
                       <div style={{ flex: 1, minWidth: 0 }}>

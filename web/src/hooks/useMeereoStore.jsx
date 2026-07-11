@@ -219,6 +219,7 @@ export function MeereoProvider({ children }) {
           id: me.id, email: me.email, name: me.name, type: me.type,
           company: me.company || '', phone: me.phone || '', avatar: me.avatar || '',
           publicId: me.publicId || null,
+          slug: me.slug || null,
           wallet: 0,
         }
 
@@ -816,6 +817,7 @@ export function MeereoProvider({ children }) {
           phone: res.user.phone || '',
           avatar: res.user.avatar || '',
           publicId: res.user.publicId || null,
+          slug: res.user.slug || null,
           wallet: 0,
         }
         // 2. Hydrate business data from PostgreSQL

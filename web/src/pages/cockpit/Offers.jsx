@@ -427,7 +427,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                             )}
                             {s?.publicId && (
                               <button className="btn btn-sm" style={{ alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }}
-                                onClick={() => window.open('/pro?uuid=' + s.publicId, '_blank')}>Voir le profil →</button>
+                                onClick={() => window.open('/pro/' + (s.slug || s.publicId), '_blank')}>Voir le profil →</button>
                             )}
                           </div>
                         )

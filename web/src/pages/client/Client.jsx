@@ -463,7 +463,7 @@ export default function Client() {
                 {results.length > 0 ? (<>
                   <div style={{ padding: '8px 14px', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', borderBottom: '1px solid var(--border)' }}>{results.length} professionnel{results.length > 1 ? 's' : ''}</div>
                   {results.map((p, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => { setTopSearchOpen(false); setTopSearch(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} onMouseOver={e => e.currentTarget.style.background = '#f5f5f7'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => { setTopSearchOpen(false); setTopSearch(''); navigate(p.publicId ? `/pro/${p.slug || p.publicId}` : '/pro') }} onMouseOver={e => e.currentTarget.style.background = '#f5f5f7'} onMouseOut={e => e.currentTarget.style.background = ''}>
                       <ProAvatar nom={p.nom} size={32} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

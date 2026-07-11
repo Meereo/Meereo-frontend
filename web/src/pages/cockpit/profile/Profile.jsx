@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Star, Camera } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMeereo } from '../../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../../utils/logoShape'
 import { formatBudgetDisplay } from '../../../utils/helpers'
@@ -35,9 +35,11 @@ const getProjects = (projects) => (projects || [])
 
 export default function Profile() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const uuid = searchParams.get('uuid')
+  const { slug: routeSlug } = useParams()
   const { store, showToast, updateStore, emitEvent } = useMeereo()
+
+  // Route param slug (can be a slug or publicId — backend accepts both)
+  const uuid = routeSlug || null
 
   // é── Données publiques (chargées depuis le backend via UUID) ──────────────
   const [pubData, setPubData]   = useState(null)   // { profile, stats, id, publicId, name, verified }
@@ -52,10 +54,10 @@ export default function Profile() {
       .catch(e  => { setPubError(e.message || 'Profil introuvable'); setPubLoading(false) })
   }, [uuid])
 
-  // é── Détection rôle : propriétaire = pro connecté dont publicId = uuid ──
+  // é── Détection rôle : propriétaire = pro connecté dont slug/publicId = route param ──
   const myPublicId = store.user?.publicId
   const isOwner = store.user?.type === 'pro' && (
-    !uuid || uuid === myPublicId   // /pro sans uuid = toujours son propre profil
+    !uuid || uuid === myPublicId || uuid === store.user?.slug
   )
   const isClient  = store.user?.type === 'client'
   const isVisitor = !store.user
@@ -70,12 +72,13 @@ export default function Profile() {
     }
   }, [uuid, store.user, navigate])
 
-  // Redirect owner to canonical UUID URL so the link is shareable
+  // Redirect owner to canonical slug URL so the link is shareable
+  const mySlug = store.user?.slug || myPublicId
   useEffect(() => {
-    if (isOwner && !uuid && myPublicId) {
-      navigate(`/pro?uuid=${myPublicId}`, { replace: true })
+    if (isOwner && !uuid && mySlug) {
+      navigate(`/pro/${mySlug}`, { replace: true })
     }
-  }, [isOwner, uuid, myPublicId, navigate])
+  }, [isOwner, uuid, mySlug, navigate])
 
   // é── Source de données : toujours store.onboardingData pour le propriétaire
   // (garantit que saveEdit optimistic updates sont immédiatement visibles)

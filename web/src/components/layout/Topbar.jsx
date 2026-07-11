@@ -133,7 +133,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
                         const initials = (p.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
                         const mc = getMetierColor(p.metier)
                         return (
-                          <div key={p.id} onClick={() => { setSearchOpen(false); setSearchQuery(''); navigate(p.publicId ? `/pro?uuid=${p.publicId}` : '/pro') }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
+                          <div key={p.id} onClick={() => { setSearchOpen(false); setSearchQuery(''); navigate(p.publicId ? `/pro/${p.slug || p.publicId}` : '/pro') }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
                             <div style={{ width: 32, height: 32, borderRadius: 8, background: mc + '12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: mc, flexShrink: 0 }}>{initials}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>

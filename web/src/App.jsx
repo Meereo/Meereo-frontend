@@ -70,9 +70,11 @@ export default function App() {
         <Route path="/cockpit/*" element={<RoleGuard allowedRole="pro"><Cockpit /></RoleGuard>} />
         <Route path="/fournisseur/*" element={<RoleGuard allowedRole="fournisseur"><Supplier /></RoleGuard>} />
         <Route path="/client/*" element={<RoleGuard allowedRole="client"><Client /></RoleGuard>} />
-        {/* Route publique — /pro?uuid=XXXX — profil public d'un professionnel */}
+        {/* Route publique — /pro/:slug — profil public d'un professionnel */}
+        <Route path="/pro/:slug" element={<Profile />} />
+        {/* /pro sans slug → redirige le pro connecté vers son propre profil */}
         <Route path="/pro" element={<Profile />} />
-        {/* Alias rétrocompat /profil → redirige vers /pro avec l'uuid du user connecté si pro */}
+        {/* Alias rétrocompat */}
         <Route path="/profil/*" element={<Profile />} />
         <Route path="/conditions" element={<Conditions />} />
         <Route path="/confidentialite" element={<Privacy />} />

@@ -321,7 +321,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         email: '', tel: '', photo: '',
         statut: 'actif', entreprise: true, ville: partner?.ville || 'Abidjan',
         note: partner?.note || 0, projets: [proj?.nom || ''],
-        profilUrl: store.user?.publicId ? `/pro?uuid=${store.user.publicId}` : '/pro'
+        profilUrl: `/pro/${store.user?.slug || store.user?.publicId || ''}`
       }
       updateStore(prev => ({ ...prev, intervenants: [...(prev.intervenants || []), newInter] }))
     } else {

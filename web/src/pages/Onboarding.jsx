@@ -1780,8 +1780,8 @@ export default function Onboarding() {
                   {wizStep===totalSteps && userType==='pro' ? (
                     <div style={{display:'flex',gap:8}}>
                       <button className="ob-btn-out" onClick={() => {
-                        const publicId = store?.user?.publicId
-                        handleFinish(publicId ? `/pro?uuid=${publicId}` : '/pro')
+                        const slug = store?.user?.slug || store?.user?.publicId
+                        handleFinish(slug ? `/pro/${slug}` : '/pro')
                       }}>Voir mon profil public</button>
                       <button className="ob-btn-blk" onClick={() => handleFinish()}>Accéder au Cockpit →</button>
                     </div>

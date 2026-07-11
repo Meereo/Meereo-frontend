@@ -144,7 +144,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   <div style={{ fontSize: 12, color: '#F59E0B' }}>{stars(f.note)} <span style={{ fontWeight: 600, color: 'var(--t2)', marginLeft: 3 }}>{f.note}/5</span> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({f.nbAvis || 0})</span></div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => { setShowDevis(f); setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' }) }}>Devis</button>
-                    {f.publicId && <button className="btn btn-primary btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => navigate(`/pro?uuid=${f.publicId}`)}>Profil</button>}
+                    {f.publicId && <button className="btn btn-primary btn-sm" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => navigate(`/pro/${f.slug || f.publicId}`)}>Profil</button>}
                   </div>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
                   <td className="muted">{f.ville}</td>
                   <td><span style={{ color: '#F59E0B' }}>{stars(f.note)}</span> <strong>{f.note}</strong> <span style={{ fontSize: 10, color: 'var(--t4)' }}>({f.nbAvis || 0})</span></td>
                   <td>{f.verified ? <span className="status-pill status-done" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Vérifié</span> : <span style={{ fontSize: 10, color: 'var(--wrn)', cursor: 'pointer' }} onClick={() => setShowVerif(f)}>Non vérifié</span>}</td>
-                  <td><div style={{ display: 'flex', gap: 6 }}><button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { setShowDevis(f); setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' }) }}>Devis</button>{f.publicId && <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => navigate(`/pro?uuid=${f.publicId}`)}>Profil</button>}</div></td>
+                  <td><div style={{ display: 'flex', gap: 6 }}><button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { setShowDevis(f); setDevis({ description: '', quantite: '', delai: '', projet: '', budget: '' }) }}>Devis</button>{f.publicId && <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => navigate(`/pro/${f.slug || f.publicId}`)}>Profil</button>}</div></td>
                 </tr>
               ))}
             </tbody>

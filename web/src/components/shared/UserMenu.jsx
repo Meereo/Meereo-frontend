@@ -36,8 +36,8 @@ export default function UserMenu({ onNavigate }) {
 
   const handleProfil = () => {
     setOpen(false)
-    const publicId = store?.user?.publicId
-    navigate(publicId ? `/pro?uuid=${publicId}` : '/pro')
+    const slug = store?.user?.slug || store?.user?.publicId
+    navigate(slug ? `/pro/${slug}` : '/pro')
   }
 
   const btnStyle = { width: '100%', padding: '9px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 12.5, fontFamily: 'var(--f)', color: 'var(--tx)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }
