@@ -55,6 +55,9 @@ const projectMissionsRouter = require('./routes/projectMissions')
 const app = express()
 const PORT = parseInt(process.env.PORT || '3001', 10)
 
+// ─── Trust proxy (behind Nginx) ──────────────────────────────────────────────
+app.set('trust proxy', 1)
+
 // ─── Sécurité ─────────────────────────────────────────────────────────────────
 
 app.use(helmet())
