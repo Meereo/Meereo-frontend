@@ -177,6 +177,8 @@ router.post('/', requireAuth, async (req, res, next) => {
           title: title || 'Groupe',
           aoId: aoId || null,
           offerId: offerId || null,
+          projectId: projectId || null,
+          missionId: missionId || null,
           participants: {
             create: allIds.map((uid) => ({ userId: uid })),
           },
@@ -277,6 +279,57 @@ router.patch('/:id/read', requireAuth, async (req, res, next) => {
       data: { lastReadAt: new Date() },
     })
     res.json({ ok: true })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── Ajouter un participant à une conversation existante ─────────────────────
+// POST /api/conversations/:id/participants  { userId }
+router.post('/:id/participants', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const myId = req.user.id
+    const { id } = req.params
+    const { userId } = req.body
+    if (!userId) return res.status(400).json({ error: 'userId requis' })
+
+    // Vérifier que l'appelant est participant
+    const myPart = await prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId: id, userId: myId } },
+    })
+    if (!myPart) return res.status(403).json({ error: 'Accès refusé' })
+
+    // Vérifier que l'utilisateur cible existe
+    const targetUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!targetUser) return res.status(404).json({ error: 'Utilisateur introuvable' })
+
+    // Ajouter le participant (ignorer si déjà présent)
+    try {
+      await prisma.conversationParticipant.create({
+        data: { conversationId: id, userId },
+      })
+    } catch (e) {
+      if (e.code === 'P2002') return res.json({ ok: true, alreadyMember: true })
+      throw e
+    }
+
+    // Marquer la conversation comme groupe si elle ne l'est pas déjà
+    await prisma.conversation.update({
+      where: { id },
+      data: { isGroup: true, updatedAt: new Date() },
+    })
+
+    // Retourner la conversation mise à jour
+    const conv = await prisma.conversation.findUnique({
+      where: { id },
+      include: {
+        participants: { include: { user: PARTICIPANT_USER_SELECT } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    })
+    if (conv?.participants) conv.participants = conv.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
+    res.json({ ok: true, conversation: conv })
   } catch (err) {
     next(err)
   }

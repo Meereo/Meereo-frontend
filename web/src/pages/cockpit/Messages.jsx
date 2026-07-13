@@ -1207,8 +1207,20 @@ export default function Messages({ showToast }) {
               <input placeholder="Rechercher..." value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} style={{ width: '100%', padding: '8px 14px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }} autoFocus />
             </div>
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
-              {inviteFiltered.filter(c => c.direct && !(active.participants || []).includes(c.nom)).map((c, i) => (
-                <ContactRow key={i} c={c} onClick={() => { updateConv(active.id, cv => ({ ...cv, participants: [...(cv.participants || []), c.nom], isGroup: true, msgs: [...(cv.msgs || []), { side: 'in', from: 'Systeme', text: c.nom + ' a rejoint la conversation', time: 'Maintenant' }] })); setShowInvite(false); showToast && showToast(c.nom + ' ajoute') }} />
+              {inviteFiltered.filter(c => c.direct && !(active.participants || []).some(p => (p.name || p.nom || p) === c.nom)).map((c, i) => (
+                <ContactRow key={i} c={c} onClick={async () => {
+                  // Optimistic local update
+                  updateConv(active.id, cv => ({ ...cv, participants: [...(cv.participants || []), c.nom], isGroup: true, msgs: [...(cv.msgs || []), { side: 'in', from: 'Systeme', text: c.nom + ' a rejoint la conversation', time: 'Maintenant' }] }))
+                  setShowInvite(false)
+                  showToast && showToast(c.nom + ' ajouté')
+                  // Persist to backend
+                  const backendUserId = c.userId || c.linkedUserId
+                  if (backendUserId && !String(active.id).startsWith('conv_')) {
+                    try {
+                      await api.conversations.addParticipant(active.id, backendUserId)
+                    } catch (e) { console.warn('[addParticipant]', e.message) }
+                  }
+                }} />
               ))}
             </div>
           </div>

@@ -1989,12 +1989,13 @@ export function MeereoProvider({ children }) {
             .map(pm => pm.userId)
             .filter(Boolean)
           let convRes
+          const convProjectId = backendProjectId || market?.projectId || null
           if (extraMembers.length > 0) {
             // Plusieurs intervenants → conversation de groupe
-            convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle })
+            convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
           } else {
             // 1:1 — le backend déduplique si elle existe déjà
-            convRes = await api.conversations.create({ participantId: supplierId, title: convTitle })
+            convRes = await api.conversations.create({ participantId: supplierId, title: convTitle, projectId: convProjectId, type: 'projet' })
           }
           const backendConv = convRes?.conversation || convRes
           if (backendConv?.id) {

@@ -673,6 +673,7 @@ const conversationsApi = {
   },
   sendMessage: (id, data) => apiFetch(`/conversations/${id}/messages`, 'POST', data, true),
   markRead: (id) => apiFetch(`/conversations/${id}/read`, 'PATCH', null, true),
+  addParticipant: (id, userId) => apiFetch(`/conversations/${id}/participants`, 'POST', { userId }, true),
   delete: (id) => apiFetch(`/conversations/${id}`, 'DELETE', null, true),
 }
 
