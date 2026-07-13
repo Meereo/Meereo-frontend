@@ -509,7 +509,7 @@ export default function Profile() {
 
         {/* METRICS — toujours visibles, contextualisés */}
         {(() => {
-          const allReviews = store.reviews || []
+          const allReviews = (pubData?.reviews || store.reviews || []).map(r => ({ stars: r.note || r.stars || 0 }))
           // Si profil public chargé depuis backend → utilise les stats agregees
           const projTotal      = remoteStats ? remoteStats.projectsCount     : (store.projects || []).length
           const livres         = remoteStats ? remoteStats.projectsCompleted  : (store.projects || []).filter(p => p.avancement >= 100).length
@@ -768,31 +768,55 @@ export default function Profile() {
         )}
 
         {/* REVIEWS */}
-        <div className="pp-section">
-          <div className="pp-section-hdr">
-            <h2 className="pp-section-title">Avis &amp; crédibilité</h2>
-          </div>
-          {(store.reviews || []).length > 0 ? (
-            <div className="pp-three-col">
-              {(store.reviews || []).map((r, i) => (
-                <div key={i} className="pp-card pp-review-card">
-                  <span className="pp-review-quote">"</span>
-                  <div className="pp-review-stars">{Array.from({length: r.stars}, (_, idx) => <Star key={idx} size={12} fill="#F59E0B" strokeWidth={0}/>)}</div>
-                  <p className="pp-review-text">"{r.text}"</p>
-                  <div className="pp-review-author">
-                    <div className="pp-review-av">{r.av}</div>
-                    <div><div className="pp-review-name">{r.name}</div><div className="pp-review-co">{r.co}</div></div>
-                  </div>
+        {(() => {
+          // Backend reviews (from pubData) or local store reviews — normalize format
+          const rawReviews = pubData?.reviews || store.reviews || []
+          const reviews = rawReviews.map(r => ({
+            stars: r.note || r.stars || 0,
+            text: r.comment || r.text || '',
+            name: r.author?.name || r.authorName || r.name || '',
+            company: r.author?.company || r.co || '',
+            qualite: r.qualite,
+            delais: r.delais,
+            communication: r.communication,
+            createdAt: r.createdAt,
+          }))
+          return (
+            <div className="pp-section">
+              <div className="pp-section-hdr">
+                <h2 className="pp-section-title">Avis &amp; crédibilité</h2>
+                {reviews.length > 0 && <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>{reviews.length} avis vérifié{reviews.length > 1 ? 's' : ''}</span>}
+              </div>
+              {reviews.length > 0 ? (
+                <div className="pp-three-col">
+                  {reviews.map((r, i) => (
+                    <div key={i} className="pp-card pp-review-card">
+                      <span className="pp-review-quote">"</span>
+                      <div className="pp-review-stars">{Array.from({length: r.stars}, (_, idx) => <Star key={idx} size={12} fill="#F59E0B" strokeWidth={0}/>)}</div>
+                      {r.text && <p className="pp-review-text">"{r.text}"</p>}
+                      {(r.qualite || r.delais || r.communication) && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 6, marginBottom: 8 }}>
+                          {r.qualite > 0 && <span style={{ fontSize: 10, color: 'var(--t3)', background: 'var(--s2)', padding: '2px 8px', borderRadius: 100 }}>Qualité {r.qualite}/5</span>}
+                          {r.delais > 0 && <span style={{ fontSize: 10, color: 'var(--t3)', background: 'var(--s2)', padding: '2px 8px', borderRadius: 100 }}>Délais {r.delais}/5</span>}
+                          {r.communication > 0 && <span style={{ fontSize: 10, color: 'var(--t3)', background: 'var(--s2)', padding: '2px 8px', borderRadius: 100 }}>Com. {r.communication}/5</span>}
+                        </div>
+                      )}
+                      <div className="pp-review-author">
+                        <div className="pp-review-av">{(r.name || '?').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
+                        <div><div className="pp-review-name">{r.name}</div>{r.company && <div className="pp-review-co">{r.company}</div>}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div style={{ textAlign: 'center', padding: '32px 24px', background: 'var(--s2)', borderRadius: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>Aucun avis vérifié pour le moment.</div>
+                  <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Les avis des clients et partenaires apparaîtront ici.</div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '32px 24px', background: 'var(--s2)', borderRadius: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>Aucun avis vérifié pour le moment.</div>
-              <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Les avis des clients et partenaires apparaîtront ici.</div>
-            </div>
-          )}
-        </div>
+          )
+        })()}
 
       </div>
 

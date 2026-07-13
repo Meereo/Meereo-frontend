@@ -490,15 +490,16 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                     </div>
                   </div>
                 )
-                // Pas de cloture en cours — afficher le bouton
+                // Pas de cloture en cours — afficher le bouton (proéminent si 100%)
+                const allComplete = globalPct >= 100
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', marginBottom: 16, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: allComplete ? '18px 22px' : '14px 20px', marginBottom: 16, background: allComplete ? 'rgba(52,199,89,.06)' : 'var(--surface-1)', border: allComplete ? '2px solid rgba(52,199,89,.25)' : '1px solid var(--border-card)', borderRadius: 12 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>Clôture du projet</div>
-                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Envoyez une demande de validation au client</div>
+                      <div style={{ fontSize: allComplete ? 15 : 13, fontWeight: 600, color: allComplete ? 'var(--ok)' : 'var(--tx)' }}>{allComplete ? 'Toutes les tâches sont terminées !' : 'Clôture du projet'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{allComplete ? 'Validez le projet pour envoyer une demande de réception au client' : 'Envoyez une demande de validation au client'}</div>
                     </div>
-                    <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, flexShrink: 0 }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
-                      Demander la clôture
+                    <button style={{ padding: allComplete ? '12px 24px' : '10px 20px', borderRadius: 10, background: allComplete ? '#34C759' : 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: allComplete ? 14 : 13, flexShrink: 0, boxShadow: allComplete ? '0 4px 16px rgba(52,199,89,.3)' : 'none' }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
+                      {allComplete ? 'Valider le projet' : 'Demander la clôture'}
                     </button>
                   </div>
                 )
