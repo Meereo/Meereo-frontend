@@ -391,19 +391,20 @@ export function MeereoProvider({ children }) {
     }
     socket.on('notification:new', handleNotifNew)
 
-    // Charger les conversations depuis l'API au premier login
-    if (!store.conversations || store.conversations.length === 0) {
-      api.conversations.getAll().then(res => {
-        const list = Array.isArray(res) ? res : (res?.conversations || [])
-        if (list.length > 0) {
-          setStore(prev => {
-            const next = { ...prev, conversations: list }
-            saveToStorage(next)
-            return next
-          })
-        }
-      }).catch(() => {})
-    }
+    // Charger les conversations depuis l'API à chaque connexion (merge avec locales)
+    api.conversations.getAll().then(res => {
+      const list = Array.isArray(res) ? res : (res?.conversations || [])
+      if (list.length > 0) {
+        setStore(prev => {
+          // Garder les conversations locales (id commence par conv_) qui n'ont pas d'équivalent backend
+          const backendIds = new Set(list.map(c => c.id))
+          const localOnly = (prev.conversations || []).filter(c => String(c.id).startsWith('conv_') && !backendIds.has(c.id))
+          const next = { ...prev, conversations: [...list, ...localOnly] }
+          saveToStorage(next)
+          return next
+        })
+      }
+    }).catch(() => {})
 
     return () => {
       socket.off('conversation:updated', handleConvUpdated)
@@ -1481,18 +1482,14 @@ export function MeereoProvider({ children }) {
       const req = (prev.clotureRequests || []).find(r => r.id === clotureId)
       if (!req) return prev
       const newStatus = accept ? 'CLOTURE_VALIDE_EXTERNE' : 'CLOTURE_REFUSEE'
-      const projectStatus = accept ? 'archived' : 'EN_COURS'
-      if (accept) {
-        api.projects.update(req.projectId, { status: 'archived' }).catch(() => {})
-      }
       return {
         ...prev,
         clotureRequests: (prev.clotureRequests || []).map(r => r.id === clotureId ? { ...r, status: newStatus, validatedAt: new Date().toISOString(), clientComment: comment || '' } : r),
-        projects: (prev.projects || []).map(p => p.id === req.projectId ? { ...p, clotureStatus: newStatus, status: projectStatus } : p),
+        projects: (prev.projects || []).map(p => p.id === req.projectId ? { ...p, clotureStatus: newStatus } : p),
       }
     })
     addNotif(accept ? clientLabel(storeRef.current) + ' a confirmé la réception du projet' : clientLabel(storeRef.current) + ' a refusé la clôture', accept ? 'green' : 'orange', null, 'projets')
-    showToast(accept ? 'Projet clôturé' : 'Clôture refusée', accept ? 'green' : 'orange')
+    showToast(accept ? 'Projet validé par le client' : 'Clôture refusée', accept ? 'green' : 'orange')
   }, [updateStore, addNotif, showToast])
 
   // ── Invitations AO ──

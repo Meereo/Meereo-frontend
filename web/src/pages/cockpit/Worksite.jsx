@@ -858,78 +858,30 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         </div>
       )}
 
-      {/* MODAL: Demande de clôture (3 options) */}
-      {confirmModal && (() => {
-        const hasClientAccount = !!confirmModal.clientEmail
-        const inputSt = { width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)' }
-        return (
+      {/* MODAL: Confirmation de validation du projet */}
+      {confirmModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setConfirmModal(null)}>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '22px 24px 16px' }}>
-              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 4 }}>Clôture du projet</div>
-              <div style={{ fontSize: 13, color: 'var(--t3)' }}>{confirmModal.projNom}</div>
-              {!hasClientAccount && <div style={{ fontSize: 12, color: 'var(--t4)', marginTop: 8, lineHeight: 1.5 }}>Votre client n'est pas encore sur MEEREO. Choisissez comment finaliser la validation.</div>}
-            </div>
-
-            <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Option 1 — Lien de validation (recommandûe) */}
-              <div style={{ padding: '16px 18px', border: '2px solid var(--tx)', borderRadius: 12, cursor: 'pointer', background: 'rgba(0,0,0,.01)' }} onClick={() => {
-                const email = prompt('Email du client pour recevoir le lien :')
-                if (!email || !email.includes('@')) return
-                requestCloture({ projectId: confirmModal.projId, clientEmail: email, validationMode: 'EXTERNAL_LINK' })
-                setConfirmModal(null)
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Envoyer un lien de validation au client</div>
-                  <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff' }}>RECOMMANDé</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra un lien simple pour confirmer la réception du projet.</div>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '24px 24px 16px', textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(52,199,89,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-
-              {/* Option 2 — Inviter le client sur MEEREO */}
-              <div style={{ padding: '16px 18px', border: '1px solid var(--border-card)', borderRadius: 12, cursor: 'pointer' }} onClick={() => {
-                const email = prompt('Email du client à inviter sur MEEREO :')
-                if (!email || !email.includes('@')) return
-                requestCloture({ projectId: confirmModal.projId, clientEmail: email, validationMode: 'PLATFORM' })
-                setConfirmModal(null)
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Inviter le client à rejoindre MEEREO</div>
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Le client recevra une invitation et pourra valider depuis son espace.</div>
-              </div>
-
-              {/* Option 3 — Validation manuelle avec preuve */}
-              <div style={{ padding: '16px 18px', border: '1px solid var(--border-card)', borderRadius: 12, cursor: 'pointer' }} onClick={() => {
-                const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,.pdf'
-                input.onchange = (ev) => {
-                  const f = ev.target.files[0]; if (!f) return
-                  const reader = new FileReader()
-                  reader.onload = () => {
-                    requestCloture({ projectId: confirmModal.projId, validationMode: 'MANUAL', proof: reader.result, message: 'Validation obtenue hors plateforme' })
-                    setConfirmModal(null)
-                  }
-                  reader.readAsDataURL(f)
-                }
-                input.click()
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Valider avec preuve externe</div>
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>Vous avez dûjé obtenu la validation du client hors plateforme. Joignez une preuve (photo, PDF, message).</div>
+              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 6 }}>Valider le projet</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--t2)', marginBottom: 8 }}>{confirmModal.projNom}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6 }}>
+                Le client sera notifié que le projet est terminé et pourra confirmer la réception et donner son avis sur votre prestation.
               </div>
             </div>
-
-            <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)' }}>
-              <button className="btn btn-sm" style={{ width: '100%' }} onClick={() => setConfirmModal(null)}>Annuler</button>
+            <div style={{ padding: '16px 24px 20px', display: 'flex', gap: 10 }}>
+              <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => setConfirmModal(null)}>Annuler</button>
+              <button style={{ flex: 1, padding: '11px 20px', borderRadius: 10, background: '#34C759', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
+                requestCloture({ projectId: confirmModal.projId, validationMode: 'PLATFORM' })
+                setConfirmModal(null)
+              }}>Confirmer</button>
             </div>
           </div>
         </div>
-        )
-      })()}
+      )}
 
       {/* MODAL: Client note le prestataire */}
       {clientRatingModal && (
