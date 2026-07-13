@@ -429,7 +429,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             {showArchived ? 'Projets actifs' : `Archives (${archivedProjets.length})`}
           </button>
         )}
-        <NewProjectButton onOpen={() => setShowCreateProject(true)} context="header" />
+        {!isClientUser && <NewProjectButton onOpen={() => setShowCreateProject(true)} context="header" />}
       </DSPageHeader>
 
       {/* KPI strip */}
@@ -438,7 +438,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
           <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Apercu</div>
           <div style={{ fontSize: 44, fontWeight: 600, letterSpacing: '-2.5px', lineHeight: 1, marginBottom: 5 }}>{total}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginBottom: 14 }}>projets en portefeuille</div>
-          <NewProjectButton onOpen={() => setShowCreateProject(true)} context="overview" variant="light" />
+          {!isClientUser && <NewProjectButton onOpen={() => setShowCreateProject(true)} context="overview" variant="light" />}
         </div>
         <div className="rg-2" style={{ gap: 12 }}>
           {[
@@ -485,11 +485,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                           <div className="prog-track" style={{ flex: 1, height: 3 }}><div className="prog-fill" style={{ width: p.avancement + '%', background: p.color || undefined }} /></div>
                           <span style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--t4)' }}>{p.avancement}%</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 4 }}>
+                        {!isClientUser && <div style={{ display: 'flex', gap: 4 }}>
                           {COLS.map(c => (
                             <button key={c.key} onClick={e => { e.stopPropagation(); updateProject(p.id, { kanbanStatus: c.key }) }} style={{ flex: 1, padding: '3px 0', borderRadius: 6, border: '1px solid var(--border-card)', background: (p.kanbanStatus || 'todo') === c.key ? col.color + '18' : 'transparent', cursor: 'pointer', fontSize: 9, fontWeight: 600, color: (p.kanbanStatus || 'todo') === c.key ? col.color : 'var(--t4)', fontFamily: 'var(--f)', transition: 'all .12s' }}>{c.label}</button>
                           ))}
-                        </div>
+                        </div>}
                       </div>
                     ))}
                     {colProjects.length === 0 && (
@@ -544,9 +544,9 @@ export default function Projects({ onNavigate, openModal, showToast }) {
           {allProjets.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, opacity: .4 }}><HardHat size={28} /></div>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>Votre portefeuille est vide</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)' }}>Créez votre premier projet pour commencer.</div>
-              <NewProjectButton onOpen={() => setShowCreateProject(true)} context="empty-state" style={{ marginTop: 4 }} />
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{isClientUser ? 'Aucun projet' : 'Votre portefeuille est vide'}</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)' }}>{isClientUser ? 'Vous n\'êtes rattaché à aucun projet pour le moment.' : 'Créez votre premier projet pour commencer.'}</div>
+              {!isClientUser && <NewProjectButton onOpen={() => setShowCreateProject(true)} context="empty-state" style={{ marginTop: 4 }} />}
             </div>
           ) : !selected ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -568,7 +568,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <button className="btn btn-sm" onClick={() => openEdit('projet')}>Editer</button>
+                {!isClientUser && <button className="btn btn-sm" onClick={() => openEdit('projet')}>Editer</button>}
                 <button className="btn btn-sm" onClick={() => onNavigate && onNavigate('chantier')}>Suivi chantier →</button>
                 <button className="btn btn-sm" onClick={() => onNavigate && onNavigate('documents')}>Documents</button>
               </div>
@@ -815,7 +815,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div className="card" style={{ padding: 18 }}>
                   <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Notes</div>
                   <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{selected.notes || '—'}</div>
-                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px', marginTop: 10 }} onClick={() => openEdit('notes')}>Modifier</button>
+                  {!isClientUser && <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px', marginTop: 10 }} onClick={() => openEdit('notes')}>Modifier</button>}
                 </div>
               </div>
             </div>
