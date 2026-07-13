@@ -4,6 +4,10 @@ ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "slug" TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS "users_publicId_key" ON "users"("publicId");
 CREATE UNIQUE INDEX IF NOT EXISTS "users_slug_key" ON "users"("slug");
 
+-- AlterTable: projects
+ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "img" TEXT;
+ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "notes" TEXT DEFAULT '';
+
 -- AlterTable: pro_profiles
 ALTER TABLE "pro_profiles" ADD COLUMN IF NOT EXISTS "pageSections" JSONB DEFAULT '[]';
 

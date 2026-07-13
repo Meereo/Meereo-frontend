@@ -515,6 +515,8 @@ model Project {
   owner       User     @relation("OwnedProjects", fields: [ownerId], references: [id], onDelete: Cascade)
   sourceAoId  String?
   color       String?
+  img         String?  // Photo banderole du projet (URL)
+  notes       String   @default("")
   etapes      Json?
   equipe      Json?
   taskStates  Json?    // { taskId: 'todo'|'active'|'done' } — set by pro, read by client

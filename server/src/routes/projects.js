@@ -10,7 +10,7 @@ const router = Router()
 const ALLOWED = [
   'nom', 'type', 'phase', 'budget', 'adresse', 'livraison', 'priorite',
   'description', 'avancement', 'status', 'client', 'clientEmail',
-  'clientId', 'color', 'etapes', 'equipe', 'sourceAoId', 'taskStates',
+  'clientId', 'color', 'img', 'notes', 'etapes', 'equipe', 'sourceAoId', 'taskStates',
 ]
 
 // ─── GET /api/projects ────────────────────────────────────────────────────────

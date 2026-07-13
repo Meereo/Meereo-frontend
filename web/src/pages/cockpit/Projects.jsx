@@ -710,6 +710,35 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 )
               })()}
 
+              {/* Photos du projet (documents images) */}
+              {(() => {
+                const IMG_EXT = /\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i
+                const isImg = (d) => (d.type && /^image/i.test(d.type)) || (d.url && IMG_EXT.test(d.url)) || (d.name && IMG_EXT.test(d.name))
+                const projPhotos = (store.documents || []).filter(d => d.projectId === selected.id && isImg(d))
+                if (projPhotos.length === 0) return null
+                return (
+                  <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>Photos ({projPhotos.length})</div>
+                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('documents')}>Voir tout →</button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, padding: 12 }}>
+                      {projPhotos.slice(0, 8).map(d => (
+                        <a key={d.id} href={d.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', position: 'relative', paddingBottom: '75%', borderRadius: 10, overflow: 'hidden', background: 'var(--s2)', border: '1px solid var(--border-card)' }}>
+                          <img src={d.url} alt={d.name || ''} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 8px 6px', background: 'linear-gradient(transparent, rgba(0,0,0,.55))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10, fontWeight: 500, color: '#fff' }}>{d.name}</div>
+                        </a>
+                      ))}
+                    </div>
+                    {projPhotos.length > 8 && (
+                      <div style={{ padding: '8px 18px 12px', textAlign: 'center' }}>
+                        <button className="btn btn-sm" style={{ fontSize: 10 }} onClick={() => onNavigate && onNavigate('documents')}>+{projPhotos.length - 8} autres photos</button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* Documents rattachés */}
               {(() => {
                 const projDocs = (store.documents || []).filter(d => d.projectId === selected.id)
@@ -872,14 +901,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   <input id="edit-project-banner-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
                     const file = e.target.files?.[0]; if (!file) return
                     try {
+                      // Show compressed preview immediately
                       const compressed = await compressImage(file, 1200, 0.7)
                       setEditModal(p => ({ ...p, img: compressed }))
-                      // Upload to MinIO in background
+                      // Upload to server via documents endpoint
                       try {
-                        const { uploadFile } = await import('../../utils/upload')
-                        const url = await uploadFile(file, 'banners', 'project-cover')
-                        setEditModal(p => ({ ...p, img: url }))
-                      } catch { /* keep compressed base64 */ }
+                        const doc = await api.documents.upload(file, { name: 'banner-' + (editModal.nom || 'project'), type: 'img', projectId: editModal.id })
+                        if (doc?.url) setEditModal(p => ({ ...p, img: doc.url }))
+                      } catch { /* keep compressed base64 as fallback */ }
                     } catch {
                       // Fallback: raw base64
                       const reader = new FileReader()
