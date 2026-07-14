@@ -153,7 +153,20 @@ export default function Cockpit() {
   const [modal, setModal] = useState(null)
   const [toast, setToast] = useState(null)
   const [showProDir, setShowProDir] = useState(false)
+  const [showBuilderPrompt, setShowBuilderPrompt] = useState(false)
   const eventFormRef = useRef(null)
+
+  // Popup "créer ta page pro" — uniquement pour les pros sans page builder
+  useEffect(() => {
+    if (store.user?.type !== 'pro') return
+    if (sessionStorage.getItem('meereo_builder_prompt_dismissed')) return
+    api.usersApi.getPageSections()
+      .then(res => {
+        const sections = res?.sections || []
+        if (sections.length === 0) setShowBuilderPrompt(true)
+      })
+      .catch(() => {})
+  }, [store.user?.type])
 
   const openModal = useCallback((name) => setModal(prev => prev ? prev : name), [])
   const closeModal = useCallback(() => setModal(null), [])
@@ -189,6 +202,46 @@ export default function Cockpit() {
       <KaiAssistant context="pro" userName={userName} onNavigate={setActivePage} />
 
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#191c1d', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 12.5, fontWeight: 600, zIndex: 99999, boxShadow: '0 8px 32px rgba(0,0,0,.18)', animation: 'modalIn .18s ease' }}>{toast}</div>}
+
+      {/* Popup : créer sa page pro avec le builder */}
+      {showBuilderPrompt && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .2s ease' }}>
+          <div style={{ background: '#fff', borderRadius: 20, width: 440, boxShadow: '0 24px 64px rgba(0,0,0,.18)', overflow: 'hidden' }}>
+            {/* Header visuel */}
+            <div style={{ background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)', padding: '32px 32px 28px', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>Créez votre page professionnelle</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,.8)', marginTop: 8, lineHeight: 1.5 }}>
+                Votre vitrine en ligne en quelques clics
+              </p>
+            </div>
+            {/* Body */}
+            <div style={{ padding: '24px 32px' }}>
+              <p style={{ fontSize: 13, color: '#555', lineHeight: 1.7, margin: '0 0 20px' }}>
+                Utilisez notre éditeur visuel pour construire votre page pro. Présentez vos réalisations, votre équipe, vos certifications et vos services — tout est personnalisable.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  onClick={() => { setShowBuilderPrompt(false); sessionStorage.setItem('meereo_builder_prompt_dismissed', '1'); setActivePage('page-builder') }}
+                  style={{ width: '100%', padding: '13px 0', borderRadius: 10, background: '#191c1d', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', boxShadow: '0 4px 16px rgba(0,0,0,.12)' }}
+                >
+                  Créer ma page
+                </button>
+                <button
+                  onClick={() => { setShowBuilderPrompt(false); sessionStorage.setItem('meereo_builder_prompt_dismissed', '1') }}
+                  style={{ width: '100%', padding: '11px 0', borderRadius: 10, background: 'transparent', color: '#888', border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)' }}
+                >
+                  Plus tard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* All creation modals — form states managed internally */}
 
