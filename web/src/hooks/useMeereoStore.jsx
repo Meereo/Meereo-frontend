@@ -1913,9 +1913,8 @@ export function MeereoProvider({ children }) {
     // Sync to PostgreSQL — project, market, offer, AO, event (all in async block)
     const closedAoId = (store.offers || []).find(o => o.id === offerId)?.aoId
     ;(async () => {
+      let backendProjectId = market?.projectId
       try {
-        // 1. Sync auto-project FIRST (market needs projectId)
-        let backendProjectId = market?.projectId
         if (market?.projectId && !ao?.projectId) {
           try {
             const autoProj = storeRef.current.projects?.find(p => p.id === market.projectId)
