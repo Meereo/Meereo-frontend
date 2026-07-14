@@ -1489,17 +1489,25 @@ export function MeereoProvider({ children }) {
     return req
   }, [store.user, store.onboardingData, updateStore, addNotif, showToast])
 
-  const respondCloture = useCallback((clotureId, accept, comment) => {
+  const respondCloture = useCallback((clotureIdOrProjectId, accept, comment) => {
+    // Supporte à la fois un clotureId (depuis clotureRequests) et un projectId direct (depuis proj.clotureStatus)
     let projectId = null
     updateStore(prev => {
-      const req = (prev.clotureRequests || []).find(r => r.id === clotureId)
-      if (!req) return prev
-      projectId = req.projectId
+      const req = (prev.clotureRequests || []).find(r => r.id === clotureIdOrProjectId)
+      if (req) {
+        projectId = req.projectId
+      } else {
+        // Fallback: clotureIdOrProjectId est un projectId ou un ID synthétique 'clot_<projectId>'
+        projectId = clotureIdOrProjectId.startsWith?.('clot_') ? clotureIdOrProjectId.replace('clot_', '') : clotureIdOrProjectId
+        // Vérifier que ce projectId existe
+        if (!(prev.projects || []).some(p => p.id === projectId)) projectId = null
+      }
+      if (!projectId) return prev
       const newStatus = accept ? 'CLOTURE_VALIDE_EXTERNE' : 'CLOTURE_REFUSEE'
       return {
         ...prev,
-        clotureRequests: (prev.clotureRequests || []).map(r => r.id === clotureId ? { ...r, status: newStatus, validatedAt: new Date().toISOString(), clientComment: comment || '' } : r),
-        projects: (prev.projects || []).map(p => p.id === req.projectId ? { ...p, clotureStatus: newStatus, ...(accept ? { status: 'completed' } : {}) } : p),
+        clotureRequests: (prev.clotureRequests || []).map(r => r.id === clotureIdOrProjectId ? { ...r, status: newStatus, validatedAt: new Date().toISOString(), clientComment: comment || '' } : r),
+        projects: (prev.projects || []).map(p => p.id === projectId ? { ...p, clotureStatus: newStatus, ...(accept ? { status: 'completed' } : {}) } : p),
       }
     })
     // Syncer vers le backend
@@ -1522,8 +1530,8 @@ export function MeereoProvider({ children }) {
         }).catch(() => {})
       }
     }
-    addNotif(accept ? clientLabel(storeRef.current) + ' a confirmé la réception du projet' : clientLabel(storeRef.current) + ' a refusé la clôture', accept ? 'green' : 'orange', null, 'projets')
-    showToast(accept ? 'Projet validé par le client' : 'Clôture refusée', accept ? 'green' : 'orange')
+    addNotif(accept ? 'Réception du projet confirmée' : 'Clôture refusée', accept ? 'green' : 'orange', null, 'projets')
+    showToast(accept ? 'Projet validé' : 'Clôture refusée', accept ? 'green' : 'orange')
   }, [updateStore, addNotif, showToast])
 
   // ── Invitations AO ──
