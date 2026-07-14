@@ -21,18 +21,26 @@ router.get('/', requireAuth, async (req, res, next) => {
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { msg, type, role, link, page } = req.body
+    const { msg, message, type, role, link, page, targetUserId } = req.body
 
     const notif = await prisma.notification.create({
       data: {
-        msg,
+        msg:    msg || message || '',
         type:   type  || 'info',
         role:   role  || null,
         link:   link  || null,
         page:   page  || null,
-        userId: req.user.id,
+        userId: targetUserId || req.user.id,
       },
     })
+    // Notifier en temps réel via socket
+    const { getIo } = require('../socket')
+    const io = getIo()
+    if (io && notif.userId) {
+      io.to(`user:${notif.userId}`).emit('notification:new', {
+        id: notif.id, msg: notif.msg, type: notif.type, link: notif.link,
+      })
+    }
     res.status(201).json(notif)
   } catch (e) { next(e) }
 })
