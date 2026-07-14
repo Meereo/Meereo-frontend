@@ -178,7 +178,8 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     if (participantIds && Array.isArray(participantIds)) {
       // ─── Groupe ───────────────────────────────────────────────────────────
-      const allIds = [...new Set([myId, ...participantIds])]
+      const allIds = [...new Set([myId, ...participantIds.filter(Boolean)])]
+      console.log('[conversations] Creating group — myId:', myId, '| participantIds:', participantIds, '| allIds:', allIds)
       const conv = await prisma.conversation.create({
         data: {
           isGroup: true,

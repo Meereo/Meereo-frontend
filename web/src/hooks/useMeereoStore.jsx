@@ -1978,6 +1978,8 @@ export function MeereoProvider({ children }) {
       // Sync auto-conversation to backend — toujours en groupe pour les conversations projet
       const supplierId = market?.supplierId
       const autoConvData = storeRef.current.conversations?.find(c => c.marketId === market?.id)
+      console.log('[acceptOffer] supplierId:', supplierId, '| market:', market?.id, '| user:', storeRef.current.user?.id)
+      if (!supplierId) console.warn('[acceptOffer] ⚠ supplierId manquant — la conversation ne sera pas créée côté backend')
       if (supplierId) {
         try {
           const convTitle = autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '')
@@ -1988,8 +1990,10 @@ export function MeereoProvider({ children }) {
             .filter(Boolean)
           const convProjectId = backendProjectId || market?.projectId || null
           // Toujours créer en groupe pour conserver le titre et que les deux parties voient la conversation
+          console.log('[acceptOffer] Creating conversation with participantIds:', [supplierId, ...extraMembers])
           const convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
           const backendConv = convRes?.conversation || convRes
+          console.log('[acceptOffer] Backend conv created:', backendConv?.id, '| participants:', backendConv?.participants?.length)
           if (backendConv?.id) {
             updateStore(prev => {
               // Supprimer le local autoConv et tout doublon de la conversation backend

@@ -1279,13 +1279,18 @@ export default function Messages({ showToast }) {
               <button onClick={() => setShowParticipants(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
             </div>
             <div style={{ padding: '8px 0' }}>
-              {(active.participants || []).map((p, i) => (
+              {(active.participants || []).map((p, i) => {
+                const pName = typeof p === 'object' && p !== null ? (p.name || p.nom || p.email || p.id || '') : String(p || '')
+                const pId = typeof p === 'object' && p !== null ? (p.id || p.userId) : p
+                const initials = pName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '??'
+                return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 20px' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{(p || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
-                  <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{p}</div>
-                  {active.isGroup && (active.participants || []).length > 2 && <button onClick={() => { updateConv(active.id, c => ({ ...c, participants: (c.participants || []).filter(x => x !== p), msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: p + ' retire', time: 'Maintenant' }] })); setShowParticipants(false); setTimeout(() => setShowParticipants(true), 0); showToast && showToast(p + ' retire') }} style={{ fontSize: 10, color: 'var(--err)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }}>Retirer</button>}
+                  <div style={{ width: 32, height: 32, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                  <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{pName}</div>
+                  {active.isGroup && (active.participants || []).length > 2 && <button onClick={() => { updateConv(active.id, c => ({ ...c, participants: (c.participants || []).filter(x => (typeof x === 'object' ? x?.id : x) !== pId), msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: pName + ' retiré', time: 'Maintenant' }] })); setShowParticipants(false); setTimeout(() => setShowParticipants(true), 0); showToast && showToast(pName + ' retiré') }} style={{ fontSize: 10, color: 'var(--err)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontWeight: 600 }}>Retirer</button>}
                 </div>
-              ))}
+                )
+              })}
             </div>
             <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
               <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { setShowParticipants(false); setShowInvite(true); setInviteSearch('') }}>+ Ajouter</button>
