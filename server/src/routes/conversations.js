@@ -165,6 +165,14 @@ router.post('/', requireAuth, async (req, res, next) => {
         throw e
       }
 
+      // Notifier l'autre participant via socket
+      const io = getIo()
+      if (io) {
+        io.to(`user:${participantId}`).emit('conversation:updated', {
+          conversationId: conv.id,
+          lastMessage: null,
+        })
+      }
       return res.status(201).json({ conversation: conv, created: true })
     }
 
@@ -175,6 +183,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         data: {
           isGroup: true,
           title: title || 'Groupe',
+          type: type || 'libre',
           aoId: aoId || null,
           offerId: offerId || null,
           projectId: projectId || null,
@@ -190,6 +199,16 @@ router.post('/', requireAuth, async (req, res, next) => {
           messages: true,
         },
       })
+      // Notifier tous les autres participants via socket pour qu'ils voient la conversation immédiatement
+      const io = getIo()
+      if (io) {
+        allIds.filter(uid => uid !== myId).forEach(uid => {
+          io.to(`user:${uid}`).emit('conversation:updated', {
+            conversationId: conv.id,
+            lastMessage: null,
+          })
+        })
+      }
       return res.status(201).json({ conversation: conv, created: true })
     }
 

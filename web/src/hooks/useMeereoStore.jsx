@@ -1900,6 +1900,7 @@ export function MeereoProvider({ children }) {
         id: 'conv_' + Date.now(),
         projectId: projectId,
         marketId: market.id,
+        isGroup: true,
         participants: [prev.user?.id, offer.supplierId].filter(Boolean),
         title: (aoObj?.title || 'Projet') + ' — ' + (offer.entreprise || ''),
         nom: offer.entreprise || offer.supplierName || aoObj?.title || 'Conversation',
@@ -1974,26 +1975,20 @@ export function MeereoProvider({ children }) {
       sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
       if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
       sync(api.events.create({ titre: 'Marché signé — ' + (market?.lot || market?.titre || 'Nouveau marché'), date: new Date().toISOString().slice(0, 10), type: 'milestone', projectId: backendProjectId || market?.projectId, color: '#34C759' }))
-      // Sync auto-conversation to backend — 1:1 si un seul prestataire, groupe si équipe déjà constituée
+      // Sync auto-conversation to backend — toujours en groupe pour les conversations projet
       const supplierId = market?.supplierId
       const autoConvData = storeRef.current.conversations?.find(c => c.marketId === market?.id)
       if (supplierId) {
         try {
           const convTitle = autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '')
-          // Vérifier si d'autres membres du projet doivent être inclus (→ groupe)
+          // Vérifier si d'autres membres du projet doivent être inclus
           const extraMembers = (storeRef.current.projectMembers || [])
             .filter(pm => pm.projectId === (backendProjectId || market?.projectId) && pm.userId !== storeRef.current.user?.id && pm.userId !== supplierId)
             .map(pm => pm.userId)
             .filter(Boolean)
-          let convRes
           const convProjectId = backendProjectId || market?.projectId || null
-          if (extraMembers.length > 0) {
-            // Plusieurs intervenants → conversation de groupe
-            convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
-          } else {
-            // 1:1 — le backend déduplique si elle existe déjà
-            convRes = await api.conversations.create({ participantId: supplierId, title: convTitle, projectId: convProjectId, type: 'projet' })
-          }
+          // Toujours créer en groupe pour conserver le titre et que les deux parties voient la conversation
+          const convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
           const backendConv = convRes?.conversation || convRes
           if (backendConv?.id) {
             updateStore(prev => {
@@ -2002,8 +1997,8 @@ export function MeereoProvider({ children }) {
               const shaped = {
                 id: backendConv.id,
                 nom: backendConv.title || autoConvData?.nom || convTitle,
-                isGroup: backendConv.isGroup || extraMembers.length > 0,
-                participants: (backendConv.participants || []).map(p => p.id || p.userId).filter(Boolean),
+                isGroup: true,
+                participants: (backendConv.participants || []).map(p => p.user?.id || p.userId).filter(Boolean),
                 title: backendConv.title || convTitle,
                 marketId: market?.id,
                 projectId: backendProjectId || market?.projectId,
