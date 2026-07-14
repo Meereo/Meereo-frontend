@@ -249,6 +249,20 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       : { etapes: proj?.etapes || [], phase: proj?.phase, avancement: 0 }
     const avancement = Math.max(taskPct, etapesSync.avancement)
 
+    // Dériver la phase directement depuis les phases chantier terminées
+    // (fonctionne même si les étapes projet ne correspondent pas au mapping ESQ/APS/APD)
+    let derivedPhase = etapesSync.phase || proj?.phase
+    const lastDonePhaseIdx = CHANTIER_PHASES.map((ph, idx) => ph.tasks.every(t => getState(t.id) === 'done') ? idx : -1).filter(i => i >= 0).pop()
+    if (lastDonePhaseIdx !== undefined && lastDonePhaseIdx >= 0) {
+      // La phase courante = mainPhases de la PROCHAINE phase chantier non terminée
+      const nextPhase = CHANTIER_PHASES[lastDonePhaseIdx + 1]
+      if (nextPhase?.mainPhases?.length) {
+        derivedPhase = nextPhase.mainPhases[0]
+      } else if (lastDonePhaseIdx === CHANTIER_PHASES.length - 1) {
+        derivedPhase = 'RECEPTION'
+      }
+    }
+
     setTaskStates(nextTaskStates)
     saveTaskStates(selProjId, Object.fromEntries(Object.entries(nextTaskStates).filter(([k]) => k.startsWith(selProjId + '_'))))
 
@@ -257,12 +271,12 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       updateStore(p => ({
         ...p,
         projects: (p.projects || []).map(pr => pr.id === proj.id
-          ? { ...pr, avancement, phase: etapesSync.phase || pr.phase, etapes: etapesSync.etapes || pr.etapes, taskStates: taskStatesForBackend }
+          ? { ...pr, avancement, phase: derivedPhase || pr.phase, etapes: etapesSync.etapes || pr.etapes, taskStates: taskStatesForBackend }
           : pr)
       }))
       // Persist to backend (only real backend IDs, not optimistic proj_ IDs)
       if (!String(proj.id).startsWith('proj_')) {
-        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement, phase: etapesSync.phase || proj.phase, etapes: etapesSync.etapes || proj.etapes }).catch(() => {})
+        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement, phase: derivedPhase || proj.phase, etapes: etapesSync.etapes || proj.etapes }).catch(() => {})
       }
     }
   }, [selProjId, taskStates, proj, updateStore, saveTaskStates]) // eslint-disable-line react-hooks/exhaustive-deps
