@@ -62,6 +62,16 @@ export default function Profile() {
     return pubData?.pageSections || []
   }, [isOwner, pubData])
 
+  // ── Écouter les actions des sections builder (boutons Contacter / Inviter) ──
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail === 'contact') setShowContactModal(true)
+      if (e.detail === 'invite') setShowInviteModal(true)
+    }
+    window.addEventListener('meereo-profile-action', handler)
+    return () => window.removeEventListener('meereo-profile-action', handler)
+  }, [])
+
   // ── Contact modals ──
   const [showContactModal, setShowContactModal] = useState(false)
   const [contactMsg, setContactMsg] = useState('')

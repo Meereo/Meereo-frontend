@@ -1,5 +1,10 @@
 // sections/ContactSection.jsx — PP-11 Contact (3 variantes)
 
+const fireProfileAction = (action, e) => {
+  e?.preventDefault()
+  window.dispatchEvent(new CustomEvent('meereo-profile-action', { detail: action }))
+}
+
 export function ContactActions({ data }) {
   return (
     <section className="py-14">
@@ -128,12 +133,14 @@ export function ContactBand({ data }) {
           <a
             className="inline-flex items-center justify-center gap-2 border border-white bg-white text-pp-ink font-semibold text-[13.5px] py-[13px] px-[22px] cursor-pointer tracking-[0.02em] hover:bg-pp-ink-4 hover:text-pp-ink"
             href="#message"
+            onClick={e => fireProfileAction('contact', e)}
           >
             {data.ctaText || "Envoyer un message"}
           </a>
           <a
             className="inline-flex items-center justify-center gap-2 border border-white bg-transparent text-white font-semibold text-[13.5px] py-[13px] px-[22px] cursor-pointer tracking-[0.02em] hover:bg-white hover:text-pp-ink"
             href="#inviter"
+            onClick={e => fireProfileAction('invite', e)}
           >
             {data.secondaryText || "Inviter dans un projet"}
           </a>

@@ -1,5 +1,11 @@
 // sections/HeroSection.jsx — PP-01 En-tete (3 variantes)
 
+/* ── profile action dispatcher ──────────────────────────── */
+const fireProfileAction = (action, e) => {
+  e?.preventDefault()
+  window.dispatchEvent(new CustomEvent('meereo-profile-action', { detail: action }))
+}
+
 /* ── shared inline helpers ────────────────────────────────── */
 
 const badgeCls =
@@ -62,8 +68,8 @@ export function HeroBanner({ data }) {
 
         {/* Actions */}
         <div className="flex gap-[10px] pt-[18px] flex-wrap">
-          <a className={btnSolidCls} href="#contact">{data.ctaText || "Contacter"}</a>
-          <a className={btnCls} href="#inviter">{data.secondaryText || "Inviter dans un projet"}</a>
+          <a className={btnSolidCls} href="#contact" onClick={e => fireProfileAction('contact', e)}>{data.ctaText || "Contacter"}</a>
+          <a className={btnCls} href="#inviter" onClick={e => fireProfileAction('invite', e)}>{data.secondaryText || "Inviter dans un projet"}</a>
         </div>
       </div>
     </section>
@@ -129,8 +135,8 @@ export function HeroEditorial({ data }) {
 
         {/* Actions */}
         <div className="flex gap-[10px] mt-[34px] flex-wrap">
-          <a className={btnSolidCls} href="#contact">{data.ctaText || "Contacter"}</a>
-          <a className={btnCls} href="#inviter">{data.secondaryText || "Inviter dans un projet"}</a>
+          <a className={btnSolidCls} href="#contact" onClick={e => fireProfileAction('contact', e)}>{data.ctaText || "Contacter"}</a>
+          <a className={btnCls} href="#inviter" onClick={e => fireProfileAction('invite', e)}>{data.secondaryText || "Inviter dans un projet"}</a>
         </div>
       </div>
     </section>
@@ -175,8 +181,8 @@ export function HeroCompact({ data }) {
 
         {/* Cell 4 — Actions (last cell) */}
         <div className={`${cellBase} !border-r-0 ml-auto !pr-0 max-[760px]:!ml-0`}>
-          <a className={btnSolidCls} href="#contact">{data.ctaText || "Contacter"}</a>
-          <a className={btnCls} href="#inviter">{data.secondaryText || "Inviter dans un projet"}</a>
+          <a className={btnSolidCls} href="#contact" onClick={e => fireProfileAction('contact', e)}>{data.ctaText || "Contacter"}</a>
+          <a className={btnCls} href="#inviter" onClick={e => fireProfileAction('invite', e)}>{data.secondaryText || "Inviter dans un projet"}</a>
         </div>
       </div>
     </section>
