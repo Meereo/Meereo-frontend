@@ -91,48 +91,96 @@ export default function Profile() {
 
   const handleContact = useCallback(async () => {
     if (!contactMsg.trim() || contactSending) return
+    if (!store.user) { navigate('/onboarding'); return }
     setContactSending(true)
     const motifLabels = { collaboration: 'Demande de collaboration', devis: 'Demande de devis', information: 'Demande d\'information', autre: 'Prise de contact' }
+    const fullMsg = `[${motifLabels[contactMotif]}]\n${contactMsg}`
     try {
-      await api.notifications.create({
+      // Créer ou retrouver une conversation backend avec le pro
+      if (pubData?.id && store._token) {
+        const convRes = await api.conversations.create({ participantId: pubData.id })
+        const conv = convRes?.conversation || convRes
+        if (conv?.id) {
+          // Envoyer le message dans la conversation
+          await api.conversations.sendMessage(conv.id, { text: fullMsg })
+          // Notifier le pro
+          api.notifications.create({
+            targetUserId: pubData.id,
+            type: 'contact_request',
+            message: `Nouveau message de ${visitorName || 'un visiteur'} — ${motifLabels[contactMotif]}`,
+            link: '/messages',
+          }).catch(() => {})
+          // Naviguer vers la messagerie
+          sessionStorage.setItem('meereo_open_conv', conv.id)
+          sessionStorage.setItem('meereo_nav_page', 'messages')
+          setContactSending(false)
+          showToast('Message envoyé à ' + proName, 'green')
+          setShowContactModal(false)
+          setContactMsg('')
+          setContactMotif('collaboration')
+          navigate(isClient ? '/client' : '/cockpit')
+          return
+        }
+      }
+      // Fallback : notification seule si pas de backend ID
+      api.notifications.create({
         targetUserId: pubData?.id || null,
         type: 'contact_request',
         message: `Nouveau message de ${visitorName || 'un visiteur'} — ${motifLabels[contactMotif]}`,
-      })
-    } catch { /* non bloquant */ }
-    emitEvent('message_sent', { to: proName }, {
-      notifMsg: `Nouveau message de ${visitorName || 'un visiteur'} — ${motifLabels[contactMotif]}`,
-      notifType: 'green'
-    })
-    setContactSending(false)
-    showToast('Message envoyé ! ' + proName + ' vous recontactera sous 24h', 'green')
-    setShowContactModal(false)
-    setContactMsg('')
-    setContactMotif('collaboration')
-  }, [contactMsg, contactSending, contactMotif, proName, visitorName, pubData, emitEvent, showToast])
+      }).catch(() => {})
+      setContactSending(false)
+      showToast('Message envoyé ! ' + proName + ' vous recontactera sous 24h', 'green')
+      setShowContactModal(false)
+      setContactMsg('')
+      setContactMotif('collaboration')
+    } catch (e) {
+      setContactSending(false)
+      showToast('Erreur : ' + (e.message || 'impossible d\'envoyer'), 'red')
+    }
+  }, [contactMsg, contactSending, contactMotif, proName, visitorName, pubData, store.user, store._token, isClient, navigate, showToast])
 
   const handleInvite = useCallback(async () => {
     if (!inviteProjet || inviteSending) return
+    if (!store.user) { navigate('/onboarding'); return }
     setInviteSending(true)
     const projObj = (store.projects || []).find(p => p.id === inviteProjet)
+    const inviteText = `[Invitation projet : ${projObj?.nom || 'Projet'}]\nRôle : ${inviteRole || proSpecialite || 'Non précisé'}${inviteMsg ? '\n' + inviteMsg : ''}`
     try {
-      await api.notifications.create({
+      if (pubData?.id && store._token) {
+        const convRes = await api.conversations.create({ participantId: pubData.id })
+        const conv = convRes?.conversation || convRes
+        if (conv?.id) {
+          await api.conversations.sendMessage(conv.id, { text: inviteText })
+          api.notifications.create({
+            targetUserId: pubData.id,
+            type: 'project_invitation',
+            message: `Invitation de ${visitorName || 'un client'} pour ${projObj?.nom || 'un projet'}`,
+            link: '/messages',
+          }).catch(() => {})
+          sessionStorage.setItem('meereo_open_conv', conv.id)
+          sessionStorage.setItem('meereo_nav_page', 'messages')
+          setInviteSending(false)
+          showToast('Invitation envoyée à ' + proName, 'blue')
+          setShowInviteModal(false)
+          setInviteProjet(''); setInviteRole(''); setInviteMsg('')
+          navigate(isClient ? '/client' : '/cockpit')
+          return
+        }
+      }
+      api.notifications.create({
         targetUserId: pubData?.id || null,
         type: 'project_invitation',
-        message: `Invitation de ${visitorName || 'un visiteur'} pour ${projObj?.nom || 'un projet'} — rôle : ${inviteRole || proSpecialite}`,
-      })
-    } catch { /* non bloquant */ }
-    emitEvent('invitation_sent', { to: proName, project: projObj?.nom }, {
-      notifMsg: `Invitation envoyée à ${proName} pour ${projObj?.nom}`,
-      notifType: 'blue'
-    })
-    setInviteSending(false)
-    showToast('Invitation envoyée à ' + proName, 'blue')
-    setShowInviteModal(false)
-    setInviteProjet('')
-    setInviteRole('')
-    setInviteMsg('')
-  }, [inviteProjet, inviteSending, inviteRole, proName, proSpecialite, visitorName, pubData, store.projects, emitEvent, showToast])
+        message: `Invitation de ${visitorName || 'un client'} pour ${projObj?.nom || 'un projet'} — rôle : ${inviteRole || proSpecialite}`,
+      }).catch(() => {})
+      setInviteSending(false)
+      showToast('Invitation envoyée à ' + proName, 'blue')
+      setShowInviteModal(false)
+      setInviteProjet(''); setInviteRole(''); setInviteMsg('')
+    } catch (e) {
+      setInviteSending(false)
+      showToast('Erreur : ' + (e.message || 'impossible d\'envoyer'), 'red')
+    }
+  }, [inviteProjet, inviteSending, inviteRole, inviteMsg, proName, proSpecialite, visitorName, pubData, store.user, store._token, store.projects, isClient, navigate, showToast])
 
   const handleContactViaMsg = useCallback(() => {
     if (isVisitor || !store.user) { navigate('/onboarding'); return }
