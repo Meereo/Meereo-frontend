@@ -3,6 +3,7 @@ export default function HeroEditor({ data, sectionType, onChange }) {
   const set = (k, v) => onChange({ ...data, [k]: v });
   return (
     <div>
+      <ImageField label="Logo" value={data.logoSrc || ""} onChange={(v) => set("logoSrc", v)} />
       <TextField label="Nom de l'entreprise" value={data.companyName} onChange={(v) => set("companyName", v)} />
       <TextField label="Categorie" value={data.category} onChange={(v) => set("category", v)} />
       <TextField label="Localisation" value={data.location} onChange={(v) => set("location", v)} />

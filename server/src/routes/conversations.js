@@ -1,6 +1,7 @@
 const { Router } = require('express')
 const { requireAuth } = require('../middleware/auth')
 const { getPrisma } = require('../db')
+const { getIo } = require('../socket')
 
 const router = Router()
 

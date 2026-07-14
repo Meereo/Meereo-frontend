@@ -20,6 +20,12 @@ const btnSolidCls =
 const logoCls =
   "grid place-items-center bg-pp-ink text-white font-[650]";
 
+/* ── Logo: image si dispo, sinon initiales ──────────────── */
+function Logo({ src, initials, size = "w-24 h-24", textSize = "text-[28px]", className = "" }) {
+  if (src) return <img src={src} alt="" className={`${size} object-contain bg-pp-ink shrink-0 ${className}`} />;
+  return <div className={`${logoCls} ${size} ${textSize} shrink-0 ${className}`} aria-hidden="true">{initials || "RD"}</div>;
+}
+
 /* ── PP-01/A — Banniere ──────────────────────────────────── */
 
 export function HeroBanner({ data }) {
@@ -47,12 +53,7 @@ export function HeroBanner({ data }) {
       {/* Inner container */}
       <div className="max-w-[1080px] mx-auto px-7 flex gap-[26px] items-end flex-wrap">
         {/* Logo */}
-        <div
-          className={`${logoCls} w-24 h-24 text-[28px] -mt-12 border-4 border-pp-paper rounded-none shrink-0`}
-          aria-hidden="true"
-        >
-          {initials || "RD"}
-        </div>
+        <Logo src={data.logoSrc} initials={initials} className="-mt-12 border-4 border-pp-paper rounded-none" />
 
         {/* Identity */}
         <div className="min-w-0">
@@ -88,12 +89,7 @@ export function HeroEditorial({ data }) {
       <div className="max-w-[1080px] mx-auto px-7">
         {/* Top row */}
         <div className="flex justify-between gap-[18px] items-center mb-[34px] flex-wrap">
-          <div
-            className={`${logoCls} w-24 h-24 text-[28px] shrink-0`}
-            aria-hidden="true"
-          >
-            {initials || "RD"}
-          </div>
+          <Logo src={data.logoSrc} initials={initials} />
           {data.verified && <span className={badgeCls}>Professionnel verifie MEEREO</span>}
         </div>
 
@@ -155,12 +151,7 @@ export function HeroCompact({ data }) {
       <div className="max-w-[1080px] mx-auto px-7 flex items-stretch gap-0 flex-wrap">
         {/* Cell 1 — Logo + name */}
         <div className={`${cellBase} !pl-0`}>
-          <div
-            className={`${logoCls} w-11 h-11 text-[15px] shrink-0`}
-            aria-hidden="true"
-          >
-            {initials || "RD"}
-          </div>
+          <Logo src={data.logoSrc} initials={initials} size="w-11 h-11" textSize="text-[15px]" />
           <div>
             <h1 className="text-[17px] font-[650] tracking-[-0.01em] leading-[1.1]">
               {data.companyName}
