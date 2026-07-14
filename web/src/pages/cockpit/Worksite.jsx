@@ -262,7 +262,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       }))
       // Persist to backend (only real backend IDs, not optimistic proj_ IDs)
       if (!String(proj.id).startsWith('proj_')) {
-        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement }).catch(() => {})
+        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement, phase: etapesSync.phase || proj.phase, etapes: etapesSync.etapes || proj.etapes }).catch(() => {})
       }
     }
   }, [selProjId, taskStates, proj, updateStore, saveTaskStates]) // eslint-disable-line react-hooks/exhaustive-deps

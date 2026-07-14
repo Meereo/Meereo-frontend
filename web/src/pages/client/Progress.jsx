@@ -21,8 +21,10 @@ export default function Progress({ ctx }) {
     .filter(r => r.type === 'note_chantier' && r.projectId === proj?.id && r.visibility !== 'internal')
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-  // Clôture en attente de validation client
-  const pendingCloture = (store?.clotureRequests || []).find(r => r.projectId === proj?.id && r.status === 'EN_ATTENTE_VALIDATION_CLIENT')
+  // Clôture en attente de validation client — détecte via clotureStatus du projet (synced from backend)
+  const pendingCloture = proj?.clotureStatus === 'EN_ATTENTE_VALIDATION_CLIENT'
+    ? { id: 'clot_' + proj.id, projectId: proj.id, status: 'EN_ATTENTE_VALIDATION_CLIENT' }
+    : (store?.clotureRequests || []).find(r => r.projectId === proj?.id && r.status === 'EN_ATTENTE_VALIDATION_CLIENT')
   const isClotured = proj?.clotureStatus === 'CLOTURE_VALIDE_EXTERNE' || proj?.clotureStatus === 'CLOTURE_VALIDE_MEEREO'
 
   // Rating modal state

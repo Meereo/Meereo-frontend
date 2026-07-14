@@ -1460,9 +1460,21 @@ export function MeereoProvider({ children }) {
         projects,
       }
     })
-    // Archiver le projet côté backend si validation immédiate
-    if (data.validationMode === 'MANUAL') {
-      api.projects.update(data.projectId, { status: 'archived' }).catch(() => {})
+    // Syncer le statut de clôture vers le backend
+    const backendStatus = data.validationMode === 'MANUAL' ? 'CLOTURE_VALIDE_EXTERNE' : 'EN_ATTENTE_VALIDATION_CLIENT'
+    api.projects.update(data.projectId, {
+      clotureStatus: backendStatus,
+      ...(data.validationMode === 'MANUAL' ? { status: 'archived' } : {}),
+    }).catch(e => console.warn('[requestCloture] Backend sync failed:', e.message))
+    // Notifier le client via notification
+    const proj = (storeRef.current.projects || []).find(p => p.id === data.projectId)
+    if (proj?.clientId) {
+      api.notifications.create({
+        targetUserId: proj.clientId,
+        type: 'cloture_request',
+        message: `${store.onboardingData?.entreprise || store.user?.name || 'Le prestataire'} a déclaré le projet "${proj.nom || 'Projet'}" comme terminé. Confirmez la réception.`,
+        link: '/client',
+      }).catch(() => {})
     }
     if (data.validationMode === 'MANUAL') {
       addNotif('Projet clôturé avec validation externe', 'green', null, 'projets')
@@ -1478,16 +1490,38 @@ export function MeereoProvider({ children }) {
   }, [store.user, store.onboardingData, updateStore, addNotif, showToast])
 
   const respondCloture = useCallback((clotureId, accept, comment) => {
+    let projectId = null
     updateStore(prev => {
       const req = (prev.clotureRequests || []).find(r => r.id === clotureId)
       if (!req) return prev
+      projectId = req.projectId
       const newStatus = accept ? 'CLOTURE_VALIDE_EXTERNE' : 'CLOTURE_REFUSEE'
       return {
         ...prev,
         clotureRequests: (prev.clotureRequests || []).map(r => r.id === clotureId ? { ...r, status: newStatus, validatedAt: new Date().toISOString(), clientComment: comment || '' } : r),
-        projects: (prev.projects || []).map(p => p.id === req.projectId ? { ...p, clotureStatus: newStatus } : p),
+        projects: (prev.projects || []).map(p => p.id === req.projectId ? { ...p, clotureStatus: newStatus, ...(accept ? { status: 'completed' } : {}) } : p),
       }
     })
+    // Syncer vers le backend
+    if (projectId) {
+      const newStatus = accept ? 'CLOTURE_VALIDE_EXTERNE' : 'CLOTURE_REFUSEE'
+      api.projects.update(projectId, {
+        clotureStatus: newStatus,
+        ...(accept ? { status: 'completed' } : {}),
+      }).catch(e => console.warn('[respondCloture] Backend sync failed:', e.message))
+      // Notifier le pro
+      const proj = (storeRef.current.projects || []).find(p => p.id === projectId)
+      if (proj?.ownerId) {
+        api.notifications.create({
+          targetUserId: proj.ownerId,
+          type: accept ? 'cloture_accepted' : 'cloture_refused',
+          message: accept
+            ? `Le client a confirmé la réception du projet "${proj.nom || 'Projet'}"`
+            : `Le client a refusé la clôture du projet "${proj.nom || 'Projet'}"${comment ? ' — ' + comment : ''}`,
+          link: '/cockpit',
+        }).catch(() => {})
+      }
+    }
     addNotif(accept ? clientLabel(storeRef.current) + ' a confirmé la réception du projet' : clientLabel(storeRef.current) + ' a refusé la clôture', accept ? 'green' : 'orange', null, 'projets')
     showToast(accept ? 'Projet validé par le client' : 'Clôture refusée', accept ? 'green' : 'orange')
   }, [updateStore, addNotif, showToast])

@@ -519,8 +519,10 @@ model Project {
   notes       String   @default("")
   etapes      Json?
   equipe      Json?
-  taskStates  Json?    // { taskId: 'todo'|'active'|'done' } — set by pro, read by client
-  createdAt   DateTime @default(now())
+  taskStates     Json?    // { taskId: 'todo'|'active'|'done' } — set by pro, read by client
+  clotureStatus  String?  // EN_ATTENTE_VALIDATION_CLIENT | CLOTURE_VALIDE_EXTERNE | CLOTURE_REFUSEE
+  clotureAt      DateTime?
+  createdAt      DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   members       ProjectMember[]
