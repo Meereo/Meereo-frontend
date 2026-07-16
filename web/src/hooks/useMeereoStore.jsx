@@ -1954,6 +1954,7 @@ export function MeereoProvider({ children }) {
     })
     // Sync to PostgreSQL — project, market, offer, AO, event (all in async block)
     const closedAoId = (store.offers || []).find(o => o.id === offerId)?.aoId
+    const isLocalId = (id) => typeof id === 'string' && id.startsWith('proj_')
     ;(async () => {
       let backendProjectId = market?.projectId
       try {
@@ -1982,6 +1983,15 @@ export function MeereoProvider({ children }) {
             console.warn('[acceptOffer] Project sync failed:', e.message)
             showToast('Erreur création projet: ' + e.message, 'red')
           }
+        }
+        // Skip downstream backend calls if projectId is still a local-only ID
+        // (the project wasn't created on the backend, so market/members would reference a non-existent project)
+        if (isLocalId(backendProjectId)) {
+          console.warn('[acceptOffer] Skipping market/project sync — project ID is local-only:', backendProjectId)
+          // Still sync offer & AO status (they don't depend on the project)
+          sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
+          if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
+          return
         }
         // 2. Create market on backend with real projectId
         const backendMarket = await api.markets.create({ titre: market?.titre, entreprise: market?.entreprise, lot: market?.lot, montant: String(market?.amount || market?.montant || market?.budget || ''), statut: 'signed', avancement: 0, projectId: backendProjectId, offerId, aoId: market?.aoId || null, clientId: market?.clientId || null, supplierId: market?.supplierId || null, delai: market?.delai || null, description: market?.description || null })
