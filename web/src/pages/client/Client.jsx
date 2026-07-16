@@ -112,6 +112,10 @@ export default function Client() {
       api.projectMembers.getAll().catch(() => null),
       api.markets.getAll().catch(() => null),
     ]).then(([freshProjects, freshMembers, freshMarkets]) => {
+      if (freshProjects) {
+        const withCloture = freshProjects.filter(p => p.clotureStatus)
+        console.log('[Client] Projects loaded:', freshProjects.length, '| With clotureStatus:', withCloture.length, withCloture.map(p => ({ id: p.id, nom: p.nom, clotureStatus: p.clotureStatus })))
+      }
       updateStore(prev => ({
         ...prev,
         ...(freshProjects ? { projects: freshProjects } : {}),

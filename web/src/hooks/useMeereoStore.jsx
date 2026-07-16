@@ -1472,7 +1472,8 @@ export function MeereoProvider({ children }) {
     api.projects.update(data.projectId, {
       clotureStatus: backendStatus,
       ...(data.validationMode === 'MANUAL' ? { status: 'archived' } : {}),
-    }).catch(e => console.warn('[requestCloture] Backend sync failed:', e.message))
+    }).then(res => console.log('[requestCloture] Backend sync OK:', res?.id, 'clotureStatus:', res?.clotureStatus))
+      .catch(e => console.warn('[requestCloture] Backend sync FAILED:', e.message))
     // Auto-compléter les missions backend liées au projet
     const projMissions = (storeRef.current.missions || []).filter(m => m.projectId === data.projectId)
     projMissions.forEach(m => {
