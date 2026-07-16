@@ -420,7 +420,7 @@ export default function Client() {
           {page === 'ao' && <Exchange showToast={showToast} onNavigate={p => setPage(p)} />}
           {page === 'offres' && <Offers showToast={showToast} openModal={openModal} />}
           {page === 'marches' && <Contracts showToast={showToast} openModal={openModal} onNavigate={p => setPage(p)} />}
-          {page === 'projets' && <Projects showToast={showToast} openModal={openModal} onNavigate={p => setPage(p)} />}
+          {page === 'projets' && <Projects showToast={showToast} openModal={openModal} onNavigate={p => setPage(p === 'chantier' ? 'avancement' : p)} />}
 
           {/* DOCUMENTS */}
           {page === 'documents' && <Documents showToast={showToast} />}

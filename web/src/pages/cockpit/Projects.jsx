@@ -566,6 +566,33 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 </div>
               )}
 
+              {/* Clôture card — visible côté client quand le projet est en attente de validation */}
+              {isClientUser && selected.clotureStatus === 'EN_ATTENTE_VALIDATION_CLIENT' && (
+                <div style={{ padding: '18px 22px', marginBottom: 16, background: 'rgba(52,199,89,.04)', border: '2px solid rgba(52,199,89,.25)', borderRadius: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(52,199,89,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#34C759' }}>Mission terminée — validation requise</div>
+                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Votre prestataire a déclaré ce projet comme terminé</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>
+                    Confirmez la bonne réception du projet et partagez votre avis sur la prestation.
+                  </div>
+                  <button onClick={() => onNavigate && onNavigate('chantier')} style={{ padding: '10px 22px', borderRadius: 10, background: '#34C759', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, boxShadow: '0 4px 16px rgba(52,199,89,.25)' }}>
+                    Confirmer la réception
+                  </button>
+                </div>
+              )}
+              {isClientUser && (selected.clotureStatus === 'CLOTURE_VALIDE_EXTERNE' || selected.clotureStatus === 'CLOTURE_VALIDE_MEEREO') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', marginBottom: 16, background: 'rgba(52,199,89,.04)', border: '1px solid rgba(52,199,89,.12)', borderRadius: 12 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Projet clôturé</div>
+                </div>
+              )}
+
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {!isClientUser && <button className="btn btn-sm" onClick={() => openEdit('projet')}>Editer</button>}

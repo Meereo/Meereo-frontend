@@ -1454,10 +1454,17 @@ export function MeereoProvider({ children }) {
         // Copier le projet statique dans le store avec le nouveau statut
         projects = [...projects, { id: data.projectId, clotureStatus: projectStatus, ...(data.validationMode === 'MANUAL' ? { status: 'archived' } : {}) }]
       }
+      // Auto-compléter les missions liées au projet (jalons → completed, avancement → 100%)
+      const missions = (prev.missions || []).map(m => {
+        if (m.projectId !== data.projectId) return m
+        const completedJalons = (m.jalons || []).map(j => ({ ...j, status: 'completed' }))
+        return { ...m, status: 'completed', avancement: 100, jalons: completedJalons, completedAt: new Date().toISOString() }
+      })
       return {
         ...prev,
         clotureRequests: [...(prev.clotureRequests || []), req],
         projects,
+        missions,
       }
     })
     // Syncer le statut de clôture vers le backend
@@ -1466,6 +1473,11 @@ export function MeereoProvider({ children }) {
       clotureStatus: backendStatus,
       ...(data.validationMode === 'MANUAL' ? { status: 'archived' } : {}),
     }).catch(e => console.warn('[requestCloture] Backend sync failed:', e.message))
+    // Auto-compléter les missions backend liées au projet
+    const projMissions = (storeRef.current.missions || []).filter(m => m.projectId === data.projectId)
+    projMissions.forEach(m => {
+      api.missions?.update(m.id, { status: 'completed', avancement: 100, completedAt: new Date().toISOString() }).catch(() => {})
+    })
     // Notifier le client via notification
     const proj = (storeRef.current.projects || []).find(p => p.id === data.projectId)
     if (proj?.clientId) {
