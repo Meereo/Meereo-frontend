@@ -882,6 +882,19 @@ export default function Exchange({ showToast, onNavigate }) {
               <div><label className="form-label">Memoire technique</label><textarea className="form-input" rows="4" value={reponse.technique} onChange={e => setReponse(p => ({ ...p, technique: e.target.value }))} placeholder="Methodologie, organisation, moyens humains et materiels, planning previsionnel, references similaires..." /></div>
               <div><label className="form-label">Message au maitre d'ouvrage</label><textarea className="form-input" rows="2" value={reponse.message} onChange={e => setReponse(p => ({ ...p, message: e.target.value }))} placeholder="Motivation, points forts de votre offre..." /></div>
 
+              {/* Offre financière */}
+              <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Offre financière</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Montant proposé (FCFA)</label>
+                  <input className="form-input" type="text" inputMode="numeric" value={reponse.montant} onChange={e => setReponse(p => ({ ...p, montant: e.target.value.replace(/[^0-9\s.]/g, '') }))} placeholder="Ex: 5 000 000" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Délai d'exécution</label>
+                  <input className="form-input" type="text" value={reponse.delai} onChange={e => setReponse(p => ({ ...p, delai: e.target.value }))} placeholder="Ex: 3 mois" />
+                </div>
+              </div>
+
               {/* Pièces jointes — vrai file picker */}
               <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Pièces jointes supplémentaires</div>
               <div
