@@ -11,6 +11,7 @@ const ALLOWED = [
   'nom', 'type', 'phase', 'budget', 'adresse', 'livraison', 'priorite',
   'description', 'avancement', 'status', 'client', 'clientEmail',
   'clientId', 'color', 'img', 'notes', 'etapes', 'equipe', 'sourceAoId', 'taskStates',
+  'clotureStatus', 'clotureAt',
 ]
 
 // ─── GET /api/projects ────────────────────────────────────────────────────────
