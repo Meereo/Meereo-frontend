@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect, Suspense, useRef } from 'react'
+﻿import { useState, useMemo, useEffect, useCallback, Suspense, useRef } from 'react'
 import { api } from '../../services/api/client'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
@@ -104,9 +104,9 @@ export default function Client() {
     if (pg) { sessionStorage.removeItem('meereo_nav_page'); setPage(pg) }
   }, [])
 
-  // Refresh projects / markets / members on mount so the client sees projects
-  // that were auto-created from an accepted offer (possibly by the pro or by them)
-  useEffect(() => {
+  // Refresh projects / markets / members on mount AND when navigating to key pages
+  // so the client picks up clotureStatus and other changes made by the pro
+  const refreshProjects = useCallback(() => {
     Promise.all([
       api.projects.getAll().catch(() => null),
       api.projectMembers.getAll().catch(() => null),
@@ -119,7 +119,12 @@ export default function Client() {
         ...(freshMarkets  ? { markets: freshMarkets } : {}),
       }))
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [updateStore])
+  useEffect(() => { refreshProjects() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Re-fetch when navigating to home or avancement (catches clotureStatus updates)
+  useEffect(() => {
+    if (page === 'home' || page === 'avancement' || page === 'projets') refreshProjects()
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Identite utilisateur — source unique
   const uid = useUserIdentity()

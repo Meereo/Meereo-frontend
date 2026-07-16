@@ -14,7 +14,13 @@ export default function Home({ ctx }) {
   } = ctx
 
   // Détecte si un projet a une demande de clôture en attente
-  const clotureProj = (store.projects || []).find(p => p.clotureStatus === 'EN_ATTENTE_VALIDATION_CLIENT')
+  // Vérifie le projet sélectionné d'abord, puis tous les projets, puis les clotureRequests
+  const clotureProj = (proj?.clotureStatus === 'EN_ATTENTE_VALIDATION_CLIENT' ? proj : null)
+    || (store.projects || []).find(p => p.clotureStatus === 'EN_ATTENTE_VALIDATION_CLIENT')
+    || (() => {
+      const req = (store.clotureRequests || []).find(r => r.status === 'EN_ATTENTE_VALIDATION_CLIENT')
+      return req ? { ...(store.projects || []).find(p => p.id === req.projectId), id: req.projectId, nom: req.projectId, clotureStatus: 'EN_ATTENTE_VALIDATION_CLIENT' } : null
+    })()
 
   return (
     <div className="cl-home-fadein">
