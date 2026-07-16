@@ -352,7 +352,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                 {detail.statut === MARKET_STATUS.COMPLETED && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--t2)' }}>Livraison validûe</span>
+                    <span style={{ color: 'var(--t2)' }}>Livraison validée</span>
                   </div>
                 )}
                 {(detail.validations || []).map((v, i) => (

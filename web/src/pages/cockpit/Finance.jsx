@@ -27,7 +27,7 @@ const INVOICE_BADGE = {
   brouillon: { label: 'Brouillon', color: 'var(--t4)',  bg: 'var(--s2)' },
   emise:     { label: 'émise',     color: '#007AFF',    bg: 'rgba(0,122,255,.07)' },
   payee:     { label: 'Payée',     color: 'var(--ok)',  bg: 'rgba(52,199,89,.07)' },
-  validee:   { label: 'Validûe',   color: '#7C3AED',    bg: 'rgba(124,58,237,.07)' },
+  validee:   { label: 'Validée',   color: '#7C3AED',    bg: 'rgba(124,58,237,.07)' },
 }
 
 const PIE_COLORS = ['#2563EB','#7C3AED','#DC2626','#16A34A','#F59E0B','#EA580C','#0891B2','#6366F1','#BE185D','#92400E']

@@ -149,7 +149,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 0 }}>
           {[
             { key: 'offres', label: isClient ? 'Offres reçues' : 'Offres envoyées', icon: isClient ? <ClipboardList size={13}/> : <Send size={13}/>, count: total },
-            { key: 'contrats', label: isClient ? 'Contrats validûs' : 'Contrats obtenus', icon: <FileText size={13}/>, count: acceptees },
+            { key: 'contrats', label: isClient ? 'Contrats validés' : 'Contrats obtenus', icon: <FileText size={13}/>, count: acceptees },
           ].map(t => (
             <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 20px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13, fontWeight: mainTab === t.key ? 700 : 500, color: mainTab === t.key ? 'var(--tx)' : 'var(--t3)', borderBottom: mainTab === t.key ? '2px solid var(--tx)' : '2px solid transparent', marginBottom: -1, transition: 'all .15s' }}>
               {t.icon} {t.label}
@@ -170,7 +170,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
       {mainTab === 'contrats' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {contrats.length === 0 ? (
-            <DSEmptyState icon={<FileText size={24}/>} title="Aucun contrat validû" description="Les offres acceptées apparaîtront ici comme contrats actifs." />
+            <DSEmptyState icon={<FileText size={24}/>} title="Aucun contrat validé" description="Les offres acceptées apparaîtront ici comme contrats actifs." />
           ) : (
             <>
               {contratsActifs.length > 0 && (

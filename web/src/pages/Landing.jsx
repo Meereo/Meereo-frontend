@@ -315,7 +315,7 @@ export default function Landing() {
                   <div style={{ fontSize:17, fontWeight:800, letterSpacing:'-.4px', color:'#16A34A' }}>95 000 000</div>
                 </div>
               </div>
-              <p style={{ fontSize:13, lineHeight:1.55, color:'#aaa', margin:0 }}>Visualisez oé va votre budget. Chaque paiement est tracé, validû et sécurisé.</p>
+              <p style={{ fontSize:13, lineHeight:1.55, color:'#aaa', margin:0 }}>Visualisez oé va votre budget. Chaque paiement est tracé, validé et sécurisé.</p>
             </div>
             {/* Marketplace */}
             <div style={{ borderRadius:18, border:'1px solid rgba(0,0,0,.08)', background:'#fff', overflow:'hidden', display:'flex', flexDirection:'column' }}>
@@ -419,7 +419,7 @@ export default function Landing() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2px', color:'#191c1d', marginBottom:4 }}>Avec MEEREO</div>
-                {['Cockpit centralisé par projet','Décisions tracées et validûes','Trésorerie temps rèel intégrée','Plateforme unique multi-acteurs'].map(t=>(
+                {['Cockpit centralisé par projet','Décisions tracées et validées','Trésorerie temps rèel intégrée','Plateforme unique multi-acteurs'].map(t=>(
                   <div key={t} style={{ padding:'16px 20px', borderRadius:12, background:'#191c1d', fontSize:14, fontWeight:600, color:'#fff' }}>{t}</div>
                 ))}
               </div>

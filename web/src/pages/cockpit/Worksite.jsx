@@ -486,7 +486,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 if (cs === 'CLOTURE_VALIDE_EXTERNE' || cs === 'CLOTURE_VALIDE_MEEREO') return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginBottom: 16, background: 'rgba(52,199,89,.05)', border: '1px solid rgba(52,199,89,.15)', borderRadius: 12 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Clôturé — validû par le client</div></div>
+                    <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Clôturé — validé par le client</div></div>
                   </div>
                 )
                 if (cs === 'DEMANDE_CLOTURE_ENVOYEE' || cs === 'EN_ATTENTE_VALIDATION_CLIENT') return (
