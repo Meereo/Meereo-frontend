@@ -216,7 +216,7 @@ function MissionDetail({ mission, onClose, onUpdate, onUpdateJalons }) {
   const canValidate = isCreator || store.user?.type === 'client'
 
   return (
-    <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 440, background: 'var(--bg)', borderLeft: '1px solid var(--border)', zIndex: 100, overflowY: 'auto', padding: 24 }}>
+    <div style={{ height: '100%', overflowY: 'auto', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 24 }}>{icon}</span>
@@ -369,22 +369,39 @@ export default function Missions() {
         </div>
       </div>
 
-      {/* Mission list */}
-      {missions.length === 0 ? (
-        <DSEmptyState
-          icon="🎯"
-          title="Aucune mission"
-          description="Créez votre première mission pour structurer votre projet en étapes confiées à des professionnels."
-          actionLabel="+ Nouvelle mission"
-          onAction={() => setShowCreate(true)}
-        />
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340, 1fr))', gap: 12 }}>
-          {missions.map(m => (
-            <MissionCard key={m.id} mission={m} project={projectMap[m.projectId]} onSelect={setSelected} />
-          ))}
+      {/* Split layout: list + detail */}
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+        {/* Mission list */}
+        <div style={{ flex: selected ? '0 0 55%' : '1 1 100%', minWidth: 0, transition: 'flex .2s ease' }}>
+          {missions.length === 0 ? (
+            <DSEmptyState
+              icon="🎯"
+              title="Aucune mission"
+              description="Créez votre première mission pour structurer votre projet en étapes confiées à des professionnels."
+              actionLabel="+ Nouvelle mission"
+              onAction={() => setShowCreate(true)}
+            />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+              {missions.map(m => (
+                <MissionCard key={m.id} mission={m} project={projectMap[m.projectId]} onSelect={setSelected} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Detail panel — inline, takes remaining space */}
+        {selected && (
+          <div style={{ flex: '0 0 42%', position: 'sticky', top: 20, maxHeight: 'calc(100vh - 180px)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+            <MissionDetail
+              mission={(store.missions || []).find(m => m.id === selected.id) || selected}
+              onClose={() => setSelected(null)}
+              onUpdate={handleUpdate}
+              onUpdateJalons={handleUpdateJalons}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Create modal */}
       <CreateMissionModal
@@ -393,16 +410,6 @@ export default function Missions() {
         projects={projects}
         onCreate={handleCreate}
       />
-
-      {/* Detail panel */}
-      {selected && (
-        <MissionDetail
-          mission={(store.missions || []).find(m => m.id === selected.id) || selected}
-          onClose={() => setSelected(null)}
-          onUpdate={handleUpdate}
-          onUpdateJalons={handleUpdateJalons}
-        />
-      )}
     </div>
   )
 }
