@@ -36,8 +36,9 @@ export default function Progress({ ctx }) {
   const alreadyReviewed = (store?.reviews || []).some(r => r.projectId === proj?.id)
 
   // Find the pro (owner) of the project
-  const proMember = (store?.projectMembers || []).find(m => m.projectId === proj?.id && (m.role === 'PRO_ADMIN' || m.role === 'ADMIN'))
-  const proName = proMember?.userName || proj?.ownerId || ''
+  const proMember = (store?.projectMembers || []).find(m => m.projectId === proj?.id && (m.role === 'pro_admin' || m.role === 'PRO_ADMIN' || m.role === 'ADMIN'))
+    || (store?.projectMembers || []).find(m => m.projectId === proj?.id && m.userId === proj?.ownerId)
+  const proName = proMember?.userName || proj?.client || proj?.entreprise || 'Prestataire'
   const proId = proMember?.userId || proj?.ownerId || null
 
   const submitRating = async () => {
