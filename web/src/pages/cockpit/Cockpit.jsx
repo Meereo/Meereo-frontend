@@ -156,10 +156,9 @@ export default function Cockpit() {
   const [showBuilderPrompt, setShowBuilderPrompt] = useState(false)
   const eventFormRef = useRef(null)
 
-  // Popup "créer ta page pro" — uniquement pour les pros sans page builder
+  // Popup "créer ta page pro" — s'affiche à chaque connexion tant que la page n'est pas créée
   useEffect(() => {
     if (store.user?.type !== 'pro') return
-    if (sessionStorage.getItem('meereo_builder_prompt_dismissed')) return
     api.usersApi.getPageSections()
       .then(res => {
         const sections = res?.sections || []
@@ -226,13 +225,13 @@ export default function Cockpit() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button
-                  onClick={() => { setShowBuilderPrompt(false); sessionStorage.setItem('meereo_builder_prompt_dismissed', '1'); setActivePage('page-builder') }}
+                  onClick={() => { setShowBuilderPrompt(false); setActivePage('page-builder') }}
                   style={{ width: '100%', padding: '13px 0', borderRadius: 10, background: '#191c1d', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', boxShadow: '0 4px 16px rgba(0,0,0,.12)' }}
                 >
                   Créer ma page
                 </button>
                 <button
-                  onClick={() => { setShowBuilderPrompt(false); sessionStorage.setItem('meereo_builder_prompt_dismissed', '1') }}
+                  onClick={() => setShowBuilderPrompt(false)}
                   style={{ width: '100%', padding: '11px 0', borderRadius: 10, background: 'transparent', color: '#888', border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)' }}
                 >
                   Plus tard

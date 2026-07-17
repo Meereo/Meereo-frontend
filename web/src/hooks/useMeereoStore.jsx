@@ -740,7 +740,12 @@ export function MeereoProvider({ children }) {
         }
       }
     } catch (e) {
-      // Register failed (409 = email exists) → try login instead
+      // Register failed — check if RCCM duplicate (don't fallback to login)
+      if (e.message?.includes('RCCM')) {
+        updateStore(prev => ({ ...prev, user: null, users: (prev.users || []).filter(u => u.id !== user.id), onboardingData: null }))
+        throw new Error('Ce numéro RCCM est déjà utilisé par une autre entreprise')
+      }
+      // 409 = email exists → try login instead
       console.warn('[MEEREO] Register failed:', e.message, '— trying login')
       try {
         const loginRes = await api.auth.login({ email: user.email, password: userPassword })

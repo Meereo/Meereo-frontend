@@ -358,6 +358,16 @@ router.patch('/me/onboarding', requireAuth, async (req, res) => {
       select: { onboardingData: true },
     })
 
+    // Vérifier unicité RCCM avant sync
+    if (sanitized.rccm) {
+      const existingPro = await prisma.proProfile.findUnique({ where: { rccm: sanitized.rccm } })
+      const existingFrn = await prisma.fournisseurProfile.findUnique({ where: { rccm: sanitized.rccm } })
+      const ownId = req.user.id
+      if ((existingPro && existingPro.userId !== ownId) || (existingFrn && existingFrn.userId !== ownId)) {
+        return res.status(409).json({ error: 'Ce numéro RCCM est déjà utilisé par une autre entreprise' })
+      }
+    }
+
     // Sync to structured profile table so public API endpoint stays consistent
     if (Object.keys(sanitized).length > 0) {
       if (req.user.type === 'pro') {

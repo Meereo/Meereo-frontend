@@ -197,7 +197,7 @@ model ProProfile {
   ville      String  @default("Abidjan")
   pays       String  @default("Côte d'Ivoire")
   annee      String? // Année de fondation
-  rccm       String? // Registre du Commerce
+  rccm       String? @unique // Registre du Commerce — unique par entreprise
   ncc        String? // Numéro de Contribuable (NCC/NIF)
   tel        String
 
@@ -242,7 +242,7 @@ model FournisseurProfile {
   entreprise String
   ville      String  @default("Abidjan")
   pays       String  @default("Côte d'Ivoire")
-  rccm       String?
+  rccm       String? @unique // Registre du Commerce — unique par entreprise
   ncc        String?
   tel        String
 

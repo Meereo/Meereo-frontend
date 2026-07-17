@@ -137,6 +137,12 @@ router.post('/register', async (req, res, next) => {
         })
       } else if (base.type === 'pro') {
         const profile = validate(registerProProfileSchema, req.body)
+        // Vérifier unicité RCCM
+        if (profile.rccm) {
+          const existingRccm = await tx.proProfile.findUnique({ where: { rccm: profile.rccm } })
+            || await tx.fournisseurProfile.findUnique({ where: { rccm: profile.rccm } })
+          if (existingRccm) throw createError(409, 'Ce numéro RCCM est déjà utilisé par une autre entreprise')
+        }
         await tx.proProfile.create({
           data: {
             userId: user.id,
@@ -164,6 +170,12 @@ router.post('/register', async (req, res, next) => {
         })
       } else if (base.type === 'fournisseur') {
         const profile = validate(registerFournisseurProfileSchema, req.body)
+        // Vérifier unicité RCCM
+        if (profile.rccm) {
+          const existingRccm = await tx.proProfile.findUnique({ where: { rccm: profile.rccm } })
+            || await tx.fournisseurProfile.findUnique({ where: { rccm: profile.rccm } })
+          if (existingRccm) throw createError(409, 'Ce numéro RCCM est déjà utilisé par une autre entreprise')
+        }
         await tx.fournisseurProfile.create({
           data: {
             userId: user.id,

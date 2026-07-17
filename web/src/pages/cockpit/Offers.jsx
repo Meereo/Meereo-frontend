@@ -89,6 +89,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const [showCreateOffer, setShowCreateOffer] = useState(false)
   const [infoModal, setInfoModal] = useState(null) // offer object for "Demander info"
   const [infoMessage, setInfoMessage] = useState('')
+  const [viewerDoc, setViewerDoc] = useState(null) // { url, name } for PDF viewer modal
 
   // Le backend filtre dûjé les offres par utilisateur (offres sur ses AOs pour un client,
   // offres soumises pour un pro). On utilise rawOffres directement.
@@ -355,7 +356,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                         if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
                         // Validate URL scheme before opening (security)
                         try { const u = new URL(fileUrl); if (!['https:', 'http:', 'data:'].includes(u.protocol) && !fileUrl.startsWith('data:')) { showToast && showToast('URL invalide'); return } } catch { /* data: URIs throw, treat as safe */ }
-                        window.open(fileUrl, '_blank', 'noopener,noreferrer')
+                        setViewerDoc({ url: fileUrl, name: d.n || d.name || 'Document' })
                       }
                       const downloadDoc = () => {
                         if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
@@ -617,6 +618,25 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 setInfoMessage('')
               }}>Envoyer</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Viewer PDF / document intégré */}
+      {viewerDoc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .2s ease' }} onClick={() => setViewerDoc(null)}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '90vw', maxWidth: 960, height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.25)' }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--border-card, #e5e7eb)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{viewerDoc.name}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 12px' }} onClick={() => { const a = document.createElement('a'); a.href = viewerDoc.url; a.download = viewerDoc.name; a.rel = 'noopener noreferrer'; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a) }}>Télécharger</button>
+                <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 12px' }} onClick={() => window.open(viewerDoc.url, '_blank', 'noopener,noreferrer')}>Nouvel onglet</button>
+                <button onClick={() => setViewerDoc(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--t3, #666)', padding: '0 4px', lineHeight: 1 }}>✕</button>
+              </div>
+            </div>
+            {/* Iframe viewer */}
+            <iframe src={viewerDoc.url} title={viewerDoc.name} style={{ flex: 1, width: '100%', border: 'none' }} />
           </div>
         </div>
       )}
