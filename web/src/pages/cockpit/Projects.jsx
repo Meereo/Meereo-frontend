@@ -677,9 +677,24 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {(() => {
                 const projectOrders = (store.paymentOrders || []).filter(o => o.projectId === selected.id)
                 const proofs = (store.proofDocuments || []).filter(d => projectOrders.some(o => o.id === d.payoutRequestId))
+                const projectBudget = selected.budget ? parseBgt(selected.budget) : 0
+                const totalPaid = projectOrders.filter(o => o.status === 'paid').reduce((s, o) => s + (o.amountGross || 0), 0)
                 if (projectOrders.length === 0) return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financiére</div>
+                    {projectBudget > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', marginBottom: 16 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Wallet size={18} color="#F59E0B"/></div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)', marginBottom: 2 }}>Budget du projet</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(projectBudget)}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Dépensé</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>{fmtMoney(0)}</div>
+                        </div>
+                      </div>
+                    )}
                     <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Wallet size={18} color="var(--t3)"/></div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun flux financier</div>
@@ -698,6 +713,25 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financiére</div>
+                    {projectBudget > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', marginBottom: 14 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Wallet size={18} color="#F59E0B"/></div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)', marginBottom: 2 }}>Budget du projet</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(projectBudget)}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Dépensé</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: totalPaid > 0 ? '#F59E0B' : 'var(--ok)' }}>{fmtMoney(totalPaid)}</div>
+                        </div>
+                        {projectBudget > 0 && (
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 10, color: 'var(--t4)' }}>Reste</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>{fmtMoney(projectBudget - totalPaid)}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {projectOrders.map(o => (
                       <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                         <PaymentBadge status={o.status} size="small" />
