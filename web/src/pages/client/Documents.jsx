@@ -181,11 +181,9 @@ export default function Documents({ showToast }) {
               const isImgDoc = d.type === 'img' || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
               return (
                 <div key={d.id} className="doc-card" style={{ position: 'relative', cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
-                  <div style={{ height: 80, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: isImgDoc && d.url ? '#000' : tc.bg }}>
-                    {isImgDoc && d.url
-                      ? <img src={d.url} alt={d.nom} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: .92 }} />
-                      : <span style={{ fontSize: 16, fontWeight: 600, color: tc.color }}>{tc.label}</span>
-                    }
+                  <div style={{ height: 80, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: tc.bg }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: tc.color }}>{tc.label}</span>
+                    {isImgDoc && d.url && <img src={d.url} alt={d.nom} onError={e => { e.target.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: .92 }} />}
                     {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
                   </div>
                   <div className="doc-card-name">{d.nom}</div>

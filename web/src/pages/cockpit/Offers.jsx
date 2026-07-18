@@ -101,9 +101,15 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const acceptees = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED).length
   const refusees = allOffres.filter(o => o.statut === OFFER_STATUS.REJECTED).length
 
+  // AO attribués/clos → offres liées considérées comme archivées (projet terminé)
+  const closedAoIds = useMemo(() => {
+    return new Set((store.aos || []).filter(a => a.status === 'attributed' || a.status === 'closed').map(a => a.id))
+  }, [store.aos])
+
   // Séparer actives / archivées pour l'onglet offres
-  const activeOffres = allOffres.filter(o => !isArchivable(o))
-  const archivedOffres = allOffres.filter(o => isArchivable(o))
+  const isOfferArchived = (o) => isArchivable(o) || (o.aoId && closedAoIds.has(o.aoId))
+  const activeOffres = allOffres.filter(o => !isOfferArchived(o))
+  const archivedOffres = allOffres.filter(o => isOfferArchived(o))
 
   const filtered = activeOffres.filter(o => {
     const statOk = filter === 'all' || o.statut === filter
@@ -117,8 +123,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 
   // Contrats = offres acceptées (actives + archivées)
   const contrats = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED)
-  const contratsActifs = contrats.filter(o => !isArchivable(o))
-  const contratsArchives = contrats.filter(o => isArchivable(o))
+  const contratsActifs = contrats.filter(o => !isOfferArchived(o))
+  const contratsArchives = contrats.filter(o => isOfferArchived(o))
 
   const selected = selectedId ? allOffres.find(o => o.id === selectedId) : filtered[0]
 

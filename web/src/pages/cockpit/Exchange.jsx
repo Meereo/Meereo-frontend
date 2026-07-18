@@ -106,7 +106,7 @@ export default function Exchange({ showToast, onNavigate }) {
     const uType = store.user?.type
     const userId = store.user?.id
     return (store.aos || [])
-      .filter(a => a.status === 'open')
+      .filter(a => a.status === 'open' || a.status === 'attributed' || a.status === 'closed')
       .filter(a => {
         // Les clients ne voient pas les AOs des autres clients
         if (uType === 'client' && a.ownerUserId && a.ownerUserId !== userId) return false
@@ -129,7 +129,7 @@ export default function Exchange({ showToast, onNavigate }) {
       })
       .map(a => ({
         id: a.id, ref: 'AO-CLI-' + String(a.id).slice(-5), titre: a.title || a.titre, maoa: 'Client', lieu: '', budget: a.budget || '—',
-        deadline: '—', statut: 'ouvert', categorie: a.lot || '', metier: a.requestedTrade || a.lot || '', desc: a.description || '',
+        deadline: '—', statut: a.status === 'attributed' ? 'attribué' : a.status === 'closed' ? 'clos' : 'ouvert', rawStatus: a.status, categorie: a.lot || '', metier: a.requestedTrade || a.lot || '', desc: a.description || '',
         matching: 0, matching_raisons: [], fromClient: true, ownerUserId: a.ownerUserId, ownerRole: a.ownerRole || null,
       }))
   }, [store.aos, store.user, mesSecteurs])
@@ -170,6 +170,21 @@ export default function Exchange({ showToast, onNavigate }) {
   }, [isClient, store.aos, store.offers, store.user])
 
   const selectedOffer = tab === 'offres' ? (selectedId ? clientReceivedOffers.find(o => o.id === selectedId) : clientReceivedOffers[0]) : null
+
+  // Fetch pro ratings for received offers
+  const [proRatings, setProRatings] = useState({}) // userId -> { noteAvg, reviewsCount }
+  useEffect(() => {
+    if (!isClient || clientReceivedOffers.length === 0) return
+    const userIds = [...new Set(clientReceivedOffers.map(o => o.userId).filter(Boolean))]
+    userIds.forEach(uid => {
+      if (proRatings[uid]) return
+      api.usersApi.getProProfile(uid)
+        .then(data => {
+          if (data?.stats) setProRatings(prev => ({ ...prev, [uid]: { noteAvg: data.stats.noteAvg, reviewsCount: data.stats.reviewsCount } }))
+        })
+        .catch(() => {})
+    })
+  }, [isClient, clientReceivedOffers])
 
   // Close trade combobox on click outside
   useEffect(() => {
@@ -529,11 +544,12 @@ export default function Exchange({ showToast, onNavigate }) {
               )}
               {tab === 'marche' && marcheFiltered.map(ao => {
                 const mc = getMetierColor(ao.metier)
+                const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
                 return (
-                  <div key={ao.id} className="list-item" style={{ background: selectedMarche?.id === ao.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(ao.id)}>
+                  <div key={ao.id} className="list-item" style={{ background: selectedMarche?.id === ao.id ? 'var(--s2)' : undefined, opacity: isClosed ? .45 : 1, pointerEvents: isClosed ? 'none' : undefined }} onClick={() => !isClosed && setSelectedId(ao.id)}>
                     <div className="list-item-body">
-                      <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}</div>
-                      <div className="list-item-sub">{ao.maoa} à {ao.lieu}</div>
+                      <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}{isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)', marginLeft: 4 }}>{ao.statut === 'attribué' ? 'Attribué' : 'Clôturé'}</span>}</div>
+                      <div className="list-item-sub">{ao.maoa} · {ao.lieu}</div>
                     </div>
                     <div className="list-item-right">
                       <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: mc + '12', color: mc }}>{ao.metier}</span>
@@ -551,14 +567,15 @@ export default function Exchange({ showToast, onNavigate }) {
               )}
               {tab === 'mesao' && allMesAO.map(ao => {
                 const mc = getMetierColor(ao.metier)
+                const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
                 return (
-                <div key={ao.id} className="list-item" style={{ background: selectedMesAO?.id === ao.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(ao.id)}>
+                <div key={ao.id} className="list-item" style={{ background: selectedMesAO?.id === ao.id ? 'var(--s2)' : undefined, opacity: isClosed ? .45 : 1 }} onClick={() => setSelectedId(ao.id)}>
                   <div className="list-item-body">
-                    <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}</div>
-                    <div className="list-item-sub">{ao.projet} à {ao.metier}</div>
+                    <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}{isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)', marginLeft: 4 }}>{ao.statut === 'attribué' ? 'Attribué' : 'Clôturé'}</span>}</div>
+                    <div className="list-item-sub">{ao.projet} · {ao.metier}</div>
                   </div>
                   <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: isClosed ? 'var(--s3)' : ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: isClosed ? 'var(--t4)' : ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{isClosed ? ao.statut : ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
                     <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
                   </div>
                 </div>
@@ -661,8 +678,16 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                     <div style={{ width: 52, height: 52, borderRadius: 14, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(selectedOffer.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 3 }}>{selectedOffer.entreprise}</div>
-                      <div style={{ fontSize: 12, color: 'var(--t3)' }}>Soumis le {selectedOffer.soumis}</div>
+                      <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {selectedOffer.entreprise}
+                        {proRatings[selectedOffer.userId]?.noteAvg > 0 && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 600, color: '#F59E0B' }}>
+                            {Array.from({ length: Math.round(proRatings[selectedOffer.userId].noteAvg) }, (_, i) => <Star key={i} size={12} fill="#F59E0B" strokeWidth={0} />)}
+                            <span style={{ color: 'var(--t3)', fontWeight: 500, marginLeft: 2 }}>{proRatings[selectedOffer.userId].noteAvg}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--t3)' }}>Soumis le {selectedOffer.soumis}{proRatings[selectedOffer.userId]?.reviewsCount > 0 ? ` · ${proRatings[selectedOffer.userId].reviewsCount} avis` : ''}</div>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: selectedOffer.statut === 'accepted' ? 'rgba(52,199,89,.08)' : selectedOffer.statut === 'rejected' ? 'rgba(220,38,38,.06)' : 'rgba(245,158,11,.08)', color: selectedOffer.statut === 'accepted' ? 'var(--ok)' : selectedOffer.statut === 'rejected' ? 'var(--err)' : 'var(--wrn)' }}>{selectedOffer.statut === 'accepted' ? 'Acceptée' : selectedOffer.statut === 'rejected' ? 'Refusée' : 'En attente'}</span>
                   </div>

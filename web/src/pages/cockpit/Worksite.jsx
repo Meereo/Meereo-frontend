@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import Modal from '../../components/shared/Modal'
 import { HardHat, Ruler, ClipboardList, Wrench, Package, Sofa, CheckCircle2, Check, Play, Circle, Star } from 'lucide-react'
-import { CHANTIER_PHASES, ANNUAIRE_PLATEFORME } from '../../data/chantier'
+import { CHANTIER_PHASES } from '../../data/chantier'
 import { getUserProjects } from '../../domain/projectsRepository'
-import { INTERVENANTS_DATA } from '../../data/intervenants'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { api } from '../../services/api/client'
 import { syncEtapesFromChantier } from '../../domain/projectAggregates'
@@ -134,6 +133,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
   const [showCreateNote, setShowCreateNote] = useState(false)
   const [assignTab, setAssignTab] = useState('plateforme') // plateforme | inviter | creer
   const [assignSearch, setAssignSearch] = useState('')
+  const [platformPros, setPlatformPros] = useState([])
+  const [prosLoading, setProsLoading] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [newInter, setNewInter] = useState({ nom: '', role: '', email: '', tel: '' })
   const [assignments, setAssignments] = useState({}) // taskId -> { type, id/nom, ... }
@@ -297,11 +298,27 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
   const stIcon = (st) => st === 'done' ? <Check size={11}/> : st === 'active' ? <Play size={11}/> : <Circle size={11}/>
   const stStyle = (st) => st === 'done' ? { bg: 'var(--tx)', color: '#fff' } : st === 'active' ? { bg: 'var(--tx)', color: '#fff' } : { bg: 'rgba(0,0,0,.04)', color: 'var(--t4)' }
 
-  // Partners for assign modal — merge ANNUAIRE + INTERVENANTS
-  const allPartners = [
-    ...ANNUAIRE_PLATEFORME.map(p => ({ ...p, source: 'annuaire' })),
-    ...INTERVENANTS_DATA.map(i => ({ id: i.id, nom: i.nom, specialite: i.role, ville: 'Abidjan', verified: true, color: '#6B7280', note: 0, projets: 0, source: 'intervenant' }))
-  ]
+  // Fetch platform pros when assign modal opens
+  useEffect(() => {
+    if (!assignModal) return
+    setProsLoading(true)
+    api.professionals.getAll()
+      .then(data => setPlatformPros(data || []))
+      .catch(() => setPlatformPros([]))
+      .finally(() => setProsLoading(false))
+  }, [assignModal])
+
+  const allPartners = platformPros.map(u => ({
+    id: u.id,
+    nom: u.nom || u.company || u.name || '',
+    specialite: u.metier || '',
+    ville: u.ville || '',
+    verified: u.verified || false,
+    color: u.logoColor || '#6B7280',
+    note: 0,
+    projets: 0,
+    source: 'annuaire'
+  }))
   const filteredPartners = assignSearch
     ? allPartners.filter(p => (p.nom + p.specialite + (p.ville || '')).toLowerCase().includes(assignSearch.toLowerCase()))
     : allPartners
@@ -327,9 +344,10 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         showToast && showToast(nom + ' assigné à toute la phase ' + ph.name)
       }
     }
-    // Auto-add to INTERVENANTS_DATA + store if not already present
-    if (!INTERVENANTS_DATA.find(i => i.nom === nom)) {
-      const partner = ANNUAIRE_PLATEFORME.find(p => p.id === id || p.nom === nom)
+    // Auto-add to store if not already present
+    const storeInters = store.intervenants || []
+    if (!storeInters.find(i => i.nom === nom)) {
+      const partner = allPartners.find(p => p.id === id || p.nom === nom)
       const newInter = {
         id: 'i_' + Date.now(), nom, role: partner?.specialite || 'Prestataire',
         email: '', tel: '', photo: '',
@@ -772,7 +790,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                       </div>
                     )
                   })}
-                  {filteredPartners.length === 0 && <div style={{ padding: '24px 22px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun résultat — essayez l'onglet "Inviter par email"</div>}
+                  {prosLoading && <div style={{ padding: '24px 22px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Chargement…</div>}
+                  {!prosLoading && filteredPartners.length === 0 && <div style={{ padding: '24px 22px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>Aucun résultat — essayez l'onglet "Inviter par email"</div>}
                 </div>
               )}
 
