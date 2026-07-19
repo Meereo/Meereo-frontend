@@ -96,6 +96,22 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const isClient = store.user?.type === 'client'
   const allOffres = useMemo(() => rawOffres, [rawOffres])
 
+  // Pour un pro : afficher le nom du MOA/client qui a publié l'AO (pas sa propre entreprise)
+  // Pour un client : afficher le nom du prestataire qui a soumis l'offre
+  const getDisplayName = useCallback((o) => {
+    if (isClient) return o.entreprise || ''
+    // Pro : résoudre le nom du MOA depuis aoOwner ou le titre de l'AO
+    const owner = o.aoOwner
+    if (owner?.company) return owner.company
+    if (owner?.name) return owner.name
+    return o.titre || o.lot || 'Appel d\'offres'
+  }, [isClient])
+
+  const getDisplayInitials = useCallback((o) => {
+    const name = getDisplayName(o)
+    return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  }, [getDisplayName])
+
   const total = allOffres.length
   const attente = allOffres.filter(o => o.statut === OFFER_STATUS.PENDING).length
   const acceptees = allOffres.filter(o => o.statut === OFFER_STATUS.ACCEPTED).length
@@ -184,7 +200,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 <>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Contrats actifs ({contratsActifs.length})</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
-                    {contratsActifs.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} />)}
+                    {contratsActifs.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} displayName={!isClient ? getDisplayName(o) : undefined} />)}
                   </div>
                 </>
               )}
@@ -195,7 +211,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Archives ({contratsArchives.length})</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, opacity: 0.45 }}>
-                    {contratsArchives.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} archived />)}
+                    {contratsArchives.map(o => <ContratCard key={o.id} offer={o} formatShort={formatShort} parseBudget={parseBudget} INTERVENANTS_DATA={INTERVENANTS_DATA} archived displayName={!isClient ? getDisplayName(o) : undefined} />)}
                   </div>
                 </>
               )}
@@ -215,14 +231,14 @@ export default function Offers({ showToast, openModal, onNavigate }) {
           </div>
           {filtered.map(o => (
             <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
-              {(() => { const av = getOfferAvatar(o); return (
+              {(() => { const av = isClient ? getOfferAvatar(o) : null; return (
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : o.color + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: av?.type === 'color' ? '#fff' : o.color, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getDisplayInitials(o)}
                   {o.lu === false && <div style={{ position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: 'var(--tx)', border: '2px solid var(--surface-1)' }} />}
                 </div>
               )})()}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: o.lu === false ? 800 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.2px' }}>{o.entreprise}</div>
+                <div style={{ fontSize: 13, fontWeight: o.lu === false ? 800 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.2px' }}>{getDisplayName(o)}</div>
                 <div style={{ fontSize: 11, color: o.lu === false ? 'var(--tx)' : 'var(--t3)', fontWeight: o.lu === false ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} à {formatShort(parseBudget(o.montant))}</div>
               </div>
               <DSStatusBadge status={o.statut} />
@@ -240,13 +256,13 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               </div>
               {filteredArchived.map(o => (
                 <div key={o.id} className="list-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', opacity: 0.45, background: selected?.id === o.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(o.id)}>
-                  {(() => { const av = getOfferAvatar(o); return (
+                  {(() => { const av = isClient ? getOfferAvatar(o) : null; return (
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
-                      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+                      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getDisplayInitials(o)}
                     </div>
                   )})()}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.entreprise}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getDisplayName(o)}</div>
                     <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} à {formatShort(parseBudget(o.montant))}</div>
                   </div>
                   <DSStatusBadge status={o.statut} />
@@ -287,15 +303,15 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* En-tête entreprise */}
-              {(() => { const av = getOfferAvatar(selected); return (
+              {/* En-tête — MOA pour le pro, prestataire pour le client */}
+              {(() => { const av = isClient ? getOfferAvatar(selected) : null; return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (selected.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+                  {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getDisplayInitials(selected)}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                    <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>{selected.entreprise}</span>
+                    <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>{getDisplayName(selected)}</span>
                     {selected.supplierRole && <span style={getRoleBadgeStyle(selected.supplierRole)}>{getRoleLabel(selected.supplierRole)}</span>}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>{selected.nbRef || 0} projets à {(selected.certifs || []).join(' à ') || 'Aucune certification'}</div>
@@ -442,21 +458,20 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     </div>
                   </div>
               ) : (
-                // Vue pro : affiche uniquement le nom du client (les clients sont privés)
-                selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (
+                // Vue pro : affiche le nom du MOA/client qui a publié l'AO
+                selected.aoOwner ? (
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Maître d'ouvrage</div>
-                    <div style={{ padding: '16px 18px', background: 'rgba(52,199,89,.04)', borderRadius: 12, border: '1px solid rgba(52,199,89,.15)' }}>
+                    <div style={{ padding: '16px 18px', background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                       {(() => {
                         const owner = selected.aoOwner
-                        const ob = owner?.onboardingData || {}
-                        const initials = (ob.prenom || owner.name || '?')[0].toUpperCase()
+                        const initials = (owner.company || owner.name || '?')[0].toUpperCase()
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{initials}</div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 600 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
-                              {ob.ville && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ob.ville}</div>}
+                              <div style={{ fontSize: 13, fontWeight: 600 }}>{owner.company || owner.name}</div>
+                              <div style={{ fontSize: 11, color: 'var(--t3)' }}>{selected.titre || selected.lot || ''}</div>
                               <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Utilisez la messagerie pour communiquer</div>
                             </div>
                           </div>
@@ -644,17 +659,19 @@ export default function Offers({ showToast, openModal, onNavigate }) {
 }
 
 // é─── Composant carte contrat ──────────────────────────────────────────────────
-function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, archived }) {
+function ContratCard({ offer: o, formatShort, parseBudget, INTERVENANTS_DATA, archived, displayName }) {
+  const name = displayName || o.entreprise
+  const initials = name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
   const inter = INTERVENANTS_DATA.find(i => i.nom === o.entreprise)
-  const av = getOfferAvatar(o)
+  const av = displayName ? null : getOfferAvatar(o)
   return (
     <div style={{ padding: '18px 20px', background: archived ? 'var(--s2)' : 'var(--surface-1)', border: '1px solid', borderColor: archived ? 'var(--border)' : 'rgba(52,199,89,.15)', borderRadius: 14, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
       <div style={{ width: 46, height: 46, borderRadius: 12, background: av?.type === 'color' ? av.value : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: av?.type === 'color' ? '#fff' : 'var(--t3)', flexShrink: 0, overflow: 'hidden' }}>
-        {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || (o.entreprise || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase())}
+        {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.2px' }}>{o.entreprise}</span>
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.2px' }}>{name}</span>
           {archived && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s2)', color: 'var(--t4)' }}>Archivé</span>}
           {!archived && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.1)', color: 'var(--ok)' }}>Contrat actif</span>}
           {inter?.verified && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)' }}>Vérifié</span>}
