@@ -25,7 +25,8 @@
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/projects.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/markets.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/offers.js)",
-      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/projectMembers.js)"
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/projectMembers.js)",
+      "Bash(node -e \"require\\('./src/routes/projectMembers'\\); require\\('./src/routes/projects'\\); require\\('./src/routes/markets'\\); require\\('./src/routes/offers'\\); console.log\\('All routes OK'\\)\")"
     ]
   }
 }
