@@ -17,7 +17,11 @@
       "Bash(ls node_modules/.bin/prisma*)",
       "Bash(node -e ':*)",
       "Bash(grep -E \"\\\\.\\(jsx?|tsx?\\)$\")",
-      "Bash(grep -E \"\\\\.\\(js|ts\\)$\")"
+      "Bash(grep -E \"\\\\.\\(js|ts\\)$\")",
+      "Bash(grep -l \"^import\\\\|^export\" /c/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/web/src/domain/*.js)",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\"; grep -E \"^import|^export\" {}')",
+      "Bash(grep:*)",
+      "Bash(awk -F: '{print $1}')"
     ]
   }
 }

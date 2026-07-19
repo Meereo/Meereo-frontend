@@ -2155,6 +2155,19 @@ export function MeereoProvider({ children }) {
     return market
   }, [store.user, store.offers, store.aos, store.projectMembers, updateStore, log, addNotif, showToast])
 
+  // Émettre un événement métier (notif + log + badge update)
+  const emitEvent = useCallback((eventType, data = {}, opts = {}) => {
+    log(eventType, data)
+    if (opts.notifMsg) {
+      addNotif(opts.notifMsg, opts.notifType || 'info', opts.notifLink || null)
+    }
+    if (opts.toast) {
+      showToast(opts.toast, opts.toastColor || 'info')
+    }
+    // Dispatch custom DOM event for cross-component reactivity
+    window.dispatchEvent(new CustomEvent('meereo-event', { detail: { type: eventType, data, ts: Date.now() } }))
+  }, [log, addNotif, showToast])
+
   const rejectOffer = useCallback((offerId) => {
     updateStore(prev => ({
       ...prev,
@@ -2316,19 +2329,6 @@ export function MeereoProvider({ children }) {
   }, [updateStore])
 
   // ═══ SYNCHRONISATION COCKPIT / CLIENT ═══
-
-  // Émettre un événement métier (notif + log + badge update)
-  const emitEvent = useCallback((eventType, data = {}, opts = {}) => {
-    log(eventType, data)
-    if (opts.notifMsg) {
-      addNotif(opts.notifMsg, opts.notifType || 'info', opts.notifLink || null)
-    }
-    if (opts.toast) {
-      showToast(opts.toast, opts.toastColor || 'info')
-    }
-    // Dispatch custom DOM event for cross-component reactivity
-    window.dispatchEvent(new CustomEvent('meereo-event', { detail: { type: eventType, data, ts: Date.now() } }))
-  }, [log, addNotif, showToast])
 
   // Mettre à jour les étapes d'un projet (quand le pro avance le chantier)
   const updateProjectEtapes = useCallback((projectId, newEtapes, newPhase, newAvancement) => {
