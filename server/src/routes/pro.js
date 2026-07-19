@@ -87,10 +87,23 @@ router.get('/:identifier', async (req, res, next) => {
       reviewsCount: reviews.length,
     }
 
-    // Fusionner proProfile + onboardingData
-    const od = (user.onboardingData || {})
+    // Fusionner proProfile + onboardingData — whitelist stricte (jamais de password/token)
+    const rawOd = (user.onboardingData || {})
     const pro = user.proProfile || {}
-    const { password, passwordHash, token, resetToken, emailPro, ...safeOd } = od
+    // Extraire uniquement les champs publics autorisés de onboardingData
+    const od = {
+      entreprise: rawOd.entreprise, ville: rawOd.ville, pays: rawOd.pays,
+      tel: rawOd.tel || rawOd.telPro, email: rawOd.email,
+      annee: rawOd.annee, rccm: rawOd.rccm,
+      secteurs: rawOd.secteurs, services: rawOd.services,
+      logoColor: rawOd.logoColor, logoShape: rawOd.logoShape,
+      logoTypo: rawOd.logoTypo, logoFileUrl: rawOd.logoFileUrl,
+      photoUrl: rawOd.photoUrl, slogan: rawOd.slogan, bio: rawOd.bio,
+      projetsN: rawOd.projetsN, effectif: rawOd.effectif,
+      portfolio: rawOd.portfolio, cockpitTeam: rawOd.cockpitTeam,
+      bannerUrl: rawOd.bannerUrl, coverUrl: rawOd.coverUrl,
+      bannerPosition: rawOd.bannerPosition, zones: rawOd.zones,
+    }
 
     const profile = {
       entreprise: od.entreprise || pro.entreprise || user.company || user.name,

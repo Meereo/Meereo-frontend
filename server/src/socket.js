@@ -4,6 +4,30 @@ const { getPrisma } = require('./db')
 
 let _io = null
 
+// Rate limiter simple par userId pour les messages socket
+const _msgRates = new Map()
+const MSG_RATE_LIMIT = 30  // max messages
+const MSG_RATE_WINDOW = 60000 // par minute
+function checkMessageRate(userId) {
+  const now = Date.now()
+  const entry = _msgRates.get(userId)
+  if (!entry || now - entry.start > MSG_RATE_WINDOW) {
+    _msgRates.set(userId, { start: now, count: 1 })
+    return true
+  }
+  entry.count++
+  return entry.count <= MSG_RATE_LIMIT
+}
+
+// Sanitisation basique — supprime les balises HTML/script
+function sanitizeText(text) {
+  if (typeof text !== 'string') return ''
+  return text
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<\/?[^>]+(>|$)/g, '')
+    .trim()
+}
+
 /** Expose the Socket.IO server for use in routes (e.g., push notifications). */
 function getIo() { return _io }
 
@@ -70,6 +94,17 @@ function attachSocketIO(httpServer, allowedOrigins) {
         return typeof ack === 'function' && ack({ error: 'Données invalides' })
       }
 
+      // Rate limiting
+      if (!checkMessageRate(userId)) {
+        return typeof ack === 'function' && ack({ error: 'Trop de messages — réessayez dans un instant' })
+      }
+
+      // Sanitiser le contenu pour éviter le XSS stocké
+      const safeText = sanitizeText(text)
+      if (!safeText) {
+        return typeof ack === 'function' && ack({ error: 'Message vide après nettoyage' })
+      }
+
       try {
         const prisma = getPrisma()
         // Vérifier participation
@@ -83,7 +118,7 @@ function attachSocketIO(httpServer, allowedOrigins) {
           data: {
             conversationId,
             senderId: userId,
-            text: text.trim(),
+            text: safeText,
             type,
             fileUrl: fileUrl || null,
             fileName: fileName || null,

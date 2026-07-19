@@ -22,6 +22,40 @@ router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { msg, message, type, role, link, page, targetUserId } = req.body
+    const senderId = req.user.id
+    const recipientId = targetUserId || senderId
+
+    // Si l'utilisateur envoie une notification à quelqu'un d'autre, vérifier la relation
+    if (recipientId !== senderId) {
+      // Vérifier qu'ils partagent au moins un projet (owner, client, ou membre commun)
+      const sharedProject = await prisma.project.findFirst({
+        where: {
+          OR: [
+            { ownerId: senderId, clientId: recipientId },
+            { ownerId: recipientId, clientId: senderId },
+            { ownerId: senderId, members: { some: { userId: recipientId } } },
+            { ownerId: recipientId, members: { some: { userId: senderId } } },
+            { clientId: senderId, members: { some: { userId: recipientId } } },
+            { clientId: recipientId, members: { some: { userId: senderId } } },
+          ],
+        },
+        select: { id: true },
+      })
+      // Ou qu'ils partagent un marché
+      const sharedMarket = !sharedProject ? await prisma.market.findFirst({
+        where: {
+          OR: [
+            { clientId: senderId, supplierId: recipientId },
+            { clientId: recipientId, supplierId: senderId },
+          ],
+        },
+        select: { id: true },
+      }) : null
+
+      if (!sharedProject && !sharedMarket) {
+        return res.status(403).json({ error: 'Vous ne pouvez notifier que des utilisateurs avec lesquels vous avez une relation professionnelle' })
+      }
+    }
 
     const notif = await prisma.notification.create({
       data: {
@@ -30,7 +64,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         role:   role  || null,
         link:   link  || null,
         page:   page  || null,
-        userId: targetUserId || req.user.id,
+        userId: recipientId,
       },
     })
     // Notifier en temps réel via socket

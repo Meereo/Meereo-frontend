@@ -33,6 +33,7 @@ model User {
   avatar        String?
   metier        String?
   ville         String?
+  role          String   @default("user")  // user | admin
   emailVerified Boolean  @default(false)
   verified      Boolean  @default(false)
   // Identifiant public unique pour les pages de profil public (/pro?uuid=XXX)

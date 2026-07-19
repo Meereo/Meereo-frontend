@@ -6,14 +6,19 @@ const { getIo } = require('../socket')
 
 const router = Router()
 
-// Middleware admin — vérifie que l'utilisateur est admin
-function requireAdmin(req, res, next) {
-  // On considère admin tout utilisateur ayant le flag admin dans ses prefs
-  // ou un email prédéfini dans les variables d'environnement
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
-  if (adminEmails.length > 0 && adminEmails.includes(req.user.email)) return next()
-  // Fallback: check onboardingData for admin role
-  throw createError('Accès admin requis', 403)
+// Middleware admin — vérifie que l'utilisateur a le rôle admin en base
+async function requireAdmin(req, res, next) {
+  try {
+    const prisma = getPrisma()
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { role: true } })
+    if (user?.role === 'admin') return next()
+    // Fallback temporaire : emails prédéfinis (rétrocompat pendant la migration)
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
+    if (adminEmails.length > 0 && adminEmails.includes(req.user.email)) return next()
+    return res.status(403).json({ error: 'Accès admin requis' })
+  } catch (e) {
+    return res.status(403).json({ error: 'Accès admin requis' })
+  }
 }
 
 // ─── GET /api/admin/verifications — liste des pros en attente de vérification ──
