@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
+import FilePreview from '../../components/shared/FilePreview'
 import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, Building2, Send, User } from 'lucide-react'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
@@ -642,24 +643,8 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         </div>
       )}
 
-      {/* Viewer PDF / document intégré */}
-      {viewerDoc && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .2s ease' }} onClick={() => setViewerDoc(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, width: '90vw', maxWidth: 960, height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.25)' }} onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--border-card, #e5e7eb)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{viewerDoc.name}</div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 12px' }} onClick={() => { const a = document.createElement('a'); a.href = viewerDoc.url; a.download = viewerDoc.name; a.rel = 'noopener noreferrer'; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a) }}>Télécharger</button>
-                <button className="btn btn-sm" style={{ fontSize: 11, padding: '5px 12px' }} onClick={() => window.open(viewerDoc.url, '_blank', 'noopener,noreferrer')}>Nouvel onglet</button>
-                <button onClick={() => setViewerDoc(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--t3, #666)', padding: '0 4px', lineHeight: 1 }}>✕</button>
-              </div>
-            </div>
-            {/* Iframe viewer */}
-            <iframe src={viewerDoc.url} title={viewerDoc.name} style={{ flex: 1, width: '100%', border: 'none' }} />
-          </div>
-        </div>
-      )}
+      {/* Viewer fichier (image / PDF / autre) */}
+      {viewerDoc && <FilePreview file={viewerDoc} onClose={() => setViewerDoc(null)} />}
     </div>
   )
 }

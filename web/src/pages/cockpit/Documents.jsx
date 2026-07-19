@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { FileText, LayoutGrid, List, X, Download, ExternalLink } from 'lucide-react'
+import FilePreview from '../../components/shared/FilePreview'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader , DSEmptyState } from '../../design/components'
@@ -635,49 +636,7 @@ export default function Documents({ showToast }) {
       )}
 
       {/* VIEWER: Visualiseur de document */}
-      {viewerDoc && (() => {
-        const d = viewerDoc
-        const isImg  = d.type === 'img'  || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
-        const isPdf  = d.type === 'pdf'  || /\.pdf$/i.test(d.url || '')
-        return createPortal(
-          <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setViewerDoc(null)}>
-            <div style={{ position: 'relative', width: '90vw', maxWidth: 900, maxHeight: '85vh', background: 'var(--surface-1)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,.35)' }} onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface-1)', flexShrink: 0 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>{d.projet || '—'} à {formatDateFR(d.date)} à {d.taille}</div>
-                </div>
-                <a href={d.url} download={d.nom} onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--tx)', textDecoration: 'none', flexShrink: 0 }}>
-                  <Download size={13} /> Télécharger
-                </a>
-                {d.url && <a href={d.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, background: 'var(--s2)', border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--tx)', textDecoration: 'none', flexShrink: 0 }}>
-                  <ExternalLink size={13} /> Ouvrir
-                </a>}
-                <button onClick={() => setViewerDoc(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)', flexShrink: 0 }}><X size={14}/></button>
-              </div>
-              {/* Content */}
-              <div style={{ overflow: 'auto', maxHeight: 'calc(85vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--s1)', minHeight: 300 }}>
-                {isImg ? (
-                  <img src={d.url} alt={d.nom} style={{ maxWidth: '100%', maxHeight: 'calc(85vh - 80px)', objectFit: 'contain', display: 'block' }} />
-                ) : isPdf ? (
-                  <iframe src={d.url} title={d.nom} style={{ width: '100%', height: 'calc(85vh - 70px)', border: 'none' }} />
-                ) : (
-                  <div style={{ textAlign: 'center', padding: 40, color: 'var(--t3)' }}>
-                    <FileText size={48} style={{ opacity: .3, marginBottom: 12 }} />
-                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Aperéu non disponible</div>
-                    <div style={{ fontSize: 12, marginBottom: 20 }}>Ce type de fichier ne peut pas être prévisualisé dans le navigateur.</div>
-                    <a href={d.url} download={d.nom} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--tx)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-                      <Download size={14} /> Télécharger
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )
-      })()}
+      {viewerDoc && <FilePreview file={viewerDoc} onClose={() => setViewerDoc(null)} />}
     </div>
   )
 }
