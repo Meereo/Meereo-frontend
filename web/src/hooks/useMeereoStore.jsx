@@ -1742,9 +1742,11 @@ export function MeereoProvider({ children }) {
       }))
       return { ...tempAO, id: backendAO.id }
     } catch (e) {
-      // Backend down — keep temp ao_xxx ID (background sync will retry)
-      console.warn('[createAO] Backend failed, keeping local ID:', e.message)
-      return tempAO
+      // Backend échoué — rollback: retirer l'AO local fantôme
+      console.warn('[createAO] Backend failed, rolling back local AO:', e.message)
+      updateStore(prev => ({ ...prev, aos: (prev.aos || []).filter(a => a.id !== tempId) }))
+      showToast('Erreur lors de la création de l\'AO — réessayez', 'red')
+      return null
     }
   }, [updateStore, log, addNotif, showToast])
 
@@ -1805,24 +1807,9 @@ export function MeereoProvider({ children }) {
         showToast('Vous avez déjà soumis une offre pour cet AO', 'orange')
         return null
       }
-      console.warn('[submitOffer] Backend failed, using local ID:', e.message)
-      offer = {
-        id: 'off_' + Date.now(),
-        aoId: data.aoId,
-        supplierId: store.user?.id || data.supplierId,
-        supplierRole: projectRole,
-        entreprise: offerPayload.entreprise,
-        supplierName: offerPayload.entreprise,
-        price: data.price || data.montant || 0,
-        montant: offerPayload.montant,
-        delai: data.delai || '',
-        message: data.message || '',
-        technique: data.technique || '',
-        docs: offerPayload.docs,
-        status: 'pending',
-        statut: 'pending',
-        createdAt: new Date().toISOString(),
-      }
+      console.warn('[submitOffer] Backend failed:', e.message)
+      showToast('Erreur lors de la soumission — réessayez', 'red')
+      return null
     }
     updateStore(prev => ({ ...prev, offers: [...prev.offers, offer] }))
     log('OFFER_SUBMITTED', { aoId: offer.aoId, price: offer.price, supplierRole: projectRole })

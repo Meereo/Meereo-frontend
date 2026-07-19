@@ -99,7 +99,7 @@ router.post('/', requireAuth, async (req, res, next) => {
       data: {
         nom, ownerId: req.user.id,
         type:        type        || '',
-        phase:       phase       || 'CONCEPTION',
+        phase:       phase       || 'ESQUISSE',
         budget:      budget      || '',
         adresse:     adresse     || '',
         livraison:   livraison   || null,

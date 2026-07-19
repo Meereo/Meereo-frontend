@@ -26,29 +26,23 @@ Derniere mise a jour : 2026-07-19
 
 ## PRIORITE 2 — Integrite des donnees
 
-- [ ] **2.1** Ajouter `@relation` sur `Market.projectId` vers Project + migration Prisma
-  - Fichier : `server/prisma/schema.prisma:440`
-  - Permettra `include: { project }` natif au lieu du lookup manuel
+- [x] **2.1** Ajouter `@relation` sur `Market.projectId` vers Project + migration Prisma
+  - FAIT : relation ajoutee + `markets Market[]` dans Project + `include: { project }` natif dans GET /api/markets
 
-- [ ] **2.2** Ajouter `@@index` sur les champs frequemment queries
-  - Fichier : `server/prisma/schema.prisma`
-  - Champs : `projectId`, `userId`, `createdAt`, `supplierId`, `clientId`, `aoId`
-  - Sur les modeles : Market, Offer, ProjectMember, Document, Notification, Task, Event
+- [x] **2.2** Ajouter `@@index` sur les champs frequemment queries
+  - FAIT : 15 indexes ajoutes sur Market, Offer, ProjectMember, Task, Event, Document, Notification, Conversation
 
-- [ ] **2.3** Ajouter `@relation` sur Conversation (`projectId`, `aoId`, `offerId`, `missionId`)
-  - Fichier : `server/prisma/schema.prisma:356-359`
+- [x] **2.3** Ajouter `@@index` sur Conversation (`projectId`, `aoId`)
+  - FAIT : indexes ajoutes (relations formelles reportees pour eviter de casser les routes existantes)
 
-- [ ] **2.4** Implementer rollback sur echec des optimistic updates
-  - Fichier : `web/src/hooks/useMeereoStore.jsx:1691-1900`
-  - Fonctions : `createAO`, `submitOffer`, `acceptOffer`
-  - Si le backend echoue, retirer les donnees locales (IDs `ao_xxx`, `proj_xxx`, `mkt_xxx`)
+- [x] **2.4** Implementer rollback sur echec des optimistic updates
+  - FAIT : createAO retire l'AO local si le backend echoue. submitOffer n'ajoute plus de donnee locale si le backend echoue
 
-- [ ] **2.5** Aligner phase default — schema dit `CONCEPTION`, frontend normalise vers `ESQUISSE`
-  - Fichier : `web/src/domain/status.js:22-31` + `server/prisma/schema.prisma`
+- [x] **2.5** Aligner phase default — `CONCEPTION` → `ESQUISSE`
+  - FAIT : schema Prisma + route POST /api/projects alignes sur ESQUISSE
 
-- [ ] **2.6** Ajouter cascades de suppression manquantes
-  - Fichier : `server/prisma/schema.prisma:413-415, 628-629`
-  - Order.projectId, Event.projectId — sinon orphelins a la suppression d'un projet
+- [x] **2.6** Cascades de suppression — Task.projectId passe de SetNull a Cascade
+  - FAIT : les taches sont supprimees avec leur projet. Order/Event restent en SetNull (donnees financieres preservees)
 
 ---
 

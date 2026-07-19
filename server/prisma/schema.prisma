@@ -342,6 +342,9 @@ model Offer {
   updatedAt   DateTime  @updatedAt
 
   @@unique([aoId, supplierId]) // Un pro ne peut soumettre qu'une offre par AO
+  @@index([supplierId])
+  @@index([aoId])
+  @@index([createdAt])
   @@map("offers")
 }
 
@@ -364,6 +367,8 @@ model Conversation {
   participants ConversationParticipant[]
   messages     Message[]
 
+  @@index([projectId])
+  @@index([aoId])
   @@map("conversations")
 }
 
@@ -439,6 +444,7 @@ model Market {
 
   // Relations métier
   projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   aoId       String?
   offerId    String?
 
@@ -456,6 +462,10 @@ model Market {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([projectId])
+  @@index([clientId])
+  @@index([supplierId])
+  @@index([aoId])
   @@map("markets")
 }
 
@@ -501,7 +511,7 @@ model Project {
   id          String   @id @default(cuid())
   nom         String
   type        String   @default("")
-  phase       String   @default("CONCEPTION")
+  phase       String   @default("ESQUISSE")
   budget      String   @default("")
   adresse     String   @default("")
   livraison   String?
@@ -540,6 +550,7 @@ model Project {
   assets        Asset[]
   passport      Passport?
   projectMissions ProjectMission[]
+  markets       Market[]
 
   @@map("projects")
 }
@@ -590,6 +601,7 @@ model ProjectMember {
   acceptedAt       DateTime?
 
   @@unique([projectId, userId])
+  @@index([userId])
   @@map("project_members")
 }
 
@@ -607,12 +619,14 @@ model Task {
   marketId    String?
   missionId   String?
   projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdBy   String
   creator     User     @relation("CreatedTasks", fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([projectId])
+  @@index([assignedTo])
   @@map("tasks")
 }
 
@@ -633,6 +647,8 @@ model Event {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([projectId])
+  @@index([createdBy])
   @@map("events")
 }
 
@@ -665,6 +681,8 @@ model Document {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([projectId])
+  @@index([userId])
   @@map("documents")
 }
 
@@ -704,6 +722,8 @@ model Notification {
   user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("notifications")
 }
 
