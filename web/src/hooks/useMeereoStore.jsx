@@ -2016,11 +2016,31 @@ export function MeereoProvider({ children }) {
             showToast('Erreur création projet: ' + e.message, 'red')
           }
         }
-        // Skip downstream backend calls if projectId is still a local-only ID
-        // (the project wasn't created on the backend, so market/members would reference a non-existent project)
+        // Si le projet n'a pas pu être créé en backend, retenter une fois
+        if (isLocalId(backendProjectId)) {
+          console.warn('[acceptOffer] Project ID is local-only, retrying...')
+          try {
+            const autoProj = storeRef.current.projects?.find(p => p.id === backendProjectId)
+            const retryProject = await api.projects.create({
+              nom: autoProj?.nom || market?.titre || 'Projet', type: market?.lot || 'Mission',
+              phase: 'ATTRIBUTION_MARCHES', budget: String(market?.amount || market?.budget || ''),
+              description: market?.description || '', status: 'active',
+              ownerId: store.user?.id || null, clientId: market?.clientId || null,
+              clientEmail: market?.clientEmail || '', client: market?.clientName || '',
+              sourceAoId: market?.aoId || null,
+            })
+            if (retryProject?.id) {
+              backendProjectId = retryProject.id
+              updateStore(prev => ({
+                ...prev,
+                projects: (prev.projects || []).map(p => p.id === market?.projectId ? { ...p, id: retryProject.id } : p)
+              }))
+            }
+          } catch (_) { /* retry failed */ }
+        }
+        // Si toujours local après retry, sync uniquement offre/AO
         if (isLocalId(backendProjectId)) {
           console.warn('[acceptOffer] Skipping market/project sync — project ID is local-only:', backendProjectId)
-          // Still sync offer & AO status (they don't depend on the project)
           sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
           if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
           return

@@ -499,7 +499,7 @@ export default function Client() {
       )}
 
       {showToastMsg && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#191c1d', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 12.5, fontWeight: 600, zIndex: 99999, boxShadow: '0 8px 32px rgba(0,0,0,.18)' }}>{showToastMsg}</div>}
-      <KaiAssistant context="client" userName={uid.firstName || clientName.split(' ')[0] || ''} onNavigate={p => setPage(p)} />
+      <KaiAssistant context="client" userName={uid.firstName || (clientName || '').split(' ')[0] || ''} onNavigate={p => setPage(p)} />
     </div>
   )
 }

@@ -99,17 +99,22 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   // Pour un pro : afficher le nom du MOA/client qui a publié l'AO (pas sa propre entreprise)
   // Pour un client : afficher le nom du prestataire qui a soumis l'offre
   const getDisplayName = useCallback((o) => {
-    if (isClient) return o.entreprise || ''
-    // Pro : résoudre le nom du MOA depuis aoOwner ou le titre de l'AO
+    if (isClient) return o.entreprise || o.supplier?.company || o.supplier?.name || '—'
+    // Pro : résoudre le nom du MOA depuis aoOwner, l'AO lié, ou le titre
     const owner = o.aoOwner
     if (owner?.company) return owner.company
     if (owner?.name) return owner.name
+    // Fallback: chercher dans le store l'AO correspondante
+    if (o.aoId) {
+      const ao = (store.aos || []).find(a => a.id === o.aoId)
+      if (ao?.ownerName) return ao.ownerName
+    }
     return o.titre || o.lot || 'Appel d\'offres'
-  }, [isClient])
+  }, [isClient, store.aos])
 
   const getDisplayInitials = useCallback((o) => {
-    const name = getDisplayName(o)
-    return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+    const name = getDisplayName(o) || '?'
+    return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'
   }, [getDisplayName])
 
   const total = allOffres.length
@@ -239,7 +244,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               )})()}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: o.lu === false ? 800 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.2px' }}>{getDisplayName(o)}</div>
-                <div style={{ fontSize: 11, color: o.lu === false ? 'var(--tx)' : 'var(--t3)', fontWeight: o.lu === false ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} à {formatShort(parseBudget(o.montant))}</div>
+                <div style={{ fontSize: 11, color: o.lu === false ? 'var(--tx)' : 'var(--t3)', fontWeight: o.lu === false ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot || '—'} · {formatShort(parseBudget(o.montant || '0'))}</div>
               </div>
               <DSStatusBadge status={o.statut} />
             </div>
@@ -263,7 +268,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                   )})()}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getDisplayName(o)}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot} à {formatShort(parseBudget(o.montant))}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lot || '—'} · {formatShort(parseBudget(o.montant || '0'))}</div>
                   </div>
                   <DSStatusBadge status={o.statut} />
                 </div>
@@ -465,13 +470,14 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     <div style={{ padding: '16px 18px', background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                       {(() => {
                         const owner = selected.aoOwner
-                        const initials = (owner.company || owner.name || '?')[0].toUpperCase()
+                        const ownerName = owner.company || owner.name || '?'
+                        const initials = (ownerName[0] || '?').toUpperCase()
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{initials}</div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 600 }}>{owner.company || owner.name}</div>
-                              <div style={{ fontSize: 11, color: 'var(--t3)' }}>{selected.titre || selected.lot || ''}</div>
+                              <div style={{ fontSize: 13, fontWeight: 600 }}>{ownerName}</div>
+                              <div style={{ fontSize: 11, color: 'var(--t3)' }}>{selected.titre || selected.lot || '—'}</div>
                               <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Utilisez la messagerie pour communiquer</div>
                             </div>
                           </div>

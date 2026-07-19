@@ -520,7 +520,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               )}
               <div className="list-item-body">
                 <div className="list-item-title">{p.nom}</div>
-                <div className="list-item-sub">{p.client}{p.type ? ' à ' + p.type : ''}</div>
+                <div className="list-item-sub">{p.client || '—'}{p.type ? ' · ' + p.type : ''}</div>
               </div>
               <div className="list-item-right">
                 {p.status === 'stopped' ? (
@@ -561,7 +561,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.65))' }} />
                   <div style={{ position: 'absolute', bottom: 16, left: 24, right: 24 }}>
                     <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-.4px' }}>{selected.nom}</div>
-                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.75)', marginTop: 3 }}>{selected.type} à {selected.adresse}</div>
+                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.75)', marginTop: 3 }}>{selected.type || ''}{selected.type && selected.adresse ? ' · ' : ''}{selected.adresse || ''}</div>
                   </div>
                 </div>
               )}

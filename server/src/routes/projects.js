@@ -33,15 +33,32 @@ router.get('/', requireAuth, async (req, res, next) => {
         OR: [
           { ownerId: userId },
           { clientId: userId },
-          // Fallback: match by email in case clientId wasn't properly linked
-          ...(req.user.email ? [{ clientEmail: req.user.email }] : []),
+          // Fallback: match by email in case clientId wasn't properly linked (case-insensitive)
+          ...(req.user.email ? [{ clientEmail: { equals: req.user.email, mode: 'insensitive' } }] : []),
           { members: { some: { userId } } },
           ...(supplierProjectIds.length ? [{ id: { in: supplierProjectIds } }] : []),
         ],
       },
+      include: {
+        owner: { select: { id: true, name: true, company: true } },
+      },
       orderBy: { createdAt: 'desc' },
     })
-    res.json(projects)
+    // Enrichir le champ `client` si vide — lookup depuis clientId ou owner
+    const clientIds = projects.map(p => p.clientId).filter(Boolean)
+    const clientUsers = clientIds.length > 0
+      ? await prisma.user.findMany({ where: { id: { in: clientIds } }, select: { id: true, name: true, company: true } })
+      : []
+    const clientMap = {}
+    clientUsers.forEach(u => { clientMap[u.id] = u })
+    const enriched = projects.map(p => {
+      const clientUser = p.clientId ? clientMap[p.clientId] : null
+      return {
+        ...p,
+        client: p.client || clientUser?.company || clientUser?.name || p.owner?.company || p.owner?.name || '',
+      }
+    })
+    res.json(enriched)
   } catch (e) { next(e) }
 })
 

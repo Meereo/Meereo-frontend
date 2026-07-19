@@ -445,7 +445,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 )}
                 <div className="list-item-body">
                   <div className="list-item-title">{p.nom}</div>
-                  <div className="list-item-sub">{p.client} à {PHASE_LABELS[normalizePhase(p.phase)] || p.phase}</div>
+                  <div className="list-item-sub">{p.client || '—'} · {PHASE_LABELS[normalizePhase(p.phase)] || p.phase || '—'}</div>
                 </div>
                 <div style={{ width: 40, textAlign: 'right' }}>
                   <div style={{ fontSize: 11, fontWeight: 600 }}>{p.avancement}%</div>
@@ -488,7 +488,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div style={{ position: 'absolute', bottom: 14, left: 20, right: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', letterSpacing: '-.2px' }}>{proj.nom}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', marginTop: 2 }}>{proj.client}{proj.adresse ? ' à ' + proj.adresse : ''}{proj.budget ? ' à ' + fmtMoney(Number(String(proj.budget).replace(/\D/g, ''))) : ''}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', marginTop: 2 }}>{proj.client || '—'}{proj.adresse ? ' · ' + proj.adresse : ''}{proj.budget ? ' · ' + fmtMoney(Number(String(proj.budget).replace(/\D/g, ''))) : ''}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1 }}>{globalPct}%</div>

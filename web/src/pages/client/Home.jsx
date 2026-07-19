@@ -33,7 +33,7 @@ export default function Home({ ctx }) {
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 600, color: '#34C759' }}>Projet terminé — validation requise</div>
-              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Votre prestataire a déclaré le projet <strong>{clotureProj.nom}</strong> comme terminé</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Votre prestataire a déclaré le projet <strong>{clotureProj?.nom || 'votre projet'}</strong> comme terminé</div>
             </div>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>
@@ -79,7 +79,7 @@ export default function Home({ ctx }) {
         /* ─── ÉTAT VIDE — Pas de projet ─── */
         <div style={{ maxWidth: 640, margin: '0 auto', paddingTop: 10 }}>
           <div style={{ marginBottom: 36 }}>
-            <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {clientName.split(' ')[0] || ''}</div>
+            <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bienvenue, {(clientName || '').split(' ')[0] || 'Client'}</div>
             <div style={{ fontSize: 13, color: 'var(--t3)', marginTop: 4 }}>Votre espace MEEREO est prêt.</div>
           </div>
 
@@ -229,7 +229,7 @@ export default function Home({ ctx }) {
         /* ─── ÉTAT ACTIF — Projet en cours ─── */
         <div>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {clientName.split(' ')[0] || ''}</div>
+            <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-.4px', color: 'var(--tx)' }}>Bonjour, {(clientName || '').split(' ')[0] || 'Client'}</div>
             <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
           </div>
 
@@ -259,7 +259,7 @@ export default function Home({ ctx }) {
               <div className="dash-hero-v2-eyebrow">Votre projet</div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
                 <div>
-                  <div className="dash-hero-v2-title">{proj.nom}</div>
+                  <div className="dash-hero-v2-title">{proj.nom || 'Mon projet'}</div>
                   <div className="dash-hero-v2-client">{proj.type ? proj.type + ' · ' : ''}{proj.adresse || ''}{projBudget ? ' · ' + formatShort(projBudget) : ''}</div>
                 </div>
                 <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.8)', border: '1px solid rgba(255,255,255,.12)', flexShrink: 0 }} onClick={() => setPage('avancement')}>Voir l'avancement →</button>
@@ -278,7 +278,7 @@ export default function Home({ ctx }) {
                   ['Phase', { ESQUISSE:'Esquisse', AVANT_PROJET:'Avant-projet', PROJET_DETAILLE:'Projet détaillé', PLANS_EXECUTION:'Plans d\'exécution', CONSULTATION_ENTREPRISES:'Consultation', ATTRIBUTION_MARCHES:'Attribution', SUIVI_CHANTIER:'Chantier', RECEPTION:'Réception' }[proj.phase] || proj.phase || '—'],
                   ['Budget engagé', totalEngage ? Math.round(totalEngage / Math.max(projBudget, 1) * 100) + '%' : '0%'],
                   ['Décisions', totalPendingActions > 0 ? totalPendingActions + ' en attente' : 'À jour'],
-                  ['Livraison', formatDateFR(proj.livraison)],
+                  ['Livraison', proj.livraison ? formatDateFR(proj.livraison) : '—'],
                 ].map(([l, v]) => (
                   <div key={l} style={{ padding: '12px 14px', background: 'rgba(255,255,255,.04)', borderRadius: 9, border: '1px solid rgba(255,255,255,.06)' }}>
                     <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 5 }}>{l}</div>

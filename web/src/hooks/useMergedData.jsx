@@ -27,29 +27,45 @@ import { normalizeOfferStatus, normalizeMarketStatus, OFFER_STATUS } from '../do
 export function useMergedData() {
   const { store } = useMeereo()
 
+  // Map projectId → project name pour résolution rapide
+  const projectsMap = useMemo(() => {
+    const m = {}
+    ;(store.projects || []).forEach(p => { if (p.id) m[p.id] = p })
+    return m
+  }, [store.projects])
+
   const offers = useMemo(() => {
     const overrides = store.offerStatuts || {}
-    return (store.offers || []).map(o => ({
-      id: o.id, titre: o.titre || o.title || o.ao?.title || '', entreprise: o.entreprise || o.company || '',
-      projet: o.projet || '', montant: o.montant || '', delai: o.delai || '',
-      statut: normalizeOfferStatus(overrides[o.id] || o.statut || o.status || OFFER_STATUS.PENDING),
-      lot: o.lot || o.ao?.lot || '',
-      aoId: o.aoId || null,
-      userId: o.userId || o.supplierId || null,
-      supplierId: o.supplierId || o.userId || null,
-      supplierRole: o.supplierRole || null,
-      soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
-      lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: o.docs || [],
-      message: o.message || o.note || '', technique: o.technique || '', note: o.note || '',
-      // Logo réel du prestataire (onboardingData.logoFileUrl)
-      logoUrl: o.supplier?.onboardingData?.logoFileUrl || null,
-      // Données réelles du prestataire (depuis le backend)
-      supplier: o.supplier || null,
-      // Données du propriétaire de l'AO (visible après acceptation)
-      aoOwner: o.ao?.owner || null,
-      aoOwnerUserId: o.ao?.ownerUserId || null,
-    }))
-  }, [store.offerStatuts, store.offers])
+    return (store.offers || []).map(o => {
+      // Résoudre le nom du projet depuis l'AO lié
+      const aoProjectId = o.ao?.projectId || null
+      const linkedProject = aoProjectId ? projectsMap[aoProjectId] : null
+      const projetName = o.projet || linkedProject?.nom || o.ao?.title || ''
+      // Résoudre le nom de l'entreprise (supplier)
+      const entreprise = o.entreprise || o.supplier?.onboardingData?.entreprise || o.supplier?.company || o.company || ''
+      return {
+        id: o.id, titre: o.titre || o.title || o.ao?.title || '', entreprise,
+        projet: projetName, montant: o.montant || '', delai: o.delai || '',
+        statut: normalizeOfferStatus(overrides[o.id] || o.statut || o.status || OFFER_STATUS.PENDING),
+        lot: o.lot || o.ao?.lot || '',
+        aoId: o.aoId || null,
+        userId: o.userId || o.supplierId || null,
+        supplierId: o.supplierId || o.userId || null,
+        supplierRole: o.supplierRole || null,
+        soumis: o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : 'Récent',
+        lu: true, color: '#6B7280', score: 0, nbRef: 0, certifs: [], docs: o.docs || [],
+        message: o.message || o.note || '', technique: o.technique || '', note: o.note || '',
+        price: o.price || null,
+        // Logo réel du prestataire (onboardingData.logoFileUrl)
+        logoUrl: o.supplier?.onboardingData?.logoFileUrl || null,
+        // Données réelles du prestataire (depuis le backend)
+        supplier: o.supplier || null,
+        // Données du propriétaire de l'AO
+        aoOwner: o.ao?.owner || null,
+        aoOwnerUserId: o.ao?.ownerUserId || null,
+      }
+    })
+  }, [store.offerStatuts, store.offers, projectsMap])
 
   const markets = useMemo(() => {
     const overrides = store.marketStatuts || {}
@@ -62,9 +78,16 @@ export function useMergedData() {
     }).map(m => {
       const override = overrides[m.id] || {}
       const raw = override.statut || m.statut
-      return { ...m, ...override, statut: normalizeMarketStatus(raw) }
+      // Résoudre le nom du projet depuis la relation ou le store
+      const linkedProject = m.projectId ? projectsMap[m.projectId] : null
+      const projet = m.projet || m.project?.nom || linkedProject?.nom || ''
+      // Résoudre le nom du client/MOA
+      const clientName = m.clientName || m.client?.name || m.client?.company || linkedProject?.client || ''
+      // Résoudre le nom de l'entreprise prestataire
+      const entreprise = m.entreprise || m.supplier?.onboardingData?.entreprise || m.supplier?.company || m.supplier?.name || ''
+      return { ...m, ...override, statut: normalizeMarketStatus(raw), projet, clientName, entreprise }
     })
-  }, [store.markets, store.marketStatuts])
+  }, [store.markets, store.marketStatuts, projectsMap])
 
   const intervenants = useMemo(() => {
     // Intervenants : contacts de type 'intervenant' stockés en base
@@ -142,8 +165,6 @@ export function useMergedData() {
   }, [store.conversations])
 
   const documents = useMemo(() => {
-    const projectsMap = {}
-    ;(store.projects || []).forEach(p => { if (p.id) projectsMap[p.id] = p.nom || p.name || '' })
     return (store.documents || [])
       .filter(d => !d._deleted)
       .map(d => ({
@@ -151,14 +172,14 @@ export function useMergedData() {
         // Backend returns `name`; legacy store/static data uses `nom`
         nom: d.nom || d.name || 'Sans titre',
         // Resolve project name from projectId if not already set
-        projet: d.projet || (d.projectId ? projectsMap[d.projectId] || '' : ''),
+        projet: d.projet || (d.projectId ? projectsMap[d.projectId]?.nom || '' : ''),
         auteur: d.auteur || 'Moi',
         taille: d.taille || '—',
         date: d.date || d.createdAt || '',
         cat: d.cat || d.type || '',
         isNew: d.isNew || false,
       }))
-  }, [store.documents, store.projects])
+  }, [store.documents, projectsMap])
 
   // Badge counts — computed from store data only
   const badgeCounts = useMemo(() => ({

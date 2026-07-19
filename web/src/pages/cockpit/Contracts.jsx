@@ -114,32 +114,42 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
     return proj?.client || ''
   }
 
+  // Résoudre le nom du projet depuis le marché ou le projet lié
+  const getProjectName = (m) => {
+    if (m.projet) return m.projet
+    if (m.project?.nom) return m.project.nom
+    const proj = (store.projects || []).find(p => p.id === m.projectId)
+    return proj?.nom || ''
+  }
+
   const MarcheCard = ({ m }) => {
-    const initials = m.entreprise.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
-    const inter = INTERVENANTS_DATA.find(i => i.nom === m.entreprise)
+    const entreprise = m.entreprise || m.supplier?.company || m.supplier?.name || '—'
+    const initials = entreprise.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+    const inter = INTERVENANTS_DATA.find(i => i.nom === entreprise)
     const moaName = getClientName(m)
+    const projName = getProjectName(m)
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setDetail(m)}>
-        {getProjetImg(m.projet, store) && (
+        {getProjetImg(projName, store) && (
           <div style={{ height: 80, position: 'relative', overflow: 'hidden' }}>
-            <img src={getProjetImg(m.projet, store)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+            <img src={getProjetImg(projName, store)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,.6))' }} />
             <div style={{ position: 'absolute', bottom: 6, left: 10, right: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{m.projet}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{m.avancement}%</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{projName || '—'}</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>{m.avancement || 0}%</span>
             </div>
           </div>
         )}
         <div style={{ padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            {(() => { const av = getEntrepriseAvatar(m.entreprise); return (
+            {(() => { const av = getEntrepriseAvatar(entreprise); return (
               <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
                 {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
               </div>
             )})()}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.entreprise}</div>
-              <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.lot}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entreprise}</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.lot || '—'}</div>
             </div>
             {inter?.note > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11, color: '#F59E0B', fontWeight: 600 }}><Star size={11} fill="#F59E0B" strokeWidth={0}/> {inter.note}</span>}
           </div>
@@ -148,10 +158,10 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               <span style={{ fontWeight: 600, color: 'var(--t2)' }}>MOA :</span> {moaName}
             </div>
           )}
-          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-1px', marginBottom: 6 }}>{formatShort(parseBudget(m.montant))}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-1px', marginBottom: 6 }}>{formatShort(parseBudget(m.montant || '0'))}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--t3)' }}>
-            <span>{m.delai}</span>
-            <span>{formatDateFR(m.dateSig)}</span>
+            <span>{m.delai || '—'}</span>
+            <span>{m.dateSig ? formatDateFR(m.dateSig) : '—'}</span>
           </div>
           {m.avancement > 0 && m.avancement < 100 && (
             <div style={{ marginTop: 8 }}>
@@ -224,13 +234,13 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                     </div>
                   )})()}
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{detail.entreprise}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot} à {getStatusLabel(detail.statut)}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{detail.entreprise || detail.supplier?.company || '—'}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot || '—'} · {getStatusLabel(detail.statut)}</div>
                   </div>
                 </div>
                 <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>×</button>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant))}</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant || '0'))}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)' }}>Avancement</span>
                 <span style={{ fontSize: 16, fontWeight: 600 }}>{detail.avancement}%</span>
@@ -242,10 +252,10 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px' }}>{detail.titre}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px' }}>{detail.titre || detail.lot || 'Marché'}</div>
 
               <div className="rg-3" style={{ gap: 8 }}>
-                {[['Signature', formatDateFR(detail.dateSig)], ['Délai', detail.delai], ['échéance', formatDateFR(detail.dateFin)]].map(([l, v]) => (
+                {[['Signature', detail.dateSig ? formatDateFR(detail.dateSig) : '—'], ['Délai', detail.delai || '—'], ['Échéance', detail.dateFin ? formatDateFR(detail.dateFin) : '—']].map(([l, v]) => (
                   <div key={l} style={{ padding: '10px 12px', background: 'var(--s2)', borderRadius: 8 }}>
                     <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 3 }}>{l}</div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{v}</div>
