@@ -478,6 +478,7 @@ const documentsApi = {
   delete:  (id)       => apiFetch(`/documents/${id}`, 'DELETE', null, true),
   /** Upload a real File object to the server (saves to /uploads/documents/) */
   upload: (file, { name, type, projectId, isEntreprise, expiresAt, category } = {}) => {
+    if (!file) return Promise.reject(new Error('Aucun fichier fourni'))
     const form = new FormData()
     form.append('file', file)
     if (name)         form.append('name',         name)

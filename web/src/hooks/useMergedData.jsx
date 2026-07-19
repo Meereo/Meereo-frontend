@@ -57,7 +57,7 @@ export function useMergedData() {
         message: o.message || o.note || '', technique: o.technique || '', note: o.note || '',
         price: o.price || null,
         // Logo réel du prestataire (onboardingData.logoFileUrl)
-        logoUrl: o.supplier?.onboardingData?.logoFileUrl || null,
+        logoUrl: o.supplier?.onboardingData?.logoFileUrl || o.supplier?.proProfile?.logoFileUrl || o.logoUrl || null,
         // Données réelles du prestataire (depuis le backend)
         supplier: o.supplier || null,
         // Données du propriétaire de l'AO

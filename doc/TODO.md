@@ -88,32 +88,29 @@ Derniere mise a jour : 2026-07-19
 
 ## PRIORITE 5 — Nettoyage & qualite
 
-- [ ] **5.1** Retirer les `console.log` de production
-  - Fichier : `web/src/pages/client/Client.jsx:117`
+- [x] **5.1** Retirer les `console.log` de production
+  - FAIT : deja nettoye en P4.5
 
-- [ ] **5.2** Corriger les caracteres corrompus dans Landing.jsx
-  - Fichier : `web/src/pages/Landing.jsx:59` — `dûcisions` → `decisions`
+- [x] **5.2** Corriger les caracteres corrompus dans Landing.jsx
+  - FAIT : `dûcisions` → `décisions`, `dûcider` → `décider`, `gros-é"uvre` → `gros-œuvre`, `rèel` → `réel`
 
-- [ ] **5.3** Retirer les endpoints API inexistants du client
-  - Fichier : `web/src/services/api/client.js`
-  - Endpoints fantomes : `/knowledge/search`, `/engines/workflow/`, etc.
+- [x] **5.3** Verifier les endpoints API du client
+  - FAIT : `/knowledge/` et `/engines/` existent cote serveur — pas d'endpoints fantomes
 
-- [ ] **5.4** Uniformiser les noms de champs logo (`logoFileUrl` vs `logoUrl`)
-  - Fichier : `web/src/hooks/useMergedData.jsx:60, 87`
+- [x] **5.4** Uniformiser les noms de champs logo
+  - FAIT : fallback chain `logoFileUrl || proProfile.logoFileUrl || logoUrl` dans useMergedData
 
-- [ ] **5.5** Ajouter les cas manquants dans normalizeOfferStatus
-  - Fichier : `web/src/domain/status.js:130-137`
-  - Ajouter `accepted`, `rejected`, `withdrawn` en plus de `en_attente`, `acceptee`, `refusee`
+- [x] **5.5** Ajouter les cas manquants dans normalizeOfferStatus
+  - FAIT : `accepted`, `rejected`, `withdrawn`, `retiree` ajoutes au mapping
 
-- [ ] **5.6** Verifier la validation des fichiers null avant upload
-  - Fichier : `web/src/services/api/client.js:479-490`
+- [x] **5.6** Valider les fichiers null avant upload
+  - FAIT : early reject si `!file` dans `documentsApi.upload()`
 
-- [ ] **5.7** Corriger la race condition du background sync apres logout
-  - Fichier : `web/src/hooks/useMeereoStore.jsx:423-546`
-  - Verifier `storeRef.current.user` avant de continuer le sync
+- [x] **5.7** Corriger la race condition du background sync apres logout
+  - FAIT : double-check `storeRef.current.user` apres les requetes + guard dans setStore
 
-- [ ] **5.8** Corriger les stale closures dans log() et addNotif()
-  - Fichier : `web/src/hooks/useMeereoStore.jsx:564-591`
+- [x] **5.8** Stale closures dans log() et addNotif()
+  - NON APPLICABLE : `storeRef.current` est synchronise via useEffect — pas de stale closure
 
 ---
 

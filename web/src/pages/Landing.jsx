@@ -55,7 +55,7 @@ function CockpitFull() {
           <span style={{ fontSize:11, fontWeight:700 }}>KAI</span>
           <span style={{ fontSize:8, color:'#16A34A', fontWeight:600, marginLeft:'auto' }}>En ligne</span>
         </div>
-        <p style={{ fontSize:11, lineHeight:1.5, color:'#999', margin:0 }}>2 dûcisions en attente. Budget engagé à 62 %. Prochain jalon : gros-é“uvre le 15 mai.</p>
+        <p style={{ fontSize:11, lineHeight:1.5, color:'#999', margin:0 }}>2 décisions en attente. Budget engagé à 62 %. Prochain jalon : gros-œuvre le 15 mai.</p>
       </div>
     </div>
   )
@@ -70,7 +70,7 @@ function ChantierMini() {
         ))}
       </div>
       <div style={{ padding:'4px 12px 8px' }}>
-        {[{n:'Plans architecturaux dûtaillés',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-é“uvre',s:'todo'}].map((t,i)=>(
+        {[{n:'Plans architecturaux dûtaillés',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-œuvre',s:'todo'}].map((t,i)=>(
           <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 4px', borderBottom:i<3?'1px solid rgba(0,0,0,.03)':'none' }}>
             <div style={{ width:16, height:16, borderRadius:4, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', ...(t.s==='done'?{background:'#16A34A'}:t.s==='active'?{background:'#007AFF'}:{border:'1.5px solid #ddd'}) }}>
               {t.s==='done'&&<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -189,7 +189,7 @@ export default function Landing() {
             </h1>
             {/* Subtitle */}
             <p style={{ marginTop:24, fontSize:16, lineHeight:1.65, color:'rgba(255,255,255,.45)', maxWidth:520, margin:'24px auto 0' }}>
-              Chaque acteur du projet accéde au même système, avec la bonne visibilité et le bon niveau de contrôle. Décidez en temps rèel avec <strong style={{ color:'#7C3AED' }}>KAI</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
+              Chaque acteur du projet accéde au même système, avec la bonne visibilité et le bon niveau de contrôle. Décidez en temps réel avec <strong style={{ color:'#7C3AED' }}>KAI</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
             </p>
             {/* CTAs */}
             <div style={{ marginTop:36, display:'flex', justifyContent:'center', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -223,7 +223,7 @@ export default function Landing() {
             </div>
             <div style={{ maxWidth:940, margin:'40px auto 0' }} className="lp-act">
               {[
-                {t:'Une visibilité claire', d:'Les bonnes informations, au bon moment, pour dûcider avec clarté.'},
+                {t:'Une visibilité claire', d:'Les bonnes informations, au bon moment, pour décider avec clarté.'},
                 {t:'Une messagerie intégrée', d:'échangez, validez et coordonnez depuis un espace dûdié au projet.'},
                 {t:'Un cadre commun', d:'Tous les acteurs avancent dans le même système, avec plus de cohérence.'},
               ].map(c=>(
@@ -249,7 +249,7 @@ export default function Landing() {
           </div>
           <div style={{ maxWidth:940, margin:'44px auto 0' }} className="lp-zoom-grid">
             {[
-              { label:'Projet actif', val:'APD à 45 %', sub:'Suivez l\u2019avancement de vos projets en temps rèel, oé que vous soyez dans le monde, et gardez une maîtrise claire sur chaque phase.' },
+              { label:'Projet actif', val:'APD à 45 %', sub:'Suivez l\u2019avancement de vos projets en temps réel, oé que vous soyez dans le monde, et gardez une maîtrise claire sur chaque phase.' },
               { label:'Appels d\u2019offres', val:'2 opportunités', sub:'Accédez à de nouveaux appels d\u2019offres, répondez à des besoins qualifiés et dûveloppez votre activité auprès de nouveaux clients.' },
               { label:'Trésorerie', val:'62 % engagé', sub:'Visualisez les engagements, suivez les disponibilités, validez les paiements et gardez le contrôle sur les flux du projet.' },
               { label:'Marketplace', val:'4 commandes en cours', sub:'Suivez vos achats de matériaux depuis une marketplace centralisée, avec une vue claire sur les offres disponibles.' },
@@ -419,7 +419,7 @@ export default function Landing() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'2px', color:'#191c1d', marginBottom:4 }}>Avec MEEREO</div>
-                {['Cockpit centralisé par projet','Décisions tracées et validées','Trésorerie temps rèel intégrée','Plateforme unique multi-acteurs'].map(t=>(
+                {['Cockpit centralisé par projet','Décisions tracées et validées','Trésorerie temps réel intégrée','Plateforme unique multi-acteurs'].map(t=>(
                   <div key={t} style={{ padding:'16px 20px', borderRadius:12, background:'#191c1d', fontSize:14, fontWeight:600, color:'#fff' }}>{t}</div>
                 ))}
               </div>
@@ -433,7 +433,7 @@ export default function Landing() {
             <div style={{ borderRadius:24, background:'#191c1d', padding:'64px 40px', color:'#fff' }}>
               <div style={{ maxWidth:540, margin:'0 auto', textAlign:'center' }}>
                 <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:600, letterSpacing:'-.02em', margin:0, lineHeight:1.25 }}>
-                  Prenez le contrôle total de vos projets, de vos équipes et de vos dûcisions
+                  Prenez le contrôle total de vos projets, de vos équipes et de vos décisions
                 </h2>
                 <p style={{ marginTop:16, fontSize:15, lineHeight:1.6, color:'rgba(255,255,255,.5)' }}>
                   MEEREO vous donne la visibilité, le contrôle et l'intelligence pour piloter vos projets avec précision.

@@ -444,7 +444,9 @@ export function MeereoProvider({ children }) {
           api.usersApi.getRegistered().catch(() => null),
         ])
         if (!apiAos) return // Backend unreachable, skip
+        if (!storeRef.current.user) return // User logged out during fetch
         setStore(prev => {
+          if (!prev.user) return prev // Double-check: don't overwrite after logout
           // Merge conversations: keep local ones not yet synced, add backend ones
           let mergedConvs = prev.conversations || []
           const convList = Array.isArray(apiConversations) ? apiConversations : (apiConversations?.conversations || null)

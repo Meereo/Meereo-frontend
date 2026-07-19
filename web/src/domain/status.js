@@ -131,7 +131,11 @@ export const OFFER_STATUS_COMPAT = {
   'en_attente': OFFER_STATUS.PENDING,
   'en attente': OFFER_STATUS.PENDING,
   'acceptee': OFFER_STATUS.ACCEPTED,
+  'accepted': OFFER_STATUS.ACCEPTED,
   'refusee': OFFER_STATUS.REJECTED,
+  'rejected': OFFER_STATUS.REJECTED,
+  'withdrawn': OFFER_STATUS.WITHDRAWN,
+  'retiree': OFFER_STATUS.WITHDRAWN,
 }
 
 export const normalizeOfferStatus = (s) => OFFER_STATUS_COMPAT[s] || s
