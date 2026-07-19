@@ -249,9 +249,20 @@ export default function Exchange({ showToast, onNavigate }) {
       reponse.docsJoints.map(async (f) => {
         let url = null
         try {
-          const { uploadFile } = await import('../../utils/upload')
-          url = await uploadFile(f, 'offer-docs', 'doc')
-        } catch { /* MinIO unavailable — store metadata only */ }
+          // Upload réel via /documents/upload — stocke le fichier sur le serveur
+          const result = await api.documents.upload(f, { name: f.name, type: 'offer_doc', category: 'offer' })
+          url = result?.url || null
+        } catch {
+          // Serveur indisponible — fallback base64 pour ne pas perdre le fichier
+          try {
+            url = await new Promise((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result)
+              reader.onerror = () => reject()
+              reader.readAsDataURL(f)
+            })
+          } catch { /* ignore */ }
+        }
         return {
           name: f.name || String(f),
           size: f.size ? (f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') : undefined,
