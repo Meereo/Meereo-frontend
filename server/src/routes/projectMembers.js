@@ -9,11 +9,34 @@ const router = Router()
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const where = {}
-    if (req.query.projectId) where.projectId = req.query.projectId
+    const userId = req.user.id
+
+    if (req.query.projectId) {
+      // Membres d'un projet spécifique
+      const members = await prisma.projectMember.findMany({
+        where: { projectId: req.query.projectId },
+        orderBy: { joinedAt: 'asc' },
+      })
+      return res.json(members)
+    }
+
+    // Sans projectId : retourner les membres de TOUS les projets de l'utilisateur
+    // 1. Trouver les projets auxquels l'utilisateur a accès
+    const userProjects = await prisma.project.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          { clientId: userId },
+          { members: { some: { userId } } },
+        ],
+      },
+      select: { id: true },
+    })
+    const projectIds = userProjects.map(p => p.id)
+    if (projectIds.length === 0) return res.json([])
 
     const members = await prisma.projectMember.findMany({
-      where,
+      where: { projectId: { in: projectIds } },
       orderBy: { joinedAt: 'asc' },
     })
     res.json(members)

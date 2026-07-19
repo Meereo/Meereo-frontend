@@ -24,7 +24,8 @@
       "Bash(awk -F: '{print $1}')",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/projects.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/markets.js)",
-      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/offers.js)"
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/offers.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/projectMembers.js)"
     ]
   }
 }
