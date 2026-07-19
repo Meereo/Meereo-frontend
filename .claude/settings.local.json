@@ -31,7 +31,12 @@
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/notifications.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/admin.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/pro.js)",
-      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/socket.js)"
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/socket.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/documents.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/users.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/products.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/conversations.js)",
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/contacts.js)"
     ]
   }
 }

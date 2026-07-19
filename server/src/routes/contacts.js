@@ -81,33 +81,40 @@ router.get('/:id/history', requireAuth, async (req, res, next) => {
     let projects = [], markets = [], offers = [], orders = []
 
     if (linkedId) {
-      // Projets en commun
-      const myProjectIds = (await prisma.project.findMany({ where: { ownerId: req.user.id }, select: { id: true } })).map(p => p.id)
-      projects = await prisma.projectMember.findMany({
-        where: { userId: linkedId, projectId: { in: myProjectIds } },
-        include: { project: { select: { id: true, nom: true, phase: true, avancement: true, status: true, createdAt: true } } },
-      })
-      // Marchés ensemble
-      markets = await prisma.market.findMany({
-        where: { OR: [{ supplierId: linkedId, clientId: req.user.id }, { clientId: linkedId, supplierId: req.user.id }] },
-        select: { id: true, titre: true, lot: true, entreprise: true, montant: true, statut: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-      })
-      // Offres sur mes AO
-      const myAOs = (await prisma.aO.findMany({ where: { ownerUserId: req.user.id }, select: { id: true } })).map(a => a.id)
-      if (myAOs.length > 0) {
-        offers = await prisma.offer.findMany({
-          where: { supplierId: linkedId, aoId: { in: myAOs } },
-          include: { ao: { select: { id: true, title: true, lot: true } } },
+      // Récupérer les IDs nécessaires en parallèle
+      const [myProjectIds, myAOIds] = await Promise.all([
+        prisma.project.findMany({ where: { ownerId: req.user.id }, select: { id: true } }).then(r => r.map(p => p.id)),
+        prisma.aO.findMany({ where: { ownerUserId: req.user.id }, select: { id: true } }).then(r => r.map(a => a.id)),
+      ])
+      // Charger toutes les données en parallèle (pas de séquentiel)
+      ;[projects, markets, offers, orders] = await Promise.all([
+        myProjectIds.length > 0
+          ? prisma.projectMember.findMany({
+              where: { userId: linkedId, projectId: { in: myProjectIds } },
+              include: { project: { select: { id: true, nom: true, phase: true, avancement: true, status: true, createdAt: true } } },
+            })
+          : [],
+        prisma.market.findMany({
+          where: { OR: [{ supplierId: linkedId, clientId: req.user.id }, { clientId: linkedId, supplierId: req.user.id }] },
+          select: { id: true, titre: true, lot: true, entreprise: true, montant: true, statut: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
-        })
-      }
-      // Commandes
-      orders = await prisma.order.findMany({
-        where: { OR: [{ buyerId: req.user.id, sellerId: linkedId }, { buyerId: linkedId, sellerId: req.user.id }] },
-        select: { id: true, ref: true, designation: true, total: true, statut: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-      })
+          take: 50,
+        }),
+        myAOIds.length > 0
+          ? prisma.offer.findMany({
+              where: { supplierId: linkedId, aoId: { in: myAOIds } },
+              include: { ao: { select: { id: true, title: true, lot: true } } },
+              orderBy: { createdAt: 'desc' },
+              take: 50,
+            })
+          : [],
+        prisma.order.findMany({
+          where: { OR: [{ buyerId: req.user.id, sellerId: linkedId }, { buyerId: linkedId, sellerId: req.user.id }] },
+          select: { id: true, ref: true, designation: true, total: true, statut: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        }),
+      ])
     }
 
     res.json({

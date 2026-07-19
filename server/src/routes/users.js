@@ -12,6 +12,10 @@ router.get('/pros', requireAuth, async (req, res, next) => {
     const where = { type: 'pro' }
     if (metier && metier !== 'all') where.metier = metier
 
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+    const skip = (page - 1) * limit
+
     const users = await prisma.user.findMany({
       where,
       select: {
@@ -37,6 +41,8 @@ router.get('/pros', requireAuth, async (req, res, next) => {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip,
     })
 
     let result = users.map(u => ({
@@ -69,6 +75,10 @@ router.get('/pros', requireAuth, async (req, res, next) => {
 router.get('/fournisseurs', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+    const skip = (page - 1) * limit
+
     const users = await prisma.user.findMany({
       where: { type: 'fournisseur' },
       select: {
@@ -97,6 +107,8 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip,
     })
 
     const result = users.map(u => ({

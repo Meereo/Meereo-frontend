@@ -39,6 +39,10 @@ router.get('/', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const userId = req.user.id
 
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+    const skip = (page - 1) * limit
+
     const participations = await prisma.conversationParticipant.findMany({
       where: { userId },
       include: {
@@ -56,6 +60,8 @@ router.get('/', requireAuth, async (req, res, next) => {
         },
       },
       orderBy: { conversation: { updatedAt: 'desc' } },
+      take: limit,
+      skip,
     })
 
     // Vérifier le type de l'utilisateur pour filtrage sécurité

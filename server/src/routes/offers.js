@@ -71,14 +71,23 @@ router.get('/compare/:aoId', requireAuth, async (req, res, next) => {
       orderBy: { createdAt: 'asc' },
     })
 
-    // Enrichir avec les documents entreprise de chaque candidat
-    const enriched = await Promise.all(offers.map(async (offer) => {
-      const docs = await prisma.document.findMany({
-        where: { userId: offer.supplierId, isEntreprise: true, parentId: null },
-        select: { id: true, name: true, type: true, category: true, url: true, expiresAt: true },
-        orderBy: { createdAt: 'desc' },
-      })
-      return { ...offer, entrepriseDocs: docs }
+    // Charger tous les documents entreprise en une seule requête (pas de N+1)
+    const supplierIds = offers.map(o => o.supplierId).filter(Boolean)
+    const allDocs = supplierIds.length > 0
+      ? await prisma.document.findMany({
+          where: { userId: { in: supplierIds }, isEntreprise: true, parentId: null },
+          select: { id: true, name: true, type: true, category: true, url: true, expiresAt: true, userId: true },
+          orderBy: { createdAt: 'desc' },
+        })
+      : []
+    const docsBySupplier = {}
+    allDocs.forEach(d => {
+      if (!docsBySupplier[d.userId]) docsBySupplier[d.userId] = []
+      docsBySupplier[d.userId].push(d)
+    })
+    const enriched = offers.map(offer => ({
+      ...offer,
+      entrepriseDocs: docsBySupplier[offer.supplierId] || [],
     }))
 
     res.json({ ao, offers: enriched })

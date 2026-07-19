@@ -48,19 +48,13 @@ Derniere mise a jour : 2026-07-19
 
 ## PRIORITE 3 — Performance
 
-- [ ] **3.1** Ajouter pagination sur les routes listes
-  - `GET /api/documents` — `server/src/routes/documents.js`
-  - `GET /api/conversations` — `server/src/routes/conversations.js`
-  - `GET /api/users/pros` — `server/src/routes/users.js`
-  - `GET /api/users/fournisseurs` — `server/src/routes/users.js`
-  - `GET /api/products` — `server/src/routes/products.js`
-  - Ajouter `?page=1&limit=50` avec defaults
+- [x] **3.1** Ajouter pagination sur les routes listes
+  - FAIT : pagination `?page=1&limit=50` ajoutee sur documents, conversations, users/pros, users/fournisseurs, products
 
-- [ ] **3.2** Eliminer les N+1 queries
-  - `GET /api/offers/compare/:aoId` — `server/src/routes/offers.js:52-86` (boucle docs)
-  - `GET /api/contacts/:id/history` — `server/src/routes/contacts.js:70-100` (requetes seq.)
-  - `GET /api/documents` — `server/src/routes/documents.js:48+` (3 boucles imbriquees)
-  - Remplacer par des `include` Prisma ou des `WHERE IN`
+- [x] **3.2** Eliminer les N+1 queries
+  - FAIT : offers/compare — boucle docs remplacee par un seul `WHERE IN` par supplierId
+  - FAIT : contacts/history — 4 requetes seq. → 2 phases paralleles (IDs puis donnees)
+  - documents — deja en parallele (Promise.all), acceptable
 
 ---
 

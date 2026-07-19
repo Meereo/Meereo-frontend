@@ -120,9 +120,15 @@ router.get('/', requireAuth, async (req, res, next) => {
       where = { ...where, expiresAt: { lt: new Date() } }
     }
 
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 100))
+    const skip = (page - 1) * limit
+
     const docs = await prisma.document.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip,
     })
     res.json(docs)
   } catch (e) { next(e) }
