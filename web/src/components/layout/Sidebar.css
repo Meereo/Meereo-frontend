@@ -124,10 +124,11 @@
 }
 .ni:hover { background: var(--sidebar-hover); transform: translateX(2px); }
 .ni.active {
-  background: var(--s3);
+  background: rgba(25, 28, 29, .10);
   color: var(--sidebar-text-active);
-  font-weight: 600;
+  font-weight: 700;
   transform: translateX(0);
+  border-radius: 10px;
 }
 .ni.active::before {
   content: '';
@@ -135,10 +136,10 @@
   left: -8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 16px;
-  background: var(--tx);
-  border-radius: 0 2px 2px 0;
+  width: 4px;
+  height: 22px;
+  background: #2563EB;
+  border-radius: 0 3px 3px 0;
 }
 /* Icon wrapper — subtle semantic color */
 .ni .ni-ico {
@@ -161,9 +162,9 @@
   background: var(--tx);
   color: #fff;
 }
-.ni-badge.nb-red { background: var(--err-s); color: var(--err); }
-.ni-badge.nb-orange { background: var(--wrn-s); color: var(--wrn); }
-.ni-badge.nb-green { background: var(--ok-s); color: var(--ok); }
+.ni-badge.nb-red { background: #ef4444; color: #fff; }
+.ni-badge.nb-orange { background: #f59e0b; color: #fff; }
+.ni-badge.nb-green { background: #22c55e; color: #fff; }
 
 /* Footer */
 .sidebar-footer {

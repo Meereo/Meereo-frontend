@@ -201,6 +201,30 @@ export default function Progress({ ctx }) {
         </div>
       )}
 
+      {/* Intervenants du projet — visibles par le client */}
+      {(() => {
+        const projIntervenants = (store?.projectMembers || []).filter(m => m.projectId === proj?.id && m.userId !== proj?.ownerId && m.userId !== proj?.clientId && m.userId !== store?.user?.id)
+        if (projIntervenants.length === 0) return null
+        return (
+          <div style={{ marginTop: 24, marginBottom: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Intervenants du projet</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {projIntervenants.map(m => (
+                <div key={m.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0 }}>
+                    {(m.userName || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.userName || 'Intervenant'}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{m.role || 'Membre'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Notes de chantier */}
       {projNotes.length > 0 && (
         <div style={{ marginTop: 24, marginBottom: 24 }}>

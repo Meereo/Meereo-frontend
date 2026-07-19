@@ -101,9 +101,23 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
     [MARKET_STATUS.COMPLETED]: filtered.filter(m => m.statut === MARKET_STATUS.COMPLETED),
   }
 
+  // Résoudre le nom du MOA depuis le marché ou le projet lié
+  const getClientName = (m) => {
+    // Depuis la relation Prisma (backend include)
+    if (m.client?.name) return m.client.name
+    if (m.client?.company) return m.client.company
+    // Depuis les champs locaux (créés par acceptOffer)
+    if (m.clientName) return m.clientName
+    if (m.clientCompany) return m.clientCompany
+    // Fallback: depuis le projet lié
+    const proj = (store.projects || []).find(p => p.id === m.projectId)
+    return proj?.client || ''
+  }
+
   const MarcheCard = ({ m }) => {
     const initials = m.entreprise.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
     const inter = INTERVENANTS_DATA.find(i => i.nom === m.entreprise)
+    const moaName = getClientName(m)
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setDetail(m)}>
         {getProjetImg(m.projet, store) && (
@@ -129,6 +143,11 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
             </div>
             {inter?.note > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11, color: '#F59E0B', fontWeight: 600 }}><Star size={11} fill="#F59E0B" strokeWidth={0}/> {inter.note}</span>}
           </div>
+          {moaName && (
+            <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontWeight: 600, color: 'var(--t2)' }}>MOA :</span> {moaName}
+            </div>
+          )}
           <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-1px', marginBottom: 6 }}>{formatShort(parseBudget(m.montant))}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--t3)' }}>
             <span>{m.delai}</span>
@@ -234,12 +253,23 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                 ))}
               </div>
 
+              {/* Maître d'ouvrage */}
+              {getClientName(detail) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{getClientName(detail).charAt(0).toUpperCase()}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase' }}>Maître d'ouvrage</div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{getClientName(detail)}</div>
+                  </div>
+                </div>
+              )}
+
               {proj && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, cursor: 'pointer' }} onClick={() => { setDetail(null); onNavigate && onNavigate('projets') }}>
                   {proj.img && <img src={proj.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 600 }}>{proj.nom}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{proj.client} à {PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase}</div>
+                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{proj.client} · {PHASE_LABELS[normalizePhase(proj.phase)] || proj.phase}</div>
                   </div>
                   <span style={{ fontSize: 10, color: 'var(--t4)' }}>Projet →</span>
                 </div>

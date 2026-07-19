@@ -295,6 +295,8 @@ export function MeereoProvider({ children }) {
               : (prev.activities || []),
             // Rapports — depuis la base
             rapports: Array.isArray(apiRapports) ? apiRapports : (prev.rapports || []),
+            // Notes chantier — extraites des rapports pour le suivi projet
+            notes: Array.isArray(apiRapports) ? apiRapports.filter(r => r.type === 'note_chantier') : (prev.notes || []),
             // Notifications — depuis la base
             notifications: Array.isArray(apiNotifications) ? apiNotifications : (prev.notifications || []),
             // Événements — depuis la base (remplace les ev_ temporaires)
@@ -490,9 +492,16 @@ export function MeereoProvider({ children }) {
             decisions: apiDecisions || prev.decisions,
             tasks: apiTasks || prev.tasks,
             events: apiEvents || prev.events,
-            notifications: apiNotifications || prev.notifications,
+            notifications: (() => {
+              if (!apiNotifications) return prev.notifications
+              // Merge: keep real-time notifications received via WebSocket that backend hasn't indexed yet
+              const backendIds = new Set(apiNotifications.map(n => n.id))
+              const localOnly = (prev.notifications || []).filter(n => !backendIds.has(n.id))
+              return [...apiNotifications, ...localOnly]
+            })(),
             contacts: apiContacts || prev.contacts,
             rapports: apiRapports || prev.rapports,
+            notes: apiRapports ? apiRapports.filter(r => r.type === 'note_chantier') : (prev.notes || []),
             transactions: apiTransactions || prev.transactions,
             users: apiRegisteredUsers ? mergeById([prev.user].filter(Boolean), apiRegisteredUsers) : prev.users,
           }

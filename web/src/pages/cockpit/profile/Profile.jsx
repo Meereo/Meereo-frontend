@@ -263,44 +263,6 @@ export default function Profile() {
           {pageSections.map((section) => (
             <SectionRenderer key={section.id} section={section} />
           ))}
-          {/* Avis clients — vrais retours de la plateforme */}
-          {(pubData?.reviews || []).length > 0 && (
-            <section style={{ padding: '48px 0', background: '#FAFAFA', borderTop: '1px solid #E5E5E5' }}>
-              <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 28px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#888' }}>Avis clients</span>
-                  {pubData?.stats?.noteAvg && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
-                      {Array.from({ length: 5 }, (_, i) => <Star key={i} size={14} fill={i < Math.round(pubData.stats.noteAvg) ? '#F59E0B' : 'none'} stroke={i < Math.round(pubData.stats.noteAvg) ? '#F59E0B' : '#D1D5DB'} strokeWidth={1.5} />)}
-                      <span style={{ marginLeft: 4 }}>{pubData.stats.noteAvg}/5</span>
-                      <span style={{ fontSize: 11, color: '#888', fontWeight: 400, marginLeft: 4 }}>({pubData.stats.reviewsCount} avis)</span>
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {pubData.reviews.map((r, i) => (
-                    <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 22, padding: '18px 0', borderBottom: '1px solid #E5E5E5', borderTop: i === 0 ? '1px solid #1D1D1F' : undefined }}>
-                      <div>
-                        <div style={{ display: 'flex', gap: 2 }}>
-                          {Array.from({ length: 5 }, (_, j) => <Star key={j} size={11} fill={j < r.note ? '#F59E0B' : 'none'} stroke={j < r.note ? '#F59E0B' : '#D1D5DB'} strokeWidth={1.5} />)}
-                        </div>
-                        <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 11, color: '#888', marginTop: 4, display: 'block' }}>
-                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : ''}
-                        </span>
-                      </div>
-                      <div>
-                        {r.comment && <p style={{ fontSize: 14.5, color: '#333', margin: '0 0 8px', lineHeight: 1.5 }}>{r.comment}</p>}
-                        <div style={{ fontSize: 12.5 }}>
-                          <b style={{ fontWeight: 600 }}>{r.author?.company || r.author?.name || 'Client'}</b>
-                          <span style={{ marginLeft: 6, fontFamily: 'var(--f-mono, monospace)', fontSize: 11, color: '#888' }}>Retour vérifié — projet MEEREO</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
           {/* Visitor actions bar */}
           {!isOwner && !isVisitor && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: 12, padding: '32px 24px', background: 'var(--surface-1)', borderTop: '1px solid var(--border-card)' }}>
@@ -349,6 +311,45 @@ export default function Profile() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Avis clients — toujours visible si des avis existent */}
+      {(pubData?.reviews || []).length > 0 && (
+        <section style={{ padding: '48px 0', background: '#FAFAFA', borderTop: '1px solid #E5E5E5' }}>
+          <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: '#888' }}>Avis clients</span>
+              {pubData?.stats?.noteAvg && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
+                  {Array.from({ length: 5 }, (_, i) => <Star key={i} size={14} fill={i < Math.round(pubData.stats.noteAvg) ? '#F59E0B' : 'none'} stroke={i < Math.round(pubData.stats.noteAvg) ? '#F59E0B' : '#D1D5DB'} strokeWidth={1.5} />)}
+                  <span style={{ marginLeft: 4 }}>{pubData.stats.noteAvg}/5</span>
+                  <span style={{ fontSize: 11, color: '#888', fontWeight: 400, marginLeft: 4 }}>({pubData.stats.reviewsCount} avis)</span>
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {pubData.reviews.map((r, i) => (
+                <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 22, padding: '18px 0', borderBottom: '1px solid #E5E5E5', borderTop: i === 0 ? '1px solid #1D1D1F' : undefined }}>
+                  <div>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {Array.from({ length: 5 }, (_, j) => <Star key={j} size={11} fill={j < r.note ? '#F59E0B' : 'none'} stroke={j < r.note ? '#F59E0B' : '#D1D5DB'} strokeWidth={1.5} />)}
+                    </div>
+                    <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 11, color: '#888', marginTop: 4, display: 'block' }}>
+                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : ''}
+                    </span>
+                  </div>
+                  <div>
+                    {r.comment && <p style={{ fontSize: 14.5, color: '#333', margin: '0 0 8px', lineHeight: 1.5 }}>{r.comment}</p>}
+                    <div style={{ fontSize: 12.5 }}>
+                      <b style={{ fontWeight: 600 }}>{r.author?.company || r.author?.name || 'Client'}</b>
+                      <span style={{ marginLeft: 6, fontFamily: 'var(--f-mono, monospace)', fontSize: 11, color: '#888' }}>Retour vérifié — projet MEEREO</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* FOOTER */}

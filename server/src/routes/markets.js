@@ -2,6 +2,7 @@ const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
 const { createError } = require('../middleware/errorHandler')
+const { getIo } = require('../socket')
 
 const router = Router()
 
@@ -106,6 +107,27 @@ router.post('/', requireAuth, async (req, res, next) => {
             userEmail: supplierUser?.email || '',
           },
         })
+      } catch (_) { /* non bloquant */ }
+    }
+
+    // Notifier le fournisseur qu'un marché a été créé pour lui
+    if (supplierId) {
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            userId: supplierId,
+            type: 'market_signed',
+            message: `Nouveau marché signé : ${titre || lot || 'Mission'} — consultez vos marchés`,
+            link: '/marches',
+            read: false,
+          },
+        })
+        const io = getIo()
+        if (io) {
+          io.to(`user:${supplierId}`).emit('notification:new', {
+            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+          })
+        }
       } catch (_) { /* non bloquant */ }
     }
 

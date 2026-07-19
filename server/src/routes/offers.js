@@ -180,6 +180,47 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     }
 
     const updated = await prisma.offer.update({ where: { id: req.params.id }, data: allowed })
+
+    // Notifier le fournisseur quand son offre est acceptée ou refusée
+    if (isAOOwner && req.body.statut === 'accepted' && existing.supplierId) {
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            userId: existing.supplierId,
+            type: 'offer_accepted',
+            message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » a été acceptée — un marché va être créé`,
+            link: '/marches',
+            read: false,
+          },
+        })
+        const io = getIo()
+        if (io) {
+          io.to(`user:${existing.supplierId}`).emit('notification:new', {
+            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+          })
+        }
+      } catch (_) { /* non bloquant */ }
+    }
+    if (isAOOwner && req.body.statut === 'rejected' && existing.supplierId) {
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            userId: existing.supplierId,
+            type: 'offer_rejected',
+            message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
+            link: '/bourse',
+            read: false,
+          },
+        })
+        const io = getIo()
+        if (io) {
+          io.to(`user:${existing.supplierId}`).emit('notification:new', {
+            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+          })
+        }
+      } catch (_) { /* non bloquant */ }
+    }
+
     res.json(updated)
   } catch (e) {
     next(e)
