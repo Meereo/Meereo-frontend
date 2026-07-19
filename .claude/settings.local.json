@@ -16,7 +16,8 @@
       "Bash(./node_modules/.bin/prisma --version)",
       "Bash(ls node_modules/.bin/prisma*)",
       "Bash(node -e ':*)",
-      "Bash(grep -E \"\\\\.\\(jsx?|tsx?\\)$\")"
+      "Bash(grep -E \"\\\\.\\(jsx?|tsx?\\)$\")",
+      "Bash(grep -E \"\\\\.\\(js|ts\\)$\")"
     ]
   }
 }

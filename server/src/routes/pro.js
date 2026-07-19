@@ -183,4 +183,44 @@ router.get('/page-sections/me', requireAuth, async (req, res, next) => {
   }
 })
 
+// ─── POST /api/pro/request-verification ─────────────────────────────────────
+// Le pro soumet sa demande de vérification (RCCM + documents admin)
+router.post('/request-verification', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const userId = req.user.id
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { type: true, verified: true, onboardingData: true } })
+    if (!user || user.type !== 'pro') throw createError('Réservé aux professionnels', 403)
+    if (user.verified) return res.json({ success: true, alreadyVerified: true })
+
+    const od = user.onboardingData || {}
+    const rccm = od.rccm || req.body.rccm
+    if (!rccm) throw createError('Le numéro RCCM est obligatoire pour la vérification', 400)
+
+    // Vérifier qu'au moins un document admin a été uploadé
+    const adminDocs = await prisma.document.count({
+      where: { userId, category: { in: ['certification', 'admin', 'legal'] }, parentId: null },
+    })
+    if (adminDocs === 0) throw createError('Veuillez télécharger au moins un document administratif (RCCM, attestation, etc.)', 400)
+
+    // Sauvegarder le RCCM dans onboardingData si pas encore fait
+    if (!od.rccm && rccm) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { onboardingData: { ...od, rccm, verificationRequestedAt: new Date().toISOString() } },
+      })
+    }
+
+    // Créer une notification pour les admins (verification pending)
+    const admins = await prisma.user.findMany({ where: { role: 'admin' }, select: { id: true } })
+    for (const admin of admins) {
+      await prisma.notification.create({
+        data: { userId: admin.id, type: 'verification_request', message: `Demande de vérification : ${od.entreprise || 'Professionnel'} — RCCM: ${rccm}`, link: '/admin', read: false },
+      }).catch(() => {})
+    }
+
+    res.json({ success: true, message: 'Demande de vérification envoyée. Vous serez notifié une fois la vérification effectuée.' })
+  } catch (e) { next(e) }
+})
+
 module.exports = router

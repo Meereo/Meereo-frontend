@@ -442,30 +442,23 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     </div>
                   </div>
               ) : (
-                // Vue pro : affiche les infos du client si l'offre est acceptée
+                // Vue pro : affiche uniquement le nom du client (les clients sont privés)
                 selected.statut === OFFER_STATUS.ACCEPTED && selected.aoOwner ? (
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Informations du client</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Maître d'ouvrage</div>
                     <div style={{ padding: '16px 18px', background: 'rgba(52,199,89,.04)', borderRadius: 12, border: '1px solid rgba(52,199,89,.15)' }}>
                       {(() => {
                         const owner = selected.aoOwner
                         const ob = owner?.onboardingData || {}
                         const initials = (ob.prenom || owner.name || '?')[0].toUpperCase()
                         return (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{initials}</div>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
-                                {ob.ville && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ob.ville}</div>}
-                              </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{initials}</div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 600 }}>{ob.prenom ? ob.prenom + ' ' + (ob.nom || '') : owner.company || owner.name}</div>
+                              {ob.ville && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ob.ville}</div>}
+                              <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Utilisez la messagerie pour communiquer</div>
                             </div>
-                            {(ob.email || ob.tel) && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                {ob.email && <div style={{ fontSize: 11, color: 'var(--t3)' }}>“é {ob.email}</div>}
-                                {ob.tel && <div style={{ fontSize: 11, color: 'var(--t3)' }}>“é {ob.tel}</div>}
-                              </div>
-                            )}
                           </div>
                         )
                       })()}

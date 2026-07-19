@@ -449,6 +449,8 @@ const projectMembersApi = {
     return apiFetch(`/project-members${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
   create:  (data)     => apiFetch('/project-members', 'POST', data, true),
+  respond: (id, accept) => apiFetch(`/project-members/${id}/respond`, 'PATCH', { accept }, true),
+  getPending: ()      => apiFetch('/project-members/pending', 'GET', null, true),
   delete:  (id)       => apiFetch(`/project-members/${id}`, 'DELETE', null, true),
 }
 

@@ -120,6 +120,7 @@
   background: none;
   font-family: var(--f);
   text-align: left;
+  position: relative;
 }
 .ni:hover { background: var(--sidebar-hover); transform: translateX(2px); }
 .ni.active {
@@ -127,6 +128,17 @@
   color: var(--sidebar-text-active);
   font-weight: 600;
   transform: translateX(0);
+}
+.ni.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--tx);
+  border-radius: 0 2px 2px 0;
 }
 /* Icon wrapper — subtle semantic color */
 .ni .ni-ico {
@@ -143,11 +155,11 @@
 .ni-badge {
   margin-left: auto;
   font-size: 9px;
-  font-weight: 500;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--s2);
-  color: var(--t3);
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--tx);
+  color: #fff;
 }
 .ni-badge.nb-red { background: var(--err-s); color: var(--err); }
 .ni-badge.nb-orange { background: var(--wrn-s); color: var(--wrn); }

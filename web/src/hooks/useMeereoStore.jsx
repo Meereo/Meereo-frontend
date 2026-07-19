@@ -1166,7 +1166,7 @@ export function MeereoProvider({ children }) {
       })
       .catch(e => console.warn('[createProject] backend sync failed:', e.message))
     log('PROJECT_CREATED', { name: p.name })
-    addNotif('Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green', null, 'projets')
+    emitEvent('project_created', { projectName: p.name }, { notifMsg: 'Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', notifType: 'green' })
     showToast('\u2705 Projet \u00ab ' + p.name + ' \u00bb cr\u00e9\u00e9', 'green')
     // Local-only member record (so project appears immediately in getUserProjects via memberProjectIds)
     // Will be replaced by the real backend member record once api.projects.create resolves
@@ -1548,7 +1548,12 @@ export function MeereoProvider({ children }) {
         }).catch(() => {})
       }
     }
-    addNotif(accept ? 'Réception du projet confirmée' : 'Clôture refusée', accept ? 'green' : 'orange', null, 'projets')
+    const projName = (storeRef.current.projects || []).find(p => p.id === projectId)?.nom || 'Projet'
+    if (accept) {
+      emitEvent('project_completed', { projectName: projName }, { notifMsg: 'Projet \u00ab ' + projName + ' \u00bb terminé', notifType: 'green' })
+    } else {
+      addNotif('Clôture refusée', 'orange', null, 'projets')
+    }
     showToast(accept ? 'Projet validé' : 'Clôture refusée', accept ? 'green' : 'orange')
   }, [updateStore, addNotif, showToast])
 
@@ -1710,7 +1715,7 @@ export function MeereoProvider({ children }) {
     }
     updateStore(prev => ({ ...prev, aos: [...(prev.aos || []), tempAO] }))
     log('AO_CREATED', { title: tempAO.title, trade: tempAO.requestedTrade, visibility: tempAO.visibilityScope, projectRole })
-    addNotif('AO \u00ab ' + tempAO.title + " \u00bb publi\u00e9 \u2014 en attente d'offres", 'blue', null, 'ao')
+    emitEvent('ao_published', { title: tempAO.title }, { notifMsg: 'AO \u00ab ' + tempAO.title + " \u00bb publi\u00e9 \u2014 en attente d'offres", notifType: 'blue' })
     showToast("\ud83d\udce3 Appel d'offres publi\u00e9", 'blue')
     // Persist to backend and replace temp ID with real ID
     try {
@@ -2104,7 +2109,7 @@ export function MeereoProvider({ children }) {
       }
     })()
     log('OFFER_ACCEPTED', { offerId, acceptedByRole: projectRole })
-    addNotif('Offre acceptée — marché en cours de création', 'green', null, 'marches')
+    emitEvent('offer_accepted', { title: ao?.title || ao?.titre || '', offerId }, { notifMsg: 'Offre acceptée — marché en cours de création', notifType: 'green' })
     showToast('Offre acceptée', 'green')
     // ── Commission clé en main : créer introduction + commission si applicable ──
     if (_isCEM && _isCEM(storeRef.current) && market) {
@@ -2157,8 +2162,10 @@ export function MeereoProvider({ children }) {
     }))
     sync(api.offers.update(offerId, { statut: 'rejected' }))
     log('OFFER_REJECTED', { offerId })
+    const rejectedOffer = storeRef.current.offers?.find(o => o.id === offerId)
+    emitEvent('offer_rejected', { title: rejectedOffer?.titre || '', offerId }, { notifMsg: 'Offre refusée', notifType: 'orange' })
     showToast('\u274c Offre refus\u00e9e', 'orange')
-  }, [updateStore, log, showToast])
+  }, [updateStore, log, showToast, emitEvent])
 
   const triggerPayment = useCallback((data) => {
     // Guard: seul le client peut initier un paiement

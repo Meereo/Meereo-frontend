@@ -29,7 +29,7 @@ export const SECTION_TEMPLATES = [
     category: "hero",
     name: "En-tete — Banniere",
     defaultData: {
-      companyName: "Raw Design",
+      companyName: "Votre Entreprise",
       category: "Bureau d'architecture",
       location: "ABIDJAN \u00B7 COTE D'IVOIRE",
       verified: true,
@@ -43,12 +43,12 @@ export const SECTION_TEMPLATES = [
     category: "hero",
     name: "En-tete — Editorial",
     defaultData: {
-      companyName: "Raw Design",
+      companyName: "Votre Entreprise",
       category: "Bureau d'architecture",
       location: "Abidjan, Cote d'Ivoire",
       verified: true,
       slogan: "Architecture residentielle et tertiaire en Afrique de l'Ouest.",
-      url: "meereo.com/pro/raw-design",
+      url: "meereo.com/pro/votre-entreprise",
       ctaText: "Contacter",
       secondaryText: "Inviter dans un projet",
     },
@@ -58,7 +58,7 @@ export const SECTION_TEMPLATES = [
     category: "hero",
     name: "En-tete — Compact",
     defaultData: {
-      companyName: "Raw Design",
+      companyName: "Votre Entreprise",
       category: "Bureau d'architecture",
       location: "ABIDJAN \u00B7 COTE D'IVOIRE",
       verified: true,
@@ -75,7 +75,7 @@ export const SECTION_TEMPLATES = [
     defaultData: {
       title: "Une architecture ancree dans son climat et son usage",
       paragraphs: [
-        "Fonde a Abidjan en 2014, Raw Design concoit des batiments residentiels et tertiaires penses pour le climat ouest-africain : ventilation naturelle, protection solaire, materiaux locaux.",
+        "Fonde a Abidjan en 2014, Votre Entreprise concoit des batiments residentiels et tertiaires penses pour le climat ouest-africain : ventilation naturelle, protection solaire, materiaux locaux.",
         "L'agence accompagne ses clients de l'esquisse a la reception, avec une methode documentee a chaque etape.",
       ],
       values: [
@@ -403,8 +403,8 @@ export const SECTION_TEMPLATES = [
     defaultData: {
       address: "Rue des Jardins, Cocody Danga\nAbidjan, Cote d'Ivoire",
       phone: "+225 27 22 00 00 00",
-      email: "contact@rawdesign.ci",
-      url: "meereo.com/pro/raw-design",
+      email: "contact@entreprise.ci",
+      url: "meereo.com/pro/votre-entreprise",
     },
   },
   {
@@ -414,8 +414,8 @@ export const SECTION_TEMPLATES = [
     defaultData: {
       address: "Rue des Jardins, Cocody Danga — Abidjan, Cote d'Ivoire",
       phone: "+225 27 22 00 00 00",
-      email: "contact@rawdesign.ci",
-      website: "rawdesign.ci",
+      email: "contact@entreprise.ci",
+      website: "entreprise.ci",
       socials: "LinkedIn \u00B7 Instagram",
     },
   },
@@ -424,13 +424,13 @@ export const SECTION_TEMPLATES = [
     category: "coordinates",
     name: "Coordonnees — Pied de page",
     defaultData: {
-      companyName: "Raw Design",
+      companyName: "Votre Entreprise",
       category: "Bureau d'architecture — Abidjan",
       address: "Rue des Jardins, Cocody Danga\nAbidjan, Cote d'Ivoire",
       phone: "+225 27 22 00 00 00",
-      email: "contact@rawdesign.ci",
-      website: "rawdesign.ci",
-      url: "meereo.com/pro/raw-design",
+      email: "contact@entreprise.ci",
+      website: "entreprise.ci",
+      url: "meereo.com/pro/votre-entreprise",
     },
   },
 
@@ -440,7 +440,7 @@ export const SECTION_TEMPLATES = [
     category: "contact",
     name: "Contact — Panneau d'actions",
     defaultData: {
-      eyebrow: "Travailler avec Raw Design",
+      eyebrow: "Travailler avec Votre Entreprise",
       actions: [
         { id: "a1", title: "Envoyer un message", description: "Ouvre une conversation privee avec l'agence dans le Communication Hub.", meta: "REPONSE SOUS 24 H OUVREES" },
         { id: "a2", title: "Demander un rendez-vous", description: "Proposez un creneau ; l'agence confirme depuis son Cockpit.", meta: "EN AGENCE OU A DISTANCE" },
@@ -458,7 +458,7 @@ export const SECTION_TEMPLATES = [
     category: "contact",
     name: "Contact — Formulaire",
     defaultData: {
-      title: "Ecrire a Raw Design",
+      title: "Ecrire a Votre Entreprise",
       note: "Votre message ouvre une conversation « Prise de contact » dans le Communication Hub.",
       submitText: "Envoyer le message",
       altLinks: [

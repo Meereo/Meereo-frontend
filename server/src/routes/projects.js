@@ -152,6 +152,16 @@ router.get('/:id/timeline', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const projectId = req.params.id
+    const userId = req.user.id
+
+    // Vérifier que l'utilisateur a accès au projet
+    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { ownerId: true, clientId: true } })
+    if (!project) return res.status(404).json({ error: 'Projet introuvable' })
+    const isOwnerOrClient = project.ownerId === userId || project.clientId === userId
+    if (!isOwnerOrClient) {
+      const isMember = await prisma.projectMember.findFirst({ where: { projectId, userId } })
+      if (!isMember) return res.status(403).json({ error: 'Accès refusé' })
+    }
 
     const [events, missions, decisions, documents, markets, activities] = await Promise.all([
       prisma.event.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, select: { id: true, titre: true, type: true, date: true, createdAt: true } }),

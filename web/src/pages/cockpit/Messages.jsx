@@ -94,9 +94,8 @@ const srcColor = s => s === 'externe' ? '#F59E0B' : s === 'client' ? '#16A34A' :
 function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearch, setShowParticipants, projects, onAction }) {
   if (!active) return null
   const av = getContactAvatar(active.nom, projects)
-  const client = CLIENTS_DATA.find(c => c.nom === active.nom)
-  const isClientPrive = client && client.type === 'Particulier'
-  const isPro = !active.isGroup && !active.pending && !isClientPrive
+  // Lien profil uniquement pour les contacts de type "pro" — les clients sont privés
+  const isPro = !active.isGroup && !active.pending && active.otherParticipantType === 'pro'
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 

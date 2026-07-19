@@ -574,15 +574,19 @@ model Mission {
 // ─── Membre de projet ─────────────────────────────────────────────────────────
 
 model ProjectMember {
-  id        String   @id @default(cuid())
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation("ProjectMemberships", fields: [userId], references: [id], onDelete: Cascade)
-  role      String   @default("MEMBER")
-  userName  String   @default("")
-  userEmail String   @default("")
-  joinedAt  DateTime @default(now())
+  id               String    @id @default(cuid())
+  projectId        String
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User      @relation("ProjectMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  role             String    @default("MEMBER")
+  userName         String    @default("")
+  userEmail        String    @default("")
+  joinedAt         DateTime  @default(now())
+  invitationStatus String    @default("accepted") // pending | accepted | rejected
+  invitedByUserId  String?
+  invitedAt        DateTime?
+  acceptedAt       DateTime?
 
   @@unique([projectId, userId])
   @@map("project_members")

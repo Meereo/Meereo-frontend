@@ -58,10 +58,33 @@ router.get('/', requireAuth, async (req, res, next) => {
       orderBy: { conversation: { updatedAt: 'desc' } },
     })
 
-    const conversations = participations.map((p) => {
+    // Vérifier le type de l'utilisateur pour filtrage sécurité
+    const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { type: true } })
+    const isPro = currentUser?.type === 'pro'
+
+    // Si pro : récupérer les IDs des clients avec lesquels il partage un projet
+    let allowedClientIds = null
+    if (isPro) {
+      const sharedProjects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+        select: { clientId: true, ownerId: true },
+      })
+      allowedClientIds = new Set()
+      sharedProjects.forEach(p => {
+        if (p.clientId) allowedClientIds.add(p.clientId)
+        if (p.ownerId) allowedClientIds.add(p.ownerId)
+      })
+      allowedClientIds.delete(userId)
+    }
+
+    let conversations = participations.map((p) => {
       const c = p.conversation
       const lastMsg = c.messages[0] || null
-      // Compter les non-lus : messages après lastReadAt
       const lastReadAt = p.lastReadAt
       return {
         id: c.id,
@@ -79,6 +102,16 @@ router.get('/', requireAuth, async (req, res, next) => {
       }
     })
 
+    // Sécurité : un pro ne voit que les conversations avec des clients liés à ses projets
+    if (isPro && allowedClientIds) {
+      conversations = conversations.filter(c => {
+        if (c.isGroup) return true // Les groupes restent visibles
+        // Pour les 1:1, vérifier que l'autre participant n'est pas un client non-autorisé
+        const otherParticipants = c.participants.filter(pp => pp.id !== userId)
+        return otherParticipants.every(pp => pp.type !== 'client' || allowedClientIds.has(pp.id))
+      })
+    }
+
     res.json(conversations)
   } catch (err) {
     next(err)
@@ -95,6 +128,31 @@ router.post('/', requireAuth, async (req, res, next) => {
     const { participantId, participantIds, title, aoId, offerId, type, projectId, missionId } = req.body
 
     if (participantId) {
+      // ─── Sécurité : un pro ne peut contacter un client que s'ils partagent un projet ───
+      const me = await prisma.user.findUnique({ where: { id: myId }, select: { type: true } })
+      const other = await prisma.user.findUnique({ where: { id: participantId }, select: { type: true } })
+      if (me?.type === 'pro' && other?.type === 'client') {
+        const sharedProject = await prisma.project.findFirst({
+          where: {
+            OR: [
+              { ownerId: myId, clientId: participantId },
+              { ownerId: participantId, clientId: myId },
+              { AND: [
+                { members: { some: { userId: myId } } },
+                { OR: [{ clientId: participantId }, { ownerId: participantId }] },
+              ]},
+              { AND: [
+                { members: { some: { userId: participantId } } },
+                { OR: [{ clientId: myId }, { ownerId: myId }] },
+              ]},
+            ],
+          },
+        })
+        if (!sharedProject) {
+          return res.status(403).json({ error: 'Vous ne pouvez contacter ce client que si vous partagez un projet' })
+        }
+      }
+
       // ─── 1:1 : chercher si elle existe déjà ───────────────────────────────
       const existing = await prisma.conversation.findFirst({
         where: {
@@ -283,6 +341,28 @@ router.post('/:id/messages', requireAuth, async (req, res, next) => {
       where: { id },
       data: { updatedAt: new Date() },
     })
+
+    // Notifier les autres participants via socket (temps réel)
+    const io = getIo()
+    if (io) {
+      const participants = await prisma.conversationParticipant.findMany({
+        where: { conversationId: id },
+        select: { userId: true },
+      })
+      const lastMsgPayload = { id: message.id, text: message.text, type: message.type, senderId: message.senderId, senderName: message.sender.name, createdAt: message.createdAt }
+      participants.filter(p => p.userId !== userId).forEach(p => {
+        io.to(`user:${p.userId}`).emit('conversation:updated', { conversationId: id, lastMessage: lastMsgPayload })
+        io.to(`user:${p.userId}`).emit('notification:new', {
+          id: 'notif_msg_' + message.id,
+          msg: `Nouveau message de ${message.sender.name}`,
+          type: 'info',
+          read: false,
+          ts: message.createdAt,
+        })
+      })
+      // Émettre aussi dans la room de la conversation
+      io.to(`conv:${id}`).emit('message:new', message)
+    }
 
     res.status(201).json(message)
   } catch (err) {

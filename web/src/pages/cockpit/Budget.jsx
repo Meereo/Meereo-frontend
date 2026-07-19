@@ -298,13 +298,72 @@ export default function Budget({ showToast, onNavigate }) {
       )}
 
       {/* â•â• TAB: Paiements â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      {tab === 'paiements' && (
+      {tab === 'paiements' && (() => {
+        const allTx = (store.transactions || [])
+          .filter(t => {
+            if (projFilter && t.projectId !== projFilter) return false
+            if (isClient) return t.fromUserId === userId || t.visibility === 'client_visible'
+            return t.toUserId === userId || t.fromUserId === userId
+          })
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        const pendingReqs = (store.paymentRequests || []).filter(r => {
+          if (projFilter && r.projectId !== projFilter) return false
+          return r.statut === 'pending'
+        })
+        const TX_ST = { pending: { l: 'En attente', c: 'var(--wrn)', bg: 'rgba(245,158,11,.08)' }, confirmed: { l: 'Confirmé', c: 'var(--ok)', bg: 'rgba(52,199,89,.08)' }, approved: { l: 'Approuvé', c: 'var(--ok)', bg: 'rgba(52,199,89,.08)' }, failed: { l: 'Échoué', c: 'var(--err)', bg: 'rgba(220,38,38,.06)' }, rejected: { l: 'Refusé', c: 'var(--err)', bg: 'rgba(220,38,38,.06)' }, reversed: { l: 'Remboursé', c: 'var(--t3)', bg: 'var(--s2)' } }
+        const hasData = allTx.length > 0 || pendingReqs.length > 0 || filteredMarkets.length > 0
+        return (
         <div style={{ marginTop: 8 }}>
-          {filteredMarkets.length === 0 ? (
+          {!hasData ? (
             <DSEmptyState icon={<TrendingUp size={28} />} title="Aucun paiement" desc="Les paiements apparaîtront ici après livraison d'un marché." />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {filteredMarkets.map(m => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Demandes en attente */}
+              {pendingReqs.length > 0 && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(245,158,11,.25)' }}>
+                  <div style={{ padding: '12px 20px', background: 'rgba(245,158,11,.04)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <AlertTriangle size={13} color="var(--wrn)" />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wrn)' }}>{pendingReqs.length} demande{pendingReqs.length > 1 ? 's' : ''} en attente</span>
+                  </div>
+                  {pendingReqs.map((r, i) => (
+                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < pendingReqs.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{r.label || r.paymentType || 'Paiement'}</div>
+                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>De {r.createdByName || '—'} · {formatDateFR(r.createdAt)}</div>
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{formatShort(r.amount)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Historique des transactions */}
+              {allTx.length > 0 && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Historique des transactions · {allTx.length}</span>
+                  </div>
+                  {allTx.slice(0, 20).map((tx, i) => {
+                    const s = TX_ST[tx.statut || tx.status] || TX_ST.pending
+                    const d = tx.createdAt ? new Date(tx.createdAt) : null
+                    return (
+                      <div key={tx.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < Math.min(allTx.length, 20) - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{tx.label || tx.paymentType || 'Paiement'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>
+                            #{(tx.id || '').slice(-8).toUpperCase()} · {tx.provider || tx.toRole || '—'} · {d ? d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{formatShort(parseFloat(tx.montant || tx.amount) || 0)}</div>
+                          <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: s.bg, color: s.c }}>{s.l}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {/* Fallback: paiements par marché */}
+              {allTx.length === 0 && filteredMarkets.map(m => {
                 const proj = allProjects.find(p => p.id === m.projectId)
                 const amount = parseFloat(m.montant) || parseFloat(m.amount) || 0
                 const isCompleted = m.statut === MARKET_STATUS.COMPLETED
@@ -335,7 +394,8 @@ export default function Budget({ showToast, onNavigate }) {
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

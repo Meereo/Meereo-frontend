@@ -135,6 +135,16 @@ router.get('/:id/versions', requireAuth, async (req, res, next) => {
     const doc = await prisma.document.findUnique({ where: { id: req.params.id } })
     if (!doc) throw createError('Document introuvable', 404)
 
+    // Vérifier l'accès : propriétaire du document OU membre du projet
+    if (doc.userId !== req.user.id && doc.projectId) {
+      const project = await prisma.project.findUnique({ where: { id: doc.projectId }, select: { ownerId: true, clientId: true } })
+      const isOwnerOrClient = project?.ownerId === req.user.id || project?.clientId === req.user.id
+      if (!isOwnerOrClient) {
+        const isMember = await prisma.projectMember.findFirst({ where: { projectId: doc.projectId, userId: req.user.id } })
+        if (!isMember) return res.status(403).json({ error: 'Accès refusé' })
+      }
+    }
+
     // Trouver le document racine (version 1)
     const rootId = doc.parentId || doc.id
 
@@ -154,6 +164,16 @@ router.post('/:id/new-version', requireAuth, upload.single('file'), async (req, 
     const prisma = getPrisma()
     const original = await prisma.document.findUnique({ where: { id: req.params.id } })
     if (!original) throw createError('Document introuvable', 404)
+
+    // Vérifier l'accès au projet du document
+    if (original.projectId) {
+      const project = await prisma.project.findUnique({ where: { id: original.projectId }, select: { ownerId: true, clientId: true } })
+      const isOwnerOrClient = project?.ownerId === req.user.id || project?.clientId === req.user.id
+      if (!isOwnerOrClient) {
+        const isMember = await prisma.projectMember.findFirst({ where: { projectId: original.projectId, userId: req.user.id } })
+        if (!isMember) return res.status(403).json({ error: 'Accès refusé' })
+      }
+    }
 
     // Déterminer le document racine
     const rootId = original.parentId || original.id
