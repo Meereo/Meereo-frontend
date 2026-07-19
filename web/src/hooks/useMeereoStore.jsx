@@ -595,6 +595,8 @@ export function MeereoProvider({ children }) {
       ...prev,
       notifications: (prev.notifications || []).map(n => n.id === notifId ? { ...n, read: true } : n)
     }))
+    // Persister en DB
+    api.notifications.markRead(notifId).catch(() => {})
   }, [updateStore])
 
   const markNotifsRead = useCallback(() => {
@@ -605,6 +607,8 @@ export function MeereoProvider({ children }) {
         notifications: (prev.notifications || []).map(n => (!n.role || n.role === role) ? { ...n, read: true } : n)
       }
     })
+    // Persister en DB
+    api.notifications.markAllRead().catch(() => {})
   }, [updateStore])
 
   // ═══ REGISTER — Creates account on backend, keeps user logged in and redirects.
