@@ -1,241 +1,65 @@
-MEEREO – Audit fonctionnel, corrections prioritaires et améliorations de la plateforme
+# Retours client — MEEREO
 
-Bonjour,
+Date de compilation : 19/07/2026
 
-À la suite de plusieurs phases de tests fonctionnels de la plateforme MEEREO, nous avons identifié un ensemble de bugs, d'incohérences fonctionnelles et de points d'amélioration qui doivent être corrigés avant la mise en production.
+## 1. Notifications
 
-L'objectif de cette phase n'est pas uniquement de corriger des anomalies, mais également d'améliorer la qualité globale de la plateforme, de renforcer la sécurité des données, de fluidifier les parcours utilisateurs et de garantir une expérience premium, cohérente et fiable.
+- Implémenter dans l'espace client le même système de notifications que celui de la barre latérale gauche de l'espace professionnel (homogénéité des deux espaces).
+- Mettre en évidence les notifications non lues par une couleur (ex. rouge) pour une identification immédiate.
+- Mettre en place les notifications par e-mail (actuellement absentes), sur le modèle des e-mails de réinitialisation de mot de passe déjà fonctionnels. Événements concernés :
+  - création ou activation d'un projet
+  - invitation d'un professionnel à rejoindre un projet
+  - ajout d'une nouvelle tâche ou étape
+  - partage d'un document
+  - réception d'un nouveau message ou d'une nouvelle notification
+  - action importante nécessitant l'attention du client ou du professionnel
+  - Objectif : compléter les notifications internes pour informer les utilisateurs même hors connexion.
 
-Merci de traiter les points suivants par ordre de priorité.
+## 2. Recherche de professionnels
 
-1. Refonte du système de notifications
+- Bug persistant : la pop-up ne s'affiche pas correctement lorsqu'on clique sur « Rechercher un professionnel » depuis l'espace professionnel. À corriger.
+- Manque d'harmonisation de l'annuaire de recherche entre les deux espaces : plus visible/mis en avant côté professionnel que côté client. À uniformiser.
 
-Le système actuel de notifications manque de visibilité et présente plusieurs dysfonctionnements.
+## 3. Documents et images
 
-Problèmes constatés
-Les badges de notifications (compteurs affichés à côté des différentes sections) sont trop discrets.
-Leur couleur actuelle ne permet pas de les identifier rapidement.
-Certaines notifications ne sont jamais générées.
-D'autres restent affichées alors qu'elles ont déjà été consultées.
-Les compteurs ne se mettent pas toujours à jour automatiquement.
-Correctifs attendus
-Utiliser une couleur beaucoup plus visible (rouge, orange ou toute couleur d'alerte compatible avec la charte graphique).
-Uniformiser le fonctionnement des notifications sur l'ensemble de la plateforme.
-Vérifier que chaque événement génère correctement sa notification.
-Vérifier que les compteurs se mettent automatiquement à jour sans rechargement de page.
-Réaliser un audit complet de toutes les notifications afin d'éliminer les incohérences.
+- Section Documents (espace pro) : les fichiers image sont présents mais sans miniature d'aperçu. Ajouter des vignettes pour faciliter l'identification.
+- Afficher automatiquement les dernières images ajoutées :
+  - dans le tableau de bord de l'espace professionnel, classées par projet ;
+  - sur la page d'accueil de l'espace client.
+- Section Projets (espace pro) : les photos sont affichées trop petites. Augmenter leur taille.
+- Section Avancement : l'image d'illustration de chaque projet est trop petite. L'agrandir pour mieux valoriser le projet.
+- Espace client, section Mes projets : même correctif à appliquer, images à afficher dans un format plus généreux.
 
-1. Sécurité de la messagerie et confidentialité des utilisateurs
+## 4. Harmonisation UI entre espace professionnel et espace client
 
-Nous avons identifié un problème critique concernant la confidentialité des données.
+- Menu latéral de navigation : expérience différente entre les deux espaces.
+  - Espace pro : section active bien mise en évidence (couleur plus sombre, fond marqué, meilleure profondeur), éléments de menu plus épais.
+  - Espace client : effet nettement moins perceptible.
+  - Uniformiser complètement design, comportement et effets visuels des deux menus pour une expérience cohérente et premium.
+- Section « Ma page Pro » : pas assez mise en valeur par rapport aux autres rubriques. Lui donner une présentation plus visible et premium, avec un emplacement qui reflète son importance (vitrine publique du professionnel).
 
-Aujourd'hui, un professionnel peut voir apparaître dans sa liste de contacts des clients avec lesquels il n'a absolument aucune relation.
+## 5. Formatage des montants
 
-Ce comportement est strictement interdit.
+- Les montants financiers (ex. budgets) ne sont pas formatés avec des séparateurs de milliers côté client (ex. `15000000 FCFA` au lieu de `15 000 000 FCFA`).
+- Appliquer ce formatage à l'ensemble des montants financiers de la plateforme, côté client comme côté professionnel.
 
-Fonctionnement attendu
+## 6. Synchronisation des membres d'équipe
 
-Un professionnel doit uniquement pouvoir consulter :
+- Lorsqu'un collaborateur est ajouté à un projet depuis l'espace professionnel, il doit être automatiquement récupéré depuis l'équipe définie sur la page professionnelle publique.
+- Inversement, un collaborateur créé directement depuis un projet doit être automatiquement ajouté à l'équipe de la page professionnelle publique.
+- Les deux espaces doivent partager une base de données commune pour éviter les doublons et garantir la cohérence.
 
-les clients avec lesquels il possède un projet ;
-les conversations auxquelles il participe ;
-les groupes auxquels il appartient.
+## 7. Module Suivi des chantiers
 
-En revanche, un client doit pouvoir consulter librement l'annuaire des professionnels, accéder à leur Page Professionnelle et initier une prise de contact ou une demande de collaboration.
+- Bug : l'ajout d'une note sur une étape ou un intervenant n'exécute aucune action (ni enregistrement, ni affichage).
+- Ces informations ne sont pas non plus répercutées côté client.
+- Les ajouts doivent être sauvegardés, synchronisés, et immédiatement visibles dans l'espace professionnel et l'espace client.
 
-Les clients ne doivent jamais être visibles publiquement ni apparaître dans les listes de contacts des professionnels en dehors d'une relation existante.
+## 8. Suppression et archivage des projets
 
-Toutes les permissions doivent être contrôlées côté serveur afin d'empêcher tout accès non autorisé aux données d'un autre utilisateur.
-
-1. Suppression de l'accès au client depuis la messagerie
-
-Nous avons constaté qu'au sein d'une conversation entre un professionnel et un client, une action permettant d'accéder à une fiche ou à un profil client est actuellement affichée.
-
-Cette fonctionnalité est une erreur et doit être supprimée.
-
-Contrairement aux professionnels, les clients ne disposent pas de page publique ni de profil consultable sur MEEREO.
-
-Le client est un utilisateur privé.
-
-Par conséquent :
-
-aucun bouton « Voir le client », « Profil client » ou équivalent ne doit apparaître dans la messagerie ;
-un professionnel ne doit jamais pouvoir accéder à une fiche détaillée du client ;
-seules les informations strictement nécessaires à la mission (nom du projet, informations liées au projet et éléments utiles à la collaboration) doivent être accessibles.
-
-Toutes les autres informations relatives au client doivent rester confidentielles.
-
-1. Synchronisation des messages en temps réel
-
-Le système de messagerie manque aujourd'hui de réactivité.
-
-Les nouveaux messages n'apparaissent pas systématiquement.
-
-Dans de nombreux cas, il est nécessaire d'actualiser manuellement la page pour voir apparaître une nouvelle conversation ou un nouveau message.
-
-Cette situation dégrade fortement l'expérience utilisateur.
-
-Correctifs attendus
-
-Mettre en place une synchronisation temps réel (WebSocket, SSE ou équivalent) permettant :
-
-l'affichage immédiat des nouveaux messages ;
-l'actualisation automatique des conversations ;
-la mise à jour instantanée de la liste des discussions ;
-la synchronisation entre tous les appareils connectés.
-
-Aucune actualisation manuelle ne doit être nécessaire.
-
-1. Notifications de nouveaux messages et d autres étapes
-
-Aujourd'hui, les utilisateurs ne sont pas correctement avertis lorsqu'ils reçoivent un nouveau message.
-
-Cette anomalie concerne aussi bien les clients que les professionnels.
-
-Fonctionnement attendu
-
-Les notifications doivent apparaître :
-
-dans la barre latérale ;
-dans la section Messagerie ;
-dans le centre de notifications ;
-directement sur la conversation concernée.
-
-Le compteur des messages non lus doit être mis à jour instantanément.
-
-1. Refonte du suivi des paiements
-
-Le module financier doit offrir une transparence totale au client.
-
-Chaque paiement effectué dans le cadre d'un projet doit automatiquement générer une notification.
-
-Le client doit pouvoir consulter un historique détaillé comprenant notamment :
-
-le montant ;
-la date ;
-l'heure ;
-le bénéficiaire ;
-le moyen de paiement ;
-le numéro de transaction ;
-le statut (en attente, validé, refusé, remboursé) ;
-les justificatifs éventuels.
-
-L'objectif est que le client puisse suivre en temps réel toutes les opérations financières liées à son projet.
-
-1. Amélioration du menu de navigation
-
-Le menu latéral manque aujourd'hui de visibilité.
-
-La section active est uniquement affichée avec un fond gris.
-
-Cette différence visuelle est insuffisante.
-
-Amélioration souhaitée
-
-Créer un véritable état actif comprenant par exemple :
-
-une couleur de fond plus marquée ;
-une barre verticale colorée ;
-une icône mise en évidence ;
-un texte plus contrasté ;
-éventuellement une légère animation.
-
-L'utilisateur doit identifier instantanément la section dans laquelle il se trouve.
-
-1. Vérification complète du module « Ajout des intervenants dans un projet en cours.
-
-Merci de réaliser un audit complet de cette fonctionnalité.
-
-Les éléments suivants doivent être contrôlés :
-
-création des invitations ;
-réception des invitations ;
-acceptation ;
-refus ;
-attribution correcte des rôles ;
-gestion des permissions ;
-notifications ;
-accès aux différents modules après validation.
-
-Cette fonctionnalité doit être entièrement fiable.
-
-1. Simplification du workflow après validation d'un appel d'offres
-
-Le workflow actuel comporte une étape inutile.
-
-Aujourd'hui :
-
-le client accepte une offre ;
-celle-ci apparaît dans Contrats validés ;
-le professionnel doit ensuite confirmer le démarrage du projet.
-
-Cette étape supplémentaire n'a aucun intérêt.
-
-Le professionnel a déjà accepté les conditions lorsqu'il a répondu à l'appel d'offres.
-
-Nouveau fonctionnement attendu
-
-Dès que le client valide une offre :
-
-le contrat devient automatiquement actif ;
-la mission démarre immédiatement ;
-le projet passe automatiquement en statut En cours ;
-le planning est généré ;
-les tâches sont créées ;
-le suivi budgétaire est activé ;
-les notifications sont envoyées aux parties concernées.
-
-Aucune validation supplémentaire du professionnel ne doit être demandée.
-
-Ce processus doit être entièrement automatisé.
-
-1. Refonte de la Page Professionnelle
-
-La Page Professionnelle doit devenir une véritable vitrine digitale pour les clients. aujourdhui le professionel doit intégrer les moduls d avis et de notes directement par lui meme . cette option doit etre d office sur la plateforme et aussi RAW DESIGN ne doit pas apparaitre a aucun moment comme exmple sur la plateforme pro. 
-
-Cette page doit inspirer confiance et permettre au client d'évaluer rapidement le sérieux du professionnel. Concernatn l option validation on doit trouver une solution qui oblige le professionnel a télécharger ses docuements admin et on doit pouvoir verifier le numero rccm afin de verifier les informations qu il a indiqué dans son inscription ce qui lui vaudra le badge validé par MEEREO ( dans la couleur Verte)
-
-1. Audit global des workflows et des permissions
-
-Nous souhaitons réaliser un audit complet de la plateforme afin de garantir la cohérence de l'ensemble des parcours utilisateurs.
-
-Merci de vérifier notamment :
-
-les permissions des clients ;
-les permissions des professionnels ;
-les permissions des maîtres d'ouvrage ;
-les permissions des architectes ;
-les permissions des administrateurs ;
-les droits des intervenants ;
-les accès aux documents ;
-les accès aux projets ;
-les accès à la messagerie ;
-les accès aux informations financières ;
-les notifications ;
-les changements d'état des projets ;
-les workflows entre les différents modules.
-
-Chaque utilisateur doit uniquement accéder aux fonctionnalités et aux informations correspondant à son rôle.
-
-Toutes les permissions doivent être contrôlées côté serveur afin de garantir la sécurité des données.
-
-1. Audit global de la plateforme
-
-Au-delà des points listés ci-dessus, nous souhaitons qu'un audit fonctionnel complet de MEEREO soit réalisé.
-
-L'objectif est d'identifier toutes les incohérences, bugs, oublis fonctionnels ou problèmes d'expérience utilisateur qui pourraient nuire à la qualité du produit.
-
-Chaque module doit être testé dans des conditions réelles afin de vérifier :
-
-la cohérence des parcours utilisateurs ;
-la fluidité de la navigation ;
-la synchronisation des données en temps réel ;
-les performances générales ;
-la sécurité des accès ;
-la cohérence entre les différents modules ;
-le respect des règles métier propres à MEEREO.
-Objectif final
-
-Cette phase doit permettre de stabiliser définitivement la plateforme avant sa mise en production.
-
-Notre ambition est de faire de MEEREO une plateforme BTP de référence, offrant une expérience premium, fluide, performante, sécurisée et cohérente, où chaque fonctionnalité respecte les workflows métiers, les droits d'accès des différents profils et les plus hauts standards de qualité logicielle.
+- Bug : un projet supprimé définitivement depuis la section Archives réapparaît par la suite. La suppression définitive doit retirer le projet de la base de données de façon permanente, sans réapparition dans aucune section.
+- Problème de synchronisation plus général : une action d'archivage ou de suppression effectuée depuis la section Projet n'est pas répercutée dans les sections liées (Avancement, Budgets, Documents/Documentation, etc.), créant des incohérences.
+- Comportement attendu :
+  - **Archivage** : le projet doit être déplacé automatiquement dans les archives de toutes les sections liées et disparaître des espaces actifs.
+  - **Suppression définitive** : le projet et toutes les données associées (avancement, budgets, documents, historiques, etc.) doivent être supprimés de l'ensemble de la plateforme.
+- L'archivage/la suppression d'un projet doit être traité comme une action centrale impactant toutes ses occurrences, afin de garantir une base de données cohérente sans duplication ni donnée obsolète.

@@ -14,7 +14,8 @@ import { formatBudgetDisplay } from '../../utils/helpers'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import InviteProfessionalModal from '../../components/shared/InviteProfessionalModal'
 import { getRoleLabel, getRoleBadgeStyle } from '../../domain/roleLabels'
-import { Zap, Lock, RefreshCcw, ClipboardList, Radio, Inbox, Paperclip, FileText, AlertTriangle, Check, Star, Globe } from 'lucide-react'
+import { Zap, Lock, RefreshCcw, ClipboardList, Radio, Inbox, Paperclip, FileText, AlertTriangle, Check, Star, Globe, Download, Eye } from 'lucide-react'
+import FilePreview from '../../components/shared/FilePreview'
 
 
 // Documents entreprise — status: missing | uploaded | generated
@@ -43,6 +44,7 @@ export default function Exchange({ showToast, onNavigate }) {
   const [dirPros, setDirPros] = useState([])
   const [dirLoading, setDirLoading] = useState(false)
   const [showRepondre, setShowRepondre] = useState(null)
+  const [viewerDoc, setViewerDoc] = useState(null)
   // Documents entreprise : lus depuis le store (seuls les uploaded/generated sont joinables)
   const entrepriseDocs = useMemo(() => {
     const stored = store.entrepriseDocs || []
@@ -707,6 +709,54 @@ export default function Exchange({ showToast, onNavigate }) {
                     <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatBudgetDisplay(selectedOffer.montant)}</div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selectedOffer.delai || '—'}</div>
                   </div>
+                  {/* Message du prestataire */}
+                  {selectedOffer.message && (
+                    <div className="card" style={{ padding: '16px 18px', marginBottom: 20 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du prestataire</div>
+                      <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{selectedOffer.message}</div>
+                    </div>
+                  )}
+                  {/* Note technique */}
+                  {selectedOffer.technique && (
+                    <div className="card" style={{ padding: '16px 18px', marginBottom: 20 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Note technique</div>
+                      <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{selectedOffer.technique}</div>
+                    </div>
+                  )}
+                  {/* Documents joints */}
+                  {selectedOffer.docs?.length > 0 && (
+                    <div className="card" style={{ padding: '16px 18px', marginBottom: 20 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Documents joints ({selectedOffer.docs.length})</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {selectedOffer.docs.map((d, i) => {
+                          const fileUrl = d.url || d.fileUrl || null
+                          const fileName = d.name || d.n || d.nom || 'Document'
+                          const fileType = (d.type || 'DOC').toUpperCase()
+                          return (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 7, background: fileUrl ? 'rgba(59,130,246,.08)' : 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: fileUrl ? '#3B82F6' : 'var(--t4)', flexShrink: 0 }}>{fileType}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</div>
+                                <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.size || (fileUrl ? 'Disponible' : 'Non disponible')}</div>
+                              </div>
+                              {fileUrl ? (
+                                <>
+                                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => setViewerDoc({ url: fileUrl, name: fileName, type: d.type })}>
+                                    <Eye size={11} /> Voir
+                                  </button>
+                                  <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => { const a = document.createElement('a'); a.href = fileUrl; a.download = fileName; a.target = '_blank'; a.rel = 'noopener noreferrer'; document.body.appendChild(a); a.click(); document.body.removeChild(a) }}>
+                                    <Download size={11} />
+                                  </button>
+                                </>
+                              ) : (
+                                <span style={{ fontSize: 10, color: 'var(--t4)', fontStyle: 'italic' }}>Non disponible</span>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 8 }}>
                     {selectedOffer.statut === 'pending' && <button className="btn" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.15)', fontWeight: 600 }} onClick={() => { storeRejectOffer(selectedOffer.id) }}>Refuser</button>}
                     {selectedOffer.statut === 'pending' && <button className="btn btn-primary" style={{ flex: 1, padding: '12px 16px', borderRadius: 10, fontWeight: 600, fontSize: 13 }} onClick={() => { storeAcceptOffer(selectedOffer.id) }}>Accepter l'offre</button>}
@@ -898,6 +948,9 @@ export default function Exchange({ showToast, onNavigate }) {
         </div>,
         document.body
       )}
+
+      {/* Viewer fichier (image / PDF / autre) */}
+      {viewerDoc && <FilePreview file={viewerDoc} onClose={() => setViewerDoc(null)} />}
 
       {/* MODAL: Répondre à un AO */}
       {showRepondre && createPortal(
