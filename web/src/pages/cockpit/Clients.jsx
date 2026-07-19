@@ -121,7 +121,7 @@ export default function Clients({ openModal, showToast }) {
 
   const saveEdit = () => {
     if (!editClient) return
-    api.contacts.update(editClient.id, editClient).catch(() => {})
+    api.contacts.update(editClient.id, editClient).catch(() => showToast && showToast('Erreur de sauvegarde', 'red'))
     updateStore(prev => ({
       ...prev,
       contacts: (prev.contacts || []).map(c => c.id === editClient.id ? { ...c, ...editClient } : c)
@@ -131,7 +131,7 @@ export default function Clients({ openModal, showToast }) {
   }
 
   const doDelete = (id) => {
-    api.contacts.delete(id).catch(() => {})
+    api.contacts.delete(id).catch(() => showToast && showToast('Erreur lors de la suppression', 'red'))
     updateStore(prev => ({
       ...prev,
       contacts: (prev.contacts || []).filter(c => c.id !== id)

@@ -90,7 +90,7 @@ export default function Documents({ showToast }) {
 
   useEffect(() => {
     api.documents.getAll().then(docs => {
-      if (docs && docs.length >= 0) updateStore(prev => ({ ...prev, documents: docs }))
+      if (Array.isArray(docs)) updateStore(prev => ({ ...prev, documents: docs }))
     }).catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -102,7 +102,7 @@ export default function Documents({ showToast }) {
   }, [docMenu])
 
   const deleteDocument = (docId) => {
-    api.documents.delete(docId).catch(() => {})
+    api.documents.delete(docId).catch(() => showToast && showToast('Erreur lors de la suppression', 'red'))
     updateStore(prev => ({ ...prev, documents: (prev.documents || []).filter(d => d.id !== docId) }))
     setConfirmDelete(null)
     showToast && showToast('Document supprimé')
@@ -110,7 +110,7 @@ export default function Documents({ showToast }) {
 
   const renameDocument = (docId, newName) => {
     if (!newName.trim()) return
-    api.documents.update(docId, { name: newName.trim() }).catch(() => {})
+    api.documents.update(docId, { name: newName.trim() }).catch(() => showToast && showToast('Erreur lors du renommage', 'red'))
     updateStore(prev => ({
       ...prev,
       documents: (prev.documents || []).map(d => d.id === docId ? { ...d, nom: newName.trim(), name: newName.trim() } : d),

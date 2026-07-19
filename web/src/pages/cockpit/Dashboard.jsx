@@ -225,8 +225,8 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
           <div className="dash-hero-v2-eyebrow">Projet principal</div>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div>
-              <div className="dash-hero-v2-title">{mainProj.nom}</div>
-              <div className="dash-hero-v2-client">Client — {mainProj.client}{mainProj.type ? ' · ' + mainProj.type : ''}{mainProj.adresse ? ' · ' + mainProj.adresse : ''}</div>
+              <div className="dash-hero-v2-title">{mainProj?.nom || 'Projet'}</div>
+              <div className="dash-hero-v2-client">{mainProj?.client ? 'Client — ' + mainProj.client : ''}{mainProj?.type ? ' · ' + mainProj.type : ''}{mainProj?.adresse ? ' · ' + mainProj.adresse : ''}</div>
             </div>
             <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.8)', border: '1px solid rgba(255,255,255,.12)', flexShrink: 0 }} onClick={() => onNavigate('projets')}>Voir le projet →</button>
           </div>

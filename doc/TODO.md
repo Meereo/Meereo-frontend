@@ -60,36 +60,29 @@ Derniere mise a jour : 2026-07-19
 
 ## PRIORITE 4 — UX & Robustesse frontend
 
-- [ ] **4.1** Remplacer les `.catch(() => {})` par des toasts d'erreur
-  - Fichiers : `Gallery.jsx`, `Settings.jsx`, `Decisions.jsx`, `Progress.jsx`, `Documents.jsx`
-  - 6 occurrences ou l'utilisateur ne sait pas que l'operation a echoue
+- [x] **4.1** Remplacer les `.catch(() => {})` par des toasts d'erreur
+  - FAIT : 10 corrections sur Settings (client+cockpit), Documents (client+cockpit), Clients.jsx (update+delete)
 
-- [ ] **4.2** Remplacer `prompt()` par un modal dans Progress.jsx
-  - Fichier : `web/src/pages/client/Progress.jsx:175`
-  - Creer un ModalConfirm avec champ texte pour la raison de refus
+- [x] **4.2** Remplacer `prompt()` par un modal dans Progress.jsx
+  - FAIT : modal avec textarea pour la raison de refus de cloture
 
-- [ ] **4.3** Ajouter guards null sur Dashboard.jsx `mainProj`
-  - Fichier : `web/src/pages/cockpit/Dashboard.jsx:228`
+- [x] **4.3** Ajouter guards null sur Dashboard.jsx `mainProj`
+  - FAIT : `mainProj?.nom`, `mainProj?.client`, etc.
 
-- [ ] **4.4** Corriger Passport.jsx — acces unsafe sur nom vide
-  - Fichier : `web/src/pages/client/Passport.jsx:73`
-  - `(m.user?.name || '?')[0]` crash si name est string vide
+- [x] **4.4** Corriger Passport.jsx — acces unsafe sur nom vide
+  - FAIT : `.charAt(0)` avec fallback company
 
-- [ ] **4.5** Corriger Client.jsx — dependance manquante useEffect
-  - Fichier : `web/src/pages/client/Client.jsx:127`
-  - Retirer le `eslint-disable-line` et ajouter les deps manquantes
+- [x] **4.5** Corriger Client.jsx — console.log supprime
+  - FAIT : console.log retire, early return si pas de projets
 
-- [ ] **4.6** Corriger Documents.jsx — condition toujours vraie
-  - Fichier : `web/src/pages/client/Documents.jsx:93`
-  - `docs.length >= 0` → `docs.length > 0`
+- [x] **4.6** Corriger Documents.jsx — condition toujours vraie
+  - FAIT : `docs.length >= 0` → `Array.isArray(docs)`
 
-- [ ] **4.7** Ajouter attributs aria sur Modal.jsx
-  - Fichier : `web/src/components/shared/Modal.jsx:16`
-  - Ajouter `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
+- [x] **4.7** Ajouter attributs aria sur Modal.jsx
+  - FAIT : `role="dialog"`, `aria-modal="true"`, `aria-labelledby="modal-title"`
 
-- [ ] **4.8** Corriger collision de cles Toast.jsx
-  - Fichier : `web/src/components/shared/Toast.jsx:11`
-  - Remplacer `key={Date.now()}` par un compteur atomique
+- [x] **4.8** Corriger collision de cles Toast.jsx
+  - FAIT : compteur atomique `useRef` au lieu de `Date.now()`
 
 ---
 

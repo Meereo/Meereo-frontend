@@ -186,9 +186,9 @@ export default function Settings({ showToast }) {
                   updateStore(prev => ({ ...prev, onboardingData: { ...(prev.onboardingData || {}), ...saved } }))
                 }
               })
-              .catch(() => {})
+              .catch(() => showToast && showToast('Erreur de sauvegarde', 'red'))
             if (pEmail || pTel || pEntreprise) {
-              api.usersApi.updateMe({ name: pEntreprise || undefined, email: pEmail || undefined, phone: pTel || undefined, ville: pVille || undefined }).catch(() => {})
+              api.usersApi.updateMe({ name: pEntreprise || undefined, email: pEmail || undefined, phone: pTel || undefined, ville: pVille || undefined }).catch(() => showToast && showToast('Erreur de mise à jour', 'red'))
             }
             setPSaved(true); setTimeout(() => setPSaved(false), 1500)
           }

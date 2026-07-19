@@ -29,6 +29,8 @@ export default function Progress({ ctx }) {
 
   // Rating modal state
   const [ratingModal, setRatingModal] = useState(null) // { targetId, targetName, projectId }
+  const [refuseModal, setRefuseModal] = useState(false)
+  const [refuseReason, setRefuseReason] = useState('')
   const [ratings, setRatings] = useState({ stars: 0, qualite: 0, delais: 0, communication: 0, comment: '' })
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
 
@@ -171,10 +173,7 @@ export default function Progress({ ctx }) {
                 setRatingModal({ targetId: proId, targetName: proName, projectId: proj.id })
               }
             }}>Confirmer la réception</button>
-            <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(255,59,48,.2)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
-              const reason = prompt('Pourquoi refusez-vous la clôture ?')
-              respondCloture && respondCloture(pendingCloture.id, false, reason || '')
-            }}>Refuser</button>
+            <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--surface-1)', color: 'var(--err)', border: '1px solid rgba(255,59,48,.2)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => setRefuseModal(true)}>Refuser</button>
           </div>
         </div>
       )}
@@ -275,6 +274,20 @@ export default function Progress({ ctx }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
             Arrêter ce projet
           </button>
+        </div>
+      )}
+      {/* MODAL: Refus de clôture */}
+      {refuseModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setRefuseModal(false)}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 440, padding: '24px', boxShadow: '0 24px 80px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Refuser la clôture</div>
+            <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Expliquez pourquoi le projet ne peut pas être clôturé.</div>
+            <textarea value={refuseReason} onChange={e => setRefuseReason(e.target.value)} placeholder="Raison du refus..." rows={4} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 13, fontFamily: 'var(--f)', resize: 'vertical', outline: 'none' }} autoFocus />
+            <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+              <button style={{ padding: '9px 18px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)' }} onClick={() => { setRefuseModal(false); setRefuseReason('') }}>Annuler</button>
+              <button style={{ padding: '9px 18px', borderRadius: 9, border: 'none', background: 'var(--err)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)' }} onClick={() => { respondCloture && respondCloture(pendingCloture.id, false, refuseReason || ''); setRefuseModal(false); setRefuseReason('') }}>Confirmer le refus</button>
+            </div>
+          </div>
         </div>
       )}
       {/* MODAL: Évaluer le prestataire */}

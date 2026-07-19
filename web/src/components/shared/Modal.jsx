@@ -13,10 +13,10 @@ export default function Modal({ isOpen, onClose, title, children, footer, wide }
   if (!isOpen) return null
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className={`modal-box ${wide ? 'modal-wide' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
+          <h3 className="modal-title" id="modal-title">{title}</h3>
           <button className="modal-close" onClick={onClose}>&#215;</button>
         </div>
         <div className="modal-body">

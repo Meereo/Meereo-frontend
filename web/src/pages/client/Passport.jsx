@@ -70,7 +70,7 @@ export default function Passport() {
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 600 }}>Entreprises intervenantes ({(detail.members || []).length})</div>
           {(detail.members || []).map(m => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(m.user?.name || '?')[0].toUpperCase()}</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(m.user?.name || m.user?.company || '?').charAt(0).toUpperCase()}</div>
               <div style={{ flex: 1 }}><div style={{ fontWeight: 600 }}>{m.user?.company || m.user?.name}</div><div style={{ fontSize: 10, color: 'var(--t3)' }}>{m.user?.metier || m.role}</div></div>
             </div>
           ))}

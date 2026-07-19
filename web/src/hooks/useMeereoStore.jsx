@@ -553,8 +553,9 @@ export function MeereoProvider({ children }) {
     })
   }, [])
 
+  const _toastCounter = useRef(0)
   const showToast = useCallback((msg, color) => {
-    const id = Date.now()
+    const id = ++_toastCounter.current
     setToasts(prev => [...prev, { id, msg, color: color || 'info' }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))

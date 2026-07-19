@@ -20,7 +20,7 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
       onboardingData: { ...(prev.onboardingData || {}), ...patch },
       user: prev.user ? { ...prev.user, name: `${prenom} ${nom}`.trim(), email, phone: tel } : prev.user,
     }))
-    api.usersApi.updateOnboardingData(patch).catch(() => {})
+    api.usersApi.updateOnboardingData(patch).catch(() => showToast('Erreur de sauvegarde', 'red'))
     setSaved(true)
     showToast('Profil mis à jour')
     setTimeout(() => setSaved(false), 1500)

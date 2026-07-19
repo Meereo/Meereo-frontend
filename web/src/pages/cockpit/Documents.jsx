@@ -140,7 +140,7 @@ export default function Documents({ showToast }) {
 
   const deleteDocument = (docId) => {
     // Call backend first (non-blocking — optimistic UI)
-    api.documents.delete(docId).catch(() => {})
+    api.documents.delete(docId).catch(() => showToast && showToast('Erreur lors de la suppression', 'red'))
     updateStore(prev => {
       const inStore = (prev.documents || []).some(d => d.id === docId)
       if (inStore) {
@@ -160,7 +160,7 @@ export default function Documents({ showToast }) {
   const renameDocument = (docId, newName) => {
     if (!newName.trim()) return
     // Call backend (non-blocking — optimistic UI)
-    api.documents.update(docId, { name: newName.trim() }).catch(() => {})
+    api.documents.update(docId, { name: newName.trim() }).catch(() => showToast && showToast('Erreur lors du renommage', 'red'))
     updateStore(prev => {
       const inStore = (prev.documents || []).some(d => d.id === docId)
       if (inStore) {
