@@ -33,10 +33,20 @@ router.get('/', requireAuth, async (req, res, next) => {
       include: {
         client: { select: { id: true, name: true, company: true, email: true, phone: true, avatar: true, onboardingData: true } },
         supplier: { select: { id: true, name: true, company: true, phone: true, avatar: true, onboardingData: true } },
-        project: { select: { id: true, nom: true, phase: true, budget: true, adresse: true, status: true, img: true } },
       },
     })
-    res.json(markets)
+    // Enrichir avec le nom du projet (projectId est un String sans relation Prisma)
+    const projectIds = markets.map(m => m.projectId).filter(Boolean)
+    const projects = projectIds.length > 0
+      ? await prisma.project.findMany({ where: { id: { in: projectIds } }, select: { id: true, nom: true, phase: true, budget: true, adresse: true, status: true, img: true } })
+      : []
+    const projMap = {}
+    projects.forEach(p => { projMap[p.id] = p })
+    const enriched = markets.map(m => ({
+      ...m,
+      project: m.projectId ? projMap[m.projectId] || null : null,
+    }))
+    res.json(enriched)
   } catch (e) {
     next(e)
   }
