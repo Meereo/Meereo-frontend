@@ -68,25 +68,9 @@ router.get('/', requireAuth, async (req, res, next) => {
     const currentUser = await prisma.user.findUnique({ where: { id: userId }, select: { type: true } })
     const isPro = currentUser?.type === 'pro'
 
-    // Si pro : récupérer les IDs des clients avec lesquels il partage un projet
+    // Pro visibility: allow all conversations where the pro is a participant
+    // (removed project-based client filter — clients can contact pros freely via public pages)
     let allowedClientIds = null
-    if (isPro) {
-      const sharedProjects = await prisma.project.findMany({
-        where: {
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId } } },
-          ],
-        },
-        select: { clientId: true, ownerId: true },
-      })
-      allowedClientIds = new Set()
-      sharedProjects.forEach(p => {
-        if (p.clientId) allowedClientIds.add(p.clientId)
-        if (p.ownerId) allowedClientIds.add(p.ownerId)
-      })
-      allowedClientIds.delete(userId)
-    }
 
     let conversations = participations.map((p) => {
       const c = p.conversation
