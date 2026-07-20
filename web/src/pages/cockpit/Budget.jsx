@@ -69,7 +69,7 @@ export default function Budget({ showToast, onNavigate }) {
 
   // â”€â”€ Data derivations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allProjects = useMemo(() => {
-    return (store.projects || []).filter(p => p.status !== 'deleted')
+    return (store.projects || []).filter(p => p.status !== 'deleted' && p.status !== 'archived' && p.status !== 'stopped')
   }, [store.projects])
 
   const myMarkets = useMemo(() => {
@@ -95,9 +95,10 @@ export default function Budget({ showToast, onNavigate }) {
       .reduce((s, m) => s + (parseFloat(m.montant) || parseFloat(m.amount) || 0), 0)
     const litiges = 0
 
-    // Budget total from projects (client view)
+    // Budget total from projects (client view) — exclude archived/stopped
     const totalBudgetProjets = isClient
       ? (store.projects || [])
+          .filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted')
           .filter(p => !projFilter || p.id === projFilter)
           .reduce((s, p) => s + parseBudget(p.budget || '0'), 0)
       : 0

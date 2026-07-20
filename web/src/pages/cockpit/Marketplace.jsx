@@ -701,7 +701,7 @@ export default function Marketplace({ showToast, commerceScope }) {
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)', marginBottom: 3 }}>Projet / Chantier</div>
                         <select value={livProjet} onChange={e => { setLivProjet(e.target.value); const p = (store.projects || []).find(x => x.nom === e.target.value); if (p?.adresse) setLivAdresse(p.adresse) }} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-card)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
                           <option value="">Sélectionner un projet</option>
-                          {(store.projects || []).map(p => <option key={p.id} value={p.nom}>{p.nom} — {p.adresse || p.client}</option>)}
+                          {(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => <option key={p.id} value={p.nom}>{p.nom} — {p.adresse || p.client}</option>)}
                         </select>
                       </div>
                     ) : (

@@ -160,6 +160,19 @@ router.post('/', requireAuth, async (req, res, next) => {
       }
     }
 
+    // ── Email notification: project created ──
+    if (clientEmail) {
+      const { sendNotificationEmail } = require('../utils/email')
+      const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+      sendNotificationEmail({
+        to: clientEmail,
+        title: 'Nouveau projet créé',
+        body: `Le projet « ${nom} » vient d'être créé sur Meereo.\nVous pouvez suivre son avancement en temps réel depuis votre espace client.`,
+        ctaLabel: 'Accéder au projet →',
+        ctaUrl: `${frontendUrl}/client`,
+      }).catch(() => {})
+    }
+
     res.status(201).json(project)
   } catch (e) { next(e) }
 })
@@ -221,6 +234,46 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       if (req.body[key] !== undefined) data[key] = req.body[key]
     }
     const updated = await prisma.project.update({ where: { id: req.params.id }, data })
+
+    // ── Notify client when project is archived or stopped ──
+    if ((data.status === 'archived' || data.status === 'stopped') && project.clientId && project.clientId !== req.user.id) {
+      const statusLabel = data.status === 'archived' ? 'archivé' : 'arrêté'
+      await prisma.notification.create({
+        data: {
+          userId: project.clientId,
+          msg: `Le projet « ${project.nom} » a été ${statusLabel}`,
+          type: data.status === 'stopped' ? 'orange' : 'info',
+          page: 'projets',
+          read: false,
+        },
+      }).catch(() => {})
+      const { getIo } = require('../socket')
+      const io = getIo()
+      if (io) {
+        io.to(`user:${project.clientId}`).emit('notification:new', {
+          id: 'notif_status_' + req.params.id,
+          msg: `Le projet « ${project.nom} » a été ${statusLabel}`,
+          type: data.status === 'stopped' ? 'orange' : 'info',
+          page: 'projets',
+          read: false,
+          ts: new Date().toISOString(),
+        })
+      }
+      // Email notification
+      const clientUser = await prisma.user.findUnique({ where: { id: project.clientId }, select: { email: true } }).catch(() => null)
+      if (clientUser?.email) {
+        const { sendNotificationEmail } = require('../utils/email')
+        const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+        sendNotificationEmail({
+          to: clientUser.email,
+          title: `Projet ${statusLabel}`,
+          body: `Le projet « ${project.nom} » a été ${statusLabel} sur Meereo.`,
+          ctaLabel: 'Voir mes projets →',
+          ctaUrl: `${frontendUrl}/client`,
+        }).catch(() => {})
+      }
+    }
+
     res.json(updated)
   } catch (e) { next(e) }
 })

@@ -307,7 +307,7 @@ export default function Client() {
           ) : (
             <>
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{proj?.nom}</div>
-              <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{[proj?.address || proj?.localisation || proj?.adresse, proj?.budget || (projBudget > 0 ? formatShort(projBudget) : null)].filter(Boolean).join(' · ') || ' '}</div>
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 8 }}>{[proj?.address || proj?.localisation || proj?.adresse, projBudget > 0 ? formatShort(projBudget) : null].filter(Boolean).join(' · ') || ' '}</div>
               <div className="prog-track" style={{ height: 3 }}><div className="prog-fill" style={{ width: projProgress + '%', background: '#F59E0B' }} /></div>
               <div style={{ fontSize: 9, color: 'var(--t4)', marginTop: 4 }}>{projProgress}%</div>
             </>
@@ -326,7 +326,7 @@ export default function Client() {
               {Object.entries(PAGES).filter(([, v]) => v.group === g).map(([k, v]) => (
                 <button key={k} className={`fourni-ni ${page === k ? 'on' : ''}`} onClick={() => { setPage(k); setSidebarOpen(false) }}>
                   <span style={{ color: { home:'#191c1d', avancement:'#EA580C', budget:'#16A34A', messages:'#7C3AED', decisions:'#F59E0B', documents:'#0891B2', ao:'#DC2626', offres:'#F59E0B', marches:'#16A34A', marketplace:'#0891B2', fournisseurs:'#2563EB', commandes:'#EA580C', parametres:'#6B7280' }[k] || '#6B7280' }}>{v.icon}</span> {v.label}
-                  {v.badge && <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: v.badgeColor + '18', color: v.badgeColor }}>{v.badge}</span>}
+                  {v.badge && <span className={`ni-badge ${v.badgeColor === 'var(--err)' ? 'nb-red' : 'nb-orange'}`}>{v.badge}</span>}
                 </button>
               ))}
             </div>
@@ -355,13 +355,13 @@ export default function Client() {
             </button>
             <span style={{ fontSize: 13, fontWeight: 600 }}>{PAGES[page]?.label || 'Accueil'}</span>
           </div>
-          {/* Search bar — absolute center so it doesn't shift with title length */}
-          <div ref={searchBarRef} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 420, maxWidth: 'calc(100% - 360px)', zIndex: 10 }}>
-            <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'transparent', borderRadius: 10, border: '1px solid var(--border-card)' }}>
+          {/* Search bar — same styling as pro topbar */}
+          <div ref={searchBarRef} className="topbar-center" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 420, maxWidth: 'calc(100% - 360px)', zIndex: 10 }}>
+            <div data-search style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-card)' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input value={topSearch} onChange={e => { setTopSearch(e.target.value); setTopSearchOpen(true) }} onFocus={() => setTopSearchOpen(true)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setTopSearchOpen(false); setDirSearch(topSearch); setTopSearch(''); setShowProDirectory(true) } }} placeholder="Rechercher un professionnel..." style={{ flex: 1, background: 'none', border: 'none', outline: 'none', boxShadow: 'none', fontSize: 12.5, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
+              <input value={topSearch} onChange={e => { setTopSearch(e.target.value); setTopSearchOpen(true) }} onFocus={() => { setTopSearchOpen(true); if (!apiPros.length) { api.professionals.getAll().then(data => setApiPros((data || []).map(u => ({ id: u.id, publicId: u.publicId || null, nom: u.company || u.name || '', metier: u.metier || '', ville: u.ville || '', note: 0, verified: u.verified || false, avatar: u.avatar || null })))).catch(() => {}) } }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setTopSearchOpen(false); setDirSearch(topSearch); setTopSearch(''); setShowProDirectory(true) } }} placeholder="Rechercher un professionnel..." style={{ flex: 1, background: 'none', border: 'none', outline: 'none', boxShadow: 'none', fontSize: 12.5, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
               <select value={proMetier} onChange={e => { setProMetier(e.target.value); setTopSearchOpen(true) }} onFocus={() => setTopSearchOpen(true)} style={{ background: 'none', border: 'none', fontSize: 11, fontFamily: 'var(--f)', color: 'var(--t3)', cursor: 'pointer', outline: 'none' }}>
-                <option value="all">Tous metiers</option>
+                <option value="all">Tous métiers</option>
                 {METIERS_AO.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>

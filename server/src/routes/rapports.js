@@ -8,8 +8,32 @@ const router = Router()
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const where = { ownerId: req.user.id }
-    if (req.query.projectId) where.projectId = req.query.projectId
+
+    // Find project IDs where the user is owner, client, or member
+    const userProjects = await prisma.project.findMany({
+      where: { OR: [{ ownerId: req.user.id }, { clientId: req.user.id }] },
+      select: { id: true },
+    })
+    const memberProjects = await prisma.projectMember.findMany({
+      where: { userId: req.user.id, invitationStatus: 'accepted' },
+      select: { projectId: true },
+    })
+    const projectIds = [...new Set([
+      ...userProjects.map(p => p.id),
+      ...memberProjects.map(m => m.projectId),
+    ])]
+
+    const where = {
+      OR: [
+        { ownerId: req.user.id },
+        // Reports visible to client on projects they belong to
+        { projectId: { in: projectIds }, visibility: 'client_visible' },
+      ],
+    }
+    if (req.query.projectId) {
+      where.AND = [{ projectId: req.query.projectId }]
+    }
+
     const rapports = await prisma.report.findMany({
       where,
       orderBy: { createdAt: 'desc' },

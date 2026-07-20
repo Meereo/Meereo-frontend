@@ -52,7 +52,7 @@ const NAV_GROUPS = [
   {
     label: 'Système',
     items: [
-      { id: 'page-builder', label: 'Ma page pro', icon: 'layers' },
+      { id: 'page-builder', label: 'Ma page pro', icon: 'layers', premium: true },
       { id: 'parametres', label: 'Paramètres', icon: 'settings' },
     ]
   }
@@ -71,6 +71,7 @@ const ICON_TINTS = {
   // Achats
   'shopping-bag': '#0891B2', 'package': '#EA580C',
   // Système
+  'layers': '#2563EB',
   'settings': '#6B7280',
 }
 
@@ -100,6 +101,7 @@ function NavIcon({ name }) {
     'truck': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
     'package': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
     'link': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>,
+    'layers': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
     'settings': <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
   }
   const svg = icons[name]
@@ -118,13 +120,13 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
   // Dynamic badge counts — projets de l'utilisateur connecté uniquement
   const userId = store.user?.id
   const memberProjectIds = new Set((store.projectMembers || []).filter(m => m.userId === userId).map(m => m.projectId))
-  const projCount = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'deleted' && (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))).length
+  const projCount = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted' && (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))).length
   const { badgeCounts: merged } = useMergedData()
   const badgeCounts = { projects: projCount, offers: merged.offresEnAttente, messages: merged.messagesNonLus }
 
   // Active project — filtré par utilisateur connecté
   const userProjects = (store.projects || []).filter(p =>
-    p.status !== 'archived' && p.status !== 'deleted' &&
+    p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted' &&
     (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))
   )
   const activeProj = userProjects[0] || null
@@ -174,7 +176,7 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
               return (
               <button
                 key={item.id}
-                className={`ni ${activePage === item.id ? 'active' : ''}`}
+                className={`ni ${activePage === item.id ? 'active' : ''}${item.premium ? ' ni-premium' : ''}`}
                 onClick={() => { onNavigate(item.id); onClose?.() }}
               >
                 <NavIcon name={item.icon} />

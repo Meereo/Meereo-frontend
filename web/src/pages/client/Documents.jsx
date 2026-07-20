@@ -136,7 +136,7 @@ export default function Documents({ showToast }) {
   })
 
   const allProjets = [...new Set([
-    ...(store.projects || []).map(p => p.nom).filter(Boolean),
+    ...(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => p.nom).filter(Boolean),
     ...allDocs.map(d => d.projet).filter(Boolean),
   ])]
 
@@ -297,7 +297,7 @@ export default function Documents({ showToast }) {
                 </label>
                 <select value={importProjet} onChange={e => setImportProjet(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid ' + (importAttempted && !importProjet ? 'var(--err)' : 'var(--border-card)'), borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
                   <option value="">— Choisir —</option>
-                  {(store.projects || []).map(p => <option key={p.id} value={p.nom || p.name}>{p.nom || p.name}</option>)}
+                  {(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => <option key={p.id} value={p.nom || p.name}>{p.nom || p.name}</option>)}
                 </select>
               </div>
               <div style={{ padding: '28px 20px', border: '2px dashed var(--border-subtle)', borderRadius: 12, textAlign: 'center', cursor: 'pointer', background: 'var(--s2)' }} onClick={() => document.getElementById('client-doc-file-input').click()}>

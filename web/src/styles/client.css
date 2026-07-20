@@ -130,6 +130,9 @@
   /* Topbar — compact padding, add room for hamburger */
   .client-topbar { padding: 0 12px; }
 
+  /* Hide search bar on mobile */
+  .client-topbar .topbar-center { display: none; }
+
   /* Scroll area — less padding */
   .client-scroll { padding: 16px 16px 60px; }
 }

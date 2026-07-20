@@ -98,7 +98,7 @@ export default function Progress({ ctx }) {
 
       {/* Progress summary */}
       <div className="card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        {proj?.img && <img src={proj.img} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
+        {proj?.img && <img src={proj.img} alt="" style={{ width: 72, height: 72, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />}
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>{proj?.nom}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{proj?.adresse} · {({ ESQUISSE:'Esquisse', AVANT_PROJET:'Avant-projet', PROJET_DETAILLE:'Projet détaillé', PLANS_EXECUTION:'Plans d\'exécution', CONSULTATION_ENTREPRISES:'Consultation', ATTRIBUTION_MARCHES:'Attribution', SUIVI_CHANTIER:'Chantier', RECEPTION:'Réception' })[proj?.phase] || proj?.phase || '—'}</div>

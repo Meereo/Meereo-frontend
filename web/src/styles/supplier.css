@@ -56,25 +56,39 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px 10px;
+  padding: 7px 12px;
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 400;
-  color: var(--sidebar-text-inactive, var(--t3));
+  color: var(--sidebar-text-inactive, #777777);
   cursor: pointer;
-  transition: background .15s var(--ease, ease);
+  transition: all .15s cubic-bezier(.22,1,.36,1);
   user-select: none;
   width: 100%;
   border: none;
   background: none;
   font-family: var(--f);
   text-align: left;
+  position: relative;
 }
-.fourni-ni:hover { background: var(--sidebar-hover, var(--s2)); }
+.fourni-ni:hover { background: var(--sidebar-hover, rgba(25,28,29,.04)); transform: translateX(2px); }
 .fourni-ni.on {
-  background: var(--s3);
-  color: var(--sidebar-text-active, var(--tx));
-  font-weight: 600;
+  background: rgba(25, 28, 29, .10);
+  color: var(--sidebar-text-active, #191c1d);
+  font-weight: 700;
+  transform: translateX(0);
+  border-radius: 10px;
+}
+.fourni-ni.on::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 22px;
+  background: #2563EB;
+  border-radius: 0 3px 3px 0;
 }
 
 /* Footer */

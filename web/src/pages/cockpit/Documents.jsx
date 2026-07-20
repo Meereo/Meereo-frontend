@@ -216,9 +216,10 @@ export default function Documents({ showToast }) {
   })
 
   const recentDocs = allDocs.filter(d => d.isNew).slice(0, 4)
-  // All projects — from store + from documents (backward compat)
+  // All projects — from store (active only) + from documents (backward compat)
+  const activeProjectNames = new Set((store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => p.nom).filter(Boolean))
   const allProjets = [...new Set([
-    ...(store.projects || []).map(p => p.nom).filter(Boolean),
+    ...activeProjectNames,
     ...allDocs.map(d => d.projet).filter(Boolean),
   ])]
 
@@ -316,9 +317,9 @@ export default function Documents({ showToast }) {
                 const isImgDoc = d.type === 'img' || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
                 return (
                   <div key={d.id} className="doc-card" style={{ position: 'relative', cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
-                    <div style={{ height: 80, borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: tc.bg }}>
+                    <div style={{ height: 120, borderRadius: 10, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: tc.bg }}>
                       <span style={{ fontSize: 16, fontWeight: 600, color: tc.color }}>{tc.label}</span>
-                      {isImgDoc && d.url && <img src={d.url} alt={d.nom} onError={e => { e.target.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: .92 }} />}
+                      {isImgDoc && d.url && <img src={d.url} alt={d.nom} onError={e => { e.target.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                       {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
                     </div>
                     <div className="doc-card-name">{d.nom}<VersionBadge version={d.version} /><ExpirationBadge expiresAt={d.expiresAt} /></div>
@@ -444,7 +445,7 @@ export default function Documents({ showToast }) {
                 <select value={importProjet} onChange={e => setImportProjet(e.target.value)} style={{ width: '100%', padding: '10px 14px', border: '1px solid ' + (importAttempted && !importProjet ? 'var(--err)' : 'var(--border-card)'), borderRadius: 10, fontSize: 13, fontFamily: 'var(--f)', background: 'var(--s2)', color: 'var(--tx)' }}>
                   <option value="">— Choisir —</option>
                   <option value="__entreprise__">éé Dossier Entreprise (RCCM, attestations...)</option>
-                  {(store.projects || []).map(p => <option key={p.id} value={p.nom}>{p.nom}</option>)}
+                  {(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => <option key={p.id} value={p.nom}>{p.nom}</option>)}
                 </select>
               </div>
 

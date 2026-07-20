@@ -170,9 +170,21 @@ router.put('/page-sections', requireAuth, async (req, res, next) => {
       throw createError('sections doit être un tableau', 400)
     }
 
+    // Extract team members from sections to keep cockpitTeam in sync
+    const teamSection = sections.find(s => s.type === 'team')
+    const teamMembers = teamSection?.data?.members || teamSection?.members || []
+    const cockpitTeam = teamMembers.map(m => ({
+      nom: m.name || m.nom || '',
+      role: m.role || '',
+      photo: m.photoSrc || m.photo || null,
+    })).filter(m => m.nom)
+
     await prisma.proProfile.update({
       where: { userId },
-      data: { pageSections: sections },
+      data: {
+        pageSections: sections,
+        ...(cockpitTeam.length > 0 ? { cockpitTeam } : {}),
+      },
     })
 
     res.json({ success: true })

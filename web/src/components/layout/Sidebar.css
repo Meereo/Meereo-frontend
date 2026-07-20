@@ -166,6 +166,24 @@
 .ni-badge.nb-orange { background: #f59e0b; color: #fff; }
 .ni-badge.nb-green { background: #22c55e; color: #fff; }
 
+/* Ma page pro — premium CTA */
+.ni.ni-premium {
+  margin: 4px 0 8px;
+  background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(124,58,237,.06));
+  border: 1px solid rgba(37,99,235,.12);
+  border-radius: 10px;
+}
+.ni.ni-premium:hover {
+  background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(124,58,237,.10));
+  border-color: rgba(37,99,235,.2);
+  transform: translateX(0);
+}
+.ni.ni-premium.active {
+  background: linear-gradient(135deg, rgba(37,99,235,.14), rgba(124,58,237,.12));
+  border-color: rgba(37,99,235,.25);
+}
+.ni.ni-premium .ni-ico { opacity: 1; }
+
 /* Footer */
 .sidebar-footer {
   padding: 14px 16px;

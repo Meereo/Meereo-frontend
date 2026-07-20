@@ -202,7 +202,7 @@ function EventModal({ event, projects, onSave, onDelete, onClose, showToast }) {
 
 export default function TasksBoard({ showToast }) {
   const { store, updateStore } = useMeereo()
-  const projects = store.projects || []
+  const projects = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted')
   const today    = todayStr()
   const now      = new Date()
 

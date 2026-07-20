@@ -413,6 +413,33 @@ export default function Home({ ctx }) {
           </div>
         </div>
       )}
+
+      {/* Dernières images ajoutées */}
+      {(() => {
+        const recentImages = projDocs
+          .filter(d => /\.(jpg|jpeg|png|webp|gif)$/i.test(d.url || '') || d.type === 'img')
+          .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+          .slice(0, 6)
+        if (recentImages.length === 0) return null
+        return (
+          <div style={{ marginTop: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)' }}>Dernières images</div>
+              <button onClick={() => setPage('documents')} style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)' }}>Voir tout →</button>
+            </div>
+            <div className="rg-3" style={{ gap: 10 }}>
+              {recentImages.map(d => (
+                <div key={d.id} className="cl-photo-card" style={{ aspectRatio: '4/3', background: 'var(--s2)' }}>
+                  <img src={d.url} alt={d.nom || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+                  <div className="cl-photo-overlay">
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{d.nom || 'Image'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

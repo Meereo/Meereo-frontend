@@ -62,7 +62,7 @@ function ContractModal({ isOpen, onClose, showToast }) {
           <div><label className="form-label">Montant (FCFA)</label><MoneyInput value={f.montant} onChange={v => setF(p => ({ ...p, montant: v }))} placeholder="45 000 000" /></div>
           <div><label className="form-label">Lot</label><input className="form-input" placeholder="Gros Oeuvre" value={f.lot} onChange={e => setF(p => ({ ...p, lot: e.target.value }))} /></div>
         </div>
-        <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">Choisir</option>{(store.projects || []).map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
+        <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">Choisir</option>{(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
       </div>
     </Modal>
   )

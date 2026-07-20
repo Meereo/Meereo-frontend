@@ -75,6 +75,23 @@ router.post('/', requireAuth, async (req, res, next) => {
         id: notif.id, msg: notif.msg, type: notif.type, link: notif.link,
       })
     }
+
+    // ── Email notification for cross-user notifications ──
+    if (recipientId !== senderId) {
+      const recipient = await prisma.user.findUnique({ where: { id: recipientId }, select: { email: true } }).catch(() => null)
+      if (recipient?.email) {
+        const { sendNotificationEmail } = require('../utils/email')
+        const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+        sendNotificationEmail({
+          to: recipient.email,
+          title: 'Nouvelle notification',
+          body: notif.msg,
+          ctaLabel: 'Voir sur Meereo →',
+          ctaUrl: frontendUrl,
+        }).catch(() => {})
+      }
+    }
+
     res.status(201).json(notif)
   } catch (e) { next(e) }
 })

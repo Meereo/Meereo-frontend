@@ -50,7 +50,7 @@ function ReportModal({ isOpen, onClose, showToast }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="form-row">
           <div><label className="form-label">Type de rapport</label><select className="form-input" value={f.type} onChange={e => setF(p => ({ ...p, type: e.target.value }))}><option>Rapport hebdomadaire</option><option>Rapport de visite</option><option>Compte-rendu réunion</option><option>Rapport technique</option><option>Rapport mensuel</option><option>Rapport de chantier</option><option>PV de réception</option></select></div>
-          <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">Sélectionner</option>{(store.projects || []).map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
+          <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}><option value="">Sélectionner</option>{(store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted').map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}</select></div>
         </div>
         <div className="form-row">
           <div><label className="form-label">Date</label><input className="form-input" type="date" value={f.date} onChange={e => setF(p => ({ ...p, date: e.target.value }))} /></div>
@@ -78,9 +78,23 @@ function NoteModal({ isOpen, onClose, showToast }) {
       createDecision({ titre: f.tache, desc: f.texte, urgent: f.statut === 'Bloque', projectId: (store.projects || [])[0]?.id || null, sourceType: 'note_chantier', sourceId: noteId, decisionType: 'validation' })
     }
     try {
-      const created = await api.rapports.create({ titre: f.tache || 'Note chantier', type: 'note_chantier', statut: f.statut, avancement: f.avancement, texte: f.texte, alertType: f.type, projectId: (store.projects || [])[0]?.id || null, visibility: 'client_visible', auteur: store.user?.name || '' })
+      const created = await api.rapports.create({
+        type: 'note_chantier',
+        projet: f.tache || 'Note chantier',
+        date: new Date().toISOString().slice(0, 10),
+        statut: f.statut,
+        alertes: f.type || 'Information',
+        ordre: f.texte || '',
+        decisions: f.avancement ? f.avancement + '%' : '',
+        projectId: (store.projects || [])[0]?.id || null,
+        visibility: 'client_visible',
+        auteur: store.user?.name || '',
+      })
       updateStore(prev => ({ ...prev, notes: prev.notes.map(n => n.id === noteId ? { ...n, id: created.id } : n), rapports: [...(prev.rapports || []), created] }))
-    } catch (e) { console.warn('[NoteModal]', e.message) }
+    } catch (e) {
+      showToast('Erreur lors de l\'enregistrement')
+      console.warn('[NoteModal]', e.message)
+    }
     showToast('Note enregistrée')
     setF({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' }); onClose()
   }
@@ -125,7 +139,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const allChantierProjets = getUserProjects(store, store.user?.id, store.user?.email)
+  const allChantierProjets = getUserProjects(store, store.user?.id, store.user?.email).filter(p => p.status !== 'archived' && p.status !== 'stopped')
   const [selProjId, setSelProjId] = useState(allChantierProjets[0]?.id)
   const [openPhases, setOpenPhases] = useState({ 0: true })
   const [assignModal, setAssignModal] = useState(null) // { phaseIdx, taskId? }
@@ -437,10 +451,10 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
             return (
               <div key={p.id} className="list-item" style={{ background: isSel ? 'var(--s2)' : undefined }} onClick={() => { setSelProjId(p.id); setOpenPhases({ 0: true }) }}>
                 {p.img ? (
-                  <img src={p.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                  <img src={p.img} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 ) : (
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <AoGear size={16} color={p.color || '#F59E0B'} />
+                  <div style={{ width: 56, height: 56, borderRadius: 10, background: (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <AoGear size={22} color={p.color || '#F59E0B'} />
                   </div>
                 )}
                 <div className="list-item-body">
@@ -482,7 +496,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               </div>
 
               {/* Hero image + progress overlay */}
-              <div style={{ height: 100, position: 'relative', borderRadius: 12, overflow: 'hidden', marginBottom: 16, background: 'linear-gradient(145deg,#191c1d,#2a2c2d)' }}>
+              <div style={{ height: 180, position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 16, background: 'linear-gradient(145deg,#191c1d,#2a2c2d)' }}>
                 {proj.img && <img src={proj.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} onError={e => { e.target.style.display = 'none' }} />}
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 20%, rgba(0,0,0,.75))' }} />
                 <div style={{ position: 'absolute', bottom: 14, left: 20, right: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>

@@ -62,7 +62,7 @@ function getInvitableContacts(projects, intervenants) {
 
 function EventForm({ formRef }) {
   const { store } = useMeereo()
-  const projects = store.projects || []
+  const projects = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted')
   const intervenants = store.intervenants || []
   const [evTitle, setEvTitle] = useState('')
   const [evDate, setEvDate] = useState('')

@@ -77,8 +77,8 @@
 }
 .notif-item:last-child { border-bottom: none; }
 .notif-item:hover { background: var(--s2); }
-.notif-item.unread { background: rgba(0,0,0,.015); }
-.notif-item.unread:hover { background: rgba(0,0,0,.03); }
+.notif-item.unread { background: rgba(239,68,68,.03); border-left: 3px solid #ef4444; }
+.notif-item.unread:hover { background: rgba(239,68,68,.06); }
 .notif-item.read { opacity: .65; }
 .notif-item.read:hover { opacity: 1; }
 
@@ -135,8 +135,9 @@
 /* Unread dot */
 .notif-unread-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: var(--tx);
+  background: #ef4444;
   flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(239,68,68,.18);
 }
 
 /* Delete button — hidden by default, shown on hover */

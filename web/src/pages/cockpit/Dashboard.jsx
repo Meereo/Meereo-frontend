@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin, Users } from 'lucide-react'
+import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin, Users, Image } from 'lucide-react'
 // RECENT_ACTIVITY mock removed — store.activities is source of truth
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -62,7 +62,7 @@ const translateAction = (action) => {
 export default function Dashboard({ onNavigate, openModal, openProDir }) {
   const { formatShort } = useDevise()
   const { store } = useMeereo()
-  const { badgeCounts } = useMergedData()
+  const { badgeCounts, documents: mergedDocs } = useMergedData()
   const uid = useUserIdentity()
   const ob = store.onboardingData || {}
   // Pro: use company name. Client: use first name.
@@ -286,10 +286,10 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
             {allProjets.filter(p => p.id !== mainProj?.id).slice(0, 4).map(p => (
               <div key={p.id} className="proj-row" onClick={() => onNavigate('projets')}>
                 {p.img ? (
-                  <img src={p.img} alt="" style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                  <img src={p.img} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                 ) : (
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <AoGear size={15} color={p.color || '#F59E0B'} />
+                  <div style={{ width: 56, height: 56, borderRadius: 10, background: (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <AoGear size={22} color={p.color || '#F59E0B'} />
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -308,6 +308,39 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
           </div>
         </div>
       )}
+
+      {/* Dernières images ajoutées — par projet */}
+      {(() => {
+        const recentImages = mergedDocs
+          .filter(d => /\.(jpg|jpeg|png|webp|gif)$/i.test(d.url || '') || d.type === 'img')
+          .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+          .slice(0, 6)
+        if (recentImages.length === 0) return null
+        return (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)' }}>Dernières images</div>
+              <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '4px 10px' }} onClick={() => onNavigate('documents')}>Voir tout</button>
+            </div>
+            <div className="rg-3" style={{ gap: 10 }}>
+              {recentImages.map(d => {
+                const projName = allProjets.find(p => p.id === d.projectId)?.nom
+                return (
+                  <div key={d.id} className="cl-photo-card" style={{ aspectRatio: '4/3', background: 'var(--s2)' }}>
+                    <img src={d.url} alt={d.nom || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+                    <div className="cl-photo-overlay">
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{d.nom || 'Image'}</div>
+                        {projName && <div style={{ fontSize: 9, color: 'rgba(255,255,255,.7)' }}>{projName}</div>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Activité récente — feed unifié avec filtres catégoriels */}
       {(() => {

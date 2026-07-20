@@ -119,7 +119,7 @@ export default function Topbar({ activePage, onOpenSidebar }) {
           </div>
 
           {/* Search results dropdown via portal */}
-          {searchOpen && searchResults.length > 0 && createPortal(
+          {searchOpen && createPortal(
             <>
               {(() => {
                 const rect = searchRef.current?.getBoundingClientRect()

@@ -71,10 +71,24 @@ router.post('/', requireAuth, async (req, res, next) => {
       },
     })
 
-    // Envoyer une notification à l'utilisateur invité
+    // Envoyer une notification à l'utilisateur invité + email
     if (invitedByClient) {
       const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true } })
       const inviterName = req.user.name || req.user.company || 'Un client'
+
+      // Email notification
+      if (userEmail) {
+        const { sendNotificationEmail } = require('../utils/email')
+        const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+        sendNotificationEmail({
+          to: userEmail,
+          title: 'Invitation à rejoindre un projet',
+          body: `${inviterName} vous invite à rejoindre le projet « ${project?.nom || 'Projet'} » sur Meereo.\nAcceptez l'invitation pour commencer à collaborer.`,
+          ctaLabel: 'Voir l\'invitation →',
+          ctaUrl: `${frontendUrl}/cockpit`,
+        }).catch(() => {})
+      }
+
       await prisma.notification.create({
         data: {
           userId,
@@ -98,6 +112,24 @@ router.post('/', requireAuth, async (req, res, next) => {
         })
       }
     }
+
+    // ── Sync to public pro page cockpitTeam ──
+    // When a member is added to a project, also add them to the project owner's cockpitTeam (public page)
+    try {
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { ownerId: true } })
+      if (project?.ownerId) {
+        const ownerProfile = await prisma.proProfile.findUnique({ where: { userId: project.ownerId } })
+        if (ownerProfile) {
+          const team = Array.isArray(ownerProfile.cockpitTeam) ? ownerProfile.cockpitTeam : []
+          const memberName = userName || userEmail || ''
+          const alreadyInTeam = team.some(t => (t.nom || '').toLowerCase() === memberName.toLowerCase())
+          if (memberName && !alreadyInTeam) {
+            team.push({ nom: memberName, role: role || 'Collaborateur' })
+            await prisma.proProfile.update({ where: { userId: project.ownerId }, data: { cockpitTeam: team } })
+          }
+        }
+      }
+    } catch (_) { /* non-blocking sync */ }
 
     res.status(201).json(member)
   } catch (e) { next(e) }

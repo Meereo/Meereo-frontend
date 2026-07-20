@@ -31,7 +31,7 @@ export default function Assets({ showToast }) {
     return list
   }, [backendAssets, store.assets, projectFilter, categoryFilter])
 
-  const projects = useMemo(() => (store.projects || []).filter(p => p.status !== 'stopped'), [store.projects])
+  const projects = useMemo(() => (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted'), [store.projects])
   const projectMap = useMemo(() => { const m = {}; projects.forEach(p => { m[p.id] = p }); return m }, [projects])
 
   // Create form

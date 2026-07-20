@@ -95,4 +95,36 @@ async function sendVerificationEmail({ to, verifyLink }) {
   })
 }
 
-module.exports = { sendEmail, sendPasswordResetEmail, sendVerificationEmail }
+/**
+ * Email de notification générique pour les événements de la plateforme.
+ * @param {string} to - Adresse email du destinataire
+ * @param {string} title - Titre de la notification (ex: "Nouveau projet créé")
+ * @param {string} body - Corps du message
+ * @param {string} [ctaLabel] - Label du bouton CTA (optionnel)
+ * @param {string} [ctaUrl] - URL du bouton CTA (optionnel)
+ */
+async function sendNotificationEmail({ to, title, body, ctaLabel, ctaUrl }) {
+  if (!to) return { success: false, reason: 'no_recipient' }
+  const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+  const ctaHtml = ctaLabel && ctaUrl
+    ? `<a href="${ctaUrl}" style="display:inline-block;background:#191c1d;color:#fff;text-decoration:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;margin-top:8px">${ctaLabel}</a>`
+    : ''
+  return sendEmail({
+    to,
+    subject: `Meereo — ${title}`,
+    text: `${title}\n\n${body}\n\n${ctaUrl ? 'Accéder : ' + ctaUrl : ''}\n\nMeereo`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#fff">
+        <img src="${frontendUrl}/logo.png" alt="Meereo" style="height:36px;margin-bottom:24px" onerror="this.style.display='none'" />
+        <h2 style="font-size:20px;font-weight:700;color:#111;margin:0 0 12px">${title}</h2>
+        <p style="color:#444;font-size:14px;line-height:1.6;margin:0 0 24px">${body.replace(/\n/g, '<br>')}</p>
+        ${ctaHtml}
+        <p style="color:#aaa;font-size:11px;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+          Vous recevez cet email car vous êtes inscrit sur <a href="${frontendUrl}" style="color:#aaa">Meereo</a>.
+        </p>
+      </div>
+    `,
+  })
+}
+
+module.exports = { sendEmail, sendPasswordResetEmail, sendVerificationEmail, sendNotificationEmail }

@@ -275,6 +275,27 @@ router.post('/', requireAuth, async (req, res, next) => {
         category:     category || null,
       },
     })
+
+    // ── Email notification: document shared on project ──
+    if (projectId) {
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true, clientId: true, clientEmail: true } }).catch(() => null)
+      if (project?.clientId && project.clientId !== req.user.id) {
+        const clientUser = await prisma.user.findUnique({ where: { id: project.clientId }, select: { email: true } }).catch(() => null)
+        const email = clientUser?.email || project.clientEmail
+        if (email) {
+          const { sendNotificationEmail } = require('../utils/email')
+          const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
+          sendNotificationEmail({
+            to: email,
+            title: 'Nouveau document partagé',
+            body: `Un nouveau document « ${name} » a été ajouté au projet « ${project.nom} ».`,
+            ctaLabel: 'Voir le document →',
+            ctaUrl: `${frontendUrl}/client`,
+          }).catch(() => {})
+        }
+      }
+    }
+
     res.status(201).json(doc)
   } catch (e) { next(e) }
 })

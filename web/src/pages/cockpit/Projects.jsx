@@ -512,10 +512,10 @@ export default function Projects({ onNavigate, openModal, showToast }) {
           {filtered.map(p => (
             <div key={p.id} className="list-item" style={{ background: selected?.id === p.id ? 'var(--s2)' : undefined }} onClick={() => setSelectedId(p.id)}>
               {p.img ? (
-                <img src={p.img} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
+                <img src={p.img} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
               ) : (
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: (p.status === 'archived' || p.status === 'stopped') ? 'var(--s2)' : (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {(p.status !== 'archived' && p.status !== 'stopped') ? <AoGear size={16} color={p.color || '#F59E0B'} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.status === 'stopped' ? '#FF9500' : 'var(--t4)' }} />}
+                <div style={{ width: 56, height: 56, borderRadius: 10, background: (p.status === 'archived' || p.status === 'stopped') ? 'var(--s2)' : (p.color || '#F59E0B') + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {(p.status !== 'archived' && p.status !== 'stopped') ? <AoGear size={22} color={p.color || '#F59E0B'} /> : <div style={{ width: 10, height: 10, borderRadius: '50%', background: p.status === 'stopped' ? '#FF9500' : 'var(--t4)' }} />}
                 </div>
               )}
               <div className="list-item-body">
@@ -556,7 +556,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             <div>
               {/* Hero image */}
               {selected.img && (
-                <div style={{ position: 'relative', height: 160, borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
+                <div style={{ position: 'relative', height: 220, borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
                   <img src={selected.img} alt={selected.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.65))' }} />
                   <div style={{ position: 'absolute', bottom: 16, left: 24, right: 24 }}>
