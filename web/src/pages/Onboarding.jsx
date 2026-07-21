@@ -380,10 +380,15 @@ export default function Onboarding() {
   }
 
   // RCCM & NCC validation
+  const RCCM_BLOCKLIST = ['CI-ABJ-2024-B-12345','CI-ABJ-0000-X-00000','CI/ABJ/2024/B/12345','CI/ABJ/0000/X/00000']
+  const NCC_BLOCKLIST = ['CI0000000A','CI1234567A','1234567A','0000000A']
   const validateRCCM = (v) => {
     if (!v) return null // optional
     // Format: CI-XXX-YYYY-X-NNNNN (ex: CI-ABJ-2024-B-12345)
     const clean = v.toUpperCase().replace(/\s/g, '')
+    // Rejeter les valeurs d'exemple
+    if (RCCM_BLOCKLIST.includes(clean)) return 'Cette valeur est un exemple. Veuillez saisir votre véritable RCCM.'
+    if (/^CI[-/][A-Z]{2,4}[-/]0{4}[-/][A-Z][-/]0{3,6}$/.test(clean)) return 'Cette valeur est un exemple. Veuillez saisir votre véritable RCCM.'
     if (/^CI-[A-Z]{2,4}-\d{4}-[A-Z]-\d{3,6}$/.test(clean)) return null
     // Accept format with separators: CI/XXX/YYYY/X/NNNNN
     if (/^CI[-/][A-Z]{2,4}[-/]\d{4}[-/][A-Z][-/]\d{3,6}$/.test(clean)) return null
@@ -392,6 +397,9 @@ export default function Onboarding() {
   const validateNCC = (v) => {
     if (!v) return null // optional
     const clean = v.toUpperCase().replace(/[\s-]/g, '')
+    // Rejeter les valeurs d'exemple
+    if (NCC_BLOCKLIST.includes(clean)) return 'Cette valeur est un exemple. Veuillez saisir votre véritable numéro de contribuable.'
+    if (/^(CI)?0{7,}[A-Z]?$/.test(clean)) return 'Cette valeur est un exemple. Veuillez saisir votre véritable numéro de contribuable.'
     // Format: CI + 7 digits + letter (ex: CI1234567A)
     if (/^CI\d{7,9}[A-Z]$/.test(clean)) return null
     // Looser: starts with CI or just digits
@@ -457,6 +465,12 @@ export default function Onboarding() {
     delete fullData.password        // ne pas stocker le mot de passe en clair dans onboardingData
     delete fullData.passwordConfirm // idem
     // fullData.photoUrl, fullData.logoFileUrl, fullData.coverUrl are already strings (base64 or MinIO URL)
+    // Set activeLogoType based on selected logo tab: 'generate' → 'generated', 'upload' → 'uploaded'
+    if (form.logoTab === 'upload' && form.logoFileUrl) {
+      fullData.activeLogoType = 'uploaded'
+    } else {
+      fullData.activeLogoType = 'generated'
+    }
     try {
       // email/name/type APRÈS fullData pour ne pas être écrasés par form.email='' (pro/fournisseur utilisent emailPro)
       // password passé séparément pour ne pas finir dans onboardingData tout en étant utilisé pour le register

@@ -50,10 +50,12 @@ export default function ProSearch({ ctx }) {
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {p.publicId && <button className="btn btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => navigate(`/pro/${p.slug || p.publicId}`)}>Voir profil</button>}
-              <button className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => {
-                updateStore(prev => ({ ...prev, messages: [...(prev.messages || []), { id: 'msg_' + Date.now(), dest: p.nom, sujet: 'Demande de contact', texte: 'Bonjour, je souhaite vous contacter pour un projet.', type: 'contact', createdAt: new Date().toISOString() }] }))
-                showToast('Demande de contact envoyée à ' + p.nom)
-              }}>Contacter</button>
+              {p.pagePublished !== false && (
+                <button className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => {
+                  updateStore(prev => ({ ...prev, messages: [...(prev.messages || []), { id: 'msg_' + Date.now(), dest: p.nom, sujet: 'Demande de contact', texte: 'Bonjour, je souhaite vous contacter pour un projet.', type: 'contact', createdAt: new Date().toISOString() }] }))
+                  showToast('Demande de contact envoyée à ' + p.nom)
+                }}>Contacter</button>
+              )}
             </div>
           </div>
         ))}

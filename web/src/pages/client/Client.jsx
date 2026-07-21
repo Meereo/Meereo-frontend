@@ -1,7 +1,7 @@
 ﻿import { useState, useMemo, useEffect, useCallback, Suspense, useRef } from 'react'
 import { api } from '../../services/api/client'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import KaiAssistant from '../../components/shared/KaiAssistant'
 import ProDirectory from '../../components/shared/ProDirectory'
 import KaiQuota from '../../components/shared/KaiQuota'
@@ -81,28 +81,34 @@ const computeSmartProgress = (project) => {
 
 export default function Client() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { store, updateStore, createAO, respondDecision, respondPayment, respondProjectInvitation, stopProject, respondCloture } = useMeereo()
   const { conversations: mergedConversations, documents: mergedDocuments } = useMergedData()
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
-  const [page, setPage] = useState('home')
+
+  // URL-based page routing: /client/messages → 'messages', /client → 'home'
+  const CLIENT_PAGES_SET = useMemo(() => new Set(['home','projets','avancement','budget','messages','decisions','documents','galerie','ao','offres','marches','marketplace','fournisseurs','commandes','passport','parametres','recherche','creerAO']), [])
+  const page = useMemo(() => {
+    const seg = location.pathname.replace(/^\/client\/?/, '').split('/')[0]
+    return (seg && CLIENT_PAGES_SET.has(seg)) ? seg : 'home'
+  }, [location.pathname, CLIENT_PAGES_SET])
+  const setPage = useCallback((p) => {
+    const target = p === 'home' ? '/client' : '/client/' + p
+    navigate(target)
+  }, [navigate])
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showToastMsg, setShowToastMsg] = useState(null)
   const showToast = msg => { setShowToastMsg(msg); setTimeout(() => setShowToastMsg(null), 2500) }
   // Client-side modal handler — cockpit components call openModal but client space handles differently
   const openModal = (type) => { showToast('Cette action sera bientôt disponible') }
 
-  // Navigation depuis notifications / UserMenu
+  // Navigation depuis notifications / UserMenu (meereo-navigate custom event)
   useEffect(() => {
     const handler = (e) => setPage(e.detail)
     window.addEventListener('meereo-navigate', handler)
     return () => window.removeEventListener('meereo-navigate', handler)
-  }, [])
-
-  // Deep-link depuis ProfilApp : sessionStorage meereo_nav_page
-  useEffect(() => {
-    const pg = sessionStorage.getItem('meereo_nav_page')
-    if (pg) { sessionStorage.removeItem('meereo_nav_page'); setPage(pg) }
-  }, [])
+  }, [setPage])
 
   // Refresh projects / markets / members on mount AND when navigating to key pages
   // so the client picks up clotureStatus and other changes made by the pro

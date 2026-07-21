@@ -11,8 +11,21 @@ const ALLOWED = [
   'nom', 'type', 'phase', 'budget', 'adresse', 'livraison', 'priorite',
   'description', 'avancement', 'status', 'client', 'clientEmail',
   'clientId', 'color', 'img', 'notes', 'etapes', 'equipe', 'sourceAoId', 'taskStates',
-  'clotureStatus', 'clotureAt',
+  'clotureStatus', 'clotureAt', 'statusHistory',
 ]
+
+// State machine: allowed transitions
+const PROJECT_TRANSITIONS = {
+  preparation: ['en_attente', 'active'],
+  en_attente: ['active', 'archived'],
+  active: ['suspendu', 'completed', 'archived', 'stopped'],
+  suspendu: ['active', 'archived'],
+  completed: ['cloture', 'active'],
+  cloture: ['archived'],
+  archived: [],
+  draft: ['active', 'preparation'],
+  stopped: ['archived'],
+}
 
 // ─── GET /api/projects ────────────────────────────────────────────────────────
 // Renvoie les projets où l'utilisateur est owner OU membre OU prestataire signataire
@@ -233,46 +246,55 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
     for (const key of ALLOWED) {
       if (req.body[key] !== undefined) data[key] = req.body[key]
     }
+
+    // ── State machine validation for status changes ──
+    if (data.status && data.status !== project.status) {
+      const allowed = PROJECT_TRANSITIONS[project.status]
+      if (allowed && !allowed.includes(data.status)) {
+        throw createError(`Transition de statut invalide : « ${project.status} » → « ${data.status} »`, 400)
+      }
+      // Record transition in statusHistory
+      const history = Array.isArray(project.statusHistory) ? project.statusHistory : []
+      data.statusHistory = [...history, {
+        from: project.status,
+        to: data.status,
+        at: new Date().toISOString(),
+        userId: req.user.id,
+      }]
+    }
+
     const updated = await prisma.project.update({ where: { id: req.params.id }, data })
 
     // ── Notify client when project is archived or stopped ──
     if ((data.status === 'archived' || data.status === 'stopped') && project.clientId && project.clientId !== req.user.id) {
       const statusLabel = data.status === 'archived' ? 'archivé' : 'arrêté'
-      await prisma.notification.create({
-        data: {
-          userId: project.clientId,
-          msg: `Le projet « ${project.nom} » a été ${statusLabel}`,
-          type: data.status === 'stopped' ? 'orange' : 'info',
-          page: 'projets',
-          read: false,
-        },
+      const { createAndPushNotification } = require('../utils/notify')
+      createAndPushNotification({
+        userId: project.clientId,
+        msg: `Le projet « ${project.nom} » a été ${statusLabel}`,
+        type: data.status === 'stopped' ? 'orange' : 'info',
+        page: 'projets',
+        senderId: req.user.id,
       }).catch(() => {})
+    }
+
+    // ── Emit project:updated for real-time sync across all project participants ──
+    try {
       const { getIo } = require('../socket')
       const io = getIo()
       if (io) {
-        io.to(`user:${project.clientId}`).emit('notification:new', {
-          id: 'notif_status_' + req.params.id,
-          msg: `Le projet « ${project.nom} » a été ${statusLabel}`,
-          type: data.status === 'stopped' ? 'orange' : 'info',
-          page: 'projets',
-          read: false,
-          ts: new Date().toISOString(),
-        })
+        // Notify all related users: owner, client, and members
+        const participantIds = new Set()
+        if (project.ownerId) participantIds.add(project.ownerId)
+        if (project.clientId) participantIds.add(project.clientId)
+        const members = await prisma.projectMember.findMany({ where: { projectId: project.id }, select: { userId: true } })
+        members.forEach(m => participantIds.add(m.userId))
+        participantIds.delete(req.user.id) // Don't notify the actor
+        for (const uid of participantIds) {
+          io.to(`user:${uid}`).emit('project:updated', { projectId: project.id, status: data.status || project.status })
+        }
       }
-      // Email notification
-      const clientUser = await prisma.user.findUnique({ where: { id: project.clientId }, select: { email: true } }).catch(() => null)
-      if (clientUser?.email) {
-        const { sendNotificationEmail } = require('../utils/email')
-        const frontendUrl = process.env.FRONTEND_URL || 'https://dev.meereo.com'
-        sendNotificationEmail({
-          to: clientUser.email,
-          title: `Projet ${statusLabel}`,
-          body: `Le projet « ${project.nom} » a été ${statusLabel} sur Meereo.`,
-          ctaLabel: 'Voir mes projets →',
-          ctaUrl: `${frontendUrl}/client`,
-        }).catch(() => {})
-      }
-    }
+    } catch (_) {}
 
     res.json(updated)
   } catch (e) { next(e) }

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, LayoutGrid, List, X, Download, ExternalLink } from 'lucide-react'
+import { FileText, LayoutGrid, List, Clock, X, Download, ExternalLink } from 'lucide-react'
 import FilePreview from '../../components/shared/FilePreview'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
@@ -227,7 +227,7 @@ export default function Documents({ showToast }) {
     <div>
       <DSPageHeader title="Documents" subtitle={`${allDocs.length} documents à ${allDocs.filter(d => d.isNew).length} nouveaux`}>
         <div style={{ display: 'flex', gap: 4 }}>
-          {[['grid', <><LayoutGrid size={12}/> Grille</>], ['list', <><List size={12}/> Liste</>]].map(([v, l]) => (
+          {[['grid', <><LayoutGrid size={12}/> Grille</>], ['list', <><List size={12}/> Liste</>], ['timeline', <><Clock size={12}/> Chronologie</>]].map(([v, l]) => (
             <button key={v} className={`filter-pill ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
@@ -319,11 +319,11 @@ export default function Documents({ showToast }) {
                   <div key={d.id} className="doc-card" style={{ position: 'relative', cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
                     <div style={{ height: 120, borderRadius: 10, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', background: tc.bg }}>
                       <span style={{ fontSize: 16, fontWeight: 600, color: tc.color }}>{tc.label}</span>
-                      {isImgDoc && d.url && <img src={d.url} alt={d.nom} onError={e => { e.target.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                      {isImgDoc && d.url && <img src={d.url} alt={d.nom} loading="lazy" onError={e => { e.target.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                       {d.isNew && <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
                     </div>
                     <div className="doc-card-name">{d.nom}<VersionBadge version={d.version} /><ExpirationBadge expiresAt={d.expiresAt} /></div>
-                    <div className="doc-card-meta">{d.projet} à {formatDateFR(d.date)} à {d.taille}</div>
+                    <div className="doc-card-meta">{d.projet} · {formatDateFR(d.date)} · {d.taille}</div>
                     {/* Menu actions */}
                     <button onClick={(e) => { e.stopPropagation(); setDocMenu(docMenu?.id === d.id ? null : { id: d.id, x: e.clientX, y: e.clientY }) }} style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 7, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(4px)', border: '1px solid var(--border-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity .12s' }} className="doc-action-btn">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
@@ -331,6 +331,43 @@ export default function Documents({ showToast }) {
                   </div>
                 )
               })}
+            </div>
+          ) : view === 'timeline' ? (
+            /* Timeline view — documents grouped by date */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {(() => {
+                const groups = {}
+                filtered.forEach(d => {
+                  const key = d.date ? new Date(d.date).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Sans date'
+                  if (!groups[key]) groups[key] = []
+                  groups[key].push(d)
+                })
+                return Object.entries(groups).map(([dateLabel, docs]) => (
+                  <div key={dateLabel} style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--tx)', flexShrink: 0 }} />
+                      <div style={{ height: 1, flex: 1, background: 'var(--border)' }} />
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', whiteSpace: 'nowrap' }}>{dateLabel}</span>
+                      <span style={{ fontSize: 10, color: 'var(--t4)' }}>({docs.length})</span>
+                    </div>
+                    <div style={{ marginLeft: 20, paddingLeft: 16, borderLeft: '2px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {docs.map(d => {
+                        const tc = getTC(d.type)
+                        return (
+                          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 10, cursor: d.url ? 'pointer' : 'default' }} onClick={() => d.url && setViewerDoc(d)}>
+                            <span style={{ fontSize: 9, fontWeight: 600, color: tc.color, background: tc.bg, padding: '3px 7px', borderRadius: 4, flexShrink: 0 }}>{tc.label}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
+                              <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{d.projet} · {d.auteur} · {d.taille}</div>
+                            </div>
+                            {d.isNew && <span style={{ fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))
+              })()}
             </div>
           ) : (
             <div className="card">

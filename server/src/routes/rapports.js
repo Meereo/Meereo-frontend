@@ -48,6 +48,7 @@ router.post('/', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { type, projet, projectId, date, heure, lieu, participants, ordre, decisions, alertes, prochaine, statut, visibility, auteur } = req.body
+    const vis = visibility || 'private'
     const rapport = await prisma.report.create({
       data: {
         type:         type         || 'Rapport hebdomadaire',
@@ -62,11 +63,28 @@ router.post('/', requireAuth, async (req, res, next) => {
         alertes:      alertes      || '',
         prochaine:    prochaine    || '',
         statut:       statut       || 'brouillon',
-        visibility:   visibility   || 'private',
+        visibility:   vis,
         auteur:       auteur       || '',
         ownerId:      req.user.id,
       },
     })
+
+    // ── Notify client when a report/note is visible to them ──
+    if (vis === 'client_visible' && projectId) {
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true, clientId: true } }).catch(() => null)
+      if (project?.clientId && project.clientId !== req.user.id) {
+        const { createAndPushNotification } = require('../utils/notify')
+        const noteLabel = (type === 'note_chantier') ? 'Note de chantier' : 'Rapport'
+        createAndPushNotification({
+          userId: project.clientId,
+          msg: `${noteLabel} ajouté au projet « ${project.nom} »`,
+          type: 'blue',
+          page: 'avancement',
+          senderId: req.user.id,
+        }).catch(() => {})
+      }
+    }
+
     res.status(201).json(rapport)
   } catch (e) { next(e) }
 })

@@ -291,6 +291,12 @@ const upload = {
 const professionals = {
   getAll: async (params = {}) => {
     const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v))).toString()
+    const res = await apiFetch(`/users/pros${qs ? '?' + qs : ''}`, 'GET', null, true)
+    // Backend returns { data, total, page, limit } — unwrap for backward compat
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+  getWithPagination: async (params = {}) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v))).toString()
     return apiFetch(`/users/pros${qs ? '?' + qs : ''}`, 'GET', null, true)
   },
   search: async (q, metier) => professionals.getAll({ q, metier }),

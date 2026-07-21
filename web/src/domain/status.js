@@ -92,11 +92,63 @@ export const normalizePhase = (p) => PHASE_COMPAT[p] || p
 
 // ── Statuts projet ──
 export const PROJECT_STATUS = {
-  DRAFT: 'draft',
+  PREPARATION: 'preparation',
+  EN_ATTENTE: 'en_attente',
   ACTIVE: 'active',
-  ON_HOLD: 'on_hold',
+  SUSPENDU: 'suspendu',
   COMPLETED: 'completed',
+  CLOTURE: 'cloture',
+  ARCHIVED: 'archived',
+  // Backward compat
+  DRAFT: 'draft',
+  ON_HOLD: 'on_hold',
   CANCELLED: 'cancelled',
+}
+
+export const PROJECT_STATUS_LABELS = {
+  preparation: 'En préparation',
+  en_attente: 'En attente',
+  active: 'En cours',
+  suspendu: 'Suspendu',
+  completed: 'Terminé',
+  cloture: 'Clôturé',
+  archived: 'Archivé',
+  // Backward compat
+  draft: 'Brouillon',
+  stopped: 'Arrêté',
+  on_hold: 'En attente',
+  cancelled: 'Annulé',
+}
+
+// State machine: allowed transitions from each status
+export const PROJECT_TRANSITIONS = {
+  preparation: ['en_attente', 'active'],
+  en_attente: ['active', 'archived'],
+  active: ['suspendu', 'completed', 'archived'],
+  suspendu: ['active', 'archived'],
+  completed: ['cloture', 'active'],
+  cloture: ['archived'],
+  archived: [],
+  // Backward compat
+  draft: ['active', 'preparation'],
+  stopped: ['archived'],
+}
+
+export const PROJECT_STATUS_COLORS = {
+  preparation: '#6B7280',
+  en_attente: '#F59E0B',
+  active: '#2563EB',
+  suspendu: '#EA580C',
+  completed: '#16A34A',
+  cloture: '#7C3AED',
+  archived: '#9CA3AF',
+  draft: '#6B7280',
+  stopped: '#DC2626',
+}
+
+export const isValidProjectTransition = (from, to) => {
+  const allowed = PROJECT_TRANSITIONS[from]
+  return allowed ? allowed.includes(to) : false
 }
 
 // ── Statuts tâche chantier ──

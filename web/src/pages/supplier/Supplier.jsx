@@ -1,4 +1,5 @@
-﻿import { useState, useMemo, useEffect } from 'react'
+﻿import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Store, Package, ShoppingCart, Truck, Wallet, BarChart2, Camera, Check, Smartphone } from 'lucide-react'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -44,7 +45,18 @@ const STATUS_LABELS = { pending: 'En attente', accepted: 'Acceptée', rejected: 
 const STATUS_COLORS = { pending: 'var(--wrn)', accepted: 'var(--color-info)', delivered: 'var(--ok)', completed: 'var(--ok)', rejected: 'var(--err)', cancelled: 'var(--err)', preparing: 'var(--color-info)', shipped: 'var(--color-info)' }
 
 export default function Supplier() {
-  const [view, setView] = useState('dashboard')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const SUPPLIER_PAGES_SET = useMemo(() => new Set(Object.keys(VIEW_LABELS)), [])
+  const view = useMemo(() => {
+    const seg = location.pathname.replace(/^\/fournisseur\/?/, '').split('/')[0]
+    return (seg && SUPPLIER_PAGES_SET.has(seg)) ? seg : 'dashboard'
+  }, [location.pathname, SUPPLIER_PAGES_SET])
+  const setView = useCallback((v) => {
+    const target = v === 'dashboard' ? '/fournisseur' : '/fournisseur/' + v
+    navigate(target)
+  }, [navigate])
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { store, showToast, updateStore, addProduct } = useMeereo()
   const { format: fmtMoney } = useDevise()
@@ -53,7 +65,7 @@ export default function Supplier() {
     const handler = (e) => setView(e.detail)
     window.addEventListener('meereo-navigate', handler)
     return () => window.removeEventListener('meereo-navigate', handler)
-  }, [])
+  }, [setView])
 
   const uid = useUserIdentity()
   const ob = store.onboardingData || {}

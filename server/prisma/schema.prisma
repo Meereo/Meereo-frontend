@@ -199,7 +199,7 @@ model ProProfile {
   pays       String  @default("Côte d'Ivoire")
   annee      String? // Année de fondation
   rccm       String? @unique // Registre du Commerce — unique par entreprise
-  ncc        String? // Numéro de Contribuable (NCC/NIF)
+  ncc        String? @unique // Numéro de Contribuable (NCC/NIF) — unique par entreprise
   tel        String
 
   // Activité
@@ -207,10 +207,14 @@ model ProProfile {
   services String[] // sous-services sélectionnés
 
   // Identité visuelle (logo généré ou uploadé)
-  logoColor   String  @default("#1D1D1F")
-  logoShape   String  @default("Hexagone")
-  logoTypo    String  @default("Gras")
-  logoFileUrl String?
+  logoColor      String  @default("#1D1D1F")
+  logoShape      String  @default("Hexagone")
+  logoTypo       String  @default("Gras")
+  logoFileUrl    String?
+  activeLogoType String  @default("generated") // "generated" | "uploaded" — determines which logo is displayed
+
+  // Page professionnelle publique
+  pagePublished  Boolean @default(false) // true once the pro has saved their public page at least once
 
   // Présentation publique
   slogan    String?
@@ -244,7 +248,7 @@ model FournisseurProfile {
   ville      String  @default("Abidjan")
   pays       String  @default("Côte d'Ivoire")
   rccm       String? @unique // Registre du Commerce — unique par entreprise
-  ncc        String?
+  ncc        String? @unique // Numéro de Contribuable (NCC/NIF) — unique par entreprise
   tel        String
 
   // Identité visuelle
@@ -518,7 +522,8 @@ model Project {
   priorite    String   @default("normale")
   description String   @default("")
   avancement  Int      @default(0)
-  status      String   @default("active")  // active | archived | completed
+  status        String   @default("active")  // preparation | en_attente | active | suspendu | completed | cloture | archived
+  statusHistory Json     @default("[]")     // [{from, to, at, userId}] — tracks state transitions
   client      String   @default("")
   clientEmail String   @default("")
   clientId    String?
@@ -552,6 +557,9 @@ model Project {
   projectMissions ProjectMission[]
   markets       Market[]
 
+  @@index([clientId])
+  @@index([ownerId])
+  @@index([status])
   @@map("projects")
 }
 
@@ -723,6 +731,7 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, read])
   @@index([createdAt])
   @@map("notifications")
 }

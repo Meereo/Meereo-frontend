@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: space-between;
   background: rgba(255,255,255,.72);
-  backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%); -webkit-backdrop-filter: blur(32px) saturate(180%);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   position: relative;

@@ -28,7 +28,8 @@ router.get('/:identifier', async (req, res, next) => {
         select: {
           entreprise: true, ville: true, pays: true, tel: true, annee: true,
           rccm: true, secteurs: true, services: true, logoColor: true, logoShape: true,
-          logoTypo: true, logoFileUrl: true, slogan: true, bio: true, projetsN: true,
+          logoTypo: true, logoFileUrl: true, activeLogoType: true, pagePublished: true,
+          slogan: true, bio: true, projetsN: true,
           effectif: true, portfolioFiles: true, cockpitTeam: true, coverUrl: true,
           pageSections: true,
         },
@@ -183,6 +184,7 @@ router.put('/page-sections', requireAuth, async (req, res, next) => {
       where: { userId },
       data: {
         pageSections: sections,
+        pagePublished: true,
         ...(cockpitTeam.length > 0 ? { cockpitTeam } : {}),
       },
     })
@@ -200,9 +202,9 @@ router.get('/page-sections/me', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const profile = await prisma.proProfile.findUnique({
       where: { userId: req.user.id },
-      select: { pageSections: true },
+      select: { pageSections: true, pagePublished: true },
     })
-    res.json({ sections: profile?.pageSections || [] })
+    res.json({ sections: profile?.pageSections || [], pagePublished: profile?.pagePublished || false })
   } catch (e) {
     next(e)
   }

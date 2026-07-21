@@ -5,16 +5,21 @@ const { requireAuth } = require('../middleware/auth')
 const router = Router()
 
 // GET /api/users/pros — annuaire public des professionnels (avec publicId)
+// Supports: ?q=keyword&metier=xxx&ville=xxx&verified=true&secteur=xxx&page=1&limit=50
 router.get('/pros', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const { q, metier } = req.query
+    const { q, metier, ville: villeFilter, verified: verifiedFilter, secteur } = req.query
     const where = { type: 'pro' }
     if (metier && metier !== 'all') where.metier = metier
+    if (verifiedFilter === 'true') where.verified = true
 
     const page = Math.max(1, parseInt(req.query.page) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
     const skip = (page - 1) * limit
+
+    // Get total count for pagination
+    const total = await prisma.user.count({ where })
 
     const users = await prisma.user.findMany({
       where,
@@ -33,10 +38,16 @@ router.get('/pros', requireAuth, async (req, res, next) => {
             ville:          true,
             tel:            true,
             secteurs:       true,
+            services:       true,
             logoFileUrl:    true,
             logoColor:      true,
+            logoShape:      true,
+            logoTypo:       true,
+            activeLogoType: true,
+            pagePublished:  true,
             portfolioFiles: true,
             slogan:         true,
+            bio:            true,
           },
         },
       },
@@ -45,27 +56,52 @@ router.get('/pros', requireAuth, async (req, res, next) => {
       skip,
     })
 
-    let result = users.map(u => ({
-      id:             u.id,
-      publicId:       u.publicId,
-      nom:            u.proProfile?.entreprise || u.company || u.name || '',
-      metier:         u.metier || (u.proProfile?.secteurs?.[0]) || '',
-      ville:          u.proProfile?.ville || u.ville || 'Abidjan',
-      verified:       u.verified || false,
-      avatar:         u.avatar || null,
-      logoUrl:        u.proProfile?.logoFileUrl || null,
-      logoColor:      u.proProfile?.logoColor || null,
-      portfolioFiles: u.proProfile?.portfolioFiles || [],
-      secteurs:       u.proProfile?.secteurs || [],
-      slogan:         u.proProfile?.slogan || null,
-    }))
+    let result = users.map(u => {
+      const activeType = u.proProfile?.activeLogoType || 'generated'
+      return {
+        id:             u.id,
+        publicId:       u.publicId,
+        nom:            u.proProfile?.entreprise || u.company || u.name || '',
+        metier:         u.metier || (u.proProfile?.secteurs?.[0]) || '',
+        ville:          u.proProfile?.ville || u.ville || 'Abidjan',
+        verified:       u.verified || false,
+        avatar:         u.avatar || null,
+        logoUrl:        activeType === 'uploaded' ? (u.proProfile?.logoFileUrl || null) : null,
+        logoColor:      u.proProfile?.logoColor || null,
+        logoShape:      u.proProfile?.logoShape || 'Hexagone',
+        logoTypo:       u.proProfile?.logoTypo || 'Gras',
+        activeLogoType: activeType,
+        pagePublished:  u.proProfile?.pagePublished || false,
+        portfolioFiles: u.proProfile?.portfolioFiles || [],
+        secteurs:       u.proProfile?.secteurs || [],
+        services:       u.proProfile?.services || [],
+        slogan:         u.proProfile?.slogan || null,
+      }
+    })
 
+    // Enhanced search: covers entreprise, metier, ville, secteurs, services, slogan, bio
     if (q) {
       const ql = q.toLowerCase()
-      result = result.filter(p => (p.nom + p.metier + p.ville).toLowerCase().includes(ql))
+      result = result.filter(p => {
+        const searchable = [
+          p.nom, p.metier, p.ville, p.slogan || '',
+          ...(p.secteurs || []), ...(p.services || []),
+        ].join(' ').toLowerCase()
+        return searchable.includes(ql)
+      })
     }
 
-    res.json(result)
+    // Filter by ville
+    if (villeFilter && villeFilter !== 'all') {
+      result = result.filter(p => p.ville.toLowerCase() === villeFilter.toLowerCase())
+    }
+
+    // Filter by secteur
+    if (secteur && secteur !== 'all') {
+      result = result.filter(p => (p.secteurs || []).some(s => s.toLowerCase().includes(secteur.toLowerCase())))
+    }
+
+    res.json({ data: result, total, page, limit })
   } catch (e) {
     next(e)
   }
@@ -131,21 +167,90 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
   }
 })
 
-// GET /api/users/registered — all registered users for contact resolution & messaging
+// GET /api/users/registered — users with whom the caller has a professional relationship
+// Returns only: conversation peers, project collaborators, market partners, CRM contacts
 router.get('/registered', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
+    const uid = req.user.id
+
+    // 1. Users sharing a conversation
+    const convPeers = prisma.conversationParticipant.findMany({
+      where: { conversation: { participants: { some: { userId: uid } } }, userId: { not: uid } },
+      select: { userId: true },
+    })
+
+    // 2. Users sharing a project (as owner, client, or member)
+    const ownedProjects = prisma.project.findMany({
+      where: { ownerId: uid },
+      select: { clientId: true, members: { select: { userId: true } } },
+    })
+    const memberProjects = prisma.projectMember.findMany({
+      where: { userId: uid },
+      select: { project: { select: { ownerId: true, clientId: true, members: { select: { userId: true } } } } },
+    })
+    const clientProjects = prisma.project.findMany({
+      where: { clientId: uid },
+      select: { ownerId: true, members: { select: { userId: true } } },
+    })
+
+    // 3. Market partners
+    const markets = prisma.market.findMany({
+      where: { OR: [{ clientId: uid }, { supplierId: uid }] },
+      select: { clientId: true, supplierId: true },
+    })
+
+    // 4. CRM contacts with linkedUserId
+    const contacts = prisma.contact.findMany({
+      where: { ownerId: uid, linkedUserId: { not: null } },
+      select: { linkedUserId: true },
+    })
+
+    const [convRes, ownedRes, memberRes, clientRes, mktRes, contactRes] = await Promise.all([
+      convPeers, ownedProjects, memberProjects, clientProjects, markets, contacts,
+    ])
+
+    // Collect unique related user IDs
+    const relatedIds = new Set()
+
+    for (const c of convRes) relatedIds.add(c.userId)
+
+    for (const p of ownedRes) {
+      if (p.clientId) relatedIds.add(p.clientId)
+      for (const m of p.members) relatedIds.add(m.userId)
+    }
+    for (const pm of memberRes) {
+      const p = pm.project
+      relatedIds.add(p.ownerId)
+      if (p.clientId) relatedIds.add(p.clientId)
+      for (const m of p.members) relatedIds.add(m.userId)
+    }
+    for (const p of clientRes) {
+      relatedIds.add(p.ownerId)
+      for (const m of p.members) relatedIds.add(m.userId)
+    }
+
+    for (const m of mktRes) {
+      if (m.clientId) relatedIds.add(m.clientId)
+      if (m.supplierId) relatedIds.add(m.supplierId)
+    }
+
+    for (const c of contactRes) {
+      if (c.linkedUserId) relatedIds.add(c.linkedUserId)
+    }
+
+    // Remove self
+    relatedIds.delete(uid)
+
+    if (relatedIds.size === 0) return res.json([])
+
     const users = await prisma.user.findMany({
-      where: {
-        id: { not: req.user.id },
-      },
+      where: { id: { in: [...relatedIds] } },
       select: {
         id: true,
         name: true,
-        email: true,
         type: true,
         company: true,
-        phone: true,
         publicId: true,
         avatar: true,
       },
@@ -281,10 +386,12 @@ router.get('/me/onboarding', requireAuth, async (req, res) => {
         ncc:          p.ncc         || '',
         secteurs:     p.secteurs    || [],
         services:     p.services    || [],
-        logoColor:    p.logoColor   || '#1D1D1F',
-        logoShape:    p.logoShape   || 'Hexagone',
-        logoTypo:     p.logoTypo    || 'Gras',
-        logoFileUrl:  p.logoFileUrl || '',
+        logoColor:      p.logoColor      || '#1D1D1F',
+        logoShape:      p.logoShape      || 'Hexagone',
+        logoTypo:       p.logoTypo       || 'Gras',
+        logoFileUrl:    p.logoFileUrl    || '',
+        activeLogoType: p.activeLogoType || 'generated',
+        pagePublished:  p.pagePublished  || false,
         slogan:       p.slogan      || '',
         bio:          p.bio         || '',
         projetsN:     p.projetsN    || '',

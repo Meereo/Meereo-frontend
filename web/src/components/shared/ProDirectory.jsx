@@ -13,7 +13,7 @@ function Avatar({ nom, logoUrl, size = 44 }) {
   if (logoUrl) {
     return (
       <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-        <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={logoUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
     )
   }

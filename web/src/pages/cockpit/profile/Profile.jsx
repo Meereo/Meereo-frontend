@@ -113,13 +113,12 @@ export default function Profile() {
           }).catch(() => {})
           // Naviguer vers la messagerie
           sessionStorage.setItem('meereo_open_conv', conv.id)
-          sessionStorage.setItem('meereo_nav_page', 'messages')
           setContactSending(false)
           showToast('Message envoyé à ' + proName, 'green')
           setShowContactModal(false)
           setContactMsg('')
           setContactMotif('collaboration')
-          navigate(isClient ? '/client' : '/cockpit')
+          navigate(isClient ? '/client/messages' : '/cockpit/messages')
           return
         }
       }
@@ -159,12 +158,11 @@ export default function Profile() {
             link: '/messages',
           }).catch(() => {})
           sessionStorage.setItem('meereo_open_conv', conv.id)
-          sessionStorage.setItem('meereo_nav_page', 'messages')
           setInviteSending(false)
           showToast('Invitation envoyée à ' + proName, 'blue')
           setShowInviteModal(false)
           setInviteProjet(''); setInviteRole(''); setInviteMsg('')
-          navigate(isClient ? '/client' : '/cockpit')
+          navigate(isClient ? '/client/messages' : '/cockpit/messages')
           return
         }
       }
@@ -206,8 +204,7 @@ export default function Profile() {
       updateStore(prev => ({ ...prev, conversations: [newConv, ...(prev.conversations || [])] }))
     }
     sessionStorage.setItem('meereo_open_conv', convId)
-    sessionStorage.setItem('meereo_nav_page', 'messages')
-    navigate(isClient ? '/client' : '/cockpit')
+    navigate(isClient ? '/client/messages' : '/cockpit/messages')
   }, [isVisitor, store.user, store.conversations, proName, proInitials, pubData, ob.logoColor, isClient, navigate, updateStore])
 
   return (
@@ -238,8 +235,7 @@ export default function Profile() {
             <>
               <button className="pp-btn-ghost" onClick={() => navigate('/cockpit')}>Tableau de bord</button>
               <button className="pp-btn-primary" onClick={() => {
-                sessionStorage.setItem('meereo_nav_page', 'page-builder')
-                navigate('/cockpit')
+                navigate('/cockpit/page-builder')
               }}>Modifier ma page</button>
             </>
           ) : isVisitor ? (
@@ -287,7 +283,7 @@ export default function Profile() {
                   Construisez votre vitrine en ligne avec notre éditeur visuel. Ajoutez vos réalisations, votre équipe, vos services et bien plus — le tout en quelques minutes.
                 </p>
                 <button
-                  onClick={() => { sessionStorage.setItem('meereo_nav_page', 'page-builder'); navigate('/cockpit') }}
+                  onClick={() => { navigate('/cockpit/page-builder') }}
                   style={{ padding: '12px 28px', borderRadius: 10, background: '#191c1d', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', boxShadow: '0 4px 16px rgba(0,0,0,.15)', transition: 'transform .12s' }}
                   onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                   onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}

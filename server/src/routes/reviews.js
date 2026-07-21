@@ -38,6 +38,19 @@ router.post('/', requireAuth, async (req, res, next) => {
     })
     if (!hasCollaboration) throw createError('Vous devez avoir collaboré avec ce professionnel pour laisser un avis', 403)
 
+    // Vérifier que le projet est en statut completed ou cloture (si projectId fourni)
+    if (projectId) {
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { status: true } })
+      if (project && !['completed', 'cloture'].includes(project.status)) {
+        throw createError('Les avis ne peuvent être déposés que sur un projet terminé ou clôturé', 400)
+      }
+    }
+
+    // Seul un client peut évaluer un professionnel (pas l'inverse)
+    if (req.user.type === 'pro') {
+      throw createError('Seul un client peut évaluer un professionnel', 403)
+    }
+
     const review = await prisma.review.upsert({
       where: { authorId_targetId_projectId: { authorId: req.user.id, targetId, projectId: projectId || '' } },
       update: { note, qualite: qualite || null, delais: delais || null, communication: communication || null, comment: comment || '' },

@@ -20,6 +20,34 @@ const {
 
 const router = Router()
 
+// ─── Blocklist RCCM / NCC ────────────────────────────────────────────────────
+// Valeurs d'exemple / placeholder qui ne doivent jamais être enregistrées.
+const RCCM_BLOCKLIST = [
+  'CI-ABJ-2024-B-12345', 'CI-ABJ-0000-X-00000',
+  'CI/ABJ/2024/B/12345', 'CI/ABJ/0000/X/00000',
+]
+const NCC_BLOCKLIST = [
+  'CI0000000A', 'CI1234567A', '1234567A', '0000000A',
+]
+
+function isBlockedRccm(v) {
+  if (!v) return false
+  const clean = v.toUpperCase().replace(/[\s]/g, '')
+  if (RCCM_BLOCKLIST.includes(clean)) return true
+  // Reject obvious test patterns: all zeros in digit portions
+  if (/^CI[-/][A-Z]{2,4}[-/]0{4}[-/][A-Z][-/]0{3,6}$/.test(clean)) return true
+  return false
+}
+
+function isBlockedNcc(v) {
+  if (!v) return false
+  const clean = v.toUpperCase().replace(/[\s-]/g, '')
+  if (NCC_BLOCKLIST.includes(clean)) return true
+  // Reject all-zeros or all-same-digit patterns
+  if (/^(CI)?0{7,}[A-Z]?$/.test(clean)) return true
+  return false
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -137,11 +165,24 @@ router.post('/register', async (req, res, next) => {
         })
       } else if (base.type === 'pro') {
         const profile = validate(registerProProfileSchema, req.body)
+        // Rejeter les valeurs d'exemple RCCM / NCC
+        if (isBlockedRccm(profile.rccm)) {
+          throw createError(400, 'Le RCCM saisi correspond à une valeur d\'exemple. Veuillez renseigner le véritable RCCM de votre entreprise.')
+        }
+        if (isBlockedNcc(profile.ncc)) {
+          throw createError(400, 'Le numéro de contribuable saisi correspond à une valeur d\'exemple. Veuillez renseigner le véritable numéro de contribuable de votre entreprise.')
+        }
         // Vérifier unicité RCCM
         if (profile.rccm) {
           const existingRccm = await tx.proProfile.findUnique({ where: { rccm: profile.rccm } })
             || await tx.fournisseurProfile.findUnique({ where: { rccm: profile.rccm } })
           if (existingRccm) throw createError(409, 'Ce numéro RCCM est déjà utilisé par une autre entreprise')
+        }
+        // Vérifier unicité NCC
+        if (profile.ncc) {
+          const existingNcc = await tx.proProfile.findUnique({ where: { ncc: profile.ncc } })
+            || await tx.fournisseurProfile.findUnique({ where: { ncc: profile.ncc } })
+          if (existingNcc) throw createError(409, 'Ce numéro de contribuable est déjà utilisé par une autre entreprise')
         }
         await tx.proProfile.create({
           data: {
@@ -159,6 +200,7 @@ router.post('/register', async (req, res, next) => {
             logoShape: profile.logoShape || 'Hexagone',
             logoTypo: profile.logoTypo || 'Gras',
             logoFileUrl: profile.logoFileUrl || null,
+            activeLogoType: profile.activeLogoType || (profile.logoFileUrl ? 'uploaded' : 'generated'),
             slogan: profile.slogan || null,
             bio: profile.bio || null,
             projetsN: profile.projetsN || null,
@@ -170,11 +212,24 @@ router.post('/register', async (req, res, next) => {
         })
       } else if (base.type === 'fournisseur') {
         const profile = validate(registerFournisseurProfileSchema, req.body)
+        // Rejeter les valeurs d'exemple RCCM / NCC
+        if (isBlockedRccm(profile.rccm)) {
+          throw createError(400, 'Le RCCM saisi correspond à une valeur d\'exemple. Veuillez renseigner le véritable RCCM de votre entreprise.')
+        }
+        if (isBlockedNcc(profile.ncc)) {
+          throw createError(400, 'Le numéro de contribuable saisi correspond à une valeur d\'exemple. Veuillez renseigner le véritable numéro de contribuable de votre entreprise.')
+        }
         // Vérifier unicité RCCM
         if (profile.rccm) {
           const existingRccm = await tx.proProfile.findUnique({ where: { rccm: profile.rccm } })
             || await tx.fournisseurProfile.findUnique({ where: { rccm: profile.rccm } })
           if (existingRccm) throw createError(409, 'Ce numéro RCCM est déjà utilisé par une autre entreprise')
+        }
+        // Vérifier unicité NCC
+        if (profile.ncc) {
+          const existingNcc = await tx.proProfile.findUnique({ where: { ncc: profile.ncc } })
+            || await tx.fournisseurProfile.findUnique({ where: { ncc: profile.ncc } })
+          if (existingNcc) throw createError(409, 'Ce numéro de contribuable est déjà utilisé par une autre entreprise')
         }
         await tx.fournisseurProfile.create({
           data: {
@@ -210,6 +265,7 @@ router.post('/register', async (req, res, next) => {
       'projectType','location','surface','budget','description','situation',
       'architecteEmail','delaiLivraison','secteurs','services','categories',
       'zones','cockpitTeam','logoFileUrl','photoUrl','coverUrl','entreprise',
+      'activeLogoType',
     ])
     const initialOd = {}
     for (const [k, v] of Object.entries(req.body)) {

@@ -1,4 +1,5 @@
-﻿import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
+﻿import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import CockpitLayout from '../../components/layout/CockpitLayout'
 import Modal from '../../components/shared/Modal'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -147,9 +148,21 @@ function EventForm({ formRef }) {
 
 export default function Cockpit() {
   const { store, updateStore, emitEvent } = useMeereo()
+  const location = useLocation()
+  const navigate = useNavigate()
   const ob = store.onboardingData || {}
   const userName = ob.entreprise || store.user?.company || ob.prenom || store.user?.name?.split(' ')[0] || ''
-  const [activePage, setActivePage] = useState('dashboard')
+
+  // URL-based page routing: /cockpit/messages → 'messages', /cockpit → 'dashboard'
+  const activePage = useMemo(() => {
+    const seg = location.pathname.replace(/^\/cockpit\/?/, '').split('/')[0]
+    return (seg && PAGES[seg]) ? seg : 'dashboard'
+  }, [location.pathname])
+  const setActivePage = useCallback((page) => {
+    const target = page === 'dashboard' ? '/cockpit' : '/cockpit/' + page
+    navigate(target)
+  }, [navigate])
+
   const [modal, setModal] = useState(null)
   const [toast, setToast] = useState(null)
   const [showProDir, setShowProDir] = useState(false)
@@ -157,35 +170,31 @@ export default function Cockpit() {
   const eventFormRef = useRef(null)
 
   // Popup "créer ta page pro" — s'affiche à chaque connexion tant que la page n'est pas créée
+  // Uses pagePublished from onboarding data (hydrated from proProfile) instead of async fetch
   useEffect(() => {
-    if (store.user?.type !== 'pro') return
-    api.usersApi.getPageSections()
-      .then(res => {
-        const sections = res?.sections || []
-        if (sections.length === 0) setShowBuilderPrompt(true)
-      })
-      .catch(() => {})
-  }, [store.user?.type])
+    if (!store._hydrated || store.user?.type !== 'pro') return
+    const od = store.onboardingData || {}
+    // pagePublished comes from proProfile, synced via onboarding endpoint
+    if (od.pagePublished === false || od.pagePublished === undefined) {
+      // Double-check via API for accuracy
+      api.usersApi.getPageSections()
+        .then(res => {
+          if (!res?.pagePublished) setShowBuilderPrompt(true)
+        })
+        .catch(() => {})
+    }
+  }, [store._hydrated, store.user?.type, store.onboardingData])
 
   const openModal = useCallback((name) => setModal(prev => prev ? prev : name), [])
   const closeModal = useCallback(() => setModal(null), [])
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(null), 2500) }, [])
 
-  // Listen for navigation events from Topbar menu
+  // Listen for navigation events from external components (NotifPanel, UserMenu, etc.)
   useEffect(() => {
     const handler = (e) => setActivePage(e.detail)
     window.addEventListener('meereo-navigate', handler)
     return () => window.removeEventListener('meereo-navigate', handler)
-  }, [])
-
-  // Deep-link depuis ProfilApp : sessionStorage meereo_nav_page
-  useEffect(() => {
-    const page = sessionStorage.getItem('meereo_nav_page')
-    if (page && PAGES[page]) {
-      sessionStorage.removeItem('meereo_nav_page')
-      setActivePage(page)
-    }
-  }, [])
+  }, [setActivePage])
 
   const PageComponent = PAGES[activePage] || Dashboard
 

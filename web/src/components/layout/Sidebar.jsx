@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { FLAG_SHOW_FINANCE, FLAG_SHOW_AO, FLAG_SHOW_MARKETPLACE, FLAG_SHOW_MESSAGES } from '../../config/featureFlags'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../utils/logoShape'
@@ -116,6 +117,7 @@ function NavIcon({ name }) {
 export default function Sidebar({ activePage, onNavigate, identity, isOpen, onClose }) {
   const { store } = useMeereo()
   const { format: fmtMoney } = useDevise()
+  const nav = useNavigate()
 
   // Dynamic badge counts — projets de l'utilisateur connecté uniquement
   const userId = store.user?.id

@@ -200,18 +200,63 @@ router.get('/pending', requireAuth, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
+// ─── PUT /api/project-members/:id ────────────────────────────────────────────
+// Modifier le rôle d'un intervenant
+router.put('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const membership = await prisma.projectMember.findUnique({
+      where: { id: req.params.id },
+      include: { project: { select: { ownerId: true, nom: true } } },
+    })
+    if (!membership) return res.status(404).json({ error: 'Membre introuvable' })
+    if (membership.project.ownerId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
+
+    const { role } = req.body
+    if (!role) return res.status(400).json({ error: 'Rôle requis' })
+
+    const updated = await prisma.projectMember.update({
+      where: { id: req.params.id },
+      data: { role },
+    })
+
+    // Notifier l'intervenant du changement de rôle
+    const { createAndPushNotification } = require('../utils/notify')
+    createAndPushNotification({
+      userId: membership.userId,
+      msg: `Votre rôle sur le projet « ${membership.project.nom} » a été modifié en « ${role} »`,
+      type: 'info',
+      page: 'projets',
+      senderId: req.user.id,
+    }).catch(() => {})
+
+    res.json(updated)
+  } catch (e) { next(e) }
+})
+
 // ─── DELETE /api/project-members/:id ─────────────────────────────────────────
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const membership = await prisma.projectMember.findUnique({
       where: { id: req.params.id },
-      include: { project: { select: { ownerId: true } } },
+      include: { project: { select: { ownerId: true, nom: true } } },
     })
     if (!membership) return res.status(404).json({ error: 'Membre introuvable' })
     // Seul le propriétaire du projet peut retirer un membre
     if (membership.project.ownerId !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
     await prisma.projectMember.delete({ where: { id: req.params.id } })
+
+    // Notifier l'intervenant qu'il a été retiré du projet
+    const { createAndPushNotification } = require('../utils/notify')
+    createAndPushNotification({
+      userId: membership.userId,
+      msg: `Vous avez été retiré du projet « ${membership.project.nom} »`,
+      type: 'orange',
+      page: 'projets',
+      senderId: req.user.id,
+    }).catch(() => {})
+
     res.json({ success: true })
   } catch (e) { next(e) }
 })
