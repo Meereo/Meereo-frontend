@@ -121,18 +121,23 @@ const SESSION_OB_KEY = 'meereo_onboarding_by_user'
 function loadFromStorage() {
   // One-time migration: clear old localStorage store key if present
   try { localStorage.removeItem(STORE_KEY) } catch {}
+  let cachedUser = null
+  try {
+    const cu = sessionStorage.getItem('meereo_cached_user')
+    if (cu) cachedUser = JSON.parse(cu)
+  } catch {}
   try {
     const raw = sessionStorage.getItem(SESSION_OB_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return { ...defaultStore, _onboardingByUser: parsed }
+        return { ...defaultStore, _onboardingByUser: parsed, _cachedUser: cachedUser }
       }
     }
   } catch (e) {
     console.warn('MEEREO loadStore error', e)
   }
-  return { ...defaultStore }
+  return { ...defaultStore, _cachedUser: cachedUser }
 }
 
 function saveToStorage(store) {
@@ -142,6 +147,12 @@ function saveToStorage(store) {
       sessionStorage.setItem(SESSION_OB_KEY, JSON.stringify(store._onboardingByUser))
     } else {
       sessionStorage.removeItem(SESSION_OB_KEY)
+    }
+    // Persist cached user hint so refresh doesn't flash/redirect to onboarding
+    if (store._cachedUser) {
+      sessionStorage.setItem('meereo_cached_user', JSON.stringify(store._cachedUser))
+    } else if (!store.user) {
+      sessionStorage.removeItem('meereo_cached_user')
     }
   } catch { /* sessionStorage not available (private mode, quota, etc.) */ }
 }
@@ -2363,6 +2374,7 @@ export function MeereoProvider({ children }) {
     disconnectSocket()
     // 4. Réinitialiser le store + vider sessionStorage
     try { sessionStorage.removeItem(SESSION_OB_KEY) } catch {}
+    try { sessionStorage.removeItem('meereo_cached_user') } catch {}
     // 5. Reset store — IMPORTANT: _checking:false so the app doesn't show
     //    a permanent loading spinner (hydrationDone.current stays true,
     //    the boot useEffect won't re-run after a logout/delete)
