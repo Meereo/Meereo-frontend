@@ -210,6 +210,43 @@ router.get('/page-sections/me', requireAuth, async (req, res, next) => {
   }
 })
 
+// ─── PUT /api/pro/slug ──────────────────────────────────────────────────────
+// Permet au pro de modifier son URL publique (slug).
+router.put('/slug', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const { slug } = req.body
+    if (!slug || typeof slug !== 'string') {
+      throw createError('Le slug est requis', 400)
+    }
+    // Normalize: lowercase, remove accents, replace non-alphanumeric with hyphens
+    const normalized = slug.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60)
+
+    if (normalized.length < 3) {
+      throw createError('Le slug doit contenir au moins 3 caractères', 400)
+    }
+
+    // Check uniqueness
+    const existing = await prisma.user.findUnique({ where: { slug: normalized } })
+    if (existing && existing.id !== req.user.id) {
+      throw createError('Cette URL est déjà utilisée par un autre professionnel', 409)
+    }
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { slug: normalized },
+    })
+
+    res.json({ slug: normalized, url: `/pro/${normalized}` })
+  } catch (e) {
+    next(e)
+  }
+})
+
 // ─── POST /api/pro/request-verification ─────────────────────────────────────
 // Le pro soumet sa demande de vérification (RCCM + documents admin)
 router.post('/request-verification', requireAuth, async (req, res, next) => {

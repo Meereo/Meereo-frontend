@@ -90,6 +90,44 @@ router.post('/', requireAuth, async (req, res, next) => {
       },
     })
 
+    // ── Auto-create project for the pro if no projectId was provided ──
+    if (!market.projectId && supplierId) {
+      try {
+        const slugSuffix = Math.random().toString(36).slice(2, 6)
+        const autoProject = await prisma.project.create({
+          data: {
+            nom: titre || lot || 'Nouveau projet',
+            type: lot || '',
+            description: description || '',
+            budget: montant || '0',
+            status: 'active',
+            ownerId: supplierId,
+            clientId: clientId || null,
+            clientEmail: '',
+            sourceAoId: aoId || null,
+          },
+        })
+        // Link market to the new project
+        await prisma.market.update({
+          where: { id: market.id },
+          data: { projectId: autoProject.id },
+        })
+        market.projectId = autoProject.id
+
+        // Notify the pro
+        const { createAndPushNotification } = require('../utils/notify')
+        createAndPushNotification({
+          userId: supplierId,
+          msg: `Nouveau projet créé automatiquement : « ${autoProject.nom} »`,
+          type: 'green',
+          page: 'projets',
+          senderId: clientId || null,
+        }).catch(() => {})
+      } catch (e) {
+        console.warn('[MARKETS] Auto-create project failed:', e.message)
+      }
+    }
+
     // Auto-ajouter le prestataire comme membre du projet dès la signature du marché
     if (supplierId && market.projectId) {
       try {

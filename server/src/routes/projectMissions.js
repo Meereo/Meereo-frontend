@@ -344,6 +344,48 @@ router.post('/milestones/:milestoneId/validate', requireAuth, async (req, res, n
   } catch (e) { next(e) }
 })
 
+// POST /api/project-missions/milestones/bulk-validate
+// Valider plusieurs jalons en une seule requête (validation groupée)
+router.post('/milestones/bulk-validate', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const { milestoneIds, role } = req.body
+
+    if (!Array.isArray(milestoneIds) || milestoneIds.length === 0) {
+      throw createError('milestoneIds doit être un tableau non vide', 400)
+    }
+    if (!role || !['pro', 'client'].includes(role)) {
+      throw createError('role doit être "pro" ou "client"', 400)
+    }
+
+    // Verify access to all milestones (they must belong to the same project)
+    const milestones = await prisma.projectMilestone.findMany({
+      where: { id: { in: milestoneIds } },
+      include: { projectMission: { select: { projectId: true } } },
+    })
+    if (milestones.length === 0) throw createError('Aucun jalon trouvé', 404)
+
+    const projectIds = new Set(milestones.map(m => m.projectMission.projectId))
+    for (const pid of projectIds) {
+      const canAccess = await userCanAccessProject(prisma, req.user.id, pid)
+      if (!canAccess) throw createError('Accès non autorisé', 403)
+    }
+
+    // Validate all milestones
+    const results = []
+    for (const mid of milestoneIds) {
+      try {
+        const updated = await validateMilestone(mid, req.user.id, role)
+        results.push(updated)
+      } catch (e) {
+        results.push({ id: mid, error: e.message })
+      }
+    }
+
+    res.json({ validated: results.filter(r => !r.error).length, total: milestoneIds.length, results })
+  } catch (e) { next(e) }
+})
+
 // POST /api/project-missions/milestones/:milestoneId/reopen
 router.post('/milestones/:milestoneId/reopen', requireAuth, async (req, res, next) => {
   try {

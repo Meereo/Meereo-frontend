@@ -421,6 +421,21 @@ export function MeereoProvider({ children }) {
     }
     socket.on('project:updated', handleProjectUpdated)
 
+    // Écouter les nouveaux AO pour mettre à jour la Bourse en temps réel
+    const handleAoNew = () => {
+      api.aos.getAll().then(freshAos => {
+        if (Array.isArray(freshAos)) {
+          setStore(prev => {
+            const localOnly = (prev.aos || []).filter(a => String(a.id).startsWith('ao_'))
+            const next = { ...prev, aos: [...freshAos, ...localOnly] }
+            saveToStorage(next)
+            return next
+          })
+        }
+      }).catch(() => {})
+    }
+    socket.on('ao:new', handleAoNew)
+
     // Charger les conversations depuis l'API à chaque connexion (merge avec locales)
     api.conversations.getAll().then(res => {
       const list = Array.isArray(res) ? res : (res?.conversations || [])
@@ -440,6 +455,7 @@ export function MeereoProvider({ children }) {
       socket.off('conversation:updated', handleConvUpdated)
       socket.off('notification:new', handleNotifNew)
       socket.off('project:updated', handleProjectUpdated)
+      socket.off('ao:new', handleAoNew)
       // En dev (React Strict Mode), le cleanup + remount crée 2 sockets simultanés.
       // On déconnecte proprement ici pour éviter "WebSocket closed before established".
       // En prod ce cleanup ne s'exécute qu'au logout ou au changement de token.

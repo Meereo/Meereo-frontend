@@ -38,7 +38,7 @@ const NAV_GROUPS = [
   {
     label: 'Business',
     items: [
-      { id: 'bourse', label: 'Appels d\'offres', icon: 'briefcase', flag: FLAG_SHOW_AO },
+      { id: 'bourse', label: 'Appels d\'offres', icon: 'briefcase', flag: FLAG_SHOW_AO, countKey: 'newAos', badgeColor: 'blue' },
       { id: 'offres', label: 'Offres', icon: 'inbox', countKey: 'offers', badgeColor: 'orange', flag: FLAG_SHOW_AO },
       { id: 'marches', label: 'Marchés', icon: 'handshake', flag: FLAG_SHOW_AO },
     ]
@@ -124,7 +124,7 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
   const memberProjectIds = new Set((store.projectMembers || []).filter(m => m.userId === userId).map(m => m.projectId))
   const projCount = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted' && (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))).length
   const { badgeCounts: merged } = useMergedData()
-  const badgeCounts = { projects: projCount, offers: merged.offresEnAttente, messages: merged.messagesNonLus }
+  const badgeCounts = { projects: projCount, offers: merged.offresEnAttente, messages: merged.messagesNonLus, newAos: merged.aoOuverts }
 
   // Active project — filtré par utilisateur connecté
   const userProjects = (store.projects || []).filter(p =>

@@ -619,6 +619,31 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: 'Mot de passe incorrect' })
     }
 
+    // Before deleting: unlink this user from other users' projects
+    // so a new account with the same email won't inherit old project references
+    const userEmail = (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))?.email
+    if (userEmail) {
+      // Clear clientEmail references in projects owned by OTHER users
+      await prisma.project.updateMany({
+        where: { clientEmail: { equals: userEmail, mode: 'insensitive' }, ownerId: { not: userId } },
+        data: { clientEmail: '', clientId: null },
+      }).catch(() => {})
+    }
+    // Clear clientId references in projects owned by OTHER users
+    await prisma.project.updateMany({
+      where: { clientId: userId, ownerId: { not: userId } },
+      data: { clientId: null },
+    }).catch(() => {})
+    // Clear supplierId references in markets
+    await prisma.market.updateMany({
+      where: { supplierId: userId },
+      data: { supplierId: null },
+    }).catch(() => {})
+    await prisma.market.updateMany({
+      where: { clientId: userId },
+      data: { clientId: null },
+    }).catch(() => {})
+
     // Hard delete — Prisma onDelete:Cascade removes all related records
     // (profiles, projects, AOs, offers, messages, orders, tasks, documents, etc.)
     await prisma.user.delete({ where: { id: userId } })
