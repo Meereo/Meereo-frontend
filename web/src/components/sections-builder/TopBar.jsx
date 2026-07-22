@@ -13,10 +13,15 @@ const STATUS = {
 };
 const Sep = () => <div className="w-px h-5 bg-gray-200" />;
 
-export default function TopBar({ pageTitle, setPageTitle, saveStatus, onSave, onPreview, onPublish, onClose, device, setDevice }) {
+export default function TopBar({ pageTitle, setPageTitle, saveStatus, onSave, onPreview, onPublish, onClose, device, setDevice, publicUrl }) {
   const [editing, setEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef(null);
   const s = STATUS[saveStatus] ?? STATUS.saved;
+  const copyUrl = () => {
+    if (!publicUrl) return;
+    navigator.clipboard.writeText(publicUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => {});
+  };
   return (
     <header className="h-13 bg-white border-b border-gray-100 flex items-center px-4 gap-3 shrink-0 z-50 shadow-sm" style={{ height: "52px" }}>
       <div className="flex items-center gap-2 mr-1 shrink-0">
@@ -47,6 +52,11 @@ export default function TopBar({ pageTitle, setPageTitle, saveStatus, onSave, on
         <button onClick={onPreview} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"><Icon name="eye" size={13} /> Aperçu</button>
         <button onClick={onSave} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"><Icon name="save" size={13} /> Sauvegarder</button>
         <button onClick={onPublish} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-gray-950 text-white rounded-lg hover:bg-gray-800 transition-colors"><Icon name="upload" size={13} /> Publier</button>
+        {publicUrl && (
+          <button onClick={copyUrl} title={publicUrl} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all">
+            <Icon name={copied ? "check" : "link"} size={13} /> {copied ? "Copié !" : "Partager"}
+          </button>
+        )}
         {onClose && <button onClick={onClose} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-lg border border-gray-200 transition-all"><Icon name="x" size={13} /></button>}
       </div>
     </header>

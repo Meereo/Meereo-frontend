@@ -72,6 +72,18 @@ router.get('/', requireAuth, async (req, res, next) => {
     // (removed project-based client filter — clients can contact pros freely via public pages)
     let allowedClientIds = null
 
+    // Compute unread counts in a single batch query (not N+1)
+    const convIds = participations.map(p => p.conversationId)
+    const unreadCounts = {}
+    if (convIds.length > 0) {
+      const counts = await Promise.all(participations.map(p => {
+        const where = { conversationId: p.conversationId, senderId: { not: userId } }
+        if (p.lastReadAt) where.createdAt = { gt: p.lastReadAt }
+        return prisma.message.count({ where }).then(n => ({ convId: p.conversationId, count: n }))
+      }))
+      counts.forEach(({ convId, count }) => { unreadCounts[convId] = count })
+    }
+
     let conversations = participations.map((p) => {
       const c = p.conversation
       const lastMsg = c.messages[0] || null
@@ -89,6 +101,7 @@ router.get('/', requireAuth, async (req, res, next) => {
           ? { id: lastMsg.id, text: lastMsg.text, type: lastMsg.type, senderId: lastMsg.senderId, senderName: lastMsg.sender.name, createdAt: lastMsg.createdAt }
           : null,
         lastReadAt: lastReadAt,
+        unread: unreadCounts[c.id] || 0,
       }
     })
 

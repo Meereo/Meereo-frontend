@@ -279,7 +279,7 @@ export default function Finance({ showToast }) {
             {[1,2,3].map(i => <SkeletonRow key={i} />)}
           </div>
         ) : budgets.length === 0 ? (
-          <DSEmptyState icon="’é" title="Aucun budget" description="Créez votre premier budget pour suivre les dûpenses par projet." actionLabel="Créer un budget" onAction={() => openCreate('budget')} />
+          <DSEmptyState icon="’é" title="Aucun budget" description="Créez votre premier budget pour suivre les dépenses par projet." actionLabel="Créer un budget" onAction={() => openCreate('budget')} />
         ) : (
           <div className="card" style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', minWidth:560, borderCollapse:'collapse', fontSize:13 }}>
@@ -327,7 +327,7 @@ export default function Finance({ showToast }) {
       {/* DéPENSES */}
       {tab === 'depenses' && (
         budgets.length === 0 ? (
-          <DSEmptyState icon="“‹" title="Aucun budget dûfini" description="Créez d'abord un budget avant d'enregistrer des dûpenses." actionLabel="Créer un budget" onAction={() => setTab('budgets')} />
+          <DSEmptyState icon="“‹" title="Aucun budget défini" description="Créez d'abord un budget avant d'enregistrer des dépenses." actionLabel="Créer un budget" onAction={() => setTab('budgets')} />
         ) : (
           <div>
             <div style={{ display:'flex', gap:10, marginBottom:16 }}>
@@ -339,7 +339,7 @@ export default function Finance({ showToast }) {
             {loading ? (
               <div className="card" style={{ overflow:'hidden' }}>{[1,2,3].map(i => <SkeletonRow key={i} />)}</div>
             ) : filteredExpenses.length === 0 ? (
-              <DSEmptyState icon="’é" title="Aucune dûpense" description="Enregistrez vos premières dûpenses de projet." actionLabel="Ajouter une dûpense" onAction={() => openCreate('expense')} />
+              <DSEmptyState icon="’é" title="Aucune dépense" description="Enregistrez vos premières dépenses de projet." actionLabel="Ajouter une dépense" onAction={() => openCreate('expense')} />
             ) : (
               <div className="card" style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', minWidth:560, borderCollapse:'collapse', fontSize:13 }}>
@@ -448,7 +448,7 @@ export default function Finance({ showToast }) {
           </div>
 
           {!selectedProjectId ? (
-            <DSEmptyState icon="“Š" title="Sélectionnez un projet" description="Choisissez un projet pour afficher les indicateurs financiers dûtaillés." />
+            <DSEmptyState icon="“Š" title="Sélectionnez un projet" description="Choisissez un projet pour afficher les indicateurs financiers détaillés." />
           ) : reportLoading ? (
             <Spinner />
           ) : !report ? (
@@ -456,12 +456,20 @@ export default function Finance({ showToast }) {
           ) : (
             <div>
               {/* KPIs */}
+              {/* FIN-01: Unified financial model — Budget (plafond) / Engagé / Payé / Restant */}
               <DSKpiStrip items={[
-                { label:'Budget total',    value: fmt(report.kpi.totalBudget) },
-                { label:'Total dûpensé',   value: fmt(report.kpi.totalExpenses),  color:'var(--err)' },
-                { label:'Total facturé',   value: fmt(report.kpi.totalInvoiced),  color:'#007AFF' },
-                { label:'Total encaissé',  value: fmt(report.kpi.totalPaid),      color:'var(--ok)' },
+                { label:'Budget (plafond)', value: fmt(report.kpi.totalBudget) },
+                { label:'Engagé (missions)', value: fmt(report.kpi.totalEngaged || 0), color: report.kpi.budgetAlert ? 'var(--err)' : '#007AFF' },
+                { label:'Payé',             value: fmt(report.kpi.totalPaid),     color:'var(--ok)' },
+                { label:'Restant',          value: fmt(report.kpi.totalRemaining || (report.kpi.totalBudget - report.kpi.totalPaid)), color: (report.kpi.totalRemaining || 0) < 0 ? 'var(--err)' : 'var(--t2)' },
               ]} />
+              {report.kpi.budgetAlert && (
+                <div className="card" style={{ padding: '12px 18px', marginBottom: 16, background: 'rgba(220,38,38,.04)', border: '1px solid rgba(220,38,38,.15)', borderRadius: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--err)' }}>
+                    Alerte : le montant engagé ({fmt(report.kpi.totalEngaged)}) dépasse le budget ({fmt(report.kpi.totalBudget)})
+                  </div>
+                </div>
+              )}
 
               {/* Burn rate */}
               <div className="card" style={{ padding:'18px 22px', marginBottom:20 }}>
@@ -477,7 +485,7 @@ export default function Finance({ showToast }) {
                 </div>
                 <div style={{ display:'flex', justifyContent:'space-between', marginTop:6, fontSize:10, color:'var(--t4)' }}>
                   <span>0%</span>
-                  <span style={{ color:'var(--wrn)' }}>éšé 70%</span>
+                  <span style={{ color:'var(--wrn)' }}>⚠ 70%</span>
                   <span style={{ color:'var(--err)' }}>”é 90%</span>
                   <span>100%</span>
                 </div>
@@ -505,9 +513,9 @@ export default function Finance({ showToast }) {
 
                 {/* Pie chart — répartition par catégorie */}
                 <div className="card" style={{ padding:'18px 22px' }}>
-                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>Répartition des dûpenses</div>
+                  <div style={{ fontSize:12, fontWeight:700, marginBottom:16 }}>Répartition des dépenses</div>
                   {pieData.length === 0 ? (
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200, fontSize:12, color:'var(--t4)' }}>Aucune dûpense enregistrée</div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200, fontSize:12, color:'var(--t4)' }}>Aucune dépense enregistrée</div>
                   ) : (
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
@@ -519,6 +527,45 @@ export default function Finance({ showToast }) {
                     </ResponsiveContainer>
                   )}
                 </div>
+              </div>
+
+              {/* FIN-01: Relevé financier — historique horodaté des paiements */}
+              <div className="card" style={{ padding: '18px 22px', marginTop: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 16 }}>Relevé financier</div>
+                {(report.payments || []).length === 0 && (report.markets || []).length === 0 ? (
+                  <div style={{ fontSize: 12, color: 'var(--t4)', textAlign: 'center', padding: '20px 0' }}>Aucune transaction enregistrée</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {/* Markets (missions engagées) */}
+                    {(report.markets || []).map(m => (
+                      <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.statut === 'completed' ? 'var(--ok)' : '#2563EB', flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{m.entreprise || m.lot || 'Mission'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Marché — {m.statut}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{fmt(parseFloat(m.montant) || 0)}</div>
+                          <div style={{ fontSize: 9, color: 'var(--t4)' }}>{new Date(m.createdAt).toLocaleDateString('fr-FR')}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Payments (paiements déclarés) */}
+                    {(report.payments || []).map(p => (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.status === 'PAYOUT_DONE' ? 'var(--ok)' : 'var(--wrn)', flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{p.label || 'Paiement'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Paiement — {p.rail || 'N/A'} — {p.status}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ok)' }}>{fmt(p.amount || 0)}</div>
+                          <div style={{ fontSize: 9, color: 'var(--t4)' }}>{new Date(p.createdAt).toLocaleDateString('fr-FR')}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -549,7 +596,7 @@ export default function Finance({ showToast }) {
       </Modal>
 
       {/* MODAL — Dépense */}
-      <Modal isOpen={modal?.type === 'expense'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier la dûpense' : 'Nouvelle dûpense'}
+      <Modal isOpen={modal?.type === 'expense'} onClose={closeModal} title={modal?.mode === 'edit' ? 'Modifier la dépense' : 'Nouvelle dépense'}
         footer={modalFooter(handleSaveExpense, false)}>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <div>

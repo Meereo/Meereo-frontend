@@ -5,21 +5,23 @@ import { getEntrepriseAvatar } from '../../data/avatars'
 import { CLIENT_METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
 
-function Avatar({ nom, logoUrl, size = 44 }) {
-  const av = getEntrepriseAvatar(nom)
+function Avatar({ nom, logoUrl, logoColor, size = 44 }) {
+  const [imgError, setImgError] = useState(false)
   const sz = size
   const initials = nom ? nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?'
-  // Prefer explicit logoUrl, then matched avatar, then initials
-  if (logoUrl) {
+  // Prefer explicit logoUrl (if image loads), then colored initials placeholder
+  if (logoUrl && !imgError) {
     return (
       <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-        <img src={logoUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={logoUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setImgError(true)} />
       </div>
     )
   }
+  // Consistent placeholder: logoColor or fallback to dark
+  const bg = logoColor || 'var(--tx)'
   return (
-    <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (av?.initials || initials)}
+    <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+      {initials}
     </div>
   )
 }
@@ -32,21 +34,51 @@ function Avatar({ nom, logoUrl, size = 44 }) {
  * @param {Function} onClose
  * @param {string} initialSearch
  */
+const PAGE_SIZE = 20
+
 export default function ProDirectory({ open, onClose, initialSearch = '' }) {
   const navigate = useNavigate()
   const [search, setSearch] = useState(initialSearch)
   const [metier, setMetier] = useState('all')
   const [pros, setPros] = useState([])
   const [loading, setLoading] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setLoading(true)
-    api.professionals.getAll()
-      .then(data => setPros(data || []))
+    setPage(1)
+    const params = { page: 1, limit: PAGE_SIZE }
+    if (search.trim()) params.q = search.trim()
+    if (metier !== 'all') params.metier = metier
+    api.professionals.getWithPagination(params)
+      .then(res => {
+        const data = res?.data || res || []
+        setPros(Array.isArray(data) ? data : [])
+        setTotal(res?.total || (Array.isArray(data) ? data.length : 0))
+      })
       .catch(() => setPros([]))
       .finally(() => setLoading(false))
-  }, [open])
+  }, [open, search, metier])
+
+  const loadMore = () => {
+    if (loadingMore) return
+    setLoadingMore(true)
+    const nextPage = page + 1
+    const params = { page: nextPage, limit: PAGE_SIZE }
+    if (search.trim()) params.q = search.trim()
+    if (metier !== 'all') params.metier = metier
+    api.professionals.getWithPagination(params)
+      .then(res => {
+        const data = res?.data || res || []
+        setPros(prev => [...prev, ...(Array.isArray(data) ? data : [])])
+        setPage(nextPage)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false))
+  }
 
   useEffect(() => {
     if (open) setSearch(initialSearch)
@@ -83,7 +115,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
           <div>
             <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>Annuaire des professionnels</div>
             <div style={{ fontSize: 11.5, color: 'var(--t3)', marginTop: 2 }}>
-              {loading ? 'Chargement…' : `${allPros.length} professionnel${allPros.length > 1 ? 's' : ''} sur MEEREO`}
+              {loading ? 'Chargement…' : `${total || allPros.length} professionnel${(total || allPros.length) > 1 ? 's' : ''} sur MEEREO`}
             </div>
           </div>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -116,12 +148,13 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
               </div>
             </div>
           ) : (
+            <>
             <div className="rg-2" style={{ gap: 10 }}>
-              {filtered.map(p => {
+              {filtered.slice(0, page * PAGE_SIZE).map(p => {
                 return (
                   <div key={p.id} onClick={() => { onClose(); navigate(p.publicId ? `/pro/${p.publicId}` : '/pro') }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Avatar nom={p.nom} logoUrl={p.logoUrl} size={44} />
+                      <Avatar nom={p.nom} logoUrl={p.logoUrl} logoColor={p.logoColor} size={44} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom || 'Professionnel'}</span>
@@ -146,6 +179,14 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
                 )
               })}
             </div>
+            {pros.length < total && (
+              <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                <button onClick={loadMore} disabled={loadingMore} style={{ padding: '8px 24px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--surface-1)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--tx)', fontFamily: 'var(--f)' }}>
+                  {loadingMore ? 'Chargement…' : 'Voir plus'}
+                </button>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

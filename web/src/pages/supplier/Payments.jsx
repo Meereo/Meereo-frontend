@@ -300,7 +300,7 @@ export default function Payments({ showToast }) {
               {/* Produits */}
               {detail.items.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits commandûs</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Produits commandés</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {detail.items.map((it, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--s2)', borderRadius: 8 }}>

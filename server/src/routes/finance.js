@@ -180,18 +180,43 @@ router.get('/reports', requireAuth, async (req, res, next) => {
       ? { ownerId: req.user.id, projectId: req.query.projectId }
       : { ownerId: req.user.id }
 
+    // FIN-01: Unified financial model — Budget (plafond) → Missions (engagé) → Payments (payé)
+    const projectId = req.query.projectId
     const [budgets, expenses, invoices] = await Promise.all([
       prisma.budget.findMany({ where }),
       prisma.expense.findMany({ where }),
       prisma.invoice.findMany({ where }),
     ])
 
+    // Fetch markets (missions = marchés validés) for this project
+    const markets = projectId
+      ? await prisma.market.findMany({ where: { projectId, OR: [{ clientId: req.user.id }, { supplierId: req.user.id }] }, select: { id: true, montant: true, statut: true, lot: true, entreprise: true, createdAt: true } }).catch(() => [])
+      : []
+
+    // Fetch payment orders for this project
+    const payments = projectId
+      ? await prisma.paymentOrder.findMany({ where: { projectId }, select: { id: true, amount: true, status: true, label: true, createdAt: true, rail: true } }).catch(() => [])
+      : []
+
+    // D3: Budget global = plafond unique
     const totalBudget  = budgets.reduce((s, b) => s + b.montant, 0)
-    const totalExpense = expenses.reduce((s, e) => s + e.montant, 0)
-    const totalPaid    = invoices
+    // D7: Engagé = somme des missions (marchés validés)
+    const totalEngaged = markets.reduce((s, m) => s + (parseFloat(m.montant) || 0), 0)
+    // D5: Payé = paiements déclarés reçus
+    const totalPaid    = payments
+      .filter(p => p.status === 'PAYOUT_DONE' || p.status === 'FUNDS_CONFIRMED' || p.status === 'HELD_FOR_MILESTONE')
+      .reduce((s, p) => s + (p.amount || 0), 0)
+    // Also count invoice-based payments
+    const totalInvoiced = invoices
       .filter(i => i.statut === 'payee' || i.statut === 'validee')
       .reduce((s, i) => s + i.montant, 0)
-    const burnRate = totalBudget > 0 ? Math.round(totalExpense / totalBudget * 100) : 0
+    const totalPayéEffectif = Math.max(totalPaid, totalInvoiced)
+    // Restant
+    const totalRemaining = totalBudget - totalPayéEffectif
+    const totalExpense = expenses.reduce((s, e) => s + e.montant, 0)
+    const burnRate = totalBudget > 0 ? Math.round(totalPayéEffectif / totalBudget * 100) : 0
+    // D7: Alerte si engagé > plafond
+    const budgetAlert = totalEngaged > totalBudget && totalBudget > 0
 
     // Dépenses par catégorie
     const byCat = {}
@@ -201,26 +226,32 @@ router.get('/reports', requireAuth, async (req, res, next) => {
     }
     const expensesByCategory = Object.entries(byCat).map(([name, value]) => ({ name, value }))
 
-    // Dépenses mensuelles (6 derniers mois)
+    // Dépenses mensuelles (6 derniers mois) — fixed field name to match frontend
     const now = new Date()
-    const monthlyExpenses = []
+    const monthlyBreakdown = []
     for (let i = 5; i >= 0; i--) {
       const d   = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const label = d.toLocaleString('fr-FR', { month: 'short' })
-      const sum = expenses
-        .filter(e => {
-          const ed = new Date(e.createdAt)
-          return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth()
-        })
+      const budgetSum = budgets
+        .filter(b => { const bd = new Date(b.createdAt); return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth() })
+        .reduce((s, b) => s + b.montant, 0)
+      const depenseSum = expenses
+        .filter(e => { const ed = new Date(e.createdAt); return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth() })
         .reduce((s, e) => s + e.montant, 0)
-      monthlyExpenses.push({ month: label, montant: sum })
+      monthlyBreakdown.push({ month: label, budgets: budgetSum, depenses: depenseSum })
     }
 
     res.json({
-      budgets, expenses, invoices,
-      kpis: { totalBudget, totalExpense, totalPaid, burnRate },
+      budgets, expenses, invoices, markets, payments,
+      kpi: {
+        totalBudget, totalEngaged, totalPaid: totalPayéEffectif, totalExpenses: totalExpense,
+        totalInvoiced, totalRemaining, burnRate, budgetAlert,
+      },
       expensesByCategory,
-      monthlyExpenses,
+      monthlyBreakdown,
+      // backward compat
+      monthlyExpenses: monthlyBreakdown,
+      kpis: { totalBudget, totalExpense, totalPaid: totalPayéEffectif, burnRate },
     })
   } catch (e) { next(e) }
 })

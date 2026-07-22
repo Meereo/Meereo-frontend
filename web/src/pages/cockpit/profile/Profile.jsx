@@ -229,10 +229,22 @@ export default function Profile() {
 
       {/* NAV */}
       <nav className="pp-nav">
-        <div className="pp-nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}><MeereoLogo size={28} /> MEEREO <span>Profil professionnel</span></div>
+        <div className="pp-nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {ob.logoFileUrl && ob.activeLogoType === 'uploaded' ? (
+            <img src={ob.logoFileUrl} alt={proName} style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>{proInitials}</div>
+          )}
+          <span style={{ fontWeight: 600 }}>{proName || 'MEEREO'}</span>
+          <span>Profil professionnel</span>
+        </div>
         <div className="pp-nav-actions">
           {isOwner ? (
             <>
+              <button className="pp-btn-ghost" onClick={() => {
+                const url = window.location.href
+                navigator.clipboard.writeText(url).then(() => showToast?.('Lien copié !'))
+              }}>Partager</button>
               <button className="pp-btn-ghost" onClick={() => navigate('/cockpit')}>Tableau de bord</button>
               <button className="pp-btn-primary" onClick={() => {
                 navigate('/cockpit/page-builder')
@@ -246,8 +258,13 @@ export default function Profile() {
           ) : (
             <>
               <button className="pp-btn-ghost" onClick={() => navigate(isClient ? '/client' : '/cockpit')}>Mon espace</button>
-              <button className="pp-btn-ghost" onClick={handleContactViaMsg}>Messagerie</button>
-              <button className="pp-btn-primary" onClick={() => setShowContactModal(true)}>Contacter</button>
+              {/* MSG-01: hide contact buttons if pro has no published public page */}
+              {pubData?.pagePublished !== false && (
+                <>
+                  <button className="pp-btn-ghost" onClick={handleContactViaMsg}>Messagerie</button>
+                  <button className="pp-btn-primary" onClick={() => setShowContactModal(true)}>Contacter</button>
+                </>
+              )}
             </>
           )}
         </div>

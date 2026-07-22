@@ -118,7 +118,7 @@ export default function Progress({ ctx }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: e.done || e.current ? 700 : 400, color: e.done || e.current ? 'var(--tx)' : 'var(--t4)' }}>{e.label}</div>
             </div>
-            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: e.done ? 'rgba(52,199,89,.06)' : e.current ? 'rgba(245,158,11,.06)' : 'transparent', color: e.done ? 'var(--ok)' : e.current ? '#F59E0B' : 'var(--t4)' }}>{e.done ? 'Termine' : e.current ? 'En cours' : 'A venir'}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: e.done ? 'rgba(52,199,89,.06)' : e.current ? 'rgba(245,158,11,.06)' : 'transparent', color: e.done ? 'var(--ok)' : e.current ? '#F59E0B' : 'var(--t4)' }}>{e.done ? 'Terminé' : e.current ? 'En cours' : 'À venir'}</span>
           </div>
         ))}
       </div>

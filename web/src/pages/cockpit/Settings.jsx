@@ -192,7 +192,7 @@ export default function Settings({ showToast }) {
             }
             setPSaved(true); setTimeout(() => setPSaved(false), 1500)
           }
-          showToast && showToast('Paramètres enregistrès')
+          showToast && showToast('Paramètres enregistrés')
         }}>{pSaved ? <><Check size={10}/> Enregistré</> : 'Enregistrer'}</button></div>
       </div>
 
@@ -519,7 +519,7 @@ export default function Settings({ showToast }) {
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ padding: '12px 14px', background: '#fff1f0', border: '1px solid #ffc5c0', borderRadius: 10, fontSize: 12, color: '#c0392b', lineHeight: 1.6 }}>
-                éšé️ Cette action est <strong>irréversible</strong>. Tous les projets, clients, offres, marchés, commandes, messages, documents et paramètres seront dûfinitivement supprimés.
+                ⚠️ Cette action est <strong>irréversible</strong>. Tous les projets, clients, offres, marchés, commandes, messages, documents et paramètres seront définitivement supprimés.
               </div>
               <div>
                 <label className="form-label">Pour confirmer, tapez <strong>RéINITIALISER</strong> ci-dessous</label>

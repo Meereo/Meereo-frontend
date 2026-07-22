@@ -1,15 +1,17 @@
 // ═══════════════════════════════════════════════════════
-//  MEEREO — KAI · Assistant personnel IA
+//  MEEREO — KAi · Assistant personnel IA
 //  Composant partagé : cockpit, client, fournisseur
 // ═══════════════════════════════════════════════════════
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { BarChart2, Folder, ClipboardList, Package, MessageSquare, Home, CheckCircle2, FileText, ShoppingCart, Wallet } from 'lucide-react'
+import { BarChart2, Folder, ClipboardList, Package, MessageSquare, Home, CheckCircle2, FileText, ShoppingCart, Wallet, Check, Send } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import useUserIdentity from '../../hooks/useUserIdentity'
 import { api } from '../../services/api/client'
 import { getKaiQuotaStatus } from '../../domain/fintech'
 import KaiGoldModal from './KaiGoldModal'
+import KaiAvatar from './KaiAvatar'
+import KaiThinkingCard from './KaiThinkingCard'
 
 // ── Response engine ──
 function getKaiResponse(q, context, store, memory) {
@@ -40,7 +42,7 @@ function getKaiResponse(q, context, store, memory) {
     if (ql.includes('commande')) return memoryPrefix + (orderCount > 0 ? `${orderCount} commande(s) dont ${pendingOrders.length} en attente.${pendingOrders.length > 0 ? ' Action requise.' : ' Tout est à jour.'}` : 'Aucune commande.')
     if (ql.includes('paiement') || ql.includes('payout')) { const fp = payOrders.filter(o => o.type === 'commande'); return memoryPrefix + (fp.length > 0 ? `${fp.filter(o => o.status === 'PAYOUT_DONE').length} versement(s), ${fp.filter(o => o.status === 'PAYOUT_REQUESTED').length} en attente.${disputes.length > 0 ? ' ⚠ ' + disputes.length + ' litige(s).' : ''}` : 'Aucun versement.') }
     if (ql.includes('litige')) return disputes.length > 0 ? `⚠ ${disputes.length} litige(s) — libérations gelées.` : 'Aucun litige.'
-    if (ql.includes('gold') || ql.includes('pro')) return isGold ? 'KAI Pro actif.' : 'KAI Pro automatise le suivi de vos commandes.'
+    if (ql.includes('gold') || ql.includes('pro')) return isGold ? 'KAi Pro actif.' : 'KAi Pro automatise le suivi de vos commandes.'
     return `${prodCount} produit(s), ${orderCount} commande(s)${pendingOrders.length > 0 ? ' dont ' + pendingOrders.length + ' à traiter' : ''}.`
   }
   if (context === 'client') {
@@ -111,7 +113,7 @@ const QUICK = {
 const KAI_ONBOARDING = {
   pro: {
     title: 'Bienvenue sur votre espace professionnel',
-    intro: 'Je suis KAI, votre assistant personnel. Je vais vous guider dans votre espace MEEREO.',
+    intro: 'Je suis KAi, votre assistant personnel. Je vais vous guider dans votre espace MEEREO.',
     sections: [
       { icon: <BarChart2 size={14}/>, label: 'Tableau de bord', desc: 'Vue d’ensemble de vos projets, vos actions urgentes et votre activité.' },
       { icon: <Folder size={14}/>, label: 'Projets', desc: 'Créez et pilotez vos projets de A à Z : phases, budget, intervenants.' },
@@ -123,7 +125,7 @@ const KAI_ONBOARDING = {
   },
   client: {
     title: 'Bienvenue sur votre espace client',
-    intro: 'Je suis KAI, votre assistant personnel. Je suis là pour vous aider à suivre votre projet simplement.',
+    intro: 'Je suis KAi, votre assistant personnel. Je suis là pour vous aider à suivre votre projet simplement.',
     sections: [
       { icon: <Home size={14}/>, label: 'Suivi du projet', desc: 'Suivez l’avancement de votre projet, phase par phase, en toute transparence.' },
       { icon: <CheckCircle2 size={14}/>, label: 'Choix & validations', desc: 'Retrouvez les décisions qui vous sont soumises et validez en un clic.' },
@@ -135,7 +137,7 @@ const KAI_ONBOARDING = {
   },
   fournisseur: {
     title: 'Bienvenue sur votre espace fournisseur',
-    intro: 'Je suis KAI, votre assistant commercial. Je vous aide à vendre et livrer efficacement sur MEEREO.',
+    intro: 'Je suis KAi, votre assistant commercial. Je vous aide à vendre et livrer efficacement sur MEEREO.',
     sections: [
       { icon: <Package size={14}/>, label: 'Mon catalogue', desc: 'Ajoutez vos produits et rendez-les visibles sur le marketplace MEEREO.' },
       { icon: <ShoppingCart size={14}/>, label: 'Commandes', desc: 'Recevez et traitez les commandes des professionnels et des projets.' },
@@ -234,15 +236,12 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
     <div className="kai-body" ref={scrollRef}>
       {/* Header */}
       <div className="kai-hdr" onMouseDown={onDragStart} style={{ cursor: 'grab' }}>
-        <div className={`kai-orb ${phase === 0 ? 'orb-thinking' : 'orb-responding'}`} style={{ width: 42, height: 42, transition: 'box-shadow .8s ease' }}>
-          <div className="kai-orb-glow" />
-          <span className="kai-orb-k" style={{ fontSize: 18 }}>K</span>
-        </div>
+        <KaiAvatar size="auto" idle={phase > 0} presence={phase > 0} />
         <div className="kai-hdr-meta">
-          <div className="kai-hdr-title">KAI</div>
+          <div className="kai-hdr-title">KAi</div>
           <div className="kai-hdr-sub">{phase === 0 ? 'Analyse de votre espace...' : 'Guide de bienvenue'}</div>
         </div>
-        <button className="kai-close" onClick={onDismiss}>
+        <button className="kai-close" onClick={onDismiss} aria-label="Fermer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -250,7 +249,7 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
       {/* Thinking dots */}
       {phase === 0 && (
         <div style={{ padding: '14px 0 6px' }}>
-          <div className="kai-dots"><span /><span /><span /></div>
+          <div className="kai-thinking-dots"><span /><span /><span /></div>
         </div>
       )}
 
@@ -327,6 +326,19 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
   )
 }
 
+// ── Quick-action chip with 600ms active feedback ──
+function KaiQuickChip({ label, onActivate }) {
+  const [active, setActive] = useState(false)
+  const handleClick = () => {
+    setActive(true)
+    onActivate()
+    setTimeout(() => setActive(false), 600)
+  }
+  return (
+    <button className={`kai-pill kai-chip${active ? ' active' : ''}`} onClick={handleClick}>{label}</button>
+  )
+}
+
 export default function KaiAssistant({ context = 'pro', userName = '', onNavigate }) {
   const { store, updateStore } = useMeereo()
   const uid = useUserIdentity()
@@ -377,7 +389,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     return () => window.removeEventListener('keydown', handler)
   }, [kaiOpen])
 
-  // ── KAI Proactive Onboarding — auto-open on first visit ──
+  // ── KAi Proactive Onboarding — auto-open on first visit ──
   useEffect(() => {
     const onboardingDone = store.kaiOnboardingDone || {}
     if (onboardingDone[context]) return
@@ -394,7 +406,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     return () => clearTimeout(timer)
   }, [store.user, store.kaiOnboardingDone, context])
 
-  // ── KAI Proactive Suggestions — context-aware triggers ──
+  // ── KAi Proactive Suggestions — context-aware triggers ──
   useEffect(() => {
     if (!store.user || !store._hydrated || kaiOpen || proactiveShown.current) return
     const onboardingDone = store.kaiOnboardingDone || {}
@@ -671,10 +683,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
           overflow: 'hidden',
         }}>
           <div style={{ padding: '16px 18px 12px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <div className="kai-orb orb-suggesting" style={{ width: 32, height: 32, flexShrink: 0 }}>
-              <div className="kai-orb-glow" />
-              <span className="kai-orb-k" style={{ fontSize: 13 }}>K</span>
-            </div>
+            <KaiAvatar size="inline" idle={false} attention={true} presence={true} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, marginBottom: 10 }}>{proactiveSuggestion.message}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -697,17 +706,20 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
       {/* ═══ FLOATING BAR ═══ */}
       {!kaiOpen && (
         <div ref={barRef} className="k10-bar" style={kaiPos.x != null ? { left: kaiPos.x, bottom: 'auto', top: kaiPos.y, transform: 'none' } : undefined}>
-          <div className="k10-bar-inner" onMouseDown={onDragStart} onClick={onBarClick} title="KAI · Ctrl+K">
-            <div className={`kai-orb orb-${kaiState}`}>
-              <div className="kai-orb-glow" />
-              <span className="kai-orb-k">K</span>
-              {(priorities.length > 0 || proactiveSuggestion)
-                ? <span className="kai-orb-badge">{priorities.length || '!'}</span>
-                : <div className={`kai-orb-dot${kaiState === 'thinking' ? ' busy' : ''}`} />
-              }
+          <div className="k10-bar-inner" onMouseDown={onDragStart} onClick={onBarClick} title="KAi · Ctrl+K">
+            <div style={{ position: 'relative' }}>
+              <KaiAvatar
+                size="auto"
+                idle={kaiState === 'idle'}
+                attention={priorities.length > 0 || !!proactiveSuggestion}
+                presence={true}
+              />
+              {(priorities.length > 0 || proactiveSuggestion) && (
+                <span className="kai-orb-badge">{priorities.length || '!'}</span>
+              )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, pointerEvents: 'none' }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#111', letterSpacing: '.04em' }}>KAI</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#111', letterSpacing: '.04em' }}>KAi</span>
               <span style={{ fontSize: 10, color: '#999' }}>Assistant personnel IA</span>
             </div>
           </div>
@@ -725,30 +737,27 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
           {kaiView === 'idle' && (
             <div className="kai-body">
               <div className="kai-hdr" onMouseDown={onDragStart} style={{ cursor: 'grab' }}>
-                <div className="kai-orb" style={{ width: 42, height: 42 }}>
-                  <div className="kai-orb-glow" />
-                  <span className="kai-orb-k" style={{ fontSize: 18 }}>K</span>
-                </div>
+                <KaiAvatar size="auto" idle={true} attention={priorities.length > 0} />
                 <div className="kai-hdr-meta">
-                  <div className="kai-hdr-title">KAI</div>
+                  <div className="kai-hdr-title">KAi</div>
                   <div className="kai-hdr-sub">Assistant personnel IA</div>
                 </div>
-                <button className="kai-close" onClick={() => setKaiOpen(false)}>
+                <button className="kai-close" onClick={() => setKaiOpen(false)} aria-label="Fermer">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
               <div className="kai-greet">
                 <div className="kai-greet-hi">Bonjour{displayName ? ` ${displayName}` : ''} !</div>
-                <div className="kai-greet-text">Je suis <strong>KAI</strong>, votre assistant personnel.</div>
+                <div className="kai-greet-text">Je suis <strong>KAi</strong>, votre assistant personnel.</div>
                 <div className="kai-greet-sub">Je vous aide à piloter, décider et exécuter vos actions.</div>
                 <div className="kai-greet-cta">Que souhaitez-vous faire aujourd'hui ? Demandez-moi !</div>
               </div>
 
               <div className="kai-input-zone" style={kaiQuota.isExhausted ? { opacity: .55, pointerEvents: 'none' } : {}}>
-                <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder={kaiQuota.isExhausted ? 'Quota épuisé — passez à KAI Pro' : phs[phIdx]} autoFocus disabled={kaiQuota.isExhausted} />
-                <button className={`kai-send${kaiInput.trim() && !kaiQuota.isExhausted ? ' active' : ''}`} onClick={() => kaiSend()} disabled={kaiQuota.isExhausted}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder={kaiQuota.isExhausted ? 'Quota épuisé — passez à KAi Pro' : phs[phIdx]} autoFocus disabled={kaiQuota.isExhausted} />
+                <button className={`kai-send${kaiInput.trim() && !kaiQuota.isExhausted ? ' active' : ''}`} onClick={() => kaiSend()} disabled={kaiQuota.isExhausted} aria-label="Envoyer">
+                  <Send size={14} className={`kai-send-icon${kaiInput.trim() ? ' has-text' : ''}`} />
                 </button>
               </div>
 
@@ -757,14 +766,14 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ba1a1a" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: '#ba1a1a' }}>Quota mensuel épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses</div>
-                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour des analyses illimitées.</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAi Pro pour des analyses illimitées.</div>
                   </div>
-                  <button onClick={() => setShowGoldModal(true)} style={{ padding: '6px 12px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAI Pro</button>
+                  <button onClick={() => setShowGoldModal(true)} style={{ padding: '6px 12px', borderRadius: 8, background: 'var(--kai-accent)', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAi Pro</button>
                 </div>
               )}
 
               <div className="kai-quick">
-                {quick.map(q => (<button key={q} className="kai-pill" onClick={() => kaiSend(q)}>{q}</button>))}
+                {quick.map(q => (<KaiQuickChip key={q} label={q} onActivate={() => kaiSend(q)} />))}
               </div>
 
               {/* Historique — lien discret */}
@@ -777,7 +786,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
 
               <div className="kai-status">
                 <span className="kai-status-orb">K</span>
-                <span>KAI {((store.kaiEntitlement || {})[context] || {}).tier === 'gold' ? 'Pro' : 'Standard'}</span>
+                <span>KAi {((store.kaiEntitlement || {})[context] || {}).tier === 'gold' ? 'Pro' : 'Standard'}</span>
                 {priorities.length > 0 && <span className="kai-status-count">{priorities.length} alerte{priorities.length > 1 ? 's' : ''}</span>}
               </div>
 
@@ -831,7 +840,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                         <div className="kai-hist-item-title">{c.title}</div>
                         <span className="kai-hist-item-time">{relativeDate(c.updatedAt)}</span>
                       </div>
-                      {lastMsg && <div className="kai-hist-item-preview">{lastMsg.side === 'kai' ? 'KAI : ' : ''}{lastMsg.text.slice(0, 60)}{lastMsg.text.length > 60 ? '...' : ''}</div>}
+                      {lastMsg && <div className="kai-hist-item-preview">{lastMsg.side === 'kai' ? 'KAi : ' : ''}{lastMsg.text.slice(0, 60)}{lastMsg.text.length > 60 ? '...' : ''}</div>}
                       <button className="kai-hist-item-del" onClick={(e) => deleteConversation(c.id, e)} title="Supprimer">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
@@ -849,10 +858,8 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 <button className="kai-conv-btn" onClick={newConversation}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
-                <div className="kai-orb" style={{ width: 26, height: 26 }}>
-                  <span className="kai-orb-k" style={{ fontSize: 11 }}>K</span>
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#111', flex: 1 }}>KAI</span>
+                <KaiAvatar size="inline" idle={false} presence={false} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#111', flex: 1 }}>KAi</span>
                 {conversations.length > 0 && (
                   <button className="kai-conv-btn" onClick={() => setKaiView('history')} title="Historique">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -875,7 +882,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 ))}
                 {kaiState === 'thinking' && (
                   <div className="kai-cmsg kai-cmsg-kai">
-                    <div className="kai-cbub kai-cbub-kai"><div className="kai-dots"><span/><span/><span/></div></div>
+                    <div className="kai-cbub kai-cbub-kai"><KaiThinkingCard inline /></div>
                   </div>
                 )}
                 <div ref={msgEndRef} />
@@ -885,15 +892,15 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#ba1a1a' }}>Quota épuisé — {kaiQuota.used}/{kaiQuota.limit} analyses ce mois</div>
-                      <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAI Pro pour continuer sans limite.</div>
+                      <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>Passez à KAi Pro pour continuer sans limite.</div>
                     </div>
-                    <button onClick={() => setShowGoldModal(true)} style={{ padding: '7px 14px', borderRadius: 8, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', flexShrink: 0 }}>KAI Pro →</button>
+                    <button onClick={() => setShowGoldModal(true)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--kai-accent)', color: '#fff', border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', flexShrink: 0 }}>KAi Pro →</button>
                   </div>
                 ) : (
                   <>
                     <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder="Écrire à KAI..." />
-                    <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()} aria-label="Envoyer">
+                      <Send size={14} className={`kai-send-icon${kaiInput.trim() ? ' has-text' : ''}`} />
                     </button>
                   </>
                 )}

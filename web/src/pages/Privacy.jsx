@@ -33,7 +33,7 @@ export default function Confidentialite() {
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>4. Partage des données</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO ne vend pas vos données personnelles. Certaines informations peuvent être partagées avec des prestataires techniques (hébergement, paiement) dans le strict cadre de la fourniture du service. Les informations de votre profil professionnel ou fournisseur sont visibles par les autres utilisateurs de la plateforme selon les paramètres de visibilité que vous dûfinissez.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO ne vend pas vos données personnelles. Certaines informations peuvent être partagées avec des prestataires techniques (hébergement, paiement) dans le strict cadre de la fourniture du service. Les informations de votre profil professionnel ou fournisseur sont visibles par les autres utilisateurs de la plateforme selon les paramètres de visibilité que vous définissez.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>

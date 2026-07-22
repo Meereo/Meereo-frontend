@@ -7,6 +7,7 @@ import { DeviseProvider } from './hooks/useDevise'
 import './styles/index.css'
 import './styles/tokens.css'
 import './styles/global.css'
+import './styles/kai-animations.css'
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null } }

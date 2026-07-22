@@ -19,7 +19,7 @@ export default function ExpertiseEditor({ data, sectionType, onChange }) {
         <ListItemWrapper key={d.id} onRemove={() => removeDomain(d.id)}>
           <TextField label="Nom" value={d.name} onChange={(v) => updateDomain(d.id, "name", v)} />
           {sectionType === "expertise-table" && (
-            <TextField label="Perimetre" value={d.scope || ""} onChange={(v) => updateDomain(d.id, "scope", v)} />
+            <TextField label="Périmètre" value={d.scope || ""} onChange={(v) => updateDomain(d.id, "scope", v)} />
           )}
           {sectionType === "expertise-bars" && (
             <>

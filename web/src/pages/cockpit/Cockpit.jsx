@@ -169,21 +169,24 @@ export default function Cockpit() {
   const [showBuilderPrompt, setShowBuilderPrompt] = useState(false)
   const eventFormRef = useRef(null)
 
-  // Popup "créer ta page pro" — s'affiche à chaque connexion tant que la page n'est pas créée
-  // Uses pagePublished from onboarding data (hydrated from proProfile) instead of async fetch
+  // Popup "créer ta page pro" — s'affiche dès la première connexion tant que la page n'est pas créée
+  // INS-03 fix: always check via API to avoid hydration timing bugs (pagePublished
+  // may not be in onboardingData on first login since it comes from proProfile)
   useEffect(() => {
     if (!store._hydrated || store.user?.type !== 'pro') return
     const od = store.onboardingData || {}
-    // pagePublished comes from proProfile, synced via onboarding endpoint
-    if (od.pagePublished === false || od.pagePublished === undefined) {
-      // Double-check via API for accuracy
-      api.usersApi.getPageSections()
-        .then(res => {
-          if (!res?.pagePublished) setShowBuilderPrompt(true)
-        })
-        .catch(() => {})
-    }
-  }, [store._hydrated, store.user?.type, store.onboardingData])
+    // If already known published, skip
+    if (od.pagePublished === true) return
+    // Always verify via API — single source of truth
+    api.usersApi.getPageSections()
+      .then(res => {
+        if (!res?.pagePublished) setShowBuilderPrompt(true)
+      })
+      .catch(() => {
+        // API unreachable — fallback to showing prompt if pagePublished unknown
+        if (od.pagePublished !== true) setShowBuilderPrompt(true)
+      })
+  }, [store._hydrated, store.user?.type])
 
   const openModal = useCallback((name) => setModal(prev => prev ? prev : name), [])
   const closeModal = useCallback(() => setModal(null), [])
@@ -239,12 +242,9 @@ export default function Cockpit() {
                 >
                   Créer ma page
                 </button>
-                <button
-                  onClick={() => setShowBuilderPrompt(false)}
-                  style={{ width: '100%', padding: '11px 0', borderRadius: 10, background: 'transparent', color: '#888', border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--f)' }}
-                >
-                  Plus tard
-                </button>
+                <p style={{ fontSize: 11.5, color: '#999', textAlign: 'center', margin: 0 }}>
+                  Étape obligatoire pour accéder à la plateforme
+                </p>
               </div>
             </div>
           </div>

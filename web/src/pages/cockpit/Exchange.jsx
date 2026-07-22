@@ -309,7 +309,17 @@ export default function Exchange({ showToast, onNavigate }) {
     <div>
       <DSPageHeader
         title={tab === 'marche' ? "Bourse des appels d'offres" : tab === 'mesao' ? 'Mes appels d\u2019offres' : 'Offres reçues'}
-        subtitle={tab === 'marche' ? `${marcheFiltered.length} disponibles sur le marché` : tab === 'mesao' ? `${allMesAO.length} publiés par vous` : `${clientReceivedOffers.length} offre${clientReceivedOffers.length > 1 ? 's' : ''} reçue${clientReceivedOffers.length > 1 ? 's' : ''}`}
+        subtitle={(() => {
+          if (tab === 'marche') {
+            const newCount = marcheFiltered.filter(ao => {
+              const raw = (store.aos || []).find(a => a.id === ao.id)
+              return raw?.createdAt && (Date.now() - new Date(raw.createdAt).getTime()) < 48 * 3600 * 1000
+            }).length
+            return `${marcheFiltered.length} disponibles` + (newCount > 0 ? ` · ${newCount} nouveau${newCount > 1 ? 'x' : ''}` : '')
+          }
+          if (tab === 'mesao') return `${allMesAO.length} publiés par vous`
+          return `${clientReceivedOffers.length} offre${clientReceivedOffers.length > 1 ? 's' : ''} reçue${clientReceivedOffers.length > 1 ? 's' : ''}`
+        })()}
       >
         <DSFilterBar
           filters={(isClient
@@ -558,15 +568,29 @@ export default function Exchange({ showToast, onNavigate }) {
               {tab === 'marche' && marcheFiltered.map(ao => {
                 const mc = getMetierColor(ao.metier)
                 const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
+                // ANN-03: Badge "Nouveau" pour les AO de moins de 48h
+                const isNew = ao.id && (store.aos || []).find(a => a.id === ao.id)?.createdAt && (Date.now() - new Date((store.aos || []).find(a => a.id === ao.id).createdAt).getTime()) < 48 * 3600 * 1000
+                const isSuivi = suivis.includes(ao.id)
                 return (
-                  <div key={ao.id} className="list-item" style={{ background: selectedMarche?.id === ao.id ? 'var(--s2)' : undefined, opacity: isClosed ? .45 : 1, pointerEvents: isClosed ? 'none' : undefined }} onClick={() => !isClosed && setSelectedId(ao.id)}>
-                    <div className="list-item-body">
-                      <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}{isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)', marginLeft: 4 }}>{ao.statut === 'attribué' ? 'Attribué' : 'Clôturé'}</span>}</div>
-                      <div className="list-item-sub">{ao.maoa} · {ao.lieu}</div>
-                    </div>
-                    <div className="list-item-right">
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: mc + '12', color: mc }}>{ao.metier}</span>
-                      <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
+                  <div key={ao.id} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: isClosed ? 'default' : 'pointer', background: selectedMarche?.id === ao.id ? 'var(--s2)' : 'transparent', opacity: isClosed ? .45 : 1, transition: 'background .12s' }} onClick={() => !isClosed && setSelectedId(ao.id)}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: mc + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <AoGear size={16} color={mc} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ao.titre}</span>
+                          {isNew && <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 6px', borderRadius: 100, background: '#2563EB', color: '#fff', flexShrink: 0, textTransform: 'uppercase', letterSpacing: '.05em' }}>Nouveau</span>}
+                          {isSuivi && <Star size={10} fill="#F59E0B" strokeWidth={0} style={{ flexShrink: 0 }} />}
+                          {isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)' }}>{ao.statut === 'attribué' ? 'Attribué' : 'Clôturé'}</span>}
+                        </div>
+                        {ao.desc && <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{ao.desc}</div>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: mc + '12', color: mc }}>{ao.metier}</span>
+                          {ao.budget && ao.budget !== '—' && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>{formatBudgetDisplay(ao.budget)}</span>}
+                          <span style={{ fontSize: 10, color: 'var(--t4)' }}>{ao.maoa}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )
@@ -582,14 +606,23 @@ export default function Exchange({ showToast, onNavigate }) {
                 const mc = getMetierColor(ao.metier)
                 const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
                 return (
-                <div key={ao.id} className="list-item" style={{ background: selectedMesAO?.id === ao.id ? 'var(--s2)' : undefined, opacity: isClosed ? .45 : 1 }} onClick={() => setSelectedId(ao.id)}>
-                  <div className="list-item-body">
-                    <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><AoGear size={12} color={mc} />{ao.titre}{isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)', marginLeft: 4 }}>{ao.statut === 'attribué' ? 'Attribué' : 'Clôturé'}</span>}</div>
-                    <div className="list-item-sub">{ao.projet} · {ao.metier}</div>
-                  </div>
-                  <div className="list-item-right">
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: isClosed ? 'var(--s3)' : ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: isClosed ? 'var(--t4)' : ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{isClosed ? ao.statut : ao.reponses > 0 ? ao.reponses + ' rép.' : 'En attente'}</span>
-                    <div className="list-item-date">{formatBudgetDisplay(ao.budget)}</div>
+                <div key={ao.id} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selectedMesAO?.id === ao.id ? 'var(--s2)' : 'transparent', opacity: isClosed ? .45 : 1, transition: 'background .12s' }} onClick={() => setSelectedId(ao.id)}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: mc + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <AoGear size={16} color={mc} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ao.titre}</span>
+                        {isClosed && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: 'var(--s3)', color: 'var(--t4)' }}>{ao.statut === 'attribué' ? 'Attribué' : ao.statut}</span>}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: mc + '12', color: mc }}>{ao.metier}</span>
+                        {ao.budget && ao.budget !== '—' && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>{formatBudgetDisplay(ao.budget)}</span>}
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: isClosed ? 'var(--s3)' : ao.reponses > 0 ? 'rgba(52,199,89,.08)' : 'rgba(245,158,11,.08)', color: isClosed ? 'var(--t4)' : ao.reponses > 0 ? 'var(--ok)' : 'var(--wrn)' }}>{isClosed ? ao.statut : ao.reponses > 0 ? ao.reponses + ' réponse' + (ao.reponses > 1 ? 's' : '') : 'En attente'}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>Publié {ao.publie}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 )

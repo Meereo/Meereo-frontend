@@ -36,7 +36,8 @@
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/users.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/products.js)",
       "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/conversations.js)",
-      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/contacts.js)"
+      "Bash(node -c C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/server/src/routes/contacts.js)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

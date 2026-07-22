@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, LayoutGrid, List, Clock, X, Download, ExternalLink } from 'lucide-react'
+import { FileText, LayoutGrid, List, Clock, X, Download, ExternalLink, Eye, Briefcase } from 'lucide-react'
 import FilePreview from '../../components/shared/FilePreview'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
@@ -227,7 +227,7 @@ export default function Documents({ showToast }) {
     <div>
       <DSPageHeader title="Documents" subtitle={`${allDocs.length} documents à ${allDocs.filter(d => d.isNew).length} nouveaux`}>
         <div style={{ display: 'flex', gap: 4 }}>
-          {[['grid', <><LayoutGrid size={12}/> Grille</>], ['list', <><List size={12}/> Liste</>], ['timeline', <><Clock size={12}/> Chronologie</>]].map(([v, l]) => (
+          {[['grid', <><LayoutGrid size={12}/> Grille</>], ['gallery', <><Eye size={12}/> Galerie</>], ['list', <><List size={12}/> Liste</>], ['timeline', <><Clock size={12}/> Chronologie</>], ['category', <><Briefcase size={12}/> Catégorie</>]].map(([v, l]) => (
             <button key={v} className={`filter-pill ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
@@ -332,6 +332,36 @@ export default function Documents({ showToast }) {
                 )
               })}
             </div>
+          ) : view === 'gallery' ? (
+            /* PRJ-08: Gallery view — image-focused with large thumbnails */
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+              {filtered.map(d => {
+                const tc = getTC(d.type)
+                const isImgDoc = d.type === 'img' || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
+                return (
+                  <div key={d.id} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-card)', background: 'var(--surface-1)', cursor: d.url ? 'pointer' : 'default', transition: 'transform .15s, box-shadow .15s' }} onClick={() => d.url && setViewerDoc(d)} onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,.08)' }} onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}>
+                    <div style={{ aspectRatio: '4/3', background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                      {isImgDoc && d.url ? (
+                        <img src={d.url} alt={d.nom} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
+                      ) : (
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: 24, fontWeight: 700, color: tc.color, opacity: .4 }}>{tc.label}</span>
+                        </div>
+                      )}
+                      {d.isNew && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
+                    </div>
+                    <div style={{ padding: '10px 12px' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{d.nom}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 9, fontWeight: 600, color: tc.color, background: tc.bg, padding: '1px 5px', borderRadius: 3 }}>{tc.label}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>{d.auteur}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>{formatDateFR(d.date)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : view === 'timeline' ? (
             /* Timeline view — documents grouped by date */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -361,6 +391,44 @@ export default function Documents({ showToast }) {
                               <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{d.projet} · {d.auteur} · {d.taille}</div>
                             </div>
                             {d.isNew && <span style={{ fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: 'var(--tx)', color: '#fff' }}>NEW</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
+          ) : view === 'category' ? (
+            /* PRJ-08: Category view — documents grouped by type/category */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {(() => {
+                const catGroups = {}
+                filtered.forEach(d => {
+                  const cat = d.cat || d.type || 'Autre'
+                  const label = getTC(cat).label || cat
+                  if (!catGroups[label]) catGroups[label] = { color: getTC(cat).color, bg: getTC(cat).bg, docs: [] }
+                  catGroups[label].docs.push(d)
+                })
+                return Object.entries(catGroups).map(([catLabel, { color, bg, docs }]) => (
+                  <div key={catLabel} className="card" style={{ overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: bg, borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '.06em' }}>{catLabel}</span>
+                      <span style={{ fontSize: 10, color: 'var(--t4)' }}>{docs.length} document{docs.length > 1 ? 's' : ''}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8, padding: 12 }}>
+                      {docs.map(d => {
+                        const tc = getTC(d.type)
+                        const isImgDoc = d.type === 'img' || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(d.url || '')
+                        return (
+                          <div key={d.id} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border-card)', cursor: d.url ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => d.url && setViewerDoc(d)}>
+                            <div style={{ width: 36, height: 36, borderRadius: 6, background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                              {isImgDoc && d.url ? <img src={d.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} /> : <span style={{ fontSize: 9, fontWeight: 700, color: tc.color }}>{tc.label}</span>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
+                              <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.projet || '—'} · {formatDateFR(d.date)}</div>
+                            </div>
                           </div>
                         )
                       })}
@@ -438,7 +506,7 @@ export default function Documents({ showToast }) {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Supprimer le document</div>
-            <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>Le document <strong>{confirmDelete.nom}</strong> sera dûfinitivement supprimé. Cette action est irréversible.</div>
+            <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>Le document <strong>{confirmDelete.nom}</strong> sera définitivement supprimé. Cette action est irréversible.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setConfirmDelete(null)} style={{ padding: '9px 18px', fontSize: 12.5 }}>Annuler</button>
               <button onClick={() => deleteDocument(confirmDelete.id)} style={{ padding: '9px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, background: '#EF4444', color: '#fff' }}>Supprimer</button>

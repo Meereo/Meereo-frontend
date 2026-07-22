@@ -18,12 +18,12 @@ export default function Conditions() {
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>1. Objet</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Les prèsentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme MEEREO, éditée par MEEREO SAS, basée à Abidjan, Côte d'Ivoire. MEEREO est une plateforme digitale dûdiée au secteur du BTP, de l'immobilier et de la construction, permettant la mise en relation de clients, professionnels et fournisseurs.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Les présentes conditions générales d'utilisation (CGU) régissent l'accès et l'utilisation de la plateforme MEEREO, éditée par MEEREO SAS, basée à Abidjan, Côte d'Ivoire. MEEREO est une plateforme digitale dédiée au secteur du BTP, de l'immobilier et de la construction, permettant la mise en relation de clients, professionnels et fournisseurs.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>2. Accès à la plateforme</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'accès à MEEREO est réservé aux utilisateurs disposant d'un compte valide. L'inscription est gratuite. L'utilisateur s'engage à fournir des informations exactes et à les maintenir à jour. MEEREO se réserve le droit de suspendre ou supprimer tout compte en cas de violation des prèsentes conditions.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>L'accès à MEEREO est réservé aux utilisateurs disposant d'un compte valide. L'inscription est gratuite. L'utilisateur s'engage à fournir des informations exactes et à les maintenir à jour. MEEREO se réserve le droit de suspendre ou supprimer tout compte en cas de violation des présentes conditions.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>
@@ -43,7 +43,7 @@ export default function Conditions() {
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>6. Contact</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Pour toute question relative aux prèsentes conditions, vous pouvez nous contacter à l'adresse : contact@meereo.com</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>Pour toute question relative aux présentes conditions, vous pouvez nous contacter à l'adresse : contact@meereo.com</p>
         </section>
       </div>
     </div>

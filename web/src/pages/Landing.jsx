@@ -4,7 +4,7 @@ import MeereoLogo from '../components/shared/MeereoLogo'
 
 /* ••
    MEEREO LANDING — SIGNATURE VERSION
-   Multi-acteurs à Cockpit à KAI à Premium à Fidûle au produit
+   Multi-acteurs à Cockpit à KAI à Premium à Fidèle au produit
 •• */
 
 //  MINI UI 
@@ -65,12 +65,12 @@ function ChantierMini() {
   return (
     <div style={{ background:'#fff', borderRadius:14, overflow:'hidden', fontFamily:'var(--f)' }}>
       <div style={{ display:'flex', gap:4, padding:'12px 16px', borderBottom:'1px solid rgba(0,0,0,.05)' }}>
-        {[{l:'Idûe',d:true},{l:'études',d:true},{l:'Conception',c:true},{l:'Consultation'},{l:'Travaux'},{l:'Livraison'},{l:'Suivi'}].map(p=>(
+        {[{l:'Idée',d:true},{l:'études',d:true},{l:'Conception',c:true},{l:'Consultation'},{l:'Travaux'},{l:'Livraison'},{l:'Suivi'}].map(p=>(
           <div key={p.l} style={{ padding:'4px 10px', borderRadius:100, fontSize:10, fontWeight:600, ...(p.d?{background:'#191c1d',color:'#fff'}:p.c?{background:'rgba(0,122,255,.07)',color:'#007AFF',border:'1px solid rgba(0,122,255,.15)'}:{background:'#f3f4f5',color:'#ccc'}) }}>{p.l}</div>
         ))}
       </div>
       <div style={{ padding:'4px 12px 8px' }}>
-        {[{n:'Plans architecturaux dûtaillés',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-œuvre',s:'todo'}].map((t,i)=>(
+        {[{n:'Plans architecturaux détaillés',s:'done'},{n:'Descente de charges structure',s:'active'},{n:'Note de calcul fondations',s:'todo'},{n:'CCTP lot gros-œuvre',s:'todo'}].map((t,i)=>(
           <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 4px', borderBottom:i<3?'1px solid rgba(0,0,0,.03)':'none' }}>
             <div style={{ width:16, height:16, borderRadius:4, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', ...(t.s==='done'?{background:'#16A34A'}:t.s==='active'?{background:'#007AFF'}:{border:'1.5px solid #ddd'}) }}>
               {t.s==='done'&&<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -102,7 +102,7 @@ function KaiMini() {
         <div style={{ alignSelf:'flex-start', maxWidth:'88%', padding:'14px 16px', borderRadius:'16px 16px 16px 4px', background:'#f5f5f7', fontSize:13, lineHeight:1.65 }}>
           <div style={{ fontSize:10, fontWeight:700, color:'#7C3AED', letterSpacing:'.04em', marginBottom:8 }}>ANALYSE KAI</div>
           3 offres reçues pour le lot CVC.<br/><br/>
-          <strong>Recommandation :</strong> CLIM Pro CI — 14,6 M FCFA, dûlai 45j.<br/>
+          <strong>Recommandation :</strong> CLIM Pro CI — 14,6 M FCFA, délai 45j.<br/>
           Meilleur ratio qualité/coét sur ce lot.
         </div>
       </div>
@@ -161,7 +161,7 @@ export default function Landing() {
               <div style={{ display:'flex', flexDirection:'column' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <span style={{ fontSize:14, fontWeight:600, letterSpacing:'-.15px', color:'#fff' }}>MEEREO</span>
-                  <span style={{ fontSize:18, lineHeight:1 }}>‡é‡é</span>
+                  <span style={{ fontSize:18, lineHeight:1 }}>🇨🇮</span>
                 </div>
                 <span style={{ fontSize:9, color:'rgba(255,255,255,.4)', fontWeight:500, letterSpacing:'.02em', marginTop:1 }}>Côte-d'Ivoire</span>
               </div>
@@ -224,7 +224,7 @@ export default function Landing() {
             <div style={{ maxWidth:940, margin:'40px auto 0' }} className="lp-act">
               {[
                 {t:'Une visibilité claire', d:'Les bonnes informations, au bon moment, pour décider avec clarté.'},
-                {t:'Une messagerie intégrée', d:'échangez, validez et coordonnez depuis un espace dûdié au projet.'},
+                {t:'Une messagerie intégrée', d:'échangez, validez et coordonnez depuis un espace dédié au projet.'},
                 {t:'Un cadre commun', d:'Tous les acteurs avancent dans le même système, avec plus de cohérence.'},
               ].map(c=>(
                 <div key={c.t} style={{ borderRadius:16, border:'1px solid rgba(0,0,0,.08)', background:'#fff', padding:'28px 24px', transition:'all .2s' }} onMouseOver={e=>{e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,.05)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseOut={e=>{e.currentTarget.style.boxShadow='none';e.currentTarget.style.transform='none'}}>
@@ -244,13 +244,13 @@ export default function Landing() {
               Le centre de contrôle de tous vos projets
             </h2>
             <p style={{ marginTop:14, fontSize:14.5, color:'rgba(255,255,255,.45)', lineHeight:1.6, maxWidth:560, margin:'14px auto 0' }}>
-              Centralisez l'avancement des chantiers, les arbitrages, les flux financiers et l'accès à de nouvelles opportunités. Achetez vos matériaux, répondez à des appels d'offres et gardez une lecture claire de chaque dûcision.
+              Centralisez l'avancement des chantiers, les arbitrages, les flux financiers et l'accès à de nouvelles opportunités. Achetez vos matériaux, répondez à des appels d'offres et gardez une lecture claire de chaque décision.
             </p>
           </div>
           <div style={{ maxWidth:940, margin:'44px auto 0' }} className="lp-zoom-grid">
             {[
               { label:'Projet actif', val:'APD à 45 %', sub:'Suivez l\u2019avancement de vos projets en temps réel, oé que vous soyez dans le monde, et gardez une maîtrise claire sur chaque phase.' },
-              { label:'Appels d\u2019offres', val:'2 opportunités', sub:'Accédez à de nouveaux appels d\u2019offres, répondez à des besoins qualifiés et dûveloppez votre activité auprès de nouveaux clients.' },
+              { label:'Appels d\u2019offres', val:'2 opportunités', sub:'Accédez à de nouveaux appels d\u2019offres, répondez à des besoins qualifiés et développez votre activité auprès de nouveaux clients.' },
               { label:'Trésorerie', val:'62 % engagé', sub:'Visualisez les engagements, suivez les disponibilités, validez les paiements et gardez le contrôle sur les flux du projet.' },
               { label:'Marketplace', val:'4 commandes en cours', sub:'Suivez vos achats de matériaux depuis une marketplace centralisée, avec une vue claire sur les offres disponibles.' },
             ].map(z=>(
@@ -283,9 +283,9 @@ export default function Landing() {
             {/* Cartes secondaires */}
             <div className="lp-pills">
               {[
-                {t:'Appels d\u2019offres & marchés', d:'Accédez à de nouvelles opportunités, répondez à des clients qualifiés et dûveloppez votre activité à travers un espace conéu pour ouvrir de nouvelles perspectives.', hero:false},
+                {t:'Appels d\u2019offres & marchés', d:'Accédez à de nouvelles opportunités, répondez à des clients qualifiés et développez votre activité à travers un espace conçu pour ouvrir de nouvelles perspectives.', hero:false},
                 {t:'Marketplace', d:'Achetez vos matériaux et équipements depuis un espace centralisé, avec une vue d\u2019ensemble claire sur les offres disponibles sur le marché.', hero:true},
-                {t:'Centre financier', d:'Suivez vos dûpenses, vos transactions financiéres, vos engagements et vos disponibilités dans un espace clair, conéu pour vous donner plus de contrôle et de traéabilité.', hero:false},
+                {t:'Centre financier', d:'Suivez vos dépenses, vos transactions financières, vos engagements et vos disponibilités dans un espace clair, conçu pour vous donner plus de contrôle et de traçabilité.', hero:false},
               ].map(f=>(
                 <div key={f.t} style={{ borderRadius:18, border:f.hero?'1px solid rgba(255,255,255,.12)':'1px solid rgba(255,255,255,.06)', background:f.hero?'#1a1d1e':'#141516', padding:f.hero?'40px 30px':'28px 24px', transition:'all .2s', boxShadow:f.hero?'0 8px 32px rgba(0,0,0,.4)':'0 2px 8px rgba(0,0,0,.2)', transform:f.hero?'scale(1.08)':'none' }} onMouseOver={e=>{e.currentTarget.style.boxShadow=f.hero?'0 14px 40px rgba(0,0,0,.45)':'0 8px 28px rgba(0,0,0,.3)';e.currentTarget.style.transform=f.hero?'scale(1.10)':'translateY(-2px)'}} onMouseOut={e=>{e.currentTarget.style.boxShadow=f.hero?'0 8px 32px rgba(0,0,0,.4)':'0 2px 8px rgba(0,0,0,.2)';e.currentTarget.style.transform=f.hero?'scale(1.08)':'none'}}>
                   <h3 style={{ fontSize:f.hero?22:17, fontWeight:f.hero?700:600, letterSpacing:'-.02em', color:'#fff', margin:0 }}>{f.t}</h3>
@@ -373,7 +373,7 @@ export default function Landing() {
                 KAI orchestre votre projet
               </h2>
               <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'rgba(255,255,255,.4)', maxWidth:460, margin:'16px auto 0' }}>
-                Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAI vous assiste activement dans chaque dûcision.
+                Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAI vous assiste activement dans chaque décision.
               </p>
             </div>
             {/* KAI capabilities cards */}
@@ -404,7 +404,7 @@ export default function Landing() {
             <div style={{ textAlign:'center', marginBottom:44 }}>
               <Label>Pourquoi MEEREO</Label>
               <h2 style={{ fontSize:'clamp(22px,3vw,30px)', fontWeight:600, letterSpacing:'-.02em', color:'#000', margin:0 }}>
-                Passez d'un projet dûsorganisé à un système structuré et maîtrisé.
+                Passez d'un projet désorganisé à un système structuré et maîtrisé.
               </h2>
             </div>
             <div className="lp-diff">
@@ -439,7 +439,7 @@ export default function Landing() {
                   MEEREO vous donne la visibilité, le contrôle et l'intelligence pour piloter vos projets avec précision.
                 </p>
                 <button onClick={go} style={{ marginTop:32, borderRadius:100, background:'#fff', padding:'14px 32px', fontSize:14.5, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)' }} onMouseOver={e=>e.target.style.background='#e8e8e8'} onMouseOut={e=>e.target.style.background='#fff'}>Créer mon espace</button>
-                <p style={{ marginTop:18, fontSize:12, color:'rgba(255,255,255,.3)' }}>Déployé sur des projets rèels en Côte d'Ivoire ‡é‡é</p>
+                <p style={{ marginTop:18, fontSize:12, color:'rgba(255,255,255,.3)' }}>Déployé sur des projets réels en Côte d'Ivoire 🇨🇮</p>
               </div>
             </div>
           </div>
@@ -472,7 +472,7 @@ export default function Landing() {
             <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>Contact</div>
             <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'rgba(255,255,255,.5)' }}>
               <span>contact@meereo.com</span>
-              <span>‡é‡é Abidjan, Côte d'Ivoire</span>
+              <span>🇨🇮 Abidjan, Côte d'Ivoire</span>
             </div>
           </div>
         </div>

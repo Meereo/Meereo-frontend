@@ -70,7 +70,7 @@ function ReportModal({ isOpen, onClose, showToast }) {
 
 function NoteModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, createDecision } = useMeereo()
-  const [f, setF] = useState({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' })
+  const [f, setF] = useState({ tache: '', statut: 'Terminé', avancement: '', type: 'Information', texte: '' })
   const submit = async () => {
     const noteId = 'note_' + Date.now()
     updateStore(prev => ({ ...prev, notes: [...(prev.notes || []), { id: noteId, ...f, createdAt: new Date().toISOString() }] }))
@@ -96,7 +96,7 @@ function NoteModal({ isOpen, onClose, showToast }) {
       console.warn('[NoteModal]', e.message)
     }
     showToast('Note enregistrée')
-    setF({ tache: '', statut: 'Termine', avancement: '', type: 'Information', texte: '' }); onClose()
+    setF({ tache: '', statut: 'Terminé', avancement: '', type: 'Information', texte: '' }); onClose()
   }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Note de chantier" footer={<><button className="btn btn-sm" onClick={onClose}>Annuler</button><button className="btn btn-primary btn-sm" onClick={submit}>Enregistrer</button></>}>
@@ -145,7 +145,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
   const [assignModal, setAssignModal] = useState(null) // { phaseIdx, taskId? }
   const [showCreateReport, setShowCreateReport] = useState(false)
   const [showCreateNote, setShowCreateNote] = useState(false)
-  const [assignTab, setAssignTab] = useState('plateforme') // plateforme | inviter | creer
+  const [assignTab, setAssignTab] = useState('equipe') // equipe | plateforme | inviter | creer
   const [assignSearch, setAssignSearch] = useState('')
   const [platformPros, setPlatformPros] = useState([])
   const [prosLoading, setProsLoading] = useState(false)
@@ -163,7 +163,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
   //  Té‚CHES RéELLES DU PROJET (backend) 
   const [projTasks, setProjTasks] = useState([])
 
-  // Recharger les tâches dûs que le projet change
+  // Recharger les tâches dès que le projet change
   useEffect(() => {
     if (!selProjId) { setProjTasks([]); return }
     api.tasks.getByProject(selProjId).then(t => setProjTasks(Array.isArray(t) ? t : [])).catch(() => {})
@@ -290,6 +290,44 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
           : pr)
       }))
       // Persist to backend (only real backend IDs, not optimistic proj_ IDs)
+      if (!String(proj.id).startsWith('proj_')) {
+        api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement, phase: derivedPhase || proj.phase, etapes: etapesSync.etapes || proj.etapes }).catch(() => {})
+      }
+    }
+  }, [selProjId, taskStates, proj, updateStore, saveTaskStates]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // PRJ-07: Set a single task directly to 'done' (used by bulk validation)
+  const cycleTaskToDone = useCallback((taskId) => {
+    const key = selProjId + '_' + taskId
+    if ((taskStates[key] || 'todo') === 'done') return // already done
+    // Set to 'done' directly
+    const nextTaskStates = { ...taskStates, [key]: 'done' }
+    const getState = (tid) => nextTaskStates[selProjId + '_' + tid] || 'todo'
+    const taskStatesForBackend = {}
+    CHANTIER_PHASES.forEach(ph => ph.tasks.forEach(t => { taskStatesForBackend[t.id] = getState(t.id) }))
+    const taskDone = Object.values(taskStatesForBackend).filter(s => s === 'done').length
+    const taskTotal = Object.values(taskStatesForBackend).length
+    const taskPct = taskTotal ? Math.round(taskDone / taskTotal * 100) : 0
+    const etapesSync = (proj?.etapes && proj.etapes.length)
+      ? syncEtapesFromChantier(proj.etapes, CHANTIER_PHASES, getState)
+      : { etapes: proj?.etapes || [], phase: proj?.phase, avancement: 0 }
+    const avancement = Math.max(taskPct, etapesSync.avancement)
+    let derivedPhase = etapesSync.phase || proj?.phase
+    const lastDonePhaseIdx = CHANTIER_PHASES.map((ph, idx) => ph.tasks.every(t => getState(t.id) === 'done') ? idx : -1).filter(i => i >= 0).pop()
+    if (lastDonePhaseIdx !== undefined && lastDonePhaseIdx >= 0) {
+      const nextPhase = CHANTIER_PHASES[lastDonePhaseIdx + 1]
+      if (nextPhase?.mainPhases?.length) derivedPhase = nextPhase.mainPhases[0]
+      else if (lastDonePhaseIdx === CHANTIER_PHASES.length - 1) derivedPhase = 'RECEPTION'
+    }
+    setTaskStates(nextTaskStates)
+    saveTaskStates(selProjId, Object.fromEntries(Object.entries(nextTaskStates).filter(([k]) => k.startsWith(selProjId + '_'))))
+    if (proj?.id) {
+      updateStore(p => ({
+        ...p,
+        projects: (p.projects || []).map(pr => pr.id === proj.id
+          ? { ...pr, avancement, phase: derivedPhase || pr.phase, etapes: etapesSync.etapes || pr.etapes, taskStates: taskStatesForBackend }
+          : pr)
+      }))
       if (!String(proj.id).startsWith('proj_')) {
         api.projects.update(proj.id, { taskStates: taskStatesForBackend, avancement, phase: derivedPhase || proj.phase, etapes: etapesSync.etapes || proj.etapes }).catch(() => {})
       }
@@ -428,7 +466,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         <div style={{ textAlign: 'center', padding: '48px 24px' }}>
           <div style={{ fontSize: 32, marginBottom: 12, opacity: .3 }}>&#128679;</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun projet à suivre</div>
-          <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Créez un projet pour dûmarrer le suivi de chantier.</div>
+          <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Créez un projet pour démarrer le suivi de chantier.</div>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate && onNavigate('projets')}>Aller aux Projets</button>
         </div>
       </div>
@@ -610,7 +648,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 {CHANTIER_PHASES.map((ph, i) => {
                   const phDone = ph.tasks.filter(t => getTaskState(t.id) === 'done').length
                   const pct = Math.round(phDone / ph.tasks.length * 100)
-                  const label = pct === 100 ? 'Termine' : pct > 0 ? 'En cours' : 'A venir'
+                  const label = pct === 100 ? 'Terminé' : pct > 0 ? 'En cours' : 'A venir'
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < CHANTIER_PHASES.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{ width: 160, fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>{ph.name}</div>
@@ -689,7 +727,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                         {isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Terminé</span>}
-                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>é—é En cours</span>}
+                        {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>🟢 En cours</span>}
                         <span style={{ fontSize: 10.5, fontWeight: 600 }}>{phPct}%</span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
                       </div>
@@ -713,14 +751,14 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                                     <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: partner.color + '14', color: partner.color }}>{partner.nom}</span>
                                     {st === 'done' && !evalDone.includes(t.id) && (
-                                      <button onClick={(e) => { e.stopPropagation(); setEvalPresta({ nom: partner.nom, taskId: t.id, ratings: { stars: 0, qualite: 0, delais: 0, communication: 0, comment: '' } }) }} style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)' }}>Evaluer</button>
+                                      <button onClick={(e) => { e.stopPropagation(); setEvalPresta({ nom: partner.nom, taskId: t.id, ratings: { stars: 0, qualite: 0, delais: 0, communication: 0, comment: '' } }) }} style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--tx)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)' }}>Évaluer</button>
                                     )}
-                                    {evalDone.includes(t.id) && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Evalué</span>}
+                                    {evalDone.includes(t.id) && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={9}/> Évalué</span>}
                                   </div>
                                 )}
                               </div>
                               {/* Status badge */}
-                              <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: s.bg, color: s.color }}>{st === 'done' ? 'Termine' : st === 'active' ? 'En cours' : 'A faire'}</span>
+                              <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: s.bg, color: s.color }}>{st === 'done' ? 'Terminé' : st === 'active' ? 'En cours' : 'À faire'}</span>
                               {/* Assign button */}
                               <button onClick={() => { setAssignModal({ phaseIdx: phIdx, taskId: t.id }); setAssignTab('plateforme'); setAssignSearch('') }} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--s2)', border: '1px solid var(--border-card)', color: 'var(--t3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title="Assigner un intervenant">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -731,8 +769,17 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                             </div>
                           )
                         })}
-                        {/* Phase action bar */}
+                        {/* Phase action bar — PRJ-07: bulk section validation */}
                         <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'var(--s2)', borderTop: '1px solid var(--border)' }}>
+                          {!isDone && (
+                            <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px', background: 'var(--tx)', color: '#fff', border: 'none' }} onClick={() => {
+                              ph.tasks.forEach(t => {
+                                const key = selProjId + '_' + t.id
+                                if ((taskStates[key] || 'todo') !== 'done') cycleTaskToDone(t.id)
+                              })
+                              showToast?.('Section validée : ' + ph.name)
+                            }}>Valider cette section</button>
+                          )}
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAssignModal({ phaseIdx: phIdx }); setAssignTab('plateforme'); setAssignSearch('') }}>Assigner intervenant</button>
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => setShowCreateNote(true)}>+ Note</button>
                         </div>
@@ -762,7 +809,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               </div>
               {/* 3 tabs */}
               <div style={{ display: 'flex', gap: 4 }}>
-                {[['plateforme', 'Rechercher sur la plateforme'], ['inviter', 'Inviter par email'], ['creer', 'Créer un profil']].map(([k, l]) => (
+                {[['equipe', 'Mon équipe'], ['plateforme', 'Rechercher sur la plateforme'], ['inviter', 'Inviter par email'], ['creer', 'Créer un profil']].map(([k, l]) => (
                   <button key={k} className={`filter-pill ${assignTab === k ? 'active' : ''}`} style={{ fontSize: 10.5 }} onClick={() => setAssignTab(k)}>{l}</button>
                 ))}
               </div>
@@ -770,6 +817,53 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
             {/* Body */}
             <div style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--border)' }}>
+
+              {/* ── Tab: Mon équipe (PRJ-06 — quick-select existing team) ── */}
+              {assignTab === 'equipe' && (() => {
+                const ob = store.onboardingData || {}
+                const cockpitTeam = ob.cockpitTeam || []
+                // Also include members from previous project assignments
+                const pastMembers = (store.projectMembers || [])
+                  .filter(m => m.userId !== store.user?.id)
+                  .reduce((acc, m) => {
+                    if (!acc.find(a => a.userId === m.userId)) acc.push(m)
+                    return acc
+                  }, [])
+                const teamMembers = [
+                  ...cockpitTeam.map((m, i) => ({ id: 'team_' + i, nom: m.nom || m.name || '', role: m.role || '', source: 'equipe' })),
+                  ...pastMembers.filter(m => !cockpitTeam.some(t => (t.nom || t.name) === m.userName)).map(m => ({ id: m.userId, nom: m.userName || m.userEmail || '', role: m.role || '', source: 'projets' })),
+                ]
+                const teamQ = assignSearch.toLowerCase()
+                const filtered = teamQ ? teamMembers.filter(m => (m.nom + m.role).toLowerCase().includes(teamQ)) : teamMembers
+                return (
+                  <div>
+                    {teamMembers.length > 3 && (
+                      <div style={{ padding: '12px 22px' }}>
+                        <input placeholder="Filtrer mon équipe..." value={assignSearch} onChange={e => setAssignSearch(e.target.value)} className="form-input" autoFocus />
+                      </div>
+                    )}
+                    {filtered.length === 0 ? (
+                      <div style={{ padding: '32px 22px', textAlign: 'center', color: 'var(--t3)', fontSize: 12 }}>
+                        {teamMembers.length === 0 ? 'Aucun membre dans votre équipe. Ajoutez-en depuis la plateforme ou créez un profil.' : 'Aucun résultat'}
+                      </div>
+                    ) : filtered.map(m => {
+                      const initials = (m.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+                      return (
+                        <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 22px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => doAssign(m.nom, m.id)}>
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{initials}</span>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
+                            <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.role}</div>
+                          </div>
+                          <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: m.source === 'equipe' ? 'rgba(37,99,235,.08)' : 'rgba(124,58,237,.08)', color: m.source === 'equipe' ? '#2563EB' : '#7C3AED', fontWeight: 600 }}>{m.source === 'equipe' ? 'Équipe' : 'Ancien projet'}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
 
               {/* ── Tab: Recherche plateforme ── */}
               {assignTab === 'plateforme' && (
@@ -854,12 +948,12 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         </div>
       )}
 
-      {/* MODAL: Evaluer un prestataire */}
+      {/* MODAL: Évaluer un prestataire */}
       {evalPresta && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEvalPresta(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>Evaluer le prestataire</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>Évaluer le prestataire</div>
               <div style={{ fontSize: 12, color: 'var(--t3)' }}>{evalPresta.nom} à Mission terminee</div>
             </div>
             <div style={{ padding: '20px 24px' }}>
@@ -939,7 +1033,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Confirmation client</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Evaluer le prestataire</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Évaluer le prestataire</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{clientRatingModal.projNom} à {clientRatingModal.client}</div>
                 </div>
                 <button onClick={() => setClientRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>

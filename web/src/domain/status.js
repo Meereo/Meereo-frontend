@@ -146,6 +146,14 @@ export const PROJECT_STATUS_COLORS = {
   stopped: '#DC2626',
 }
 
+// PRJ-09: Expanded color palette for per-project identification
+export const PROJECT_COLOR_PALETTE = [
+  '#2563EB', '#7C3AED', '#DC2626', '#16A34A', '#F59E0B',
+  '#EA580C', '#0891B2', '#DB2777', '#4F46E5', '#059669',
+  '#D97706', '#9333EA', '#E11D48', '#0D9488', '#6366F1',
+  '#CA8A04', '#BE185D', '#15803D', '#1D4ED8', '#9F1239',
+]
+
 export const isValidProjectTransition = (from, to) => {
   const allowed = PROJECT_TRANSITIONS[from]
   return allowed ? allowed.includes(to) : false

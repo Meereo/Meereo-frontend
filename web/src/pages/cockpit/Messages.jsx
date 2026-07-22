@@ -120,7 +120,7 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
           {active.pending ? <><Lock size={10}/> En attente d{'’'}acceptation</>
             : active.invited ? <><MailOpen size={10}/> Invité — en attente d{'’'}inscription</>
             : active.isGroup ? (active.participants || []).length + ' participants'
-            : 'é—é En ligne'}
+            : '🟢 En ligne'}
         </div>
       </div>
       {!active.pending && (
@@ -213,7 +213,7 @@ export default function Messages({ showToast }) {
   const [confirmAction, setConfirmAction] = useState(null)
   const [ctxMenu, setCtxMenu] = useState(null)
   const ctxRef = useRef(null)
-  // Pro — suggestion de prix/dûlai dans la conversation
+  // Pro — suggestion de prix/délai dans la conversation
   const [showSuggestPanel, setShowSuggestPanel] = useState(false)
   const [suggestMontant, setSuggestMontant] = useState('')
   const [suggestDelai, setSuggestDelai] = useState('')
@@ -282,8 +282,8 @@ export default function Messages({ showToast }) {
             time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
           }
         }
-        // Unread: messages after lastReadAt (simplified: keep existing unread count)
-        const unread = c.unread || 0
+        // Unread: computed server-side from lastReadAt (MSG-03 fix)
+        const unread = typeof c.unread === 'number' ? c.unread : 0
         return {
           ...c,
           nom,
@@ -370,12 +370,14 @@ export default function Messages({ showToast }) {
           fileName: m.fileName,
           time: new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           senderId: m.senderId,
-          read: true,
+          read: m.senderId === store.user?.id || true, // own messages always read; others marked read on open
         }))
         setMessagesMap(prev => ({ ...prev, [convId]: shaped }))
-        // Mark read
+        // Mark conversation as read (actual open event — MSG-03)
         api.conversations.markRead(convId).catch(() => {})
         emitRead(convId)
+        // Reset unread counter for this conversation in the list
+        updateConv(convId, cv => ({ ...cv, unread: 0 }))
       })
       .catch(() => {})
       .finally(() => setLoadingMessages(false))
@@ -654,7 +656,7 @@ export default function Messages({ showToast }) {
           msg.size = f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' Mo' : Math.round(f.size / 1024) + ' Ko'
         }
 
-        const dernier = isImg ? 'Photo' : isVid ? 'Vidûo' : f.name
+        const dernier = isImg ? 'Photo' : isVid ? 'Vidéo' : f.name
         // For local conversations: update msgs array in store
         // For backend conversations: send via socket (file support future)
         const convId = active.id
@@ -914,7 +916,7 @@ export default function Messages({ showToast }) {
                           </div>
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tx)' }}>{active.nom}</div>
                           <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
-                            Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour dûmarrer la conversation.
+                            Ce contact n'a pas encore créé son compte sur MEEREO. Invitez-le à rejoindre la plateforme pour démarrer la conversation.
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
@@ -1084,7 +1086,7 @@ export default function Messages({ showToast }) {
               ) : (
                 /* ─── Utilisateur inscrit — messagerie normale ─── */
                 <div style={{ borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-                  {/* ── Banniére suggestion prix/dûlai — visible uniquement pour le PRO dans une conversation 1-1 ── */}
+                  {/* ── Bannière suggestion prix/délai — visible uniquement pour le PRO dans une conversation 1-1 ── */}
                   {store.user?.type === 'pro' && active && !active.isGroup && !active.pending && !active.invited && (
                     showSuggestPanel ? (
                       <div style={{ padding: '10px 20px 6px', background: 'var(--s2)', borderBottom: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1123,7 +1125,7 @@ export default function Messages({ showToast }) {
                         <button
                           onClick={() => setShowSuggestPanel(true)}
                           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--t3)', fontFamily: 'var(--f)', transition: 'all .15s' }}
-                          title="Suggérer un prix et un dûlai au client"
+                          title="Suggérer un prix et un délai au client"
                         >
                           <span>“‹</span> Suggérer un prix
                         </button>
@@ -1356,7 +1358,7 @@ export default function Messages({ showToast }) {
             {/* Description */}
             <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 22 }}>
               {confirmAction.type === 'delete' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera supprimée de votre liste. Les autres participants conserveront la leur.</>}
-              {confirmAction.type === 'archive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera dûplacée dans vos archives. Vous pourrez la restaurer à tout moment.</>}
+              {confirmAction.type === 'archive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera déplacée dans vos archives. Vous pourrez la restaurer à tout moment.</>}
               {confirmAction.type === 'unarchive' && <>La conversation avec <strong>{confirmAction.convName}</strong> sera restaurée dans votre liste principale.</>}
               {confirmAction.type === 'quit' && <>Vous quitterez le groupe <strong>{confirmAction.convName}</strong>. Vous ne recevrez plus de messages de ce groupe.</>}
             </div>

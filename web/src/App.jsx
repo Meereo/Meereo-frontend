@@ -61,11 +61,23 @@ function OnboardingGuard({ children }) {
   return children
 }
 
+// NAV-01: Logged-in users should never see the landing page — redirect to their workspace
+function LandingGuard({ children }) {
+  const { store } = useMeereo()
+  const user = store.user || store._cachedUser
+  if (store._checking) return null
+  if (user) {
+    const dest = user.type === 'pro' ? '/cockpit' : user.type === 'client' ? '/client' : user.type === 'fournisseur' ? '/fournisseur' : '/cockpit'
+    return <Navigate to={dest} replace />
+  }
+  return children
+}
+
 export default function App() {
   return (
     <HydrationGate>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<LandingGuard><Landing /></LandingGuard>} />
         <Route path="/onboarding/*" element={<OnboardingGuard><Onboarding /></OnboardingGuard>} />
         <Route path="/cockpit/*" element={<RoleGuard allowedRole="pro"><Cockpit /></RoleGuard>} />
         <Route path="/fournisseur/*" element={<RoleGuard allowedRole="fournisseur"><Supplier /></RoleGuard>} />

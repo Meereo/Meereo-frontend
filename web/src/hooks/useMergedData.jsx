@@ -185,7 +185,8 @@ export function useMergedData() {
   const badgeCounts = useMemo(() => ({
     offresEnAttente: offers.filter(o => o.statut === OFFER_STATUS.PENDING).length,
     messagesNonLus: (store.conversations || []).reduce((s, c) => s + (c.unread || 0), 0),
-    aoOuverts: (store.aos || []).filter(a => a.status === 'open').length,
+    // ANN-03: Show count of NEW AOs (< 48h) for sidebar notification badge
+    aoOuverts: (store.aos || []).filter(a => a.status === 'open' && a.createdAt && (Date.now() - new Date(a.createdAt).getTime()) < 48 * 3600 * 1000).length,
   }), [offers, store.conversations, store.aos])
 
   return {

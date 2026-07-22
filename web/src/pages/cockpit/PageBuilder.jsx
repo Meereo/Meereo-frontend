@@ -6,7 +6,9 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 export default function PageBuilder() {
   const [sections, setSections] = useState(null)
   const [loading, setLoading] = useState(true)
-  const { showToast } = useMeereo()
+  const { store, showToast } = useMeereo()
+  const slug = store.user?.slug || store.user?.publicId
+  const publicUrl = slug ? `${window.location.origin}/pro/${slug}` : null
 
   useEffect(() => {
     api.usersApi.getPageSections()
@@ -38,6 +40,7 @@ export default function PageBuilder() {
         onSave={handleSave}
         onPublish={handleSave}
         onClose={() => window.history.back()}
+        publicUrl={publicUrl}
       />
     </div>
   )

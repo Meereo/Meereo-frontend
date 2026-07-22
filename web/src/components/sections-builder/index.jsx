@@ -28,7 +28,7 @@ function PreviewModal({ sections, onClose }) {
 // onSave(sections): called when user saves
 // onPublish(sections): called when user publishes
 // onClose: called when user closes the builder
-export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle }) {
+export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle, publicUrl }) {
   const [sections, setSections] = useState(() => initialSections?.length ? deepClone(initialSections) : deepClone(DEFAULT_PAGE));
   const [selectedId, setSelectedId] = useState(null);
   const [pageTitle, setPageTitle] = useState(initialTitle || "Ma page pro");
@@ -80,7 +80,7 @@ export default function SectionsBuilder({ initialSections, onSave: onSaveProp, o
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-white font-sans select-none">
       <TopBar pageTitle={pageTitle} setPageTitle={(t) => { setPageTitle(t); markUnsaved(); }} saveStatus={saveStatus}
-        onSave={handleSave} onPreview={() => setShowPreview(true)} onPublish={handlePublish} onClose={onClose} device={device} setDevice={setDevice} />
+        onSave={handleSave} onPreview={() => setShowPreview(true)} onPublish={handlePublish} onClose={onClose} device={device} setDevice={setDevice} publicUrl={publicUrl} />
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <LeftSidebar onAdd={addSection} onDragStart={setDraggedTemplate} />
         <Canvas sections={sections} selectedId={selectedId} onSelect={setSelectedId} onUpdate={handleUpdate} onMove={handleMove} onDuplicate={handleDuplicate} onDelete={handleDelete} onDropFromLibrary={handleDropFromLibrary} device={device} />

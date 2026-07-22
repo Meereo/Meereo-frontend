@@ -35,8 +35,8 @@ router.get('/', requireAuth, async (req, res, next) => {
             // onboardingData contient bio, services, RCCM, email, téléphone, ville…
             // partagé volontairement par le prestataire dans son profil
             onboardingData: true,
-            proProfile: { select: { entreprise: true } },
-            fournisseurProfile: { select: { entreprise: true } },
+            proProfile: { select: { entreprise: true, logoFileUrl: true, activeLogoType: true, logoColor: true } },
+            fournisseurProfile: { select: { entreprise: true, logoFileUrl: true } },
           },
         },
         ao: { select: { id: true, title: true, lot: true, ownerUserId: true, projectId: true, owner: { select: { id: true, name: true, company: true, publicId: true } } } },
@@ -64,7 +64,7 @@ router.get('/compare/:aoId', requireAuth, async (req, res, next) => {
           select: {
             id: true, name: true, company: true, publicId: true, verified: true,
             onboardingData: true,
-            proProfile: { select: { entreprise: true, ville: true, pays: true, bio: true, secteurs: true, services: true, effectif: true, annee: true } },
+            proProfile: { select: { entreprise: true, ville: true, pays: true, bio: true, secteurs: true, services: true, effectif: true, annee: true, logoFileUrl: true, activeLogoType: true, logoColor: true } },
           },
         },
       },

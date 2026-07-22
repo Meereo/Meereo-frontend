@@ -6,10 +6,13 @@ import { ClipboardList, Clock, CheckCircle2, XCircle, Star, FileText, Archive, B
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { useDevise } from '../../hooks/useDevise'
 
-// Résolution du logo d'une offre : logo réel > lookup statique > initiales
+// Résolution du logo d'une offre : logo réel (source unique proProfile) > initiales colorées
 function getOfferAvatar(offer) {
-  if (offer?.logoUrl) return { type: 'img', value: offer.logoUrl, initials: '' }
-  return getEntrepriseAvatar(offer?.entreprise) || { type: null, initials: (offer?.entreprise || '').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() }
+  const logoUrl = offer?.logoUrl || offer?.supplier?.proProfile?.logoFileUrl || offer?.supplier?.fournisseurProfile?.logoFileUrl || offer?.supplier?.onboardingData?.logoFileUrl || null
+  if (logoUrl && !logoUrl.startsWith('data:')) return { type: 'img', value: logoUrl, initials: '' }
+  const initials = (offer?.entreprise || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const color = offer?.supplier?.proProfile?.logoColor || offer?.logoColor || '#191c1d'
+  return { type: 'color', value: color, initials }
 }
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
@@ -27,7 +30,7 @@ const FILTERS = [
   { key: OFFER_STATUS.REJECTED, label: 'Refusées' },
 ]
 
-// Délai d'archivage : offre dûcidûe depuis plus de 30 jours
+// Délai d'archivage : offre décidée depuis plus de 30 jours
 const ARCHIVE_DAYS = 30
 function isArchivable(offer) {
   if (offer.statut === OFFER_STATUS.PENDING) return false
@@ -92,7 +95,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
   const [infoMessage, setInfoMessage] = useState('')
   const [viewerDoc, setViewerDoc] = useState(null) // { url, name } for PDF viewer modal
 
-  // Le backend filtre dûjé les offres par utilisateur (offres sur ses AOs pour un client,
+  // Le backend filtre déjà les offres par utilisateur (offres sur ses AOs pour un client,
   // offres soumises pour un pro). On utilise rawOffres directement.
   const isClient = store.user?.type === 'client'
   const allOffres = useMemo(() => rawOffres, [rawOffres])
@@ -282,11 +285,11 @@ export default function Offers({ showToast, openModal, onNavigate }) {
         <div className="split-right">
           {!selected ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <DSEmptyState icon={<ClipboardList size={24}/>} title="Sélectionnez une offre" description="Choisissez une offre dans la liste pour voir le dûtail et dûcider." />
+              <DSEmptyState icon={<ClipboardList size={24}/>} title="Sélectionnez une offre" description="Choisissez une offre dans la liste pour voir le détail et décider." />
             </div>
           ) : (
             <div>
-              {/* Banniére statut si dûcision prise */}
+              {/* Bannière statut si décision prise */}
               {selected.statut !== OFFER_STATUS.PENDING && (
                 <div style={{ padding: '12px 18px', marginBottom: 20, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', ...(selected.statut === OFFER_STATUS.ACCEPTED ? { background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)' } : { background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.1)' }) }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -363,7 +366,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* Mémoire technique / Description dûtaillée */}
+              {/* Mémoire technique / Description détaillée */}
               {(selected.technique || selected.description) && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Détails techniques</div>
@@ -521,7 +524,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 </div>
               )}
 
-              {/* Boutons dûcision — uniquement pour le propriétaire de l'AO (client/pro qui a publié) */}
+              {/* Boutons décision — uniquement pour le propriétaire de l'AO (client/pro qui a publié) */}
               {isClient ? (
                 <div style={{ display: 'flex', gap: 8 }}>
                   {selected.statut === OFFER_STATUS.PENDING && (
@@ -541,7 +544,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     ? <><CheckCircle2 size={16} color="var(--ok)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ok)' }}>Offre acceptée — vous avez obtenu ce marché !</span></>
                     : selected.statut === OFFER_STATUS.REJECTED
                     ? <><XCircle size={16} color="var(--err)" /><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--err)' }}>Offre non retenue</span></>
-                    : <><Clock size={16} color="var(--t4)" /><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>En attente de dûcision du client</span></>}
+                    : <><Clock size={16} color="var(--t4)" /><span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>En attente de décision du client</span></>}
                 </div>
               )}
             </div>

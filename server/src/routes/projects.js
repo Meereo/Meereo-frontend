@@ -278,6 +278,25 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       }).catch(() => {})
     }
 
+    // ── AVS-01: Auto-invite client to review pro on mission close ──
+    const isClosing = (data.clotureStatus === 'CLOTURE_VALIDE_EXTERNE' || data.clotureStatus === 'CLOTURE_VALIDE_MEEREO' || data.status === 'completed')
+      && project.clientId && project.clientId !== req.user.id
+    if (isClosing) {
+      // Check if client already reviewed this project
+      const existingReview = await prisma.review.findFirst({ where: { projectId: project.id, authorId: project.clientId } }).catch(() => null)
+      if (!existingReview) {
+        const { createAndPushNotification } = require('../utils/notify')
+        createAndPushNotification({
+          userId: project.clientId,
+          msg: `Mission terminée : évaluez votre prestataire pour le projet « ${project.nom} »`,
+          type: 'green',
+          page: 'projets',
+          relatedId: project.id,
+          senderId: req.user.id,
+        }).catch(() => {})
+      }
+    }
+
     // ── Emit project:updated for real-time sync across all project participants ──
     try {
       const { getIo } = require('../socket')

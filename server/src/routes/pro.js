@@ -141,6 +141,7 @@ router.get('/:identifier', async (req, res, next) => {
       verified: user.verified,
       createdAt: user.createdAt,
       profile,
+      pagePublished: pro.pagePublished || false,
       pageSections: pro.pageSections || [],
       stats,
       reviews: reviews.map(r => ({
@@ -275,15 +276,36 @@ router.post('/request-verification', requireAuth, async (req, res, next) => {
       })
     }
 
-    // Créer une notification pour les admins (verification pending)
+    // INS-04: Verify RCCM number matches the one declared at registration
+    const proProfile = await prisma.proProfile.findUnique({ where: { userId }, select: { rccm: true } })
+    const registeredRccm = (proProfile?.rccm || '').toUpperCase().replace(/[\s]/g, '')
+    const submittedRccm = rccm.toUpperCase().replace(/[\s]/g, '')
+
+    if (registeredRccm && submittedRccm && registeredRccm === submittedRccm) {
+      // RCCM matches — auto-verify the professional (INS-04 badge activation)
+      await prisma.user.update({
+        where: { id: userId },
+        data: { verified: true },
+      })
+      // Notify the pro about successful verification
+      await prisma.notification.create({
+        data: { userId, type: 'green', message: 'Votre entreprise est désormais vérifiée par MEEREO. Le badge est actif sur toutes les interfaces.', link: '/pro', read: false },
+      }).catch(() => {})
+
+      return res.json({ success: true, verified: true, message: 'RCCM vérifié avec succès. Badge « Vérifié par MEEREO » activé.' })
+    }
+
+    // RCCM doesn't match or not verifiable automatically — notify admins for manual review
     const admins = await prisma.user.findMany({ where: { role: 'admin' }, select: { id: true } })
     for (const admin of admins) {
       await prisma.notification.create({
-        data: { userId: admin.id, type: 'verification_request', message: `Demande de vérification : ${od.entreprise || 'Professionnel'} — RCCM: ${rccm}`, link: '/admin', read: false },
+        data: { userId: admin.id, type: 'verification_request', message: `Demande de vérification : ${od.entreprise || 'Professionnel'} — RCCM: ${rccm}${registeredRccm !== submittedRccm ? ' (écart avec inscription: ' + registeredRccm + ')' : ''}`, link: '/admin', read: false },
       }).catch(() => {})
     }
 
-    res.json({ success: true, message: 'Demande de vérification envoyée. Vous serez notifié une fois la vérification effectuée.' })
+    res.json({ success: true, verified: false, message: registeredRccm !== submittedRccm
+      ? 'Le numéro RCCM soumis ne correspond pas à celui de l\'inscription. Un administrateur va vérifier votre dossier.'
+      : 'Demande de vérification envoyée. Vous serez notifié une fois la vérification effectuée.' })
   } catch (e) { next(e) }
 })
 

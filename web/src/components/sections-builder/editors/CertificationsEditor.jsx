@@ -14,14 +14,14 @@ export default function CertificationsEditor({ data, sectionType, onChange }) {
       <ListHeader label="Certifications" onAdd={addCert} />
       {(data.certs || []).map((c) => (
         <ListItemWrapper key={c.id} onRemove={() => removeCert(c.id)}>
-          <TextField label="Intitule" value={c.name} onChange={(v) => updateCert(c.id, "name", v)} />
+          <TextField label="Intitulé" value={c.name} onChange={(v) => updateCert(c.id, "name", v)} />
           {sectionType === "cert-register" && (
             <TextField label="Organisme" value={c.issuer || ""} onChange={(v) => updateCert(c.id, "issuer", v)} />
           )}
           {sectionType === "cert-seals" && (
             <TextField label="Monogramme (2-3 lettres)" value={c.mark || ""} onChange={(v) => updateCert(c.id, "mark", v)} />
           )}
-          <TextField label="Annee" value={c.year || ""} onChange={(v) => updateCert(c.id, "year", v)} />
+          <TextField label="Année" value={c.year || ""} onChange={(v) => updateCert(c.id, "year", v)} />
         </ListItemWrapper>
       ))}
     </div>

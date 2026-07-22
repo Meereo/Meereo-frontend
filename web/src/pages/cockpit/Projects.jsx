@@ -14,7 +14,7 @@ import { useDevise } from '../../hooks/useDevise'
 import { DSPageHeader, DSFilterBar, DSEmptyState } from '../../design/components'
 import AoGear from '../../components/shared/AoGear'
 import { computeProjectAvancement } from '../../domain/projectAggregates'
-import { PHASE_LABELS, normalizePhase } from '../../domain/status'
+import { PHASE_LABELS, normalizePhase, PROJECT_COLOR_PALETTE } from '../../domain/status'
 import { formatDateFR } from '../../utils/helpers'
 import { CHANTIER_PHASES } from '../../data/chantier'
 import compressImage from '../../utils/compressImage'
@@ -79,7 +79,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
   const { store, updateStore, createProject } = useMeereo()
   const isClient = store.user?.type === 'client'
 
-  const blank = { nom: '', type: 'Maison / Villa', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '' }
+  const blank = { nom: '', type: 'Maison / Villa', client: '', clientEmail: '', budget: '', livraison: '', localisation: '', priorite: 'Normale', description: '', color: '' }
   const [f, setF] = useState(blank)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -122,7 +122,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
     createProject({
       id: projId, name: f.nom, type: f.type, budget: f.budget, address: f.localisation,
       phase: 'ESQUISSE', livraison: f.livraison, priorite: f.priorite, description: f.description,
-      client: f.client, clientEmail: f.clientEmail,
+      client: f.client, clientEmail: f.clientEmail, color: f.color || undefined,
       // Parcours d'accompagnement
       accompagnement: proMode === 'kai' ? 'recherche' : proMode === 'decouverte' ? 'decouverte' : undefined,
       searchArchitect: proMode === 'kai',
@@ -193,6 +193,14 @@ function ProjetModal({ isOpen, onClose, showToast }) {
           <div><label className="form-label">Priorité</label><select className="form-input" value={f.priorite} onChange={e => setF(p => ({ ...p, priorite: e.target.value }))}><option>Normale</option><option>Haute</option><option>Critique</option></select></div>
         </div>
         <div><label className="form-label">Description</label><textarea className="form-input" rows="2" placeholder="Contexte, objectifs..." value={f.description} onChange={e => setF(p => ({ ...p, description: e.target.value }))} /></div>
+        <div>
+          <label className="form-label">Couleur du projet</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {PROJECT_COLOR_PALETTE.map(c => (
+              <button key={c} onClick={() => setF(p => ({ ...p, color: p.color === c ? '' : c }))} style={{ width: 24, height: 24, borderRadius: 6, background: c, border: f.color === c ? '2px solid var(--tx)' : '2px solid transparent', cursor: 'pointer', outline: f.color === c ? '2px solid rgba(0,0,0,.1)' : 'none' }} />
+            ))}
+          </div>
+        </div>
 
         {/* ── Section professionnel d'accompagnement (client uniquement) ── */}
         {isClient && (
@@ -550,7 +558,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
             </div>
           ) : !selected ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <DSEmptyState icon={<HardHat size={24}/>} title="Sélectionnez un projet" description="Choisissez un projet dans la liste pour voir le dûtail." />
+              <DSEmptyState icon={<HardHat size={24}/>} title="Sélectionnez un projet" description="Choisissez un projet dans la liste pour voir le détail." />
             </div>
           ) : (
             <div>
@@ -740,7 +748,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                       </div>
                     ))}
                     {proofs.length > 0 && (
-                      <div style={{ marginTop: 10, fontSize: 10, color: 'var(--t4)' }}>{proofs.length} preuve(s) dûposée(s)</div>
+                      <div style={{ marginTop: 10, fontSize: 10, color: 'var(--t4)' }}>{proofs.length} preuve(s) déposée(s)</div>
                     )}
                   </div>
                 )
@@ -995,7 +1003,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <div className="modal-row">
                   <div><label className="form-label">Phase</label>
                     <select className="form-input" value={editModal.phase} onChange={e => setEditModal(p => ({ ...p, phase: e.target.value }))}>
-                      {[['ESQUISSE','Esquisse'],['AVANT_PROJET','Avant-projet'],['PROJET_DETAILLE','Projet dûtaillé'],['PLANS_EXECUTION','Plans d\'exécution'],['CONSULTATION_ENTREPRISES','Consultation des entreprises'],['ATTRIBUTION_MARCHES','Attribution des marchés'],['SUIVI_CHANTIER','Suivi de chantier'],['RECEPTION','Réception du projet']].map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+                      {[['ESQUISSE','Esquisse'],['AVANT_PROJET','Avant-projet'],['PROJET_DETAILLE','Projet détaillé'],['PLANS_EXECUTION','Plans d\'exécution'],['CONSULTATION_ENTREPRISES','Consultation des entreprises'],['ATTRIBUTION_MARCHES','Attribution des marchés'],['SUIVI_CHANTIER','Suivi de chantier'],['RECEPTION','Réception du projet']].map(([k,l]) => <option key={k} value={k}>{l}</option>)}
                     </select>
                   </div>
                   <div><label className="form-label">Priorité</label>
@@ -1135,7 +1143,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
               </div>
               <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Archiver ce projet ?</div>
-              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>Le projet sera retiré de la liste active et dûplacé dans les archives. Vous pourrez le consulter depuis la section Archivés.</div>
+              <div style={{ fontSize: 13, color: '#666', lineHeight: 1.55 }}>Le projet sera retiré de la liste active et déplacé dans les archives. Vous pourrez le consulter depuis la section Archivés.</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#111', marginTop: 8 }}>« {archiveConfirm.nom} »</div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,.06)', display: 'flex', gap: 10 }}>
@@ -1171,7 +1179,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {memberTab === 'existant' && (
                 <div>
                   <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Recherchez parmi vos collaborateurs et intervenants dûjé enregistrès dans votre environnement MEEREO.</div>
+                    <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.5 }}>Recherchez parmi vos collaborateurs et intervenants déjà enregistrés dans votre environnement MEEREO.</div>
                     <input placeholder="Rechercher par nom, métier, rôle..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} style={{ ...inputStyle, padding: '8px 12px' }} />
                   </div>
                   {(() => {

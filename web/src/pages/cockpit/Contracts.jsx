@@ -184,7 +184,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
       {/* Pipeline KPI */}
       <DSKpiStrip hero items={[
         { value: total, label: 'Total', sub: 'contrats' },
-        { value: signes, label: 'Signés', sub: 'à dûmarrer' },
+        { value: signes, label: 'Signés', sub: 'à démarrer' },
         { value: enCours, label: 'En cours', sub: 'Missions actives', color: '#F59E0B' },
         { value: livres, label: 'Livrés', sub: 'Terminés', color: 'var(--ok)' },
       ]} />
@@ -312,65 +312,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
               const railMeta = RAIL_META[rec.rail]
               const commission = calculateCommission('services', amount)
               return (
-                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Paiement & sécurisation</div>
-                  {po ? (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <PaymentBadge status={po.status} />
-                        <span style={{ fontSize: 10, color: 'var(--t4)' }}>Réf. {po.id.slice(-8)}</span>
-                      </div>
-                      {po.status === PAY_STATUS.CONFIRMED && (
-                        <button className="btn btn-sm" style={{ width: '100%', marginTop: 4 }} onClick={() => { updatePaymentStatus(po.id, PAY_STATUS.HELD); showToast && showToast('Fonds sécurisés pour ce marché') }}>Cantonner pour milestone</button>
-                      )}
-                      {po.status === PAY_STATUS.HELD && (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                          <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => {
-                            const proofs = (store.proofDocuments || []).filter(p => p.payoutRequestId === po.id)
-                            if (proofs.length === 0) { showToast && showToast('Déposez une preuve avant de demander la libération'); return }
-                            updatePaymentStatus(po.id, PAY_STATUS.PAYOUT_REQ); showToast && showToast('Demande de libération envoyée')
-                          }}>Demander la libération</button>
-                          <button className="btn btn-sm" style={{ fontSize: 10 }} onClick={() => {
-                            const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,.pdf'
-                            input.onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const { uploadFile } = await import('../../utils/upload'); const url = await uploadFile(f, 'proofs', f.name); uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: url }); showToast && showToast('Preuve dûposée') } catch(err) { const reader = new FileReader(); reader.onload = () => { uploadProof({ paymentOrderId: po.id, type: 'pv_signe', fileUrl: reader.result }); showToast && showToast('Preuve dûposée') }; reader.readAsDataURL(f) } }
-                            input.click()
-                          }}>Preuve</button>
-                        </div>
-                      )}
-                      {po.status === PAY_STATUS.PAYOUT_REQ && (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                          <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => { updatePaymentStatus(po.id, 'PAYOUT_DONE'); showToast && showToast('Versement effectué') }}>Simuler le versement</button>
-                          <button className="btn btn-danger btn-sm" style={{ fontSize: 10 }} onClick={() => { openDispute(po.id, 'Contestation sur le marché ' + (detail.titre || '')); showToast && showToast('Litige ouvert') }}>Signaler un litige</button>
-                        </div>
-                      )}
-                      {po.status === 'PAYOUT_DONE' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--ok)', marginTop: 4 }}>Fonds transférés au bénéficiaire</div>}
-                      {po.status === 'DISPUTE_OPEN' && <div style={{ padding: '8px 12px', background: 'rgba(220,38,38,.04)', borderRadius: 8, border: '1px solid rgba(220,38,38,.1)', marginTop: 4, fontSize: 11, color: 'var(--err)', fontWeight: 600 }}>Litige en cours — libérations gelées</div>}
-                      {po.status === 'REVERSED' && <div style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--t3)', marginTop: 4 }}>Fonds remboursés au payeur</div>}
-                    </div>
-                  ) : (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        {(() => { const RI = RAIL_ICONS[rec.rail]; return RI ? <RI size={16}/> : <span style={{ fontSize: 16 }}>{railMeta?.icon}</span> })()}
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{railMeta?.label}</div>
-                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{rec.reason}</div>
-                        </div>
-                      </div>
-                      {amount > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--t4)', marginBottom: 8 }}>
-                          <span>Montant : {formatShort(amount)}</span>
-                          <span>Commission : {formatShort(commission)}</span>
-                        </div>
-                      )}
-                      <button className="btn btn-primary btn-sm" style={{ width: '100%' }} onClick={() => {
-                        const order = createPaymentOrder({ type: 'marche', marketId: detail.id, projectId: detail.projectId, amount, commission, beneficiaryId: detail.entreprise, railRecommended: rec.rail, label: detail.titre || 'Marché' })
-                        setTimeout(() => updatePaymentStatus(order.id, PAY_STATUS.PENDING), 500)
-                        setTimeout(() => { updatePaymentStatus(order.id, PAY_STATUS.CONFIRMED); showToast && showToast('Fonds confirmés — marché sécurisé') }, 2000)
-                        setDetail({ ...detail })
-                      }}>Sécuriser le paiement</button>
-                    </div>
-                  )}
-                </div>
+                {/* PRJ-01 / FIN-01: Section "Paiement & sécurisation" supprimée — suivi financier désormais dans le module Finance */}
               )
             })()}
 
@@ -386,7 +328,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                 {(detail.statut === MARKET_STATUS.IN_PROGRESS || detail.statut === MARKET_STATUS.COMPLETED) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--wrn)', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--t2)' }}>Mission dûmarrée</span>
+                    <span style={{ color: 'var(--t2)' }}>Mission démarrée</span>
                   </div>
                 )}
                 {detail.statut === MARKET_STATUS.COMPLETED && (
@@ -419,17 +361,11 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                   }))
                   setDetail(prev => ({ ...prev, statut: newStatut, ...extraFields }))
                 }
+                // PRJ-01: Bouton "Démarrer le marché" supprimé — la mission démarre automatiquement à la validation
                 if (detail.statut === MARKET_STATUS.SIGNED) return (
-                  isOwner ? (
-                    <button className="btn btn-primary" style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', fontSize: 13 }} onClick={async () => {
-                      await updateMarketStatus(MARKET_STATUS.IN_PROGRESS)
-                      showToast && showToast('Mission dûmarrée — ' + detail.entreprise)
-                    }}>Démarrer la mission</button>
-                  ) : (
-                    <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.12)', textAlign: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wrn)' }}>⏳ En attente du dûmarrage par le maître d'ouvrage</span>
-                    </div>
-                  )
+                  <div style={{ flex: 1, padding: '11px 16px', borderRadius: 10, background: 'rgba(52,199,89,.06)', border: '1px solid rgba(52,199,89,.12)', textAlign: 'center' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ok)' }}>Mission en cours — marché validé automatiquement</span>
+                  </div>
                 )
                 if (detail.statut === MARKET_STATUS.IN_PROGRESS) return (
                   <>
