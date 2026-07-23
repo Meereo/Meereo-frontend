@@ -111,7 +111,7 @@ router.get('/:identifier', async (req, res, next) => {
       ville: od.ville || pro.ville || user.ville || 'Abidjan',
       pays: od.pays || pro.pays || "Côte d'Ivoire",
       tel: od.tel || od.telPro || pro.tel || '',
-      email: od.email || emailPro || '',
+      email: od.email || od.emailPro || '',
       annee: od.annee || pro.annee || null,
       rccm: od.rccm || pro.rccm || null,
       secteurs: od.secteurs || pro.secteurs || [],
