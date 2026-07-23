@@ -1,51 +1,18 @@
-import { TextField, CheckboxField, Divider, ListHeader, ListItemWrapper } from "./_fields";
+/* AVS-01: la création/gestion manuelle des avis est SUPPRIMÉE de l'éditeur.
+   Les avis sont entièrement générés par le système à la fin de chaque mission.
+   Cet éditeur est en lecture seule — il affiche les avis réels depuis l'API. */
 
-let _uid = Date.now();
-const uid = () => `rev-${_uid++}`;
-
-export default function ReviewsEditor({ data, sectionType, onChange }) {
-  const set = (k, v) => onChange({ ...data, [k]: v });
-
-  if (sectionType === "review-testimony") {
-    return (
-      <div>
-        <TextField label="Citation" value={data.quote || ""} onChange={(v) => set("quote", v)} multiline />
-        <TextField label="Auteur" value={data.author || ""} onChange={(v) => set("author", v)} />
-        <TextField label="Projet" value={data.project || ""} onChange={(v) => set("project", v)} />
-        <CheckboxField label="Retour verifie MEEREO" checked={data.verified ?? true} onChange={(v) => set("verified", v)} />
-      </div>
-    );
-  }
-
-  if (sectionType === "review-structured") {
-    return (
-      <div>
-        <TextField label="Contexte" value={data.context || ""} onChange={(v) => set("context", v)} multiline />
-        <TextField label="Ce qui a ete livre" value={data.delivered || ""} onChange={(v) => set("delivered", v)} multiline />
-        <TextField label="Retour du client" value={data.feedback || ""} onChange={(v) => set("feedback", v)} multiline />
-        <Divider />
-        <TextField label="Auteur" value={data.author || ""} onChange={(v) => set("author", v)} />
-        <CheckboxField label="Retour verifie MEEREO" checked={data.verified ?? true} onChange={(v) => set("verified", v)} />
-      </div>
-    );
-  }
-
-  // review-journal
-  const updateReview = (id, k, v) => set("reviews", (data.reviews || []).map((r) => r.id === id ? { ...r, [k]: v } : r));
-  const addReview = () => set("reviews", [...(data.reviews || []), { id: uid(), date: "", quote: "", author: "", project: "", verified: true }]);
-  const removeReview = (id) => set("reviews", (data.reviews || []).filter((r) => r.id !== id));
+export default function ReviewsEditor({ data, sectionType }) {
   return (
-    <div>
-      <ListHeader label="Retours" onAdd={addReview} />
-      {(data.reviews || []).map((r) => (
-        <ListItemWrapper key={r.id} onRemove={() => removeReview(r.id)}>
-          <TextField label="Date (ex: JANV. 2025)" value={r.date || ""} onChange={(v) => updateReview(r.id, "date", v)} />
-          <TextField label="Citation" value={r.quote || ""} onChange={(v) => updateReview(r.id, "quote", v)} multiline />
-          <TextField label="Auteur" value={r.author || ""} onChange={(v) => updateReview(r.id, "author", v)} />
-          <TextField label="Projet" value={r.project || ""} onChange={(v) => updateReview(r.id, "project", v)} />
-          <CheckboxField label="Verifie MEEREO" checked={r.verified ?? true} onChange={(v) => updateReview(r.id, "verified", v)} />
-        </ListItemWrapper>
-      ))}
+    <div style={{ padding: '16px 0' }}>
+      <div style={{ padding: '12px 14px', background: 'rgba(99,102,241,.06)', border: '1px solid rgba(99,102,241,.15)', borderRadius: 10, fontSize: 12, color: 'var(--t3)', lineHeight: 1.6 }}>
+        <strong>Section automatique.</strong> Les avis sont générés par le système à la fin de chaque mission validée. Cette section ne peut pas être modifiée manuellement.
+      </div>
+      {data.reviews && data.reviews.length > 0 && (
+        <div style={{ marginTop: 12, fontSize: 11, color: 'var(--t4)' }}>
+          {data.reviews.length} avis affichés sur votre page.
+        </div>
+      )}
     </div>
   );
 }

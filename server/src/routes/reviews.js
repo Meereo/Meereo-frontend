@@ -46,9 +46,18 @@ router.post('/', requireAuth, async (req, res, next) => {
       }
     }
 
-    // Seul un client peut évaluer un professionnel (pas l'inverse)
+    // AVS-01: évaluation croisée — client→pro ET pro→intervenant
+    // Un pro peut évaluer un autre pro/intervenant avec qui il a travaillé sur un projet
     if (req.user.type === 'pro') {
-      throw createError('Seul un client peut évaluer un professionnel', 403)
+      const sharedProjectAsPro = await prisma.projectMember.findFirst({
+        where: {
+          userId: targetId,
+          project: { ownerId: req.user.id },
+        },
+      })
+      if (!sharedProjectAsPro) {
+        throw createError('Vous ne pouvez évaluer que les intervenants de vos projets', 403)
+      }
     }
 
     const review = await prisma.review.upsert({

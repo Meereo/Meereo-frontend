@@ -16,6 +16,7 @@ const ROLES = {
   BET: 'bet',
   ENTREPRISE: 'entreprise',
   SUPPLIER: 'fournisseur',
+  INTERVENANT: 'intervenant',  // PRJ-05/I3: sous-traité, accès nul sauf messagerie
   ADMIN: 'admin',
 }
 
@@ -46,6 +47,11 @@ const BASE_PERMISSIONS = {
   assign_task: [ROLES.PRO_ADMIN, ROLES.ARCHITECTE],
   advance_task: [ROLES.PRO_ADMIN, ROLES.ARCHITECTE, ROLES.ENTREPRISE, ROLES.BET],
   validate_task: [ROLES.CLIENT, ROLES.ARCHITECTE],
+
+  // Messagerie — PRJ-05/I3 + MSG-07: l'intervenant sous-traité peut uniquement participer à la messagerie
+  send_message: [ROLES.PRO_ADMIN, ROLES.PRO_MEMBER, ROLES.CLIENT, ROLES.ARCHITECTE, ROLES.BET, ROLES.ENTREPRISE, ROLES.SUPPLIER, ROLES.INTERVENANT],
+  // L'intervenant n'a accès à RIEN d'autre sur le projet sous-traité (I3)
+  // Son rôle n'apparaît dans aucune autre action ci-dessus = accès nul par défaut
 }
 
 // ── Restrictions par état de workflow ──

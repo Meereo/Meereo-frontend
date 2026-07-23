@@ -53,6 +53,22 @@ router.post('/', requireAuth, async (req, res, next) => {
     if (!ref) throw createError('ref requis', 400)
     if (!total && total !== 0) throw createError('total requis', 400)
 
+    // MKT-01: vérifier et décrémenter le stock des produits commandés
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        if (item.productId) {
+          const product = await prisma.product.findUnique({ where: { id: item.productId }, select: { stock: true, name: true } })
+          const qty = parseInt(item.quantity || item.qty) || 1
+          if (product && product.stock < qty) {
+            throw createError(`Stock insuffisant pour "${product.name}" (disponible : ${product.stock}, demandé : ${qty})`, 400)
+          }
+          if (product) {
+            await prisma.product.update({ where: { id: item.productId }, data: { stock: { decrement: qty } } })
+          }
+        }
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         ref,

@@ -7,7 +7,7 @@ export default function Catalogue({ ctx }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          {[['all', 'Tous (' + activeProducts.length + ')'], ['sponsored', 'Sponsorises (' + sponsoredProducts.length + ')'], ['flash', 'Flash (' + flashProducts.length + ')']].map(([k, l]) => (
+          {[['all', 'Tous (' + activeProducts.length + ')'], ...(sponsoredProducts.length > 0 ? [['sponsored', 'Sponsorisés (' + sponsoredProducts.length + ')']] : []), ...(flashProducts.length > 0 ? [['flash', 'Flash (' + flashProducts.length + ')']] : [])].map(([k, l]) => (
             <button key={k} onClick={() => setCatalogFilter(k)} style={{ padding: '5px 12px', borderRadius: 100, border: catalogFilter === k ? '1.5px solid var(--tx)' : '1px solid var(--border-subtle)', background: catalogFilter === k ? 'var(--tx)' : 'var(--surface-1)', color: catalogFilter === k ? '#fff' : 'var(--t2)', fontSize: 11, fontWeight: catalogFilter === k ? 700 : 500, cursor: 'pointer', fontFamily: 'var(--f)' }}>{l}</button>
           ))}
         </div>

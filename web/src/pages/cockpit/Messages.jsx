@@ -253,9 +253,20 @@ export default function Messages({ showToast }) {
         const myId = store.user?.id
         const otherParticipants = participants.filter(p => p.id !== myId)
         const firstOther = otherParticipants[0]
-        const nom = c.isGroup
-          ? (c.title || 'Groupe')
-          : (firstOther?.name || 'Contact')
+        // MSG-04: nommage contextuel — pro voit le projet seul, client voit projet + entreprise
+        const userType = store.user?.type
+        let nom
+        if (c.isGroup) {
+          nom = c.title || 'Groupe'
+        } else if (c.projectId || c.type === 'projet') {
+          const projName = c.projectName || c.title || ''
+          const otherName = firstOther?.company || firstOther?.name || ''
+          nom = userType === 'client' && projName && otherName
+            ? `${projName} — ${otherName}`
+            : projName || otherName || firstOther?.name || 'Contact'
+        } else {
+          nom = firstOther?.company || firstOther?.name || 'Contact'
+        }
         // Photo réelle : priorité au champ photoUrl pré-calculé côté serveur
         const photoUrl = !c.isGroup
           ? (firstOther?.photoUrl ||

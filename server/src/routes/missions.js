@@ -6,27 +6,51 @@ const { getIo } = require('../socket')
 
 const router = Router()
 
-// ─── Jalons prédéfinis par type de mission ────────────────────────────────────
+// ─── PRJ-07 / FIN-01: 7 phases FIXES alignées avec la spec v1.27 ─────────────
+// Alignées avec web/src/data/chantier.js (CHANTIER_PHASES)
 const MISSION_JALONS = {
+  conception_etudes: [
+    'Relevé de mesures', 'Analyse du site', 'Faisabilité', 'Esquisse',
+    'Avant-projet', 'Projet détaillé', 'Estimation budgétaire',
+    'Études BET structure', 'Études BET fluides / CVC',
+    'Plans d\'exécution', 'Dossier permis de construire',
+  ],
+  preparation_lancement: [
+    'Dossier de consultation', 'Lancement des consultations', 'Réception des offres',
+    'Analyse des offres', 'Choix des entreprises', 'Attribution des marchés',
+    'Signature des marchés', 'Planning chantier', 'Installation chantier',
+  ],
+  gros_oeuvre: [
+    'Implantation', 'Terrassement', 'Fondations', 'Soubassement', 'Dallage',
+    'Poteaux / poutres / voiles', 'Dalles', 'Charpente', 'Toiture',
+  ],
+  second_oeuvre: [
+    'Cloisons', 'Enduits', 'Faux plafonds', 'Électricité', 'Plomberie',
+    'CVC / climatisation', 'Menuiseries', 'Revêtements sols',
+    'Revêtements murs', 'Peinture', 'Équipements sanitaires', 'Finitions',
+  ],
+  materiaux_equipements: [
+    'Sélection des matériaux', 'Validation client', 'Sélection équipements',
+    'Demande de devis', 'Validation budget', 'Commande',
+    'Livraison chantier', 'Vérification conformité',
+  ],
+  mobilier_decoration: [
+    'Sélection mobilier', 'Sélection décoration', 'Validation client',
+    'Commande', 'Livraison', 'Installation', 'Mise en place finale',
+  ],
+  reception_livraison: [
+    'Nettoyage fin chantier', 'Vérifications finales', 'Pré-réception',
+    'Réception', 'Réserves', 'Levée des réserves',
+    'DOE / documents finaux', 'Remise des clés',
+  ],
+  // Legacy — compatibilité ascendante pour les projets existants
   conception_architecturale: [
     'Relevé & diagnostic', 'Esquisse', 'Avant-projet sommaire', 'Avant-projet détaillé',
     'Projet', 'Plans d\'exécution', 'Dossier de consultation', 'Suivi architectural', 'Réception',
   ],
-  etudes_structure: [
-    'Diagnostic structurel', 'Note de calcul', 'Plans de fondation', 'Plans de structure',
-    'Plans d\'exécution', 'Suivi chantier structure', 'Réception structure',
-  ],
-  etudes_fluides: [
-    'Diagnostic fluides', 'Conception CVC', 'Conception plomberie', 'Conception électricité',
-    'Plans d\'exécution', 'Suivi chantier fluides', 'Réception fluides',
-  ],
   construction: [
     'Préparation chantier', 'Terrassement', 'Fondations', 'Gros œuvre', 'Charpente',
     'Couverture', 'Second œuvre', 'Finitions', 'Réception',
-  ],
-  architecture_interieur: [
-    'Brief & concept', 'Moodboard & planches', 'Plans d\'aménagement', 'Choix matériaux',
-    'Suivi de réalisation', 'Installation mobilier', 'Réception',
   ],
 }
 

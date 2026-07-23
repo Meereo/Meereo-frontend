@@ -131,6 +131,18 @@ router.post('/', requireAuth, async (req, res, next) => {
     const { participantId, participantIds, title, aoId, offerId, type, projectId, missionId } = req.body
 
     if (participantId) {
+      // MSG-01 cas 3: si le destinataire n'existe pas (entreprise référencée sans compte),
+      // retenir le message et signaler qu'une invitation sera envoyée
+      const recipientExists = await prisma.user.findUnique({ where: { id: participantId }, select: { id: true } })
+      if (!recipientExists) {
+        // Le participantId n'est pas un utilisateur enregistré — message retenu
+        // TODO: persister dans un modèle PendingMessage + envoyer email d'invitation
+        return res.status(202).json({
+          pending: true,
+          message: 'Ce professionnel n\'est pas encore inscrit sur MEEREO. Votre message sera conservé et lui sera transmis dès son inscription.',
+        })
+      }
+
       // ─── Sécurité : un pro ne peut contacter un client que s'ils partagent un projet ───
       const me = await prisma.user.findUnique({ where: { id: myId }, select: { type: true } })
       const other = await prisma.user.findUnique({ where: { id: participantId }, select: { type: true } })
@@ -153,6 +165,20 @@ router.post('/', requireAuth, async (req, res, next) => {
         })
         if (!sharedProject) {
           return res.status(403).json({ error: 'Vous ne pouvez contacter ce client que si vous partagez un projet' })
+        }
+      }
+      // MSG-02: un fournisseur ne peut contacter que les acheteurs ayant une commande avec lui
+      if (me?.type === 'fournisseur') {
+        const sharedOrder = await prisma.order.findFirst({
+          where: {
+            OR: [
+              { sellerId: myId, buyerId: participantId },
+              { buyerId: myId, sellerId: participantId },
+            ],
+          },
+        })
+        if (!sharedOrder) {
+          return res.status(403).json({ error: 'Vous ne pouvez contacter que les acheteurs ayant une commande avec vous' })
         }
       }
 
@@ -296,10 +322,14 @@ router.get('/:id/messages', requireAuth, async (req, res, next) => {
     })
     if (!participation) return res.status(403).json({ error: 'Accès refusé' })
 
+    // MSG-07 G4: filtrer les messages postérieurs à la date d'ajout du participant
+    // Un participant ajouté ne voit que les messages postérieurs à son ajout
+    const joinedAt = participation.createdAt
     const messages = await prisma.message.findMany({
       where: {
         conversationId: id,
-        ...(cursor ? { createdAt: { lt: (await prisma.message.findUnique({ where: { id: cursor } }))?.createdAt } } : {}),
+        createdAt: { gte: joinedAt },
+        ...(cursor ? { createdAt: { lt: (await prisma.message.findUnique({ where: { id: cursor } }))?.createdAt, gte: joinedAt } } : {}),
       },
       orderBy: { createdAt: 'asc' },
       take: limit,

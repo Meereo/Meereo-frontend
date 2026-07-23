@@ -19,7 +19,7 @@ async function requireAuth(req, res, next) {
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'Non authentifié — token manquant' })
+    return res.status(401).json({ error: 'Votre session a expiré — veuillez vous reconnecter' })
   }
   let decoded
   try {

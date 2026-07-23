@@ -47,7 +47,7 @@ const FEATURES = [
   { num:'01', dot:'#EA580C', title:"Bourse des appels d'offres", desc:'Publiez vos besoins, comparez des offres qualifiées et composez votre équipe projet.' },
   { num:'02', dot:'#16A34A', title:'Marketplace intégrée', desc:'Accédez aux matériaux et équipements, commandez et faites livrer directement sur chantier.' },
   { num:'03', dot:'#0891B2', title:'Suivi & paiements sécurisés', desc:"Pilotez l'avancement, validez les étapes et sécurisez chaque flux financier." },
-  { num:'04', dot:'#7C3AED', title:'KAI — Assistant personnel IA', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets avec précision.' },
+  { num:'04', dot:'#7C3AED', title:'KAi — Assistant personnel IA', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets avec précision.' },
 ]
 
 /* ── Client data (SIMPLIFIED — 2 steps) ── */
@@ -686,7 +686,7 @@ export default function Onboarding() {
                 <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(0,0,0,.05)'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                     <div style={{width:10,height:10,borderRadius:'50%',background:'#191c1d',boxShadow:'0 0 6px rgba(124,58,237,.2), 0 0 2px rgba(124,58,237,.35)',flexShrink:0,animation:'kaiPulseLogin 3s ease-in-out infinite'}} />
-                    <span style={{fontSize:13,color:'var(--t2)',fontWeight:600,letterSpacing:'.01em'}}>KAI : prêt à reprendre votre projet en cours.</span>
+                    <span style={{fontSize:13,color:'var(--t2)',fontWeight:600,letterSpacing:'.01em'}}>KAi : prêt à reprendre votre projet en cours.</span>
                   </div>
                   <div style={{fontSize:12,color:'var(--t3)',paddingLeft:18,lineHeight:1.55}}>Analyse, recommandations et pilotage intelligent à chaque étape.</div>
                 </div>
@@ -1561,7 +1561,7 @@ export default function Onboarding() {
                       <h3 className="wiz-action-hero-title">MEEREO pilote, <Kai /> vous accompagne</h3>
                       <p className="wiz-action-hero-desc">MEEREO organise la mise en place de votre projet, identifie les professionnels adaptés et coordonne chaque étape. <strong><Kai /></strong>, votre assistant personnel, vous guide au quotidien.</p>
                       <div className="wiz-action-hero-tags">
-                        {['Projet piloté par MEEREO','KAI vous accompagne','Paiements sécurisés','Banque partenaire'].map(t=>(
+                        {['Projet piloté par MEEREO','KAi vous accompagne','Paiements sécurisés','Banque partenaire'].map(t=>(
                           <span key={t} className="wiz-action-hero-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>{t}</span>
                         ))}
                       </div>
@@ -1613,7 +1613,7 @@ export default function Onboarding() {
                       {num:'4',color:'#16A34A',title:"Suivez & payez en sécurité",desc:"Validation par jalons, paiements sécurisés, tableau de bord temps réel."},
                     ] : cleEnMain ? [
                       {num:'1',color:'#7C3AED',title:"MEEREO organise votre projet",desc:"Nous structurons les étapes, identifions les professionnels adaptés et préparons la mise en place."},
-                      {num:'2',color:'#191c1d',title:"KAI vous accompagne au quotidien",desc:"Votre assistant personnel vous informe, vous guide et vous notifie à chaque avancée."},
+                      {num:'2',color:'#191c1d',title:"KAi vous accompagne au quotidien",desc:"Votre assistant personnel vous informe, vous guide et vous notifie à chaque avancée."},
                       {num:'3',color:'#2563EB',title:"Les professionnels sont intégrés au bon moment",desc:"Architectes, ingénieurs et constructeurs rejoignent le projet quand c'est pertinent."},
                       {num:'4',color:'#0891B2',title:"Commandez sur le Marketplace",desc:"Matériaux et équipements liés à votre chantier, livrés directement sur site."},
                       {num:'5',color:'#16A34A',title:"Paiements sécurisés via banque partenaire",desc:"Chaque paiement est lié à une étape validée. Les fonds restent sécurisés hors plateforme."},

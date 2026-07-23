@@ -9,7 +9,7 @@ const PTABS = [
   { id: 'livraison', label: 'Livraison' },
   { id: 'notifs', label: 'Notifications' },
   { id: 'abonnement', label: 'Abonnement' },
-  { id: 'securite', label: 'Securite' },
+  { id: 'securite', label: 'Sécurité' },
   { id: 'donnees', label: 'Données' },
 ]
 

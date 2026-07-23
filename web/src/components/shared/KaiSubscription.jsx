@@ -20,18 +20,25 @@ const STATUS_META = {
 
 const PLANS = {
   standard: {
-    name: 'KAI Standard',
+    name: 'KAi Standard',
     price: 'Gratuit',
     period: '',
-    features: ['25 analyses KAI / mois', 'Recommandations basiques', 'Alertes passives', 'Support communautaire'],
+    features: ['25 analyses KAi / mois', 'Recommandations basiques', 'Alertes passives', 'Support communautaire'],
   },
   gold: {
-    name: 'KAI Pro',
-    price: '9 900 FCFA',
+    name: 'KAi Pro',
     period: '/ mois',
     features: ['Analyses illimitées', 'Orchestration proactive', 'Automatisations métier', 'Relances automatiques', 'Détection des blocages', 'Support prioritaire'],
   },
 }
+
+// FIN-02: tarifs KAi Pro différenciés par rôle (ACTÉS)
+const KAI_PRO_PRICES = {
+  client: '9 900 FCFA',
+  pro: '19 900 FCFA',
+  fournisseur: '39 000 FCFA',
+}
+const getKaiProPrice = (role) => KAI_PRO_PRICES[role] || KAI_PRO_PRICES.pro
 
 const MOCK_HISTORY = [
   { id: 'inv_3', date: '2026-04-01', label: 'KAI Pro — Renouvellement mensuel', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0042' },
@@ -253,9 +260,9 @@ export default function KaiSubscription({ role = 'pro' }) {
               <div style={{ width: 48, height: 48, borderRadius: 12, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <span style={{ color: '#fff', fontSize: 22, fontWeight: 600 }}>K</span>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Passer à KAI Pro</div>
+              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Passer à KAi Pro</div>
               <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Copilote opérationnel pour {roleLabels[role]}s</div>
-              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1px', marginBottom: 4 }}>9 900 FCFA <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--t3)' }}>/ mois</span></div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1px', marginBottom: 4 }}>{getKaiProPrice(role)} <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--t3)' }}>/ mois</span></div>
             </div>
             <div style={{ padding: '0 28px 20px' }}>
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 8 }}>Inclus dans Pro</div>

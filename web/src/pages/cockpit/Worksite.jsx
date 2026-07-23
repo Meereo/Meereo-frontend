@@ -575,18 +575,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                   </div>
                 )
                 // Pas de cloture en cours — afficher le bouton (proéminent si 100%)
-                const allComplete = globalPct >= 100
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: allComplete ? '18px 22px' : '14px 20px', marginBottom: 16, background: allComplete ? 'rgba(52,199,89,.06)' : 'var(--surface-1)', border: allComplete ? '2px solid rgba(52,199,89,.25)' : '1px solid var(--border-card)', borderRadius: 12 }}>
-                    <div>
-                      <div style={{ fontSize: allComplete ? 15 : 13, fontWeight: 600, color: allComplete ? 'var(--ok)' : 'var(--tx)' }}>{allComplete ? 'Toutes les tâches sont terminées !' : 'Clôture du projet'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{allComplete ? 'Validez le projet pour envoyer une demande de réception au client' : 'Envoyez une demande de validation au client'}</div>
-                    </div>
-                    <button style={{ padding: allComplete ? '12px 24px' : '10px 20px', borderRadius: 10, background: allComplete ? '#34C759' : 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: allComplete ? 14 : 13, flexShrink: 0, boxShadow: allComplete ? '0 4px 16px rgba(52,199,89,.3)' : 'none' }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
-                      {allComplete ? 'Valider le projet' : 'Demander la clôture'}
-                    </button>
-                  </div>
-                )
+                // PRJ-07: "Valider le projet" déplacé en bas de page (après les sections)
+                return null
               })()}
 
               {/* Té‚CHES CONTRACTUELLES (depuis le backend) */}
@@ -707,8 +697,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
                 return (
                   <div key={phIdx} className="card" style={{ marginBottom: 10, overflow: 'hidden' }}>
-                    {/* Phase header */}
-                    <div onClick={() => togglePhase(phIdx)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', cursor: 'pointer' }}>
+                    {/* Phase header — PRJ-07: "Valider cette section" placé dans l'en-tête */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', cursor: 'pointer' }} onClick={() => togglePhase(phIdx)}>
                       <div style={{
                         width: 34, height: 34, borderRadius: 10, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -729,6 +719,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                         {isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'var(--s2)', color: 'var(--tx)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={10}/> Terminé</span>}
                         {isAct && !isDone && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(0,0,0,.06)', color: 'var(--tx)' }}>🟢 En cours</span>}
                         <span style={{ fontSize: 10.5, fontWeight: 600 }}>{phPct}%</span>
+                        {/* PRJ-07: bouton "Valider cette section" dans l'en-tête */}
+                        {!isDone && <button className="btn btn-sm" style={{ fontSize: 9, padding: '3px 8px', background: 'var(--tx)', color: '#fff', border: 'none', marginLeft: 4 }} onClick={(e) => { e.stopPropagation(); ph.tasks.forEach(t => { const key = selProjId + '_' + t.id; if ((taskStates[key] || 'todo') !== 'done') cycleTaskToDone(t.id) }); showToast?.('Section validée : ' + ph.name) }}>Valider</button>}
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform .2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
                       </div>
                     </div>
@@ -770,16 +762,8 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                           )
                         })}
                         {/* Phase action bar — PRJ-07: bulk section validation */}
+                        {/* PRJ-07: action bar de section — "Valider" déplacé en en-tête */}
                         <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'var(--s2)', borderTop: '1px solid var(--border)' }}>
-                          {!isDone && (
-                            <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px', background: 'var(--tx)', color: '#fff', border: 'none' }} onClick={() => {
-                              ph.tasks.forEach(t => {
-                                const key = selProjId + '_' + t.id
-                                if ((taskStates[key] || 'todo') !== 'done') cycleTaskToDone(t.id)
-                              })
-                              showToast?.('Section validée : ' + ph.name)
-                            }}>Valider cette section</button>
-                          )}
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => { setAssignModal({ phaseIdx: phIdx }); setAssignTab('plateforme'); setAssignSearch('') }}>Assigner intervenant</button>
                           <button className="btn btn-sm" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => setShowCreateNote(true)}>+ Note</button>
                         </div>
@@ -792,6 +776,22 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
           )}
         </div>
       </div>
+
+      {/* PRJ-07: "Valider le projet" en bas — aboutissement du parcours */}
+      {proj && (() => {
+        const allComplete = globalPct >= 100
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: allComplete ? '18px 22px' : '14px 20px', marginTop: 8, marginBottom: 16, background: allComplete ? 'rgba(52,199,89,.06)' : 'var(--surface-1)', border: allComplete ? '2px solid rgba(52,199,89,.25)' : '1px solid var(--border-card)', borderRadius: 12 }}>
+            <div>
+              <div style={{ fontSize: allComplete ? 15 : 13, fontWeight: 600, color: allComplete ? 'var(--ok)' : 'var(--tx)' }}>{allComplete ? 'Toutes les tâches sont terminées !' : 'Clôture du projet'}</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{allComplete ? 'Validez le projet pour envoyer une demande de réception au client' : 'Envoyez une demande de validation au client'}</div>
+            </div>
+            <button style={{ padding: allComplete ? '12px 24px' : '10px 20px', borderRadius: 10, background: allComplete ? '#34C759' : 'var(--tx)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: allComplete ? 14 : 13, flexShrink: 0, boxShadow: allComplete ? '0 4px 16px rgba(52,199,89,.3)' : 'none' }} onClick={() => setConfirmModal({ projId: selProjId, projNom: proj.nom, client: proj.client, clientEmail: proj.clientEmail })}>
+              {allComplete ? 'Valider le projet' : 'Demander la clôture'}
+            </button>
+          </div>
+        )
+      })()}
 
       {/* MODAL: Assigner un intervenant */}
       {assignModal && (

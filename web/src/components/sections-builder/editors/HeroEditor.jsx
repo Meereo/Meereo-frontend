@@ -7,7 +7,7 @@ export default function HeroEditor({ data, sectionType, onChange }) {
       <TextField label="Nom de l'entreprise" value={data.companyName} onChange={(v) => set("companyName", v)} />
       <TextField label="Categorie" value={data.category} onChange={(v) => set("category", v)} />
       <TextField label="Localisation" value={data.location} onChange={(v) => set("location", v)} />
-      <CheckboxField label="Professionnel verifie" checked={data.verified ?? true} onChange={(v) => set("verified", v)} />
+      <CheckboxField label="Professionnel vérifié" checked={data.verified ?? true} onChange={(v) => set("verified", v)} />
       {sectionType === "hero-editorial" && (
         <>
           <Divider />

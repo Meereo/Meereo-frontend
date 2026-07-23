@@ -314,10 +314,12 @@ model Product {
   certificatUrl String?    // Certificat de conformité
   garantieUrl   String?    // Document de garantie
   garantieDuree String?    // Durée de garantie (ex: "2 ans")
+  stock       Int      @default(0)
   isPublished Boolean  @default(true)
   sponsored   Boolean  @default(false)
-  flash       Boolean  @default(false)
-  flashPrice  Float?
+  flash         Boolean  @default(false)
+  flashPrice    Float?
+  flashDuration String?    // "24h", "48h", "72h"
   status      String   @default("active") // active | archived
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

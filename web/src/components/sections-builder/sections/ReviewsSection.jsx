@@ -41,7 +41,7 @@ export function ReviewJournal({ data }) {
               <p className="text-[14.5px] text-pp-ink-2">{r.quote}</p>
               <div className="mt-2 text-[12.5px]">
                 <b className="font-semibold">{r.author}</b> &middot; {r.project}
-                {r.verified && " \u00B7 retour verifie MEEREO"}
+                {r.verified && " \u00B7 retour vérifié MEEREO"}
               </div>
             </div>
           </div>

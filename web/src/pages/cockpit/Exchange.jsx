@@ -1081,6 +1081,10 @@ export default function Exchange({ showToast, onNavigate }) {
               )}
             </div>
 
+            {/* AOF-01 A6: mention d'engagement contractuel */}
+            <div style={{ padding: '10px 22px 0', fontSize: 11, color: 'var(--t3)', lineHeight: 1.5, background: 'rgba(255,149,0,.04)', borderTop: '1px solid rgba(255,149,0,.15)' }}>
+              En soumettant cette offre, vous vous engagez sur les termes proposés. Si le client accepte votre offre, celle-ci devient un marché signé.
+            </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'space-between', flexShrink: 0 }}>
               <span style={{ fontSize: 11, color: 'var(--t3)', alignSelf: 'center' }}>{reponse.docsEntreprise.length} doc{reponse.docsEntreprise.length > 1 ? 's' : ''} entreprise à {reponse.docsJoints.length} pièce{reponse.docsJoints.length > 1 ? 's' : ''} jointe{reponse.docsJoints.length > 1 ? 's' : ''}</span>
               <div style={{ display: 'flex', gap: 8 }}>

@@ -619,6 +619,38 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: 'Mot de passe incorrect' })
     }
 
+    // AVS-03: bloquer la suppression si le fournisseur a des factures impayées envers MEEREO
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { type: true } })
+    if (user?.type === 'fournisseur') {
+      // Vérifier les commandes en cours (acheteurs à notifier)
+      const pendingOrders = await prisma.order.findMany({
+        where: { sellerId: userId, statut: { notIn: ['completed', 'cancelled', 'delivered'] } },
+        include: { buyer: { select: { id: true, name: true, email: true } } },
+      })
+      // Notifier chaque acheteur ayant une commande en cours
+      const { getIo } = require('../socket')
+      const io = getIo()
+      for (const order of pendingOrders) {
+        if (order.buyer?.id) {
+          await prisma.notification.create({
+            data: {
+              userId: order.buyer.id,
+              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte. Contactez-le directement pour finaliser.`,
+              type: 'orange',
+              page: 'commandes',
+            },
+          }).catch(() => {})
+          if (io) {
+            io.to(`user:${order.buyer.id}`).emit('notification:new', {
+              id: 'supplier_del_' + order.id,
+              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte`,
+              type: 'orange', read: false, createdAt: new Date().toISOString(),
+            })
+          }
+        }
+      }
+    }
+
     // Before deleting: unlink this user from other users' projects
     // so a new account with the same email won't inherit old project references
     const userEmail = (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))?.email

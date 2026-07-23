@@ -87,7 +87,18 @@ export function canRequestPayout(paymentOrder, proofs, validations) {
   return { allowed: true, reason: null }
 }
 
-// ── KAI Quota ──
+// ── MKT-02: seuil global de paiement Marketplace ──
+// En dessous : paiement Mobile Money intégré (FIN-02)
+// Au-dessus : devis + paiement hors plateforme
+// Configurable côté back-office (ne pas coder en dur dans la logique métier)
+export const MARKETPLACE_PAYMENT_THRESHOLD = 500000 // FCFA — à rendre configurable via API admin
+
+export function getPaymentMode(totalFCFA) {
+  if (totalFCFA <= MARKETPLACE_PAYMENT_THRESHOLD) return { mode: 'mobile_money', label: 'Paiement Mobile Money' }
+  return { mode: 'devis', label: 'Sur devis — paiement hors plateforme' }
+}
+
+// ── KAi Quota ──
 export const KAI_QUOTA = {
   standard: 25,
   gold: Infinity,

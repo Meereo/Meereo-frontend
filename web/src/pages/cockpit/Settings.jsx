@@ -57,7 +57,7 @@ function SecurityForm({ showToast }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div><label style={labelStyleSec}>Mot de passe actuel</label><input type="password" placeholder="••••••••" style={inputStyleSec} value={pwd.current} onChange={e => setPwd(p => ({ ...p, current: e.target.value }))} /></div>
-      <div><label style={labelStyleSec}>Nouveau mot de passe</label><input type="password" placeholder="Minimum 8 caractéres" style={inputStyleSec} value={pwd.nouveau} onChange={e => setPwd(p => ({ ...p, nouveau: e.target.value }))} /></div>
+      <div><label style={labelStyleSec}>Nouveau mot de passe</label><input type="password" placeholder="Minimum 8 caractères" style={inputStyleSec} value={pwd.nouveau} onChange={e => setPwd(p => ({ ...p, nouveau: e.target.value }))} /></div>
       <div><label style={labelStyleSec}>Confirmer</label><input type="password" placeholder="Confirmer le nouveau" style={inputStyleSec} value={pwd.confirm} onChange={e => setPwd(p => ({ ...p, confirm: e.target.value }))} /></div>
       <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 8 }} onClick={handleSave} disabled={saving}>{saving ? 'Mise à jour…' : 'Mettre à jour'}</button>
     </div>
@@ -254,9 +254,9 @@ export default function Settings({ showToast }) {
                   </div>
                 </div>
                 <div><label className="form-label">Nom de l'agence / structure</label><input className="form-input" value={pEntreprise} onChange={e => setPEntreprise(e.target.value)} placeholder="Nom de votre structure" /></div>
-                <div><label className="form-label">Slogan / accroche</label><input className="form-input" value={pSlogan} onChange={e => setPSlogan(e.target.value)} placeholder="Une architecture ancree dans la duree" /></div>
+                <div><label className="form-label">Slogan / accroche</label><input className="form-input" value={pSlogan} onChange={e => setPSlogan(e.target.value)} placeholder="Une architecture ancrée dans la durée" /></div>
                 <div><label className="form-label">Bio / presentation</label><textarea className="form-input" value={pBio} onChange={e => setPBio(e.target.value)} placeholder="Presentez votre structure, votre approche, vos valeurs..." /></div>
-                <div><label className="form-label">Numero RCCM</label><input className="form-input" value={pRccm} onChange={e => setPRccm(e.target.value)} placeholder="CI-ABJ-2019-B-12345" /></div>
+                <div><label className="form-label">Numero RCCM {store.user?.verified && <span style={{ fontSize: 10, color: 'var(--ok)', fontWeight: 600 }}>· Vérifié</span>}</label><input className="form-input" value={pRccm} onChange={e => setPRccm(e.target.value)} placeholder="CI-ABJ-2019-B-12345" disabled={!!store.user?.verified} style={store.user?.verified ? { opacity: 0.6, cursor: 'not-allowed' } : undefined} />{store.user?.verified && <span style={{ fontSize: 10, color: 'var(--t3)', marginTop: 2, display: 'block' }}>Verrouillé après vérification — contactez l'administrateur MEEREO pour toute modification.</span>}</div>
                 <div><label className="form-label">Email</label><input type="email" className="form-input" value={pEmail} onChange={e => setPEmail(e.target.value)} placeholder="contact@entreprise.com" /></div>
                 <div><label className="form-label">Telephone</label><input className="form-input" value={pTel} onChange={e => setPTel(e.target.value)} placeholder="+225 07 00 11 22" /></div>
                 <div><label className="form-label">Ville</label><input className="form-input" value={pVille} onChange={e => setPVille(e.target.value)} placeholder="Abidjan" /></div>
@@ -396,11 +396,7 @@ export default function Settings({ showToast }) {
                   </div>
                 )}
 
-                <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Réinitialiser toutes les données</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Cette action supprime toutes les données locales : projets, clients, offres, marchés, commandes, messages, documents, équipe, notifications et paramètres. La plateforme reviendra à son état initial vierge.</div>
-                  <button className="btn btn-danger btn-sm" onClick={() => { setResetText(''); setShowResetModal(true) }}>Réinitialiser et revenir à l'accueil</button>
-                </div>
+                {/* SYS-06: bouton "Réinitialiser toutes les données" RETIRÉ pour production */}
                 <div style={{ padding: 20, background: 'var(--s2)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Exporter les donnees</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14, lineHeight: 1.5 }}>Telechargez un export JSON de toutes vos donnees MEEREO.</div>
@@ -509,41 +505,6 @@ export default function Settings({ showToast }) {
       , document.body)}
 
       {/* MODAL: Modifier le role */}
-      {/* MODAL: Confirmer la réinitialisation */}
-      {showResetModal && createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setShowResetModal(false)}>
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 14, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.2)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.5px', color: 'var(--err)' }}>Réinitialiser toutes les données ?</div>
-              <button onClick={() => setShowResetModal(false)} style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--t3)' }}>×</button>
-            </div>
-            <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ padding: '12px 14px', background: '#fff1f0', border: '1px solid #ffc5c0', borderRadius: 10, fontSize: 12, color: '#c0392b', lineHeight: 1.6 }}>
-                ⚠️ Cette action est <strong>irréversible</strong>. Tous les projets, clients, offres, marchés, commandes, messages, documents et paramètres seront définitivement supprimés.
-              </div>
-              <div>
-                <label className="form-label">Pour confirmer, tapez <strong>RéINITIALISER</strong> ci-dessous</label>
-                <input
-                  className="form-input"
-                  value={resetText}
-                  onChange={e => setResetText(e.target.value)}
-                  placeholder="RéINITIALISER"
-                  autoFocus
-                  style={{ fontFamily: 'monospace', letterSpacing: 1 }}
-                />
-              </div>
-            </div>
-            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="btn btn-sm" onClick={() => setShowResetModal(false)}>Annuler</button>
-              <button
-                className="btn btn-danger btn-sm"
-                disabled={resetText !== 'RéINITIALISER'}
-                onClick={() => { try { sessionStorage.removeItem('meereo_onboarding_by_user') } catch {} window.location.href = '/onboarding' }}
-              >Réinitialiser et revenir à l'accueil</button>
-            </div>
-          </div>
-        </div>
-      , document.body)}
 
       {editMember && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .15s ease' }} onClick={() => setEditMember(null)}>

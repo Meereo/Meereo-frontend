@@ -107,7 +107,7 @@ function KaiMini() {
         </div>
       </div>
       <div style={{ padding:'10px 20px 14px', borderTop:'1px solid rgba(0,0,0,.03)' }}>
-        <div style={{ padding:'10px 14px', borderRadius:10, background:'#f5f5f7', fontSize:12, color:'#bbb' }}>Demandez à KAI. Obtenez une réponse claire et exploitable.</div>
+        <div style={{ padding:'10px 14px', borderRadius:10, background:'#f5f5f7', fontSize:12, color:'#bbb' }}>Demandez à KAi. Obtenez une réponse claire et exploitable.</div>
       </div>
       <div style={{ padding:'0 20px 14px', display:'flex', gap:5, flexWrap:'wrap' }}>
         {['Rapport chantier','Vérifier paiements','Urgences du jour'].map(p=>(
@@ -189,7 +189,7 @@ export default function Landing() {
             </h1>
             {/* Subtitle */}
             <p style={{ marginTop:24, fontSize:16, lineHeight:1.65, color:'rgba(255,255,255,.45)', maxWidth:520, margin:'24px auto 0' }}>
-              Chaque acteur du projet accéde au même système, avec la bonne visibilité et le bon niveau de contrôle. Décidez en temps réel avec <strong style={{ color:'#7C3AED' }}>KAI</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
+              Chaque acteur du projet accéde au même système, avec la bonne visibilité et le bon niveau de contrôle. Décidez en temps réel avec <strong style={{ color:'#7C3AED' }}>KAi</strong>, <strong style={{ color:'rgba(255,255,255,.7)' }}>votre assistant IA personnel</strong>.
             </p>
             {/* CTAs */}
             <div style={{ marginTop:36, display:'flex', justifyContent:'center', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -370,10 +370,10 @@ export default function Landing() {
               </div>
               <LabelDark>Intelligence embarquée</LabelDark>
               <h2 style={{ fontSize:'clamp(28px,4vw,40px)', fontWeight:600, letterSpacing:'-.04em', lineHeight:1.1, margin:0 }}>
-                KAI orchestre votre projet
+                KAi orchestre votre projet
               </h2>
               <p style={{ marginTop:16, fontSize:15, lineHeight:1.65, color:'rgba(255,255,255,.4)', maxWidth:460, margin:'16px auto 0' }}>
-                Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAI vous assiste activement dans chaque décision.
+                Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAi vous assiste activement dans chaque décision.
               </p>
             </div>
             {/* KAI capabilities cards */}
@@ -393,7 +393,7 @@ export default function Landing() {
               <div className="lp-frame-kai"><KaiMini/></div>
             </div>
             <div style={{ textAlign:'center', marginTop:36 }}>
-              <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'13px 28px', fontSize:14, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)', boxShadow:'0 2px 16px rgba(255,255,255,.06)' }} onMouseOver={e=>e.target.style.background='#e8e8e8'} onMouseOut={e=>e.target.style.background='#fff'}>Essayer KAI</button>
+              <button onClick={go} style={{ borderRadius:100, background:'#fff', padding:'13px 28px', fontSize:14, fontWeight:500, color:'#000', border:'none', cursor:'pointer', fontFamily:'var(--f)', boxShadow:'0 2px 16px rgba(255,255,255,.06)' }} onMouseOver={e=>e.target.style.background='#e8e8e8'} onMouseOut={e=>e.target.style.background='#fff'}>Essayer KAi</button>
             </div>
           </div>
         </section>

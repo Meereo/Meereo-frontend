@@ -463,6 +463,13 @@ router.patch('/me/onboarding', requireAuth, async (req, res) => {
   const prisma = getPrisma()
   try {
     const sanitized = sanitizeOnboardingData(req.body)
+    // Bloquer la modification du RCCM si l'utilisateur est vérifié (INS-01/SYS-06)
+    if (sanitized.rccm) {
+      const caller = await prisma.user.findUnique({ where: { id: req.user.id }, select: { verified: true } })
+      if (caller?.verified) {
+        delete sanitized.rccm
+      }
+    }
     const current = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { onboardingData: true },

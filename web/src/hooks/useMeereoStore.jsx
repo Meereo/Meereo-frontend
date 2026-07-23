@@ -2846,8 +2846,8 @@ export function MeereoProvider({ children }) {
       }
     })
     const labels = { pro: 'Professionnel', client: 'Client', fournisseur: 'Fournisseur' }
-    addNotif('KAI Pro activé — Espace ' + (labels[activeRole] || activeRole), 'green', null, 'parametres')
-    showToast('KAI Pro activé', 'green')
+    addNotif('KAi Pro activé — Espace ' + (labels[activeRole] || activeRole), 'green', null, 'parametres')
+    showToast('KAi Pro activé', 'green')
   }, [store.user, updateStore, addNotif, showToast])
 
   // ═══ COMMISSION WORKFLOW (clé en main uniquement) ═══

@@ -121,7 +121,7 @@ function ClientPrefsForm({ store, updateStore }) {
 
 const PARAM_TABS = [
   { id: 'profil', label: 'Mon profil' },
-  { id: 'securite', label: 'Securite' },
+  { id: 'securite', label: 'Sécurité' },
   { id: 'prefs', label: 'Préférences' },
   { id: 'abonnement', label: 'Abonnement' },
   { id: 'donnees', label: 'Données' },

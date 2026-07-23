@@ -8,6 +8,7 @@ import './styles/index.css'
 import './styles/tokens.css'
 import './styles/global.css'
 import './styles/kai-animations.css'
+import './config/i18n' // SYS-04: initialisation i18n FR+EN
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null } }

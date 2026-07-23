@@ -43,7 +43,11 @@ router.get('/mine', requireAuth, async (req, res, next) => {
       where: { supplierId: req.user.id },
       orderBy: { createdAt: 'desc' },
     })
-    res.json(products)
+    // FIN-03: inclure le compte de quota pour le frontend
+    const publishedCount = await prisma.product.count({
+      where: { supplierId: req.user.id, isPublished: true, status: 'active' },
+    })
+    res.json({ products, quota: { used: publishedCount, free: 5, isOverQuota: publishedCount > 5 } })
   } catch (e) {
     next(e)
   }
@@ -52,9 +56,15 @@ router.get('/mine', requireAuth, async (req, res, next) => {
 // POST /api/products — créer un produit (fournisseur connecté)
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { name, category, price, unit, description, photoUrl, sponsored, flash, flashPrice, ficheUrl, noticeUrl, certificatUrl, garantieUrl, garantieDuree } = req.body
+    const { name, category, price, unit, description, photoUrl, sponsored, flash, flashPrice, flashDuration, ficheUrl, noticeUrl, certificatUrl, garantieUrl, garantieDuree, stock } = req.body
     if (!name || !name.trim()) throw createError('Le nom du produit est requis', 400)
     const prisma = getPrisma()
+    // FIN-03: quota — 5 premiers produits gratuits, au-delà = forfait requis
+    const FREE_PRODUCT_QUOTA = 5
+    const publishedCount = await prisma.product.count({
+      where: { supplierId: req.user.id, isPublished: true, status: 'active' },
+    })
+    const isOverQuota = publishedCount >= FREE_PRODUCT_QUOTA
     const product = await prisma.product.create({
       data: {
         supplierId: req.user.id,
@@ -69,9 +79,11 @@ router.post('/', requireAuth, async (req, res, next) => {
         certificatUrl: certificatUrl || null,
         garantieUrl: garantieUrl || null,
         garantieDuree: garantieDuree || null,
+        stock: parseInt(stock) || 0,
         sponsored: sponsored || false,
         flash: flash || false,
         flashPrice: flashPrice ? parseFloat(flashPrice) : null,
+        flashDuration: flashDuration || null,
       },
     })
     res.status(201).json(product)
@@ -102,9 +114,11 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         garantieUrl: req.body.garantieUrl !== undefined ? req.body.garantieUrl : existing.garantieUrl,
         garantieDuree: req.body.garantieDuree !== undefined ? req.body.garantieDuree : existing.garantieDuree,
         isPublished: req.body.isPublished !== undefined ? req.body.isPublished : existing.isPublished,
+        stock: req.body.stock !== undefined ? parseInt(req.body.stock) : existing.stock,
         sponsored: req.body.sponsored ?? existing.sponsored,
         flash: req.body.flash ?? existing.flash,
         flashPrice: req.body.flashPrice !== undefined ? parseFloat(req.body.flashPrice) : existing.flashPrice,
+        flashDuration: req.body.flashDuration !== undefined ? req.body.flashDuration : existing.flashDuration,
         status: req.body.status ?? existing.status,
       },
     })

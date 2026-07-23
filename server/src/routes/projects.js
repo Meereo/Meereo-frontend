@@ -297,6 +297,29 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       }
     }
 
+    // AVS-01: prompt automatique d'évaluation à la clôture du projet
+    if (data.status && ['completed', 'cloture'].includes(data.status) && project.clientId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: project.clientId,
+            msg: `Le projet "${project.nom}" est terminé ! Évaluez le professionnel pour aider la communauté.`,
+            type: 'review_prompt',
+            page: 'projets',
+            link: `/client/projets?review=${project.id}`,
+          },
+        })
+        const io = getIo()
+        if (io) {
+          io.to(`user:${project.clientId}`).emit('notification:new', {
+            id: 'review_' + project.id,
+            msg: `Évaluez le professionnel du projet "${project.nom}"`,
+            type: 'blue', read: false, createdAt: new Date().toISOString(), page: 'projets',
+          })
+        }
+      } catch (_) {}
+    }
+
     // ── Emit project:updated for real-time sync across all project participants ──
     try {
       const { getIo } = require('../socket')
@@ -323,10 +346,30 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
 router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const project = await prisma.project.findUnique({ where: { id: req.params.id } })
+    const project = await prisma.project.findUnique({
+      where: { id: req.params.id },
+      include: { members: { select: { userId: true } } },
+    })
     if (!project) throw createError('Projet introuvable', 404)
     if (project.ownerId !== req.user.id) throw createError('Accès non autorisé', 403)
+    // PRJ-02: notifier tous les participants avant suppression
+    const participantIds = new Set([project.ownerId, project.clientId, ...project.members.map(m => m.userId)].filter(Boolean))
     await prisma.project.delete({ where: { id: req.params.id } })
+    // Sync temps réel — notifier chaque participant
+    const io = getIo()
+    if (io) {
+      for (const uid of participantIds) {
+        if (uid === req.user.id) continue
+        io.to(`user:${uid}`).emit('project:deleted', { projectId: req.params.id })
+        io.to(`user:${uid}`).emit('notification:new', {
+          id: 'proj_del_' + req.params.id,
+          msg: `Le projet "${project.nom}" a été supprimé`,
+          type: 'orange',
+          read: false,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    }
     res.json({ success: true })
   } catch (e) { next(e) }
 })

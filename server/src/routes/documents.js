@@ -33,11 +33,28 @@ async function userCanAccessProject(prisma, userId, projectId) {
   return !!isSupplier
 }
 
+// ─── SYS-05: formats de fichier autorisés ─────────────────────────────────────
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',  // Images
+  '.pdf',                                     // PDF
+  '.doc', '.docx',                            // Word
+  '.xls', '.xlsx',                            // Excel
+])
+
+function validateFileExtension(originalname) {
+  const ext = path.extname(originalname).toLowerCase()
+  if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
+    const allowed = [...ALLOWED_EXTENSIONS].join(', ')
+    throw new Error(`Format de fichier non autorisé. Formats acceptés : ${allowed}`)
+  }
+  return ext
+}
+
 // ─── Helper: save file to disk ────────────────────────────────────────────────
 function saveFileToDisk(fileBuffer, originalname, subfolder) {
+  const ext = validateFileExtension(originalname)
   const dir = path.join(UPLOADS_BASE, subfolder)
   fs.mkdirSync(dir, { recursive: true })
-  const ext = path.extname(originalname) || ''
   const filename = `${randomUUID()}${ext}`
   const filePath = path.join(dir, filename)
   fs.writeFileSync(filePath, fileBuffer)

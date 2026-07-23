@@ -8,8 +8,10 @@ const fireProfileAction = (action, e) => {
 
 /* ── shared inline helpers ────────────────────────────────── */
 
+// INS-04: badge vert identique partout
 const badgeCls =
-  "inline-flex items-center gap-[7px] border border-pp-ink py-1 px-[10px] text-[11.5px] font-semibold tracking-[0.04em] whitespace-nowrap";
+  "inline-flex items-center gap-[7px] py-1 px-[10px] text-[11.5px] font-semibold tracking-[0.04em] whitespace-nowrap rounded-full"
+const badgeStyle = { background: 'rgba(52,199,89,.1)', color: '#34C759', border: '1px solid rgba(52,199,89,.25)' }
 
 const btnCls =
   "inline-flex items-center justify-center gap-2 border border-pp-ink bg-pp-paper text-pp-ink font-semibold text-[13.5px] py-[13px] px-[22px] cursor-pointer no-underline tracking-[0.02em] transition-colors hover:bg-pp-ink hover:text-white";
@@ -62,7 +64,7 @@ export function HeroBanner({ data }) {
           </h1>
           <div className="flex gap-[14px] items-center flex-wrap mt-[10px]">
             <span className="text-sm text-pp-ink-2 font-medium">{data.category}</span>
-            {data.verified && <span className={badgeCls}>Professionnel verifie MEEREO</span>}
+            {data.verified && <span className={badgeCls} style={badgeStyle}>Professionnel vérifié MEEREO</span>}
             <span className="font-pp-mono text-xs text-pp-ink-3">{data.location}</span>
           </div>
         </div>
@@ -90,7 +92,7 @@ export function HeroEditorial({ data }) {
         {/* Top row */}
         <div className="flex justify-between gap-[18px] items-center mb-[34px] flex-wrap">
           <Logo src={data.logoSrc} initials={initials} />
-          {data.verified && <span className={badgeCls}>Professionnel verifie MEEREO</span>}
+          {data.verified && <span className={badgeCls} style={badgeStyle}>Professionnel vérifié MEEREO</span>}
         </div>
 
         {/* Headline */}
@@ -162,7 +164,7 @@ export function HeroCompact({ data }) {
 
         {/* Cell 2 — Badge */}
         <div className={cellBase}>
-          {data.verified && <span className={badgeCls}>Professionnel verifie MEEREO</span>}
+          {data.verified && <span className={badgeCls} style={badgeStyle}>Professionnel vérifié MEEREO</span>}
         </div>
 
         {/* Cell 3 — Location */}

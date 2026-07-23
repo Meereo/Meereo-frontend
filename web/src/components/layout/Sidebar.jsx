@@ -19,8 +19,6 @@ const NAV_GROUPS = [
   {
     label: 'Opération',
     items: [
-      { id: 'missions',      label: 'Missions',          icon: 'target' },
-      { id: 'actifs',        label: 'Actifs',            icon: 'box' },
       { id: 'chantier',      label: 'Avancement',       icon: 'hardhat' },
       { id: 'taches-board',  label: 'Tâches',            icon: 'kanban' },
       { id: 'budget',        label: 'Budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
@@ -53,7 +51,7 @@ const NAV_GROUPS = [
   {
     label: 'Système',
     items: [
-      { id: 'page-builder', label: 'Ma page pro', icon: 'layers', premium: true },
+      { id: 'page-builder', label: 'Modifier ma page pro', icon: 'layers', premium: true },
       { id: 'parametres', label: 'Paramètres', icon: 'settings' },
     ]
   }

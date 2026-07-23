@@ -73,7 +73,7 @@ export const SECTION_TEMPLATES = [
     category: "presentation",
     name: "Presentation — Essai",
     defaultData: {
-      title: "Une architecture ancree dans son climat et son usage",
+      title: "Une architecture ancrée dans son climat et son usage",
       paragraphs: [
         "Fonde a Abidjan en 2014, Votre Entreprise concoit des batiments residentiels et tertiaires penses pour le climat ouest-africain : ventilation naturelle, protection solaire, materiaux locaux.",
         "L'agence accompagne ses clients de l'esquisse a la reception, avec une methode documentee a chaque etape.",

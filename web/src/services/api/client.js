@@ -70,6 +70,17 @@ async function apiFetch(path, method = 'GET', body = null, withAuth = false) {
   const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
+    // NAV-06: intercepter les 401 pour rediriger vers la reconnexion
+    if (res.status === 401 && withAuth && !path.includes('/auth/login')) {
+      // Session expirée — nettoyage et redirection
+      setInMemoryToken(null)
+      try { sessionStorage.removeItem('meereo_session_token'); sessionStorage.removeItem('meereo_cached_user') } catch {}
+      // Éviter les redirections multiples
+      if (!window._meereoRedirecting) {
+        window._meereoRedirecting = true
+        window.location.href = '/onboarding'
+      }
+    }
     const msg = data?.error || data?.message || `Erreur ${res.status}`
     const err = new Error(msg)
     err.status = res.status

@@ -190,6 +190,38 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
 
     const updated = await prisma.offer.update({ where: { id: req.params.id }, data: allowed })
 
+    // AOF-01 A5/A7: quand une offre est acceptée, rejeter automatiquement toutes les autres offres du même AO
+    if (isAOOwner && req.body.statut === 'accepted' && existing.aoId) {
+      const otherOffers = await prisma.offer.findMany({
+        where: { aoId: existing.aoId, id: { not: req.params.id }, statut: 'pending' },
+      })
+      for (const other of otherOffers) {
+        await prisma.offer.update({ where: { id: other.id }, data: { statut: 'rejected' } })
+        // Notifier chaque pro dont l'offre est rejetée
+        if (other.supplierId) {
+          try {
+            const notif = await prisma.notification.create({
+              data: {
+                userId: other.supplierId,
+                type: 'offer_rejected',
+                message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
+                link: '/bourse',
+                read: false,
+              },
+            })
+            const io = getIo()
+            if (io) {
+              io.to(`user:${other.supplierId}`).emit('notification:new', {
+                id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+              })
+            }
+          } catch (_) {}
+        }
+      }
+      // AOF-01 A8: fermer l'AO automatiquement
+      await prisma.aO.update({ where: { id: existing.aoId }, data: { status: 'attributed' } }).catch(() => {})
+    }
+
     // Notifier le fournisseur quand son offre est acceptée ou refusée
     if (isAOOwner && req.body.statut === 'accepted' && existing.supplierId) {
       try {
