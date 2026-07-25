@@ -43,7 +43,8 @@
       "Bash(ls:*)",
       "Bash(python3 -c ':*)",
       "Bash(python -c ':*)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(node -c src/routes/conversations.js)"
     ]
   }
 }

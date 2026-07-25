@@ -483,15 +483,15 @@ router.post('/:id/participants', requireAuth, async (req, res, next) => {
     })
 
     // Retourner la conversation mise à jour
-    const conv = await prisma.conversation.findUnique({
+    const updatedConv = await prisma.conversation.findUnique({
       where: { id },
       include: {
         participants: { include: { user: PARTICIPANT_USER_SELECT } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     })
-    if (conv?.participants) conv.participants = conv.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
-    res.json({ ok: true, conversation: conv })
+    if (updatedConv?.participants) updatedConv.participants = updatedConv.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
+    res.json({ ok: true, conversation: updatedConv })
   } catch (err) {
     next(err)
   }
@@ -508,7 +508,7 @@ router.delete('/:id/participants/:userId', requireAuth, async (req, res, next) =
 
     // Vérifier que l'appelant est participant
     const myPart = await prisma.conversationParticipant.findUnique({
-      where: { conversationId_userId: { conversationId: id, visitorId: myId } },
+      where: { conversationId_userId: { conversationId: id, userId: myId } },
     }).catch(() => null)
 
     // MSG-07 G3: vérifier que c'est le pro responsable
