@@ -407,6 +407,61 @@ export default function Onboarding() {
     return 'Format attendu : CI-0000000-A'
   }
   const rccmError = form.rccm ? validateRCCM(form.rccm) : null
+
+  // ─── INS-06: Route guard — empêcher l'accès à une étape sans avoir validé les précédentes ───
+  // Au chargement (restauration sessionStorage ou accès direct), on vérifie que step 1 est OK avant d'autoriser step 2+
+  useEffect(() => {
+    if (screen !== 'wizard' || wizStep <= 1 || !userType) return
+    // Validate step 1 prerequisites
+    const step1Invalid = (() => {
+      if (userType === 'pro' || userType === 'fournisseur') return !form.entreprise?.trim()
+      if (userType === 'client') return !form.prenom?.trim()
+      return false
+    })()
+    if (step1Invalid) setWizStep(1)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── INS-06: Validation par étape — stepper gardé ───
+  // Chaque étape doit être validée avant de passer à la suivante.
+  // Retourne un message d'erreur si invalide, null si OK.
+  const validateCurrentStep = () => {
+    if (userType === 'pro') {
+      if (wizStep === 1) {
+        if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre structure'
+        if (rccmError) return rccmError
+        if (nccError) return nccError
+      }
+      if (wizStep === 2) {
+        const email = form.emailPro || form.email || ''
+        if (!email || !email.includes('@')) return 'Veuillez renseigner une adresse email professionnelle valide'
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (form.passwordConfirm && form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+      }
+    }
+    if (userType === 'client') {
+      if (wizStep === 1) {
+        if (!form.prenom?.trim()) return 'Veuillez renseigner votre prénom'
+      }
+      if (wizStep === 2) {
+        const email = form.email || ''
+        if (!email || !email.includes('@')) return 'Veuillez renseigner une adresse email valide'
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+      }
+    }
+    if (userType === 'fournisseur') {
+      if (wizStep === 1) {
+        if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre entreprise'
+        if (rccmError) return rccmError
+        if (nccError) return nccError
+      }
+      if (wizStep === 2) {
+        const email = form.emailPro || form.email || ''
+        if (!email || !email.includes('@')) return 'Veuillez renseigner une adresse email valide'
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+      }
+    }
+    return null
+  }
   const nccError = form.ncc ? validateNCC(form.ncc) : null
 
   const handleLogin = async () => {
@@ -1801,9 +1856,10 @@ export default function Onboarding() {
                     </div>
                   ) : (
                     <button className="ob-btn-blk" onClick={()=>{
-                      // Block if RCCM or NCC are filled but invalid (step 1 for pro/fournisseur)
-                      if (wizStep === 1 && (userType === 'pro' || userType === 'fournisseur') && (rccmError || nccError)) {
-                        showToast(rccmError || nccError, 'orange'); return
+                      // INS-06: validation par étape — bloquer si l'étape courante est invalide
+                      const stepError = validateCurrentStep()
+                      if (stepError) {
+                        showToast(stepError, 'orange'); return
                       }
                       if(wizStep===totalSteps) handleFinish()
                       else {

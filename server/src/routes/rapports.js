@@ -1,6 +1,7 @@
 const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
+const { getIo } = require('../socket')
 
 const router = Router()
 
@@ -69,7 +70,7 @@ router.post('/', requireAuth, async (req, res, next) => {
       },
     })
 
-    // ── Notify client when a report/note is visible to them ──
+    // ── PRJ-03: Notify + synchro temps réel quand note/rapport visible pour le client ──
     if (vis === 'client_visible' && projectId) {
       const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true, clientId: true } }).catch(() => null)
       if (project?.clientId && project.clientId !== req.user.id) {
@@ -82,6 +83,14 @@ router.post('/', requireAuth, async (req, res, next) => {
           page: 'avancement',
           senderId: req.user.id,
         }).catch(() => {})
+        // PRJ-03: événement temps réel pour synchro instantanée
+        const io = getIo()
+        if (io) {
+          io.to(`user:${project.clientId}`).emit('report:new', {
+            id: rapport.id, type, projectId, projet: project.nom,
+            visibility: vis, createdAt: rapport.createdAt,
+          })
+        }
       }
     }
 

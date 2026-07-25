@@ -403,8 +403,8 @@ export default function Marketplace({ showToast, commerceScope }) {
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px' }}>
 
-        {/* Bannieres promo */}
-        {activeCat === 'all' && !search && !activeFournisseur && (
+        {/* MKT-01: Bannieres promo — conditionnelles (n'afficher que s'il y a de vrais produits) */}
+        {activeCat === 'all' && !search && !activeFournisseur && allProducts.length > 0 && (
           <div className="rg-hero" style={{ gap: 12, marginBottom: 22 }}>
             <div onClick={() => setActiveCat('mobilier')} style={{ height: 150, borderRadius: 14, overflow: 'hidden', position: 'relative', cursor: 'pointer', background: 'linear-gradient(135deg, #1a1d1e 0%, #2d3436 50%, #191c1d 100%)' }}>
               <div style={{ position: 'absolute', inset: 0 }} />
@@ -426,15 +426,15 @@ export default function Marketplace({ showToast, commerceScope }) {
           </div>
         )}
 
-        {/* Produits sponsorises */}
-        {activeCat === 'all' && !search && !activeFournisseur && (
+        {/* MKT-01: Produits sponsorises — conditionnel (n'afficher que s'il y en a) */}
+        {activeCat === 'all' && !search && !activeFournisseur && allProducts.filter(m => m.sponsorise).length > 0 && (
           <div style={{ marginBottom: 22 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-.3px' }}>Produits sponsorises</div>
               <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(245,158,11,.1)', color: '#F59E0B' }}>AD</span>
             </div>
             <div className="rg-4" style={{ gap: 10 }}>
-              {MKT_ITEMS.filter(m => m.sponsorise).map(m => (
+              {allProducts.filter(m => m.sponsorise).map(m => (
                 <div key={m.id} onClick={() => { setDetail(m); setDetailQty(1) }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--surface-1)', border: '1px solid rgba(245,158,11,.15)', borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }} onMouseOver={e => e.currentTarget.style.borderColor = '#F59E0B'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,.15)'}>
                   <img src={m.img} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -448,14 +448,14 @@ export default function Marketplace({ showToast, commerceScope }) {
           </div>
         )}
 
-        {/* Flash deals */}
-        {activeCat === 'all' && !search && (
+        {/* MKT-01: Flash deals — conditionnel (n'afficher que s'il y a de vrais produits flash) */}
+        {activeCat === 'all' && !search && allProducts.filter(m => m.flash).length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.3px', display: 'flex', alignItems: 'center', gap: 5 }}><Zap size={15}/> Ventes Flash <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--err)', background: 'rgba(220,38,38,.08)', padding: '3px 9px', borderRadius: 100, marginLeft: 4 }}>Offres limitees</span></div>
             </div>
             <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
-              {flashItems.map(m => (
+              {allProducts.filter(m => m.flash).map(m => (
                 <div key={m.id} onClick={() => { setDetail(m); setDetailQty(1) }} style={{ flexShrink: 0, width: 170, background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', transition: 'all .15s' }}>
                   <img src={m.img} alt="" style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none' }} />
                   <div style={{ padding: '10px 10px 12px' }}>

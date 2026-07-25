@@ -1,6 +1,7 @@
 const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
+const { requirePermission } = require('../middleware/permission')
 const { createError } = require('../middleware/errorHandler')
 const { getIo } = require('../socket')
 
@@ -135,7 +136,8 @@ router.get('/:id', requireAuth, async (req, res, next) => {
 })
 
 // ─── POST /api/missions ──────────────────────────────────────────────────────
-router.post('/', requireAuth, async (req, res, next) => {
+// SYS-02: permission centralisée — seuls pro_admin, architecte, client peuvent créer
+router.post('/', requireAuth, requirePermission('create_mission'), async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { projectId, type, title, description, responsibleUserId, responsibleName, responsibleEmail } = req.body

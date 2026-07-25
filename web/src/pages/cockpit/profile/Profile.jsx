@@ -6,6 +6,8 @@ import MeereoLogo from '../../../components/shared/MeereoLogo'
 import { api } from '../../../services/api/client'
 import SectionRenderer from '../../../components/sections-builder/SectionRenderer'
 import { Star } from 'lucide-react'
+import ShareMenu from '../../../components/shared/ShareMenu'
+import VerifiedBadge from '../../../components/shared/VerifiedBadge'
 import '../../../styles/profile.css'
 
 export default function Profile() {
@@ -241,10 +243,7 @@ export default function Profile() {
         <div className="pp-nav-actions">
           {isOwner ? (
             <>
-              <button className="pp-btn-ghost" onClick={() => {
-                const url = window.location.href
-                navigator.clipboard.writeText(url).then(() => showToast?.('Lien copié !'))
-              }}>Partager</button>
+              <ShareMenu url={window.location.href} text={`Découvrez ${proName} sur MEEREO`} onCopied={() => showToast?.('Lien copié !')} />
               <button className="pp-btn-ghost" onClick={() => navigate('/cockpit')}>Tableau de bord</button>
               <button className="pp-btn-primary" onClick={() => {
                 navigate('/cockpit/page-builder')

@@ -4,26 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import { getEntrepriseAvatar } from '../../data/avatars'
 import { CLIENT_METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
+import CompanyLogo from './CompanyLogo'
+import VerifiedBadge from './VerifiedBadge'
 
+// QAL-02: Avatar local remplacé par CompanyLogo centralisé
 function Avatar({ nom, logoUrl, logoColor, size = 44 }) {
-  const [imgError, setImgError] = useState(false)
-  const sz = size
-  const initials = nom ? nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?'
-  // Prefer explicit logoUrl (if image loads), then colored initials placeholder
-  if (logoUrl && !imgError) {
-    return (
-      <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-        <img src={logoUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setImgError(true)} />
-      </div>
-    )
-  }
-  // Consistent placeholder: logoColor or fallback to dark
-  const bg = logoColor || 'var(--tx)'
-  return (
-    <div style={{ width: sz, height: sz, borderRadius: sz / 2, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sz * .3, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-      {initials}
-    </div>
-  )
+  // Mapper les props ad-hoc vers le format attendu par CompanyLogo
+  const pro = { entreprise: nom, logoFileUrl: logoUrl, logoColor, activeLogoType: logoUrl ? 'uploaded' : 'generated' }
+  return <CompanyLogo pro={pro} size={size} rounded />
 }
 
 /**
@@ -158,7 +146,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom || 'Professionnel'}</span>
-                          {p.verified && <span style={{ fontWeight: 600, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', padding: '1px 4px', borderRadius: 100, flexShrink: 0, display: 'inline-flex' }}><Check size={7}/></span>}
+                          <VerifiedBadge verified={p.verified} size={12} />
                         </div>
                         <div style={{ fontSize: 10.5, color: 'var(--t4)' }}>{p.ville || "Côte d'Ivoire"}</div>
                       </div>

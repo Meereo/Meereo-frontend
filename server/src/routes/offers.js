@@ -220,6 +220,26 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       }
       // AOF-01 A8: fermer l'AO automatiquement
       await prisma.aO.update({ where: { id: existing.aoId }, data: { status: 'attributed' } }).catch(() => {})
+
+      // AOF-01 A6: créer automatiquement le marché signé
+      try {
+        await prisma.market.create({
+          data: {
+            title: existing.ao?.title || 'Marché',
+            supplierId: existing.supplierId,
+            clientId: existing.ao?.ownerUserId,
+            aoId: existing.aoId,
+            projectId: existing.ao?.projectId || null,
+            offerId: existing.id,
+            montant: existing.montant || '0',
+            delai: existing.delai || '',
+            statut: 'signed',
+            signedAt: new Date(),
+          },
+        })
+      } catch (marketErr) {
+        console.warn('[AOF-01] Auto-create market failed:', marketErr.message)
+      }
     }
 
     // Notifier le fournisseur quand son offre est acceptée ou refusée

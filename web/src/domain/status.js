@@ -18,75 +18,83 @@ export const STATUS = {
   ARCHIVED: 'archived',
 }
 
-// ── Phases projet (ordre strict) — 8 phases compréhensibles par tous ──
+// ── Phases projet (ordre strict) — 7 phases construction (PRJ-07 / FIN-01) ──
+// Phases FIXES imposées par MEEREO, identiques pour tous les projets (FIN-01 v1.26).
+// Même axe pour l'avancement (PRJ-07) et les décaissements (FIN-01).
 export const PROJECT_PHASES = [
-  'ESQUISSE',
-  'AVANT_PROJET',
-  'PROJET_DETAILLE',
-  'PLANS_EXECUTION',
-  'CONSULTATION_ENTREPRISES',
-  'ATTRIBUTION_MARCHES',
-  'SUIVI_CHANTIER',
+  'CONCEPTION',
+  'PREPARATION',
+  'GROS_OEUVRE',
+  'SECOND_OEUVRE',
+  'MATERIAUX',
+  'MOBILIER',
   'RECEPTION',
 ]
 
 // Labels courts — affichage compact (cartes, badges, filtres)
 export const PHASE_LABELS = {
-  ESQUISSE: 'Esquisse',
-  AVANT_PROJET: 'Avant-projet',
-  PROJET_DETAILLE: 'Projet détaillé',
-  PLANS_EXECUTION: 'Plans d\'exécution',
-  CONSULTATION_ENTREPRISES: 'Consultation des entreprises',
-  ATTRIBUTION_MARCHES: 'Attribution des marchés',
-  SUIVI_CHANTIER: 'Suivi de chantier',
-  RECEPTION: 'Réception du projet',
-  // Backward compat
-  IDEE: 'Esquisse',
-  ETUDES: 'Esquisse',
-  CONCEPTION: 'Avant-projet',
-  CONSULTATION: 'Consultation des entreprises',
-  TRAVAUX: 'Suivi de chantier',
-  FINITIONS: 'Suivi de chantier',
-  LIVRAISON: 'Réception du projet',
-  EXPLOITATION: 'Réception du projet',
+  CONCEPTION: 'Conception',
+  PREPARATION: 'Préparation',
+  GROS_OEUVRE: 'Gros Œuvre',
+  SECOND_OEUVRE: 'Second Œuvre',
+  MATERIAUX: 'Matériaux',
+  MOBILIER: 'Mobilier',
+  RECEPTION: 'Réception',
+  // Backward compat — anciennes phases architecture → nouvelles phases construction
+  ESQUISSE: 'Conception',
+  AVANT_PROJET: 'Conception',
+  PROJET_DETAILLE: 'Conception',
+  PLANS_EXECUTION: 'Préparation',
+  CONSULTATION_ENTREPRISES: 'Préparation',
+  ATTRIBUTION_MARCHES: 'Préparation',
+  SUIVI_CHANTIER: 'Gros Œuvre',
+  IDEE: 'Conception',
+  ETUDES: 'Conception',
+  CONSULTATION: 'Préparation',
+  TRAVAUX: 'Gros Œuvre',
+  FINITIONS: 'Second Œuvre',
+  LIVRAISON: 'Réception',
+  EXPLOITATION: 'Réception',
 }
 
 // Labels descriptifs — utilisés dans les selects de création/édition
 export const PHASE_LABELS_FULL = {
-  ESQUISSE: 'Esquisse',
-  AVANT_PROJET: 'Avant-projet',
-  PROJET_DETAILLE: 'Projet détaillé',
-  PLANS_EXECUTION: 'Plans d\'exécution',
-  CONSULTATION_ENTREPRISES: 'Consultation des entreprises',
-  ATTRIBUTION_MARCHES: 'Attribution des marchés',
-  SUIVI_CHANTIER: 'Suivi de chantier',
+  CONCEPTION: 'Conception & Études',
+  PREPARATION: 'Préparation du chantier',
+  GROS_OEUVRE: 'Gros Œuvre',
+  SECOND_OEUVRE: 'Second Œuvre',
+  MATERIAUX: 'Matériaux',
+  MOBILIER: 'Mobilier & Aménagement',
   RECEPTION: 'Réception du projet',
 }
 
-// Prochaine action recommandée par phase
+// Tâches types par phase (PRJ-07)
 export const PHASE_DETAIL = {
-  ESQUISSE: ['Relevé de mesures', 'Analyse du site', 'Faisabilité'],
-  AVANT_PROJET: ['Estimation budgétaire', 'Études BET', 'Études techniques'],
-  PROJET_DETAILLE: ['Plans d\'exécution', 'Dossier permis de construire'],
-  PLANS_EXECUTION: ['Lancer les consultations', 'Préparer le DCE'],
-  CONSULTATION_ENTREPRISES: ['Réceptionner les offres', 'Analyser et comparer'],
-  ATTRIBUTION_MARCHES: ['Signer les marchés', 'Planifier le chantier'],
-  SUIVI_CHANTIER: ['Suivre l\'avancement', 'Contrôler la qualité'],
-  RECEPTION: ['Lever les réserves', 'Remettre les clés'],
+  CONCEPTION: ['Relevé de mesures', 'Analyse du site', 'Faisabilité', 'Esquisse', 'Avant-projet', 'Projet détaillé', 'Estimation budgétaire', 'Études BET structure', 'Études BET fluides/CVC', 'Plans d\'exécution', 'Dossier permis de construire'],
+  PREPARATION: ['Consultation des entreprises', 'Analyse des offres', 'Attribution des marchés', 'Planification du chantier', 'Installation de chantier'],
+  GROS_OEUVRE: ['Fondations', 'Structure', 'Charpente', 'Toiture', 'Maçonnerie'],
+  SECOND_OEUVRE: ['Menuiseries', 'Électricité', 'Plomberie', 'CVC / Climatisation', 'Revêtements', 'Peinture'],
+  MATERIAUX: ['Commande matériaux', 'Réception matériaux', 'Contrôle qualité'],
+  MOBILIER: ['Mobilier bureau', 'Mobilier maison', 'Cuisine & SDB', 'Aménagement extérieur'],
+  RECEPTION: ['Pré-réception', 'Lever des réserves', 'Réception définitive', 'Remise des clés'],
 }
 
 export const PHASE_INDEX = Object.fromEntries(PROJECT_PHASES.map((p, i) => [p, i]))
 
 // Backward compatibility — map ALL old phase codes to new ones
 export const PHASE_COMPAT = {
-  // Anciens codes techniques
-  ESQ: 'ESQUISSE', APS: 'AVANT_PROJET', APD: 'PROJET_DETAILLE', PRO: 'PLANS_EXECUTION',
-  DCE: 'CONSULTATION_ENTREPRISES', ACT: 'ATTRIBUTION_MARCHES',
-  EXE: 'SUIVI_CHANTIER', DET: 'SUIVI_CHANTIER', AOR: 'RECEPTION', REC: 'RECEPTION',
+  // Anciens codes techniques (architecture)
+  ESQ: 'CONCEPTION', APS: 'CONCEPTION', APD: 'CONCEPTION', PRO: 'PREPARATION',
+  DCE: 'PREPARATION', ACT: 'PREPARATION',
+  EXE: 'GROS_OEUVRE', DET: 'SECOND_OEUVRE', AOR: 'RECEPTION', REC: 'RECEPTION',
+  // Anciennes phases architecture (v < 1.27)
+  ESQUISSE: 'CONCEPTION', AVANT_PROJET: 'CONCEPTION', PROJET_DETAILLE: 'CONCEPTION',
+  PLANS_EXECUTION: 'PREPARATION', CONSULTATION_ENTREPRISES: 'PREPARATION', ATTRIBUTION_MARCHES: 'PREPARATION',
+  SUIVI_CHANTIER: 'GROS_OEUVRE',
   // Anciennes phases simplifiées
-  IDEE: 'ESQUISSE', ETUDES: 'ESQUISSE', CONCEPTION: 'AVANT_PROJET',
-  CONSULTATION: 'CONSULTATION_ENTREPRISES', TRAVAUX: 'SUIVI_CHANTIER',
-  FINITIONS: 'SUIVI_CHANTIER', LIVRAISON: 'RECEPTION', EXPLOITATION: 'RECEPTION',
+  IDEE: 'CONCEPTION', ETUDES: 'CONCEPTION', CONCEPTION: 'CONCEPTION',
+  CONSULTATION: 'PREPARATION', TRAVAUX: 'GROS_OEUVRE',
+  FINITIONS: 'SECOND_OEUVRE', LIVRAISON: 'RECEPTION', EXPLOITATION: 'RECEPTION',
 }
 export const normalizePhase = (p) => PHASE_COMPAT[p] || p
 
@@ -99,6 +107,7 @@ export const PROJECT_STATUS = {
   COMPLETED: 'completed',
   CLOTURE: 'cloture',
   ARCHIVED: 'archived',
+  DELETED: 'deleted',
   // Backward compat
   DRAFT: 'draft',
   ON_HOLD: 'on_hold',
@@ -113,6 +122,7 @@ export const PROJECT_STATUS_LABELS = {
   completed: 'Terminé',
   cloture: 'Clôturé',
   archived: 'Archivé',
+  deleted: 'Supprimé',
   // Backward compat
   draft: 'Brouillon',
   stopped: 'Arrêté',
@@ -124,11 +134,12 @@ export const PROJECT_STATUS_LABELS = {
 export const PROJECT_TRANSITIONS = {
   preparation: ['en_attente', 'active'],
   en_attente: ['active', 'archived'],
-  active: ['suspendu', 'completed', 'archived'],
-  suspendu: ['active', 'archived'],
+  active: ['suspendu', 'completed', 'archived', 'deleted'],
+  suspendu: ['active', 'archived', 'deleted'],
   completed: ['cloture', 'active'],
   cloture: ['archived'],
   archived: [],
+  deleted: [],
   // Backward compat
   draft: ['active', 'preparation'],
   stopped: ['archived'],
@@ -142,6 +153,7 @@ export const PROJECT_STATUS_COLORS = {
   completed: '#16A34A',
   cloture: '#7C3AED',
   archived: '#9CA3AF',
+  deleted: '#DC2626',
   draft: '#6B7280',
   stopped: '#DC2626',
 }

@@ -47,6 +47,7 @@ async function requireAuth(req, res, next) {
       emailVerified: true,
       verified: true,
       publicId: true,
+      deletedAt: true,
     },
   })
 
@@ -54,8 +55,8 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Utilisateur introuvable' })
   }
 
-  // Refuse access to soft-deleted accounts
-  if (user.email && user.email.startsWith('deleted_')) {
+  // AVS-03: refuse access to soft-deleted accounts
+  if (user.deletedAt || (user.email && user.email.startsWith('deleted_'))) {
     return res.status(401).json({ error: 'Ce compte a été supprimé' })
   }
 

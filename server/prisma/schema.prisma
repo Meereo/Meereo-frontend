@@ -40,6 +40,7 @@ model User {
   // Nullable pour les comptes existants — généré à l'inscription pour les nouveaux
   publicId      String?  @unique @default(uuid())
   slug          String?  @unique   // URL SEO-friendly (ex: "raw-design")
+  deletedAt     DateTime?          // AVS-03: soft-delete — null = actif, date = supprimé
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -91,8 +92,9 @@ model User {
   offers Offer[]
 
   // Conversations
-  participations ConversationParticipant[]
-  sentMessages   Message[]
+  participations  ConversationParticipant[]
+  sentMessages    Message[]
+  pendingMessages PendingMessage[] @relation("PendingMessageSender")
 
   // KAI
   kaiEntitlements  KaiEntitlement[]
@@ -111,6 +113,9 @@ model User {
   ownedIntroductions    Introduction[]    @relation("OwnedIntroductions")
   ownedCommissions      Commission[]      @relation("OwnedCommissions")
   ownedPaymentRequests  PaymentRequest[]  @relation("OwnedPaymentRequests")
+
+  // Abonnements (FIN-02/03)
+  subscriptions Subscription[]
 
   // Préférences utilisateur (notifications, UI…)
   // Format : { notifEmail, notifPush, rappels, resume, devise, theme, langue, … }
@@ -362,6 +367,9 @@ model Conversation {
   isGroup      Boolean  @default(false)
   // Type de conversation : libre | projet | mission | crm | entreprise
   type         String   @default("libre")
+  // MSG-04: hash trié des 2 user IDs pour les conversations 1:1.
+  // Garantit l'unicité du binôme en DB (null pour les groupes).
+  pairHash     String?  @unique
   // Contexte métier optionnel
   aoId         String?
   offerId      String?
@@ -404,6 +412,30 @@ model Message {
   createdAt      DateTime     @default(now())
 
   @@map("messages")
+}
+
+// ─── MSG-01: Messages en attente pour destinataires non inscrits ─────────────
+// Quand un utilisateur envoie un message à une entreprise référencée mais pas encore
+// inscrite, le message est retenu ici. À l'inscription, rattacher à une vraie conversation.
+
+model PendingMessage {
+  id              String   @id @default(cuid())
+  senderId        String
+  sender          User     @relation("PendingMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientEmail  String?  // Email du destinataire non inscrit (pour invitation)
+  recipientPhone  String?  // Téléphone alternatif
+  recipientRef    String?  // Référence de l'entreprise dans l'annuaire
+  text            String
+  type            String   @default("text")
+  fileUrl         String?
+  delivered       Boolean  @default(false) // true une fois rattaché à une conversation
+  deliveredAt     DateTime?
+  conversationId  String?  // Renseigné après rattachement
+  createdAt       DateTime @default(now())
+
+  @@index([recipientEmail])
+  @@index([delivered])
+  @@map("pending_messages")
 }
 
 // ─── Commande Marketplace ────────────────────────────────────────────────────
@@ -922,6 +954,45 @@ model Transaction {
   updatedAt   DateTime @updatedAt
 
   @@map("transactions")
+}
+
+// ─── FIN-02/03: Tarifs configurables + Abonnements ──────────────────────────
+// Les tarifs sont paramétrables en back-office, jamais codés en dur (FIN-03 v1.25).
+
+model PricingConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique  // ex: 'kai_pro_client', 'kai_pro_pro', 'quota_product', 'flash_sale'
+  label       String             // Libellé lisible
+  amount      Float              // Montant en FCFA
+  currency    String   @default("XOF")
+  interval    String?            // 'month' | 'year' | 'one_time' | null
+  isActive    Boolean  @default(true)
+  metadata    Json     @default("{}")  // Données supplémentaires (paliers, conditions...)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("pricing_configs")
+}
+
+model Subscription {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planKey       String    // Référence vers PricingConfig.key
+  status        String    @default("active") // active | suspended | cancelled | expired
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  renewalDate   DateTime?
+  paymentMethod String?   // orange_money | mtn_momo | wave
+  paymentRef    String?   // Référence transaction Mobile Money
+  amount        Float     @default(0)
+  cancelledAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 // ─── Introduction (mise en relation AO / commissions clé en main) ─────────────

@@ -290,7 +290,48 @@ router.post('/register', async (req, res, next) => {
       }).catch(e => console.warn('[AUTH] onboardingData initial save failed:', e.message))
     }
 
-    // 7. Répondre avec le user public + token JWT
+    // 7. MSG-01: rattacher les messages en attente envoyés à cet email
+    //    (entreprise référencée qui s'inscrit → retrouve ses messages)
+    try {
+      const pending = await prisma.pendingMessage.findMany({
+        where: { recipientEmail: email.toLowerCase(), delivered: false },
+      })
+      for (const pm of pending) {
+        // Créer la conversation 1:1 entre l'expéditeur et le nouvel inscrit
+        const pairHash = [pm.senderId, user.id].sort().join('::')
+        let conv = await prisma.conversation.findUnique({ where: { pairHash } })
+        if (!conv) {
+          conv = await prisma.conversation.create({
+            data: {
+              isGroup: false,
+              pairHash,
+              type: 'libre',
+              participants: { create: [{ userId: pm.senderId }, { userId: user.id }] },
+            },
+          })
+        }
+        // Insérer le message dans la conversation
+        await prisma.message.create({
+          data: {
+            conversationId: conv.id,
+            senderId: pm.senderId,
+            text: pm.text,
+            type: pm.type || 'text',
+            fileUrl: pm.fileUrl || null,
+            createdAt: pm.createdAt, // conserver la date originale
+          },
+        })
+        // Marquer comme livré
+        await prisma.pendingMessage.update({
+          where: { id: pm.id },
+          data: { delivered: true, deliveredAt: new Date(), conversationId: conv.id },
+        })
+      }
+    } catch (e) {
+      console.warn('[AUTH] MSG-01 pending message delivery failed:', e.message)
+    }
+
+    // 8. Répondre avec le user public + token JWT
     const resp = authResponse(user)
     setAuthCookie(res, resp.token)
     return res.status(201).json(resp)
@@ -317,8 +358,8 @@ router.post('/login', async (req, res, next) => {
       throw createError('Email ou mot de passe incorrect', 401)
     }
 
-    // Compte supprimé (soft-delete)
-    if (user.passwordHash === 'DELETED') {
+    // AVS-03: Compte supprimé (soft-delete)
+    if (user.passwordHash === 'DELETED' || user.deletedAt) {
       throw createError('Ce compte a été supprimé', 401)
     }
 
@@ -620,14 +661,30 @@ router.delete('/account', requireAuth, async (req, res, next) => {
     }
 
     // AVS-03: bloquer la suppression si le fournisseur a des factures impayées envers MEEREO
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { type: true } })
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { type: true, email: true } })
+
     if (user?.type === 'fournisseur') {
+      // FIN-03 / AVS-03 (tranché v1.26) : vérifier les factures MEEREO impayées
+      // (quota de produits, sponsoring, abonnement — si le fournisseur a un solde dû,
+      //  la suppression est BLOQUÉE tant que le solde n'est pas réglé)
+      const unpaidTransactions = await prisma.transaction.findMany({
+        where: { userId, statut: { in: ['pending', 'due', 'overdue'] } },
+      }).catch(() => [])
+      if (unpaidTransactions.length > 0) {
+        const totalDue = unpaidTransactions.reduce((sum, t) => sum + (Number(t.montant) || 0), 0)
+        return res.status(403).json({
+          error: `Suppression impossible : vous avez un solde impayé de ${totalDue.toLocaleString('fr-FR')} FCFA envers MEEREO. Veuillez régler vos factures avant de supprimer votre compte.`,
+          unpaidAmount: totalDue,
+          unpaidCount: unpaidTransactions.length,
+        })
+      }
+
       // Vérifier les commandes en cours (acheteurs à notifier)
       const pendingOrders = await prisma.order.findMany({
         where: { sellerId: userId, statut: { notIn: ['completed', 'cancelled', 'delivered'] } },
         include: { buyer: { select: { id: true, name: true, email: true } } },
       })
-      // Notifier chaque acheteur ayant une commande en cours
+      // Notifier chaque acheteur ayant une commande en cours + transmettre coordonnées
       const { getIo } = require('../socket')
       const io = getIo()
       for (const order of pendingOrders) {
@@ -635,7 +692,7 @@ router.delete('/account', requireAuth, async (req, res, next) => {
           await prisma.notification.create({
             data: {
               userId: order.buyer.id,
-              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte. Contactez-le directement pour finaliser.`,
+              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte. Contactez-le directement : ${user.email}`,
               type: 'orange',
               page: 'commandes',
             },
@@ -643,7 +700,7 @@ router.delete('/account', requireAuth, async (req, res, next) => {
           if (io) {
             io.to(`user:${order.buyer.id}`).emit('notification:new', {
               id: 'supplier_del_' + order.id,
-              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte`,
+              msg: `Le fournisseur de votre commande ${order.ref} a supprimé son compte. Contact : ${user.email}`,
               type: 'orange', read: false, createdAt: new Date().toISOString(),
             })
           }
@@ -651,22 +708,42 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       }
     }
 
-    // Before deleting: unlink this user from other users' projects
-    // so a new account with the same email won't inherit old project references
-    const userEmail = (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))?.email
-    if (userEmail) {
-      // Clear clientEmail references in projects owned by OTHER users
-      await prisma.project.updateMany({
-        where: { clientEmail: { equals: userEmail, mode: 'insensitive' }, ownerId: { not: userId } },
-        data: { clientEmail: '', clientId: null },
+    // ─── AVS-03: SOFT-DELETE — anonymiser le compte au lieu de le supprimer ───
+    // L'email est préfixé avec 'deleted_TIMESTAMP_' pour :
+    // 1. Libérer l'email pour réutilisation (contrainte @unique satisfaite)
+    // 2. Empêcher toute réassociation de données via l'ancien email
+    // 3. Conserver les données historiques (projets passés, reviews, etc.)
+    const deletedEmail = `deleted_${Date.now()}_${user.email}`
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: deletedEmail,
+        passwordHash: 'DELETED',
+        name: 'Compte supprimé',
+        deletedAt: new Date(),
+        // Anonymiser les données sensibles du profil
+        ...(user.type === 'pro' ? {
+          proProfile: { update: { rccm: null, ncc: null, telephone: null } },
+        } : {}),
+        ...(user.type === 'fournisseur' ? {
+          fournisseurProfile: { update: { rccm: null, ncc: null, telephone: null } },
+        } : {}),
+      },
+    })
+
+    // Retirer les produits de la Marketplace (fournisseur)
+    if (user.type === 'fournisseur') {
+      await prisma.product.updateMany({
+        where: { supplierId: userId },
+        data: { isPublished: false, status: 'archived' },
       }).catch(() => {})
     }
-    // Clear clientId references in projects owned by OTHER users
+
+    // Nettoyer les références dans les projets d'autres utilisateurs (par UUID, pas par email)
     await prisma.project.updateMany({
       where: { clientId: userId, ownerId: { not: userId } },
       data: { clientId: null },
     }).catch(() => {})
-    // Clear supplierId references in markets
     await prisma.market.updateMany({
       where: { supplierId: userId },
       data: { supplierId: null },
@@ -675,10 +752,6 @@ router.delete('/account', requireAuth, async (req, res, next) => {
       where: { clientId: userId },
       data: { clientId: null },
     }).catch(() => {})
-
-    // Hard delete — Prisma onDelete:Cascade removes all related records
-    // (profiles, projects, AOs, offers, messages, orders, tasks, documents, etc.)
-    await prisma.user.delete({ where: { id: userId } })
 
     // Clear the session cookie so the user is immediately unauthenticated
     res.clearCookie('meereo_token', { path: '/', sameSite: 'strict' })

@@ -898,7 +898,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                   </div>
                 ) : (
                   <>
-                    <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder="Écrire à KAI..." />
+                    <textarea rows="1" value={kaiInput} onChange={e => setKaiInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kaiSend() } }} placeholder="Écrire à KAi..." />
                     <button className={`kai-send${kaiInput.trim() ? ' active' : ''}`} onClick={() => kaiSend()} aria-label="Envoyer">
                       <Send size={14} className={`kai-send-icon${kaiInput.trim() ? ' has-text' : ''}`} />
                     </button>

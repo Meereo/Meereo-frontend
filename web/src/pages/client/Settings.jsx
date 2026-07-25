@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { api } from '../../services/api/client'
+import { setLanguage } from '../../config/i18n'
 import KaiSubscription from '../../components/shared/KaiSubscription'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
 
@@ -115,6 +116,20 @@ function ClientPrefsForm({ store, updateStore }) {
           </div>
         )
       })}
+
+      {/* SYS-04: Sélecteur de langue FR/EN */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+        <span style={{ fontSize: 13, color: 'var(--t2)' }}>Langue de l'interface</span>
+        <select
+          className="form-input"
+          style={{ width: 160 }}
+          defaultValue={localStorage.getItem('meereo_lang') || 'fr'}
+          onChange={e => setLanguage(e.target.value)}
+        >
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </div>
     </div>
   )
 }

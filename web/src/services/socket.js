@@ -121,6 +121,42 @@ export function emitRead(conversationId) {
   socket?.emit('read', { conversationId })
 }
 
+// ─── MSG-05: Infrastructure appels audio/vidéo ──────────────────────────────
+// Événements socket pour la signalisation des appels.
+// L'intégration avec un prestataire réel (Twilio, LiveKit, Daily.co) sera ajoutée
+// ultérieurement — cette couche gère la signalisation (initier, accepter, refuser, raccrocher).
+
+/** Initier un appel (audio ou vidéo). */
+export function emitCallStart(conversationId, callType = 'audio') {
+  socket?.emit('call:start', { conversationId, callType })
+}
+
+/** Accepter un appel entrant. */
+export function emitCallAccept(conversationId) {
+  socket?.emit('call:accept', { conversationId })
+}
+
+/** Refuser / raccrocher un appel. */
+export function emitCallEnd(conversationId, reason = 'hangup') {
+  socket?.emit('call:end', { conversationId, reason })
+}
+
+/** Écouter les appels entrants. */
+export function onCallIncoming(cb) {
+  socket?.on('call:incoming', cb)
+}
+export function offCallIncoming(cb) {
+  socket?.off('call:incoming', cb)
+}
+
+/** Écouter les événements d'appel (accepted, ended, missed). */
+export function onCallEvent(cb) {
+  socket?.on('call:event', cb)
+}
+export function offCallEvent(cb) {
+  socket?.off('call:event', cb)
+}
+
 /** Déconnecter le socket (appelé au logout). */
 export function disconnectSocket() {
   if (socket) {

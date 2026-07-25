@@ -113,6 +113,7 @@ export default function Documents({ showToast }) {
   const [uploading, setUploading] = useState(false)
   const [importCategory, setImportCategory] = useState('')
   const [importExpiresAt, setImportExpiresAt] = useState('')
+  const [importVisibility, setImportVisibility] = useState('shared') // PRJ-04: 'shared' | 'internal'
   // Document actions
   const [docMenu, setDocMenu] = useState(null) // { id, x, y }
   const [confirmDelete, setConfirmDelete] = useState(null) // { id, nom }
@@ -573,6 +574,30 @@ export default function Documents({ showToast }) {
                 </div>
               )}
 
+              {/* PRJ-04: Toggle visibilité — interne ou partagé avec le client */}
+              {!isEntrepriseMode && importProjet && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)' }}>Visibilité :</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {[{ id: 'shared', label: 'Partagé avec le client' }, { id: 'internal', label: 'Interne (privé)' }].map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setImportVisibility(opt.id)}
+                        style={{
+                          padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+                          fontFamily: 'var(--f)', cursor: 'pointer', border: '1px solid',
+                          background: importVisibility === opt.id ? (opt.id === 'shared' ? 'rgba(37,99,235,.08)' : 'rgba(107,114,128,.08)') : 'transparent',
+                          borderColor: importVisibility === opt.id ? (opt.id === 'shared' ? 'rgba(37,99,235,.3)' : 'rgba(107,114,128,.3)') : 'var(--border)',
+                          color: importVisibility === opt.id ? (opt.id === 'shared' ? '#2563EB' : '#6B7280') : 'var(--t3)',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Drop zone */}
               <div
                 style={{ padding: '28px 20px', border: '2px dashed var(--border-subtle)', borderRadius: 12, textAlign: 'center', cursor: 'pointer', background: 'var(--s2)', transition: 'border-color .15s' }}
@@ -646,6 +671,7 @@ export default function Documents({ showToast }) {
                           isEntreprise,
                           category: isEntreprise && importCategory ? importCategory : undefined,
                           expiresAt: isEntreprise && importExpiresAt ? importExpiresAt : undefined,
+                          visibility: isEntreprise ? 'internal' : importVisibility,
                         })
                         uploaded.push({ ...doc, nom: doc.name, projet: isEntreprise ? 'Dossier Entreprise' : importProjet, cat: f.cat, taille: f.size, isNew: true, isEntreprise, category: isEntreprise ? 'entreprise' : undefined })
                       } catch (err) {

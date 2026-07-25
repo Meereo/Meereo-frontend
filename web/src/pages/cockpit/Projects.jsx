@@ -836,11 +836,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 return (
                   <div className="card" style={{ padding: 0, marginBottom: 20, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>Missions ({projMissions.length})</div>
-                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('missions')}>Voir tout →</button>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>Marchés ({projMissions.length})</div>
+                      <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => onNavigate && onNavigate('marches')}>Voir tout →</button>
                     </div>
                     {projMissions.length === 0 ? (
-                      <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucune mission — créez des missions depuis l'onglet Missions</div>
+                      <div style={{ padding: '16px 18px', fontSize: 12, color: 'var(--t4)', textAlign: 'center' }}>Aucun marché — créez des marchés depuis l'onglet Marchés</div>
                     ) : projMissions.slice(0, 5).map(m => {
                       const ICONS = { conception_architecturale: '📐', etudes_structure: '🔩', etudes_fluides: '🚿', construction: '🏗️', architecture_interieur: '🛋️' }
                       const STATUS_C = { created: 'var(--t4)', invitation_sent: 'var(--wrn)', accepted: 'var(--info)', in_progress: 'var(--blue)', pending_validation: 'var(--wrn)', validated: 'var(--ok)', completed: 'var(--ok)' }

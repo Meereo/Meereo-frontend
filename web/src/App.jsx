@@ -1,4 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Cockpit from './pages/cockpit/Cockpit'
 import Onboarding from './pages/Onboarding'
 import Supplier from './pages/supplier/Supplier'
@@ -12,6 +14,7 @@ import GlobalNav from './components/shared/GlobalNav'
 import Toast from './components/shared/Toast'
 import NotifPanel from './components/shared/NotifPanel'
 import { useMeereo } from './hooks/useMeereoStore'
+import { setSessionExpiredCallback } from './services/api/client'
 
 // Hydration gate: show spinner only when backend check is in progress AND no cached session hint
 function HydrationGate({ children }) {
@@ -61,6 +64,33 @@ function OnboardingGuard({ children }) {
   return children
 }
 
+// NAV-06: Modal « Session expirée » — affiché à la place des messages techniques bruts
+function SessionExpiredModal({ visible, onReconnect }) {
+  const { t } = useTranslation()
+  if (!visible) return null
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(4px)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '32px 28px', maxWidth: 380, width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: '#111' }}>{t('auth.sessionExpiredTitle')}</h3>
+        <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, margin: '0 0 24px' }}>
+          {t('auth.sessionExpiredMessage')}
+        </p>
+        <button
+          onClick={onReconnect}
+          style={{ width: '100%', padding: '10px 20px', fontSize: 14, fontWeight: 600, color: '#fff', background: '#111', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+        >
+          {t('auth.reconnect')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // NAV-01: Logged-in users should never see the landing page — redirect to their workspace
 function LandingGuard({ children }) {
   const { store } = useMeereo()
@@ -74,6 +104,19 @@ function LandingGuard({ children }) {
 }
 
 export default function App() {
+  const [sessionExpired, setSessionExpired] = useState(false)
+
+  // NAV-06: enregistrer le callback qui sera appelé par client.js sur un 401
+  useEffect(() => {
+    setSessionExpiredCallback(() => setSessionExpired(true))
+    return () => setSessionExpiredCallback(null)
+  }, [])
+
+  const handleReconnect = useCallback(() => {
+    setSessionExpired(false)
+    window.location.href = '/onboarding'
+  }, [])
+
   return (
     <HydrationGate>
       <Routes>
@@ -95,6 +138,8 @@ export default function App() {
       <GlobalNav />
       <Toast />
       <NotifPanel />
+      {/* NAV-06: modal session expirée — jamais de message technique brut */}
+      <SessionExpiredModal visible={sessionExpired} onReconnect={handleReconnect} />
     </HydrationGate>
   )
 }

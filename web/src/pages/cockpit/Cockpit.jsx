@@ -30,8 +30,7 @@ const Suppliers = lazy(() => import('./Suppliers'))
 const Finance = lazy(() => import('./Finance'))
 const TasksBoard = lazy(() => import('./TasksBoard'))
 const Budget = lazy(() => import('./Budget'))
-const Missions = lazy(() => import('./Missions'))
-const Assets = lazy(() => import('./Assets'))
+// FIN-01: « Missions » et « Actifs » supprimés — fusionnés dans « Marchés » (marches) et « Phases » (PRJ-07)
 const PageBuilder = lazy(() => import('./PageBuilder'))
 const PAGES = {
   dashboard: Dashboard, projets: Projects, clients: Clients, messages: Messages,
@@ -40,7 +39,7 @@ const PAGES = {
   documents: Documents, integrations: Integrations, parametres: Settings,
   marches: Contracts, rapports: Reports, commandes: Orders,
   fournisseurs: Suppliers, finance: Finance, 'taches-board': TasksBoard,
-  budget: Budget, missions: Missions, actifs: Assets, 'page-builder': PageBuilder,
+  budget: Budget, 'page-builder': PageBuilder,
 }
 
 // Suspense fallback — minimal loading indicator

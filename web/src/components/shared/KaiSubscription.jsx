@@ -41,9 +41,9 @@ const KAI_PRO_PRICES = {
 const getKaiProPrice = (role) => KAI_PRO_PRICES[role] || KAI_PRO_PRICES.pro
 
 const MOCK_HISTORY = [
-  { id: 'inv_3', date: '2026-04-01', label: 'KAI Pro — Renouvellement mensuel', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0042' },
-  { id: 'inv_2', date: '2026-03-01', label: 'KAI Pro — Renouvellement mensuel', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0031' },
-  { id: 'inv_1', date: '2026-02-15', label: 'KAI Pro — Première souscription', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0018' },
+  { id: 'inv_3', date: '2026-04-01', label: 'KAi Pro — Renouvellement mensuel', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0042' },
+  { id: 'inv_2', date: '2026-03-01', label: 'KAi Pro — Renouvellement mensuel', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0031' },
+  { id: 'inv_1', date: '2026-02-15', label: 'KAi Pro — Première souscription', amount: '9 900 FCFA', status: 'paid', ref: 'INV-2026-0018' },
 ]
 
 const HIST_STATUS = {
@@ -143,7 +143,7 @@ export default function KaiSubscription({ role = 'pro' }) {
         <div style={{ flexShrink: 0 }}>
           {!isGold && (
             <button onClick={() => setShowUpgrade(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#7C3AED', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
-              Passer à KAI Pro
+              Passer à KAi Pro
             </button>
           )}
           {status === 'expired' && (
@@ -282,7 +282,7 @@ export default function KaiSubscription({ role = 'pro' }) {
               {upgraded ? (
                 <div style={{ textAlign: 'center', padding: '8px 0' }}>
                   <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center', color: '#34C759' }}><Check size={24}/></div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#34C759' }}>KAI Pro activé avec succès</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#34C759' }}>KAi Pro activé avec succès</div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 4 }}>Actif dans tous vos espaces</div>
                 </div>
               ) : (

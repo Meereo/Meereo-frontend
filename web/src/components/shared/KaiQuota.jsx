@@ -15,14 +15,14 @@ export default function KaiQuota({ context = {}, role = 'pro' }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(124,58,237,.04)', borderRadius: 10, border: '1px solid rgba(124,58,237,.1)', cursor: 'pointer' }} onClick={() => setShowGold(true)}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#7C3AED', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#7C3AED' }}>KAI Pro actif</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#7C3AED' }}>KAi Pro actif</div>
             <div style={{ fontSize: 10, color: 'var(--t4)' }}>Copilote opérationnel — usage illimité</div>
           </div>
         </div>
       ) : (
         <div style={{ padding: '12px 14px', background: 'var(--s2)', borderRadius: 10, border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: quota.isExhausted ? 'var(--err)' : 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>KAI Standard</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: quota.isExhausted ? 'var(--err)' : 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>KAi Standard</div>
             <div style={{ fontSize: 10, fontWeight: quota.isExhausted ? 700 : 400, color: quota.isExhausted ? 'var(--err)' : 'var(--t4)' }}>{quota.used}/{quota.limit}</div>
           </div>
           <div style={{ height: 3, background: 'var(--s3)', borderRadius: 100, overflow: 'hidden', marginBottom: (suggest || quota.isExhausted) ? 8 : 0 }}>
@@ -30,8 +30,8 @@ export default function KaiQuota({ context = {}, role = 'pro' }) {
           </div>
           {(suggest || quota.isExhausted) && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: 10, color: quota.isExhausted ? 'var(--err)' : 'var(--t4)' }}>{quota.isExhausted ? 'Quota épuisé — KAI bloqué' : 'Passez au pilotage proactif'}</div>
-              <button onClick={() => setShowGold(true)} style={{ fontSize: 10, fontWeight: 600, color: '#7C3AED', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAI Pro →</button>
+              <div style={{ fontSize: 10, color: quota.isExhausted ? 'var(--err)' : 'var(--t4)' }}>{quota.isExhausted ? 'Quota épuisé — KAi bloqué' : 'Passez au pilotage proactif'}</div>
+              <button onClick={() => setShowGold(true)} style={{ fontSize: 10, fontWeight: 600, color: '#7C3AED', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>KAi Pro →</button>
             </div>
           )}
         </div>

@@ -245,4 +245,20 @@ router.put('/memory', requireAuth, async (req, res) => {
   }
 })
 
+// ─── MKT-05: KAi commercial fournisseur — analyse du catalogue ──────────────
+// Accessible uniquement par le fournisseur (SYS-02: données privées au fournisseur)
+router.get('/commercial/analysis', requireAuth, async (req, res) => {
+  try {
+    if (req.user.type !== 'fournisseur') {
+      return res.status(403).json({ error: 'Réservé aux fournisseurs' })
+    }
+    const { analyzeSupplierCatalogue } = require('../engines/kaiCommercial')
+    const analysis = await analyzeSupplierCatalogue(req.user.id)
+    res.json(analysis)
+  } catch (e) {
+    console.error('[KAI] GET /commercial/analysis', e)
+    res.status(500).json({ error: 'Erreur d\'analyse' })
+  }
+})
+
 module.exports = router

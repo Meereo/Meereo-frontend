@@ -2,11 +2,13 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Lock, MailOpen, Package, MessageSquare, Users, Camera, Video, Paperclip, Check, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { INTERVENANTS_DATA } from '../../data/intervenants'
 import { CLIENTS_DATA } from '../../data/clients'
 import { ANNUAIRE_PLATEFORME } from '../../data/chantier'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { api } from '../../services/api/client'
+import CompanyLogo from '../../components/shared/CompanyLogo'
 import {
   getSocket,
   joinConversation,
@@ -117,8 +119,8 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
           {isPro && active.publicId && <span style={{ fontSize: 10, color: 'var(--t4)', fontWeight: 500, cursor: 'pointer' }} onClick={() => navigate(`/pro/${active.slug || active.publicId}`)}>→ profil</span>}
         </div>
         <div style={{ fontSize: 11, color: 'var(--t3)', cursor: active.isGroup ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 3 }} onClick={() => active.isGroup && setShowParticipants(true)}>
-          {active.pending ? <><Lock size={10}/> En attente d{'’'}acceptation</>
-            : active.invited ? <><MailOpen size={10}/> Invité — en attente d{'’'}inscription</>
+          {active.pending ? <><Lock size={10}/> En attente d'acceptation</>
+            : active.invited ? <><MailOpen size={10}/> Invité — en attente d'inscription</>
             : active.isGroup ? (active.participants || []).length + ' participants'
             : '🟢 En ligne'}
         </div>
@@ -187,6 +189,7 @@ function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearc
 }
 
 export default function Messages({ showToast }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { store, updateStore } = useMeereo()
   const [activeId, setActiveId] = useState(null)
@@ -227,6 +230,7 @@ export default function Messages({ showToast }) {
   const typingTimers = useRef({})
   const typingRef = useRef(false) // whether WE are currently "typing"
   const messagesEndRef = useRef(null)
+  const readObserverRef = useRef(null) // R5: IntersectionObserver for deferred read-marking
 
   // ── Conversations from store (hydrated by socket useEffect in useMeereoStore) ─
   const allConversations = useMemo(() => {
@@ -267,18 +271,14 @@ export default function Messages({ showToast }) {
         } else {
           nom = firstOther?.company || firstOther?.name || 'Contact'
         }
-        // Photo réelle : priorité au champ photoUrl pré-calculé côté serveur
-        const photoUrl = !c.isGroup
-          ? (firstOther?.photoUrl ||
-             firstOther?.onboardingData?.photoUrl ||
-             firstOther?.onboardingData?.logoFileUrl ||
-             firstOther?.avatar || null)
-          : null
+        // QAL-02: résolution unifiée via CompanyLogo (firstOther sert de "pro" object)
+        const photoUrl = null // Rendu via <CompanyLogo /> dans la liste
+        const _contactPro = !c.isGroup ? firstOther : null
         const color = c.isGroup ? '#7C3AED' : '#2563EB'
         const lastMsg = c.lastMessage
         let dernier = ''
         if (lastMsg) {
-          const content = lastMsg.type === 'image' ? 'Photo' : lastMsg.type === 'file' ? 'Fichier' : lastMsg.type === 'devis' ? 'Proposition commerciale' : (lastMsg.text || '')
+          const content = lastMsg.type === 'image' ? t('messages.photo') : lastMsg.type === 'file' ? t('messages.file') : lastMsg.type === 'devis' ? t('messages.proposal') : (lastMsg.text || '')
           if (content) {
             const isMe = lastMsg.senderId === myId
             const label = isMe ? 'Vous' : (lastMsg.senderName ? lastMsg.senderName.split(' ')[0].slice(0, 5) : null)
@@ -301,6 +301,7 @@ export default function Messages({ showToast }) {
           color,
           avatar: nom?.[0]?.toUpperCase() || '?',
           photoUrl,
+          _contactPro,
           participants,
           dernier,
           time,
@@ -384,11 +385,8 @@ export default function Messages({ showToast }) {
           read: m.senderId === store.user?.id || true, // own messages always read; others marked read on open
         }))
         setMessagesMap(prev => ({ ...prev, [convId]: shaped }))
-        // Mark conversation as read (actual open event — MSG-03)
-        api.conversations.markRead(convId).catch(() => {})
-        emitRead(convId)
-        // Reset unread counter for this conversation in the list
-        updateConv(convId, cv => ({ ...cv, unread: 0 }))
+        // R5 / MSG-03: Defer markRead until messages are actually visible (IntersectionObserver)
+        // The observer on messagesEndRef will fire markRead when the bottom of the list is in view
       })
       .catch(() => {})
       .finally(() => setLoadingMessages(false))
@@ -482,19 +480,37 @@ export default function Messages({ showToast }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messagesMap, activeId])
 
+  // ── R5 / MSG-03: IntersectionObserver — mark read only when messages are visible ──
+  useEffect(() => {
+    if (readObserverRef.current) { readObserverRef.current.disconnect(); readObserverRef.current = null }
+    if (!activeId) return
+    const el = messagesEndRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        api.conversations.markRead(activeId).catch(() => {})
+        emitRead(activeId)
+        updateConv(activeId, cv => ({ ...cv, unread: 0 }))
+      }
+    }, { threshold: 0.1 })
+    observer.observe(el)
+    readObserverRef.current = observer
+    return () => observer.disconnect()
+  }, [activeId, messagesMap]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle conversation actions
   const handleConvAction = (type, convId) => {
     const conv = allConversations.find(c => c.id === convId)
     if (!conv) return
     if (type === 'unread') {
       updateConv(convId, c => ({ ...c, unread: 1 }))
-      showToast && showToast('Conversation marquée non lue')
+      showToast && showToast(t('messages.markUnread'))
       return
     }
     if (type === 'unarchive') {
       // Direct unarchive (no confirm needed, it's non-destructive)
       updateConv(convId, c => ({ ...c, _archived: false }))
-      showToast && showToast('Conversation restaurée')
+      showToast && showToast(t('messages.restored'))
       return
     }
     // Actions that require confirmation
@@ -515,10 +531,10 @@ export default function Messages({ showToast }) {
         if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _archived: true }] }))
       }
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Conversation archivée')
+      showToast && showToast(t('messages.archived'))
     } else if (type === 'unarchive') {
       updateConv(convId, c => ({ ...c, _archived: false }))
-      showToast && showToast('Conversation restaurée')
+      showToast && showToast(t('messages.restored'))
     } else if (type === 'delete') {
       // Call backend to remove the current user from this conversation (won't reload on next sync)
       if (!String(convId).startsWith('conv_')) {
@@ -531,7 +547,7 @@ export default function Messages({ showToast }) {
         if (conv) updateStore(prev => ({ ...prev, conversations: [...(prev.conversations || []), { ...conv, _deleted: true }] }))
       }
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Conversation supprimée')
+      showToast && showToast(t('messages.deleted'))
     } else if (type === 'quit') {
       updateConv(convId, c => ({
         ...c,
@@ -539,7 +555,7 @@ export default function Messages({ showToast }) {
         msgs: [...(c.msgs || []), { side: 'in', from: 'Systeme', text: 'Vous avez quitté le groupe', time: new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' }) }]
       }))
       if (activeId === convId) setActiveId(null)
-      showToast && showToast('Vous avez quitté le groupe')
+      showToast && showToast(t('messages.quitGroup'))
     }
     setConfirmAction(null)
   }
@@ -736,17 +752,43 @@ export default function Messages({ showToast }) {
       || (store.fournisseurs || []).find(u => u.name === c.nom || u.nom === c.nom)
 
     if (backendUser?.id && store._token) {
+      // MSG-06: Optimistic UI — insérer la conversation AVANT la réponse serveur
+      const tempId = 'temp_' + Date.now()
+      const optimisticConv = {
+        id: tempId,
+        nom: c.nom,
+        avatar: c.nom?.[0]?.toUpperCase() || '?',
+        color: '#2563EB',
+        isGroup: false,
+        participants: [c.nom],
+        dernier: 'En cours d\'envoi...',
+        time: 'Maintenant',
+        unread: 0,
+        msgs: [],
+        _optimistic: true,
+      }
+      updateStore(prev => ({ ...prev, conversations: [optimisticConv, ...(prev.conversations || [])] }))
+      setActiveId(tempId)
+      setShowNewConv(false)
+
       try {
         const { conversation } = await api.conversations.create({ participantId: backendUser.id })
-        updateStore(prev => {
-          const ids = new Set((prev.conversations || []).map(x => x.id))
-          if (ids.has(conversation.id)) return prev
-          return { ...prev, conversations: [conversation, ...(prev.conversations || [])] }
-        })
+        // MSG-06: Réconcilier — remplacer l'id temporaire par l'id réel
+        updateStore(prev => ({
+          ...prev,
+          conversations: prev.conversations.map(cv =>
+            cv.id === tempId ? { ...conversation, nom: cv.nom, avatar: cv.avatar, color: cv.color, dernier: '', time: 'Maintenant', unread: 0, msgs: [] } : cv
+          ),
+        }))
         setActiveId(conversation.id)
-        setShowNewConv(false)
         return
       } catch (e) {
+        // Erreur — retirer la conversation optimiste
+        updateStore(prev => ({
+          ...prev,
+          conversations: prev.conversations.filter(cv => cv.id !== tempId),
+        }))
+        setActiveId(null)
         console.warn('[startConversation]', e.message)
       }
     }
@@ -853,18 +895,19 @@ export default function Messages({ showToast }) {
             )}
             {mainConvs.map(c => {
               const av = getContactAvatar(c.nom, store.projects || [])
-              // Photo réelle : priorité à photoUrl (depuis backend), puis getContactAvatar (statique)
-              const listPhoto = c.photoUrl || (av?.type === 'img' ? av.value : null)
               const convThreads = threadMap[c.id] || []
               const mainRow = (
               <div key={'c-' + c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: convThreads.length ? 'none' : '1px solid var(--border)', cursor: 'pointer', background: active?.id === c.id ? 'var(--s2)' : undefined, transition: 'background .12s' }}
                 onClick={() => { setActiveId(c.id); if (c.unread) updateConv(c.id, cv => ({ ...cv, unread: 0 })) }}
                 onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ convId: c.id, x: e.clientX, y: e.clientY }) }}
               >
-                <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 600, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-                  {listPhoto
-                    ? <img src={listPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none' }} />
-                    : av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  {/* QAL-02: CompanyLogo unifié pour les contacts pro/fournisseur */}
+                  {c._contactPro
+                    ? <CompanyLogo pro={c._contactPro} size={42} rounded={!c.isGroup} />
+                    : <div style={{ width: 42, height: 42, borderRadius: c.isGroup ? 12 : 21, background: av?.type === 'color' ? av.value : c.color + '14', color: av?.type === 'color' ? '#fff' : c.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: av?.type === 'emoji' ? 20 : 13, fontWeight: 600 }}>
+                        {av?.type === 'color' ? av.initials : av?.type === 'emoji' ? av.value : c.avatar}
+                      </div>
                   }
                   {c.isGroup && <div style={{ position: 'absolute', bottom: -2, right: -2, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface-1)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={8}/></div>}
                 </div>
@@ -893,9 +936,9 @@ export default function Messages({ showToast }) {
           {!active ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12 }}>
               <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MessageSquare size={24}/></div>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>Vos messages</div>
-              <div style={{ fontSize: 12, color: 'var(--t3)', maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>Selectionnez une conversation ou demarrez-en une nouvelle</div>
-              <button style={{ marginTop: 8, padding: '9px 18px', borderRadius: 10, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, color: '#fff' }} onClick={() => { setShowNewConv(true); setNewConvSearch('') }}>Nouvelle conversation</button>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{t('messages.title')}</div>
+              <div style={{ fontSize: 12, color: 'var(--t3)', maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>{t('messages.selectConversation')}</div>
+              <button style={{ marginTop: 8, padding: '9px 18px', borderRadius: 10, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 12.5, fontWeight: 600, color: '#fff' }} onClick={() => { setShowNewConv(true); setNewConvSearch('') }}>{t('messages.newConversation')}</button>
             </div>
           ) : (
             <>
@@ -907,9 +950,9 @@ export default function Messages({ showToast }) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: 'rgba(107,114,128,.04)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 13 }}><Package size={13}/></span>
-                    <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>Cette conversation est archivée</span>
+                    <span style={{ fontSize: 12, color: 'var(--t3)', fontWeight: 500 }}>{t('messages.archivedBanner')}</span>
                   </div>
-                  <button onClick={() => handleConvAction('unarchive', active.id)} style={{ padding: '6px 14px', borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 11.5, fontWeight: 600, color: '#fff', transition: 'opacity .12s' }} onMouseOver={e => e.currentTarget.style.opacity = '.85'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>Restaurer</button>
+                  <button onClick={() => handleConvAction('unarchive', active.id)} style={{ padding: '6px 14px', borderRadius: 8, background: 'var(--tx)', border: 'none', cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 11.5, fontWeight: 600, color: '#fff', transition: 'opacity .12s' }} onMouseOver={e => e.currentTarget.style.opacity = '.85'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>{t('common.restore')}</button>
                 </div>
               )}
 
@@ -931,13 +974,13 @@ export default function Messages({ showToast }) {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, padding: '6px 14px', borderRadius: 100, background: 'rgba(107,114,128,.06)' }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF' }} />
-                            <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF' }}>En attente d'inscription</span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF' }}>{t('messages.waitingSignup')}</span>
                           </div>
                         </div>
                       )}
                       {loadingMessages && !activeMsgs.length && (
                         <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-                          <span style={{ fontSize: 11, color: 'var(--t4)' }}>Chargement...</span>
+                          <span style={{ fontSize: 11, color: 'var(--t4)' }}>{t('common.loading')}</span>
                         </div>
                       )}
                       {activeMsgs.map((m, i) => (
@@ -990,7 +1033,7 @@ export default function Messages({ showToast }) {
                                     return (
                                       <div style={{ maxWidth: '72%', borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px', overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: '0 2px 8px rgba(0,0,0,.06)' }}>
                                       <div style={{ padding: '8px 14px 6px', background: isOut ? 'var(--tx)' : 'var(--s2)', display: 'flex', alignItems: 'center', gap: 7 }}>
-                                        <span style={{ fontSize: 12 }}>“‹</span>
+                                        <span style={{ fontSize: 12 }}>"‹</span>
                                         <span style={{ fontSize: 10, fontWeight: 600, color: isOut ? 'rgba(255,255,255,.55)' : 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.07em' }}>Proposition commerciale</span>
                                       </div>
                                       <div style={{ padding: '10px 14px 12px', background: isOut ? 'rgba(0,0,0,.6)' : 'var(--surface-1)', display: 'flex', gap: 24 }}>
@@ -1048,7 +1091,7 @@ export default function Messages({ showToast }) {
               {/* Input — 3 states: pending / invited / normal */}
               {active.pending ? (
                 <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', flexShrink: 0, background: 'rgba(255,149,0,.03)' }}>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><Lock size={12}/> En attente d’acceptation par <strong>{active.nom}</strong></div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', textAlign: 'center', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><Lock size={12}/> {t('messages.pendingAcceptance')} <strong>{active.nom}</strong></div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     <button className="btn btn-sm" onClick={() => { updateStore(prev => ({ ...prev, conversations: (prev.conversations || []).filter(c => c.id !== active.id) })); setActiveId(null); showToast && showToast('Demande annulée') }}>Annuler</button>
                     <button className="btn btn-primary btn-sm" onClick={() => { updateConv(active.id, c => ({ ...c, pending: false, invited: false, type: 'entreprise', avatar: active.nom ? active.nom[0] : '?', color: '#16A34A', msgs: [...(c.msgs || []), { side: 'in', text: 'Bonjour, je suis disponible. Comment puis-je vous aider ?', time: 'Maintenant', read: true }], dernier: 'Demande acceptée' })); setActiveId(null); setTimeout(() => setActiveId(active.id), 0); showToast && showToast(active.nom + ' a accepté') }}>Simuler l'acceptation</button>
@@ -1062,8 +1105,8 @@ export default function Messages({ showToast }) {
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     </div>
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)' }}>{active.nom} n'est pas encore sur MEEREO</div>
-                      <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 1 }}>La messagerie sera disponible après son inscription.</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)' }}>{active.nom} {t('messages.notOnPlatform')}</div>
+                      <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 1 }}>{t('messages.availableAfterSignup')}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1102,7 +1145,7 @@ export default function Messages({ showToast }) {
                     showSuggestPanel ? (
                       <div style={{ padding: '10px 20px 6px', background: 'var(--s2)', borderBottom: '1px solid var(--border-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>“‹ Proposition commerciale</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>"‹ Proposition commerciale</span>
                           <button onClick={() => { setShowSuggestPanel(false); setSuggestMontant(''); setSuggestDelai('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t4)', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
                         </div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1138,7 +1181,7 @@ export default function Messages({ showToast }) {
                           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'var(--s2)', border: '1px solid var(--border-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--t3)', fontFamily: 'var(--f)', transition: 'all .15s' }}
                           title="Suggérer un prix et un délai au client"
                         >
-                          <span>“‹</span> Suggérer un prix
+                          <span>"‹</span> Suggérer un prix
                         </button>
                       </div>
                     )

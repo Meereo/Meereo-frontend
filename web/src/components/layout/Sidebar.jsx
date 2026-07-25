@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FLAG_SHOW_FINANCE, FLAG_SHOW_AO, FLAG_SHOW_MARKETPLACE, FLAG_SHOW_MESSAGES } from '../../config/featureFlags'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../utils/logoShape'
@@ -8,51 +9,52 @@ import MeereoLogo from '../shared/MeereoLogo'
 import KaiQuota from '../shared/KaiQuota'
 import './Sidebar.css'
 
+// SYS-04: i18n keys for sidebar labels — resolved at render time via t()
 const NAV_GROUPS = [
   {
     label: 'Core',
     items: [
-      { id: 'dashboard', label: 'Tableau de bord', icon: 'grid' },
-      { id: 'projets', label: 'Projets', icon: 'folder', countKey: 'projects' },
+      { id: 'dashboard', i18nKey: 'nav.dashboard', icon: 'grid' },
+      { id: 'projets', i18nKey: 'nav.projects', icon: 'folder', countKey: 'projects' },
     ]
   },
   {
     label: 'Opération',
     items: [
-      { id: 'chantier',      label: 'Avancement',       icon: 'hardhat' },
-      { id: 'taches-board',  label: 'Tâches',            icon: 'kanban' },
-      { id: 'budget',        label: 'Budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
+      { id: 'chantier',      i18nKey: 'nav.progress',       icon: 'hardhat' },
+      { id: 'taches-board',  i18nKey: 'nav.tasks',            icon: 'kanban' },
+      { id: 'budget',        i18nKey: 'nav.budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
     ]
   },
   {
     label: 'Collaboration',
     items: [
-      { id: 'messages', label: 'Messages', icon: 'message', countKey: 'messages', badgeColor: 'red', flag: FLAG_SHOW_MESSAGES },
-      { id: 'documents', label: 'Documents', icon: 'archive' },
-      { id: 'intervenants', label: 'Intervenants', icon: 'user-check' },
-      { id: 'clients', label: 'Clients', icon: 'users' },
+      { id: 'messages', i18nKey: 'nav.messages', icon: 'message', countKey: 'messages', badgeColor: 'red', flag: FLAG_SHOW_MESSAGES },
+      { id: 'documents', i18nKey: 'nav.documents', icon: 'archive' },
+      { id: 'intervenants', i18nKey: 'nav.contractors', icon: 'user-check' },
+      { id: 'clients', i18nKey: 'nav.clients', icon: 'users' },
     ]
   },
   {
     label: 'Business',
     items: [
-      { id: 'bourse', label: 'Appels d\'offres', icon: 'briefcase', flag: FLAG_SHOW_AO, countKey: 'newAos', badgeColor: 'blue' },
-      { id: 'offres', label: 'Offres', icon: 'inbox', countKey: 'offers', badgeColor: 'orange', flag: FLAG_SHOW_AO },
-      { id: 'marches', label: 'Marchés', icon: 'handshake', flag: FLAG_SHOW_AO },
+      { id: 'bourse', i18nKey: 'nav.tenders', icon: 'briefcase', flag: FLAG_SHOW_AO, countKey: 'newAos', badgeColor: 'blue' },
+      { id: 'offres', i18nKey: 'nav.offers', icon: 'inbox', countKey: 'offers', badgeColor: 'orange', flag: FLAG_SHOW_AO },
+      { id: 'marches', i18nKey: 'nav.markets', icon: 'handshake', flag: FLAG_SHOW_AO },
     ]
   },
   {
     label: 'Achats',
     items: [
-      { id: 'marketplace', label: 'Marketplace', icon: 'shopping-bag', flag: FLAG_SHOW_MARKETPLACE },
-      { id: 'commandes', label: 'Commandes', icon: 'package', flag: FLAG_SHOW_MARKETPLACE },
+      { id: 'marketplace', i18nKey: 'nav.marketplace', icon: 'shopping-bag', flag: FLAG_SHOW_MARKETPLACE },
+      { id: 'commandes', i18nKey: 'nav.orders', icon: 'package', flag: FLAG_SHOW_MARKETPLACE },
     ]
   },
   {
     label: 'Système',
     items: [
-      { id: 'page-builder', label: 'Modifier ma page pro', icon: 'layers', premium: true },
-      { id: 'parametres', label: 'Paramètres', icon: 'settings' },
+      { id: 'page-builder', i18nKey: 'nav.pageBuilder', icon: 'layers', premium: true },
+      { id: 'parametres', i18nKey: 'nav.settings', icon: 'settings' },
     ]
   }
 ]
@@ -113,6 +115,7 @@ function NavIcon({ name }) {
 }
 
 export default function Sidebar({ activePage, onNavigate, identity, isOpen, onClose }) {
+  const { t } = useTranslation()
   const { store } = useMeereo()
   const { format: fmtMoney } = useDevise()
   const nav = useNavigate()
@@ -158,8 +161,8 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
         </div>
       ) : (
         <div className="sidebar-project-card" style={{ cursor: 'pointer', textAlign: 'center' }} onClick={() => onNavigate('projets')}>
-          <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>Aucun projet actif</div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>+ Créer un projet</div>
+          <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>{t('project.noActive')}</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>{t('project.createNew')}</div>
         </div>
       )}
 
@@ -180,7 +183,7 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
                 onClick={() => { onNavigate(item.id); onClose?.() }}
               >
                 <NavIcon name={item.icon} />
-                <span>{item.label}</span>
+                <span>{t(item.i18nKey)}</span>
                 {count > 0 ? (
                   <span className={`ni-badge ${item.badgeColor ? 'nb-' + item.badgeColor : ''}`}>
                     {count}

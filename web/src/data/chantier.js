@@ -6,11 +6,11 @@
 
 export const CHANTIER_PHASES = [
   {
-    code: 'CONCEPTION_ETUDES',
+    code: 'CONCEPTION',
     name: 'Conception & Études',
     description: 'Relevés, faisabilité, esquisse, avant-projet, études techniques et permis',
     icon: '📐',
-    mainPhases: ['ESQUISSE', 'AVANT_PROJET', 'PROJET_DETAILLE', 'PLANS_EXECUTION'],
+    mainPhases: ['CONCEPTION'],
     tasks: [
       { id: 'ce01', title: 'Relevé de mesures', defaultStatus: 'todo' },
       { id: 'ce02', title: 'Analyse du site', defaultStatus: 'todo' },
@@ -27,11 +27,11 @@ export const CHANTIER_PHASES = [
     ]
   },
   {
-    code: 'PREPARATION_LANCEMENT',
+    code: 'PREPARATION',
     name: 'Préparation & Lancement',
     description: 'Consultations, analyse des offres, attribution des marchés et installation chantier',
     icon: '📋',
-    mainPhases: ['CONSULTATION_ENTREPRISES', 'ATTRIBUTION_MARCHES'],
+    mainPhases: ['PREPARATION'],
     tasks: [
       { id: 'pl01', title: 'Dossier de consultation', defaultStatus: 'todo' },
       { id: 'pl02', title: 'Lancement des consultations', defaultStatus: 'todo' },
@@ -52,7 +52,7 @@ export const CHANTIER_PHASES = [
     name: 'Gros Œuvre & Structure',
     description: 'Terrassement, fondations, structure et toiture',
     icon: '🏗️',
-    mainPhases: ['SUIVI_CHANTIER'],
+    mainPhases: ['GROS_OEUVRE'],
     tasks: [
       { id: 'go01', title: 'Implantation', defaultStatus: 'todo' },
       { id: 'go02', title: 'Terrassement', defaultStatus: 'todo' },
@@ -72,7 +72,7 @@ export const CHANTIER_PHASES = [
     name: 'Second Œuvre & Finitions',
     description: 'Cloisons, réseaux, menuiseries, revêtements et peinture',
     icon: '🔧',
-    mainPhases: ['SUIVI_CHANTIER'],
+    mainPhases: ['SECOND_OEUVRE'],
     tasks: [
       { id: 'so01', title: 'Cloisons', defaultStatus: 'todo' },
       { id: 'so02', title: 'Enduits', defaultStatus: 'todo' },
@@ -91,11 +91,11 @@ export const CHANTIER_PHASES = [
     ]
   },
   {
-    code: 'MATERIAUX_EQUIPEMENTS',
+    code: 'MATERIAUX',
     name: 'Matériaux & Équipements Client',
     description: 'Sélection, validation, commande et livraison des matériaux et équipements',
     icon: '📦',
-    mainPhases: ['SUIVI_CHANTIER'],
+    mainPhases: ['MATERIAUX'],
     tasks: [
       { id: 'me01', title: 'Sélection des matériaux', defaultStatus: 'todo' },
       { id: 'me02', title: 'Validation client', defaultStatus: 'todo' },
@@ -110,11 +110,11 @@ export const CHANTIER_PHASES = [
     ]
   },
   {
-    code: 'MOBILIER_DECORATION',
+    code: 'MOBILIER',
     name: 'Mobilier & Décoration',
     description: 'Sélection, commande et installation du mobilier et de la décoration',
     icon: '🛋️',
-    mainPhases: ['SUIVI_CHANTIER'],
+    mainPhases: ['MOBILIER'],
     tasks: [
       { id: 'md01', title: 'Sélection mobilier', defaultStatus: 'todo' },
       { id: 'md02', title: 'Sélection décoration', defaultStatus: 'todo' },
@@ -127,7 +127,7 @@ export const CHANTIER_PHASES = [
     ]
   },
   {
-    code: 'RECEPTION_LIVRAISON',
+    code: 'RECEPTION',
     name: 'Réception & Livraison',
     description: 'Vérifications finales, réception, réserves et remise des clés',
     icon: '✅',

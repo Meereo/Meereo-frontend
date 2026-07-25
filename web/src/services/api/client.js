@@ -32,6 +32,11 @@ export function setInMemoryToken(token) {
   } catch { /* sessionStorage non disponible */ }
 }
 
+// NAV-06: callback global déclenché lors d'un 401 (session expirée)
+// Permet à l'UI d'afficher un modal clair au lieu d'un message technique « token manquant ».
+let _onSessionExpired = null
+export function setSessionExpiredCallback(cb) { _onSessionExpired = cb }
+
 /**
  * Retourne le JWT courant — mémoire en priorité, puis sessionStorage (après refresh).
  * @returns {string|null}
@@ -76,8 +81,14 @@ async function apiFetch(path, method = 'GET', body = null, withAuth = false) {
     if (res.status === 401 && withAuth && !path.includes('/auth/me') && !path.includes('/auth/login')) {
       setInMemoryToken(null)
       try { sessionStorage.removeItem('meereo_session_token'); sessionStorage.removeItem('meereo_cached_user') } catch {}
+      // NAV-06: déclencher le modal « session expirée » au lieu d'afficher un message technique
+      if (_onSessionExpired) _onSessionExpired()
     }
-    const msg = data?.error || data?.message || `Erreur ${res.status}`
+    // NAV-06: ne jamais exposer de message technique brut à l'utilisateur
+    const rawMsg = data?.error || data?.message || ''
+    const msg = res.status === 401
+      ? 'Votre session a expiré. Veuillez vous reconnecter.'
+      : rawMsg || `Erreur ${res.status}`
     const err = new Error(msg)
     err.status = res.status
     err.errors = data?.errors || null
@@ -106,7 +117,16 @@ async function apiFetchForm(path, method = 'POST', formData) {
   const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
-    const msg = data?.error || data?.message || `Erreur ${res.status}`
+    // NAV-06: intercepter les 401 dans les uploads aussi
+    if (res.status === 401) {
+      setInMemoryToken(null)
+      try { sessionStorage.removeItem('meereo_session_token'); sessionStorage.removeItem('meereo_cached_user') } catch {}
+      if (_onSessionExpired) _onSessionExpired()
+    }
+    const rawMsg = data?.error || data?.message || ''
+    const msg = res.status === 401
+      ? 'Votre session a expiré. Veuillez vous reconnecter.'
+      : rawMsg || `Erreur ${res.status}`
     const err = new Error(msg)
     err.status = res.status
     throw err

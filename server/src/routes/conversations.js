@@ -132,11 +132,25 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     if (participantId) {
       // MSG-01 cas 3: si le destinataire n'existe pas (entreprise référencée sans compte),
-      // retenir le message et signaler qu'une invitation sera envoyée
-      const recipientExists = await prisma.user.findUnique({ where: { id: participantId }, select: { id: true } })
-      if (!recipientExists) {
-        // Le participantId n'est pas un utilisateur enregistré — message retenu
-        // TODO: persister dans un modèle PendingMessage + envoyer email d'invitation
+      // persister le message en attente et signaler qu'une invitation sera envoyée
+      const recipientExists = await prisma.user.findUnique({ where: { id: participantId }, select: { id: true, email: true, deletedAt: true } })
+      if (!recipientExists || recipientExists.deletedAt) {
+        // Le participantId n'est pas un utilisateur actif — persister le message en attente
+        const { message: msgText, recipientEmail, recipientPhone, recipientRef } = req.body
+        await prisma.pendingMessage.create({
+          data: {
+            senderId: myId,
+            recipientEmail: recipientEmail || null,
+            recipientPhone: recipientPhone || null,
+            recipientRef: participantId,
+            text: msgText || 'Bonjour, je souhaiterais échanger avec vous.',
+            type: 'text',
+          },
+        }).catch(() => {})
+
+        // TODO: envoyer email/SMS d'invitation si recipientEmail/recipientPhone disponible
+        // « Un client vous a contacté sur MEEREO, inscrivez-vous pour lire son message »
+
         return res.status(202).json({
           pending: true,
           message: 'Ce professionnel n\'est pas encore inscrit sur MEEREO. Votre message sera conservé et lui sera transmis dès son inscription.',
@@ -182,18 +196,13 @@ router.post('/', requireAuth, async (req, res, next) => {
         }
       }
 
-      // ─── 1:1 : chercher si elle existe déjà ───────────────────────────────
-      const existing = await prisma.conversation.findFirst({
-        where: {
-          isGroup: false,
-          participants: {
-            every: { userId: { in: [myId, participantId] } },
-          },
-          AND: [
-            { participants: { some: { userId: myId } } },
-            { participants: { some: { userId: participantId } } },
-          ],
-        },
+      // ─── MSG-04: 1:1 — conversation UNIQUE par binôme, garantie par pairHash ──
+      // pairHash = IDs triés et joints, garantit l'unicité en DB (@unique sur pairHash)
+      const pairHash = [myId, participantId].sort().join('::')
+
+      // Chercher la conversation existante via pairHash (rapide, indexé)
+      const existing = await prisma.conversation.findUnique({
+        where: { pairHash },
         include: {
           participants: {
             include: { user: PARTICIPANT_USER_SELECT },
@@ -204,15 +213,28 @@ router.post('/', requireAuth, async (req, res, next) => {
 
       if (existing) {
         if (existing.participants) existing.participants = existing.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
+        // MSG-04: rattacher le contexte métier à la conversation existante si fourni
+        if ((projectId || aoId || offerId || missionId) && !existing.projectId) {
+          await prisma.conversation.update({
+            where: { id: existing.id },
+            data: {
+              ...(projectId && !existing.projectId ? { projectId } : {}),
+              ...(aoId && !existing.aoId ? { aoId } : {}),
+              ...(offerId && !existing.offerId ? { offerId } : {}),
+              ...(missionId && !existing.missionId ? { missionId } : {}),
+            },
+          }).catch(() => {})
+        }
         return res.json({ conversation: existing, created: false })
       }
 
-      // Créer la conversation
+      // Créer la conversation avec pairHash — la contrainte @unique empêche les doublons
       let conv
       try {
         conv = await prisma.conversation.create({
           data: {
             isGroup: false,
+            pairHash,
             type: type || 'libre',
             aoId: aoId || null,
             offerId: offerId || null,
@@ -233,16 +255,10 @@ router.post('/', requireAuth, async (req, res, next) => {
           },
         })
       } catch (e) {
-        // Race condition: another request created the conversation simultaneously
+        // Race condition: pairHash unique violation — retourner la conversation existante
         if (e.code === 'P2002') {
-          const race = await prisma.conversation.findFirst({
-            where: {
-              isGroup: false,
-              AND: [
-                { participants: { some: { userId: myId } } },
-                { participants: { some: { userId: participantId } } },
-              ],
-            },
+          const race = await prisma.conversation.findUnique({
+            where: { pairHash },
             include: {
               participants: { include: { user: PARTICIPANT_USER_SELECT } },
               messages: { orderBy: { createdAt: 'desc' }, take: 1 },
@@ -434,6 +450,18 @@ router.post('/:id/participants', requireAuth, async (req, res, next) => {
     })
     if (!myPart) return res.status(403).json({ error: 'Accès refusé' })
 
+    // MSG-07 G3: seul le professionnel responsable du marché peut ajouter des intervenants
+    const conv = await prisma.conversation.findUnique({ where: { id }, select: { projectId: true } })
+    if (conv?.projectId) {
+      const project = await prisma.project.findUnique({
+        where: { id: conv.projectId },
+        select: { ownerId: true },
+      })
+      if (project && project.ownerId !== myId && req.user.type !== 'admin') {
+        return res.status(403).json({ error: 'Seul le professionnel responsable du projet peut ajouter des participants' })
+      }
+    }
+
     // Vérifier que l'utilisateur cible existe
     const targetUser = await prisma.user.findUnique({ where: { id: userId } })
     if (!targetUser) return res.status(404).json({ error: 'Utilisateur introuvable' })
@@ -464,6 +492,53 @@ router.post('/:id/participants', requireAuth, async (req, res, next) => {
     })
     if (conv?.participants) conv.participants = conv.participants.map(pp => ({ ...pp, user: mapParticipantUser(pp.user) }))
     res.json({ ok: true, conversation: conv })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── MSG-07: Retirer un participant d'une conversation ──────────────────────
+// DELETE /conversations/:id/participants/:userId
+// Seul le pro responsable du projet peut retirer (G3).
+router.delete('/:id/participants/:userId', requireAuth, async (req, res, next) => {
+  try {
+    const prisma = getPrisma()
+    const myId = req.user.id
+    const { id, userId } = req.params
+
+    // Vérifier que l'appelant est participant
+    const myPart = await prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId: id, visitorId: myId } },
+    }).catch(() => null)
+
+    // MSG-07 G3: vérifier que c'est le pro responsable
+    const conv = await prisma.conversation.findUnique({ where: { id }, select: { projectId: true } })
+    if (conv?.projectId) {
+      const project = await prisma.project.findUnique({
+        where: { id: conv.projectId },
+        select: { ownerId: true },
+      })
+      if (project && project.ownerId !== myId) {
+        return res.status(403).json({ error: 'Seul le professionnel responsable peut retirer des participants' })
+      }
+    }
+
+    // Ne pas permettre de se retirer soi-même ni de retirer les participants originaux (1:1)
+    if (userId === myId) {
+      return res.status(400).json({ error: 'Utilisez la suppression de conversation pour quitter' })
+    }
+
+    await prisma.conversationParticipant.delete({
+      where: { conversationId_userId: { conversationId: id, userId } },
+    }).catch(() => {})
+
+    // Notifier le participant retiré
+    const io = getIo()
+    if (io) {
+      io.to(`user:${userId}`).emit('conversation:removed', { conversationId: id })
+    }
+
+    res.json({ ok: true })
   } catch (err) {
     next(err)
   }

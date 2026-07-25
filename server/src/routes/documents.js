@@ -1,7 +1,9 @@
 const { Router } = require('express')
 const { getPrisma } = require('../db')
 const { requireAuth } = require('../middleware/auth')
+const { requirePermission } = require('../middleware/permission')
 const { createError } = require('../middleware/errorHandler')
+const { getIo } = require('../socket')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
@@ -273,7 +275,8 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res, next
 })
 
 // ─── POST /api/documents — JSON (url already hosted, e.g. MinIO) ──────────────
-router.post('/', requireAuth, async (req, res, next) => {
+// SYS-02: permission centralisée — upload_document
+router.post('/', requireAuth, requirePermission('upload_document'), async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { name, type, url, projectId, missionId, isEntreprise, expiresAt, category } = req.body
@@ -293,18 +296,27 @@ router.post('/', requireAuth, async (req, res, next) => {
       },
     })
 
-    // ── Notification: document shared on project (in-app + email) ──
+    // ── PRJ-03/04: Notification temps réel + in-app pour document partagé ──
     if (projectId) {
-      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true, clientId: true, clientEmail: true } }).catch(() => null)
-      if (project?.clientId && project.clientId !== req.user.id) {
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { nom: true, clientId: true, ownerId: true, clientEmail: true } }).catch(() => null)
+      // Notifier le client ET le pro (l'autre partie)
+      const targetId = project?.clientId === req.user.id ? project?.ownerId : project?.clientId
+      if (targetId && targetId !== req.user.id) {
         const { createAndPushNotification } = require('../utils/notify')
         createAndPushNotification({
-          userId: project.clientId,
+          userId: targetId,
           msg: `Nouveau document « ${name} » ajouté au projet « ${project.nom} »`,
           type: 'blue',
           page: 'documents',
           senderId: req.user.id,
         }).catch(() => {})
+        // PRJ-03/04: événement temps réel pour synchro instantanée
+        const io = getIo()
+        if (io) {
+          io.to(`user:${targetId}`).emit('document:new', {
+            id: doc.id, name, type, projectId, uploadedBy: req.user.id, createdAt: doc.createdAt,
+          })
+        }
       }
     }
 
