@@ -13,7 +13,12 @@ import MoneyInput from '../components/shared/MoneyInput'
 import compressImage from '../utils/compressImage'
 import { api } from '../services/api/client'
 import { useMeereo } from '../hooks/useMeereoStore'
+import { MKT_CATS } from '../data/marketplace'
 import '../styles/onboarding.css'
+
+// MKT-06b : source unique des catégories fournisseur = référentiel MeereoShop (11 catégories).
+// Utilisé pour les catégories servies (f-struct) ET la catégorie produit (f-mat).
+const FRN_CATEGORIES = MKT_CATS.filter(c => c.id !== 'all')
 
 /* ══════════════════════════════════════════════════════════
    SHARED DATA
@@ -297,8 +302,8 @@ const WizardLeftPanel = memo(function WizardLeftPanel({ steps, currentStep }) {
   )
 })
 
-/* ── KAI brand: dot of the i is purple ── */
-const Kai = () => <span className="kai-brand" style={{color:'#7C3AED'}}>KAI</span>
+/* ── KAi brand: dot of the i is purple ── */
+const Kai = () => <span className="kai-brand" style={{color:'#7C3AED'}}>KAi</span>
 
 /* ── Shared field component (OUTSIDE to avoid re-mount) ── */
 const Field = ({label,required,children}) => (
@@ -312,7 +317,16 @@ const Field = ({label,required,children}) => (
 export default function Onboarding() {
   // Restore wizard state from sessionStorage (survives refresh, not logout)
   const savedWiz = useRef(null)
-  try { savedWiz.current = JSON.parse(sessionStorage.getItem('meereo_onboarding') || 'null') } catch { savedWiz.current = null }
+  // INS-13 : brouillon persistant en localStorage, expiration 30 jours
+  try {
+    const raw = JSON.parse(localStorage.getItem('meereo_onboarding') || 'null')
+    if (raw && raw._savedAt && Date.now() - raw._savedAt > 30 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('meereo_onboarding')
+      savedWiz.current = null
+    } else {
+      savedWiz.current = raw
+    }
+  } catch { savedWiz.current = null }
   const [screen, setScreen] = useState(savedWiz.current?.screen || 'auth')
   const [email, setEmail] = useState(savedWiz.current?.email || '')
   const [password, setPassword] = useState('')
@@ -329,6 +343,8 @@ export default function Onboarding() {
   const [prodUnit, setProdUnit] = useState('/unité')
   const [prodCat, setProdCat] = useState('')
   const [prodPhoto, setProdPhoto] = useState(null)
+  const [prodStock, setProdStock] = useState('')      // MKT-06a
+  const [prodVisible, setProdVisible] = useState(true) // MKT-06c
   const [showAOConfirm, setShowAOConfirm] = useState(false)
   const [showPageBuilder, setShowPageBuilder] = useState(false)
   const [pageSections, setPageSections] = useState([])
@@ -340,6 +356,7 @@ export default function Onboarding() {
   const defaultForm = {
     photo:null, photoUrl:null,
     prenom:'', nom:'', email:'', tel:'', telPrefix:'+225', ville:'Abidjan', pays:"Côte d'Ivoire", password:'', passwordConfirm:'',
+    cgu:false, comms:false, // INS-10
     // Client
     projectType:null, location:'', surface:'', budget:'', description:'',
     situation:null, architecteEmail:'',
@@ -362,8 +379,8 @@ export default function Onboarding() {
   // Persist wizard progress to sessionStorage (survives refresh)
   useEffect(() => {
     try {
-      const safe = { screen, email, userType, wizStep, form: { ...form, photo: null, logoFile: null, coverFile: null } }
-      sessionStorage.setItem('meereo_onboarding', JSON.stringify(safe))
+      const safe = { screen, email, userType, wizStep, form: { ...form, photo: null, logoFile: null, coverFile: null }, _savedAt: Date.now() }
+      localStorage.setItem('meereo_onboarding', JSON.stringify(safe))
     } catch { /* quota exceeded — ignore */ }
   }, [screen, email, userType, wizStep, form])
   const navigate = useNavigate()
@@ -425,9 +442,17 @@ export default function Onboarding() {
   // Chaque étape doit être validée avant de passer à la suivante.
   // Retourne un message d'erreur si invalide, null si OK.
   const validateCurrentStep = () => {
+    // INS-10 : acceptation des CGU obligatoire sur l'étape compte (step 1)
+    if (wizStep === 1 && !form.cgu) return 'Veuillez accepter les conditions générales d\'utilisation'
     if (userType === 'pro') {
       if (wizStep === 1) {
         if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre structure'
+        if (!form.ville?.trim()) return 'Veuillez indiquer votre ville'                      // INS-08
+        if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        if (!form.secteurs?.length) return 'Sélectionnez au moins un secteur d\'activité'     // INS-11
+        if (!(form.email || '').includes('@')) return 'Adresse email professionnelle invalide'  // INS-06
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
         if (rccmError) return rccmError
         if (nccError) return nccError
       }
@@ -441,6 +466,11 @@ export default function Onboarding() {
     if (userType === 'client') {
       if (wizStep === 1) {
         if (!form.prenom?.trim()) return 'Veuillez renseigner votre prénom'
+        if (!form.nom?.trim()) return 'Veuillez renseigner votre nom'
+        if (!(form.email || '').includes('@')) return 'Adresse email invalide'               // INS-06
+        if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
       }
       if (wizStep === 2) {
         const email = form.email || ''
@@ -451,6 +481,11 @@ export default function Onboarding() {
     if (userType === 'fournisseur') {
       if (wizStep === 1) {
         if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre entreprise'
+        if (!form.ville?.trim()) return 'Veuillez indiquer votre ville'                      // INS-08
+        if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        if (!(form.email || '').includes('@')) return 'Adresse email invalide'               // INS-06
+        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
+        if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
         if (rccmError) return rccmError
         if (nccError) return nccError
       }
@@ -536,7 +571,7 @@ export default function Onboarding() {
     }
 
     // Clear wizard progress — account created successfully
-    try { sessionStorage.removeItem('meereo_onboarding') } catch {}
+    try { localStorage.removeItem('meereo_onboarding') } catch {}
 
     // Save page builder sections if any (pro only)
     if (userType === 'pro' && pageSections.length > 0) {
@@ -737,7 +772,7 @@ export default function Onboarding() {
                 {/* Légal */}
                 <div className="ob-legal" style={{marginTop:16}}>En continuant, vous acceptez nos <a href="/conditions" className="ob-link-soft" onClick={e => { e.preventDefault(); navigate('/conditions') }}>Conditions d'utilisation</a> et notre <a href="/confidentialite" className="ob-link-soft" onClick={e => { e.preventDefault(); navigate('/confidentialite') }}>Politique de confidentialité</a>.</div>
 
-                {/* KAI */}
+                {/* KAi */}
                 <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(0,0,0,.05)'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                     <div style={{width:10,height:10,borderRadius:'50%',background:'#191c1d',boxShadow:'0 0 6px rgba(124,58,237,.2), 0 0 2px rgba(124,58,237,.35)',flexShrink:0,animation:'kaiPulseLogin 3s ease-in-out infinite'}} />
@@ -780,7 +815,7 @@ export default function Onboarding() {
                 {!forgotSent ? (
                   <>
                     <button onClick={() => setShowForgot(false)} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: 'var(--t3)', cursor: 'pointer' }}>Annuler</button>
-                    <button onClick={() => { if (!forgotEmail.trim() || !forgotEmail.includes('@')) { showToast('Saisissez un email valide', 'orange'); return } setForgotSent(true) }} disabled={!forgotEmail.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: forgotEmail.trim() ? 'var(--tx)' : 'var(--s3)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: forgotEmail.trim() ? '#fff' : 'var(--t4)', cursor: 'pointer' }}>Envoyer le lien</button>
+                    <button onClick={() => { if (!forgotEmail.trim() || !forgotEmail.includes('@')) { showToast('Saisissez un email valide', 'orange'); return } api.auth.forgotPassword(forgotEmail.trim()).catch(() => {}); setForgotSent(true) }} disabled={!forgotEmail.trim()} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: forgotEmail.trim() ? 'var(--tx)' : 'var(--s3)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: forgotEmail.trim() ? '#fff' : 'var(--t4)', cursor: 'pointer' }}>Envoyer le lien</button>
                   </>
                 ) : (
                   <button onClick={() => { setShowForgot(false); setForgotSent(false) }} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--tx)', fontSize: 12, fontWeight: 600, fontFamily: 'var(--f)', color: '#fff', cursor: 'pointer' }}>Fermer</button>
@@ -1133,7 +1168,7 @@ export default function Onboarding() {
                 {wizStep===2 && userType==='pro' && (<>
                   {/* Tab switcher */}
                   <div className="wiz-tab-bar" style={{marginBottom:24}}>
-                    {[['generate',<><Sparkles size={13}/> Générer avec KAI</>],['upload',<><FolderOpen size={13}/> Mon logo existant</>]].map(([k,l])=>(<button key={k} className={`wiz-tab-btn ${form.logoTab===k?'active':''}`} onClick={()=>set('logoTab',k)}>{l}</button>))}
+                    {[['generate',<><Sparkles size={13}/> Générer avec KAi</>],['upload',<><FolderOpen size={13}/> Mon logo existant</>]].map(([k,l])=>(<button key={k} className={`wiz-tab-btn ${form.logoTab===k?'active':''}`} onClick={()=>set('logoTab',k)}>{l}</button>))}
                   </div>
 
                   {form.logoTab==='generate' && (<>
@@ -1200,7 +1235,7 @@ export default function Onboarding() {
                       </div>
                     </div>
 
-                    <button className="ob-btn-out" style={{width:'100%',marginTop:16}} onClick={()=>{set('logoColor',LOGO_COLORS[Math.floor(Math.random()*LOGO_COLORS.length)].hex);set('logoShape',LOGO_SHAPES[Math.floor(Math.random()*LOGO_SHAPES.length)]);set('logoTypo',LOGO_TYPOS[Math.floor(Math.random()*LOGO_TYPOS.length)]);showToast('Nouvelle proposition générée par KAI','green')}}>
+                    <button className="ob-btn-out" style={{width:'100%',marginTop:16}} onClick={()=>{set('logoColor',LOGO_COLORS[Math.floor(Math.random()*LOGO_COLORS.length)].hex);set('logoShape',LOGO_SHAPES[Math.floor(Math.random()*LOGO_SHAPES.length)]);set('logoTypo',LOGO_TYPOS[Math.floor(Math.random()*LOGO_TYPOS.length)]);showToast('Nouvelle proposition générée par KAi','green')}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
                       Nouvelle proposition
                     </button>
@@ -1393,29 +1428,23 @@ export default function Onboarding() {
                       <button type="button" style={{fontSize:10,color:'var(--t3)',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--f)'}} onClick={()=>set('categories',[])}>Tout désélectionner</button>
                     </div>
                   )}
-                  {/* Sections compactes */}
-                  {FRN_CAT_SECTIONS.map(section=>{
-                    const selCount=section.cats.filter(c=>form.categories.includes(c.label)).length
-                    return (
-                      <div key={section.title} style={{marginBottom:10,background:'#fff',borderRadius:14,boxShadow:'0 20px 40px rgba(0,0,0,.04)',overflow:'hidden'}}>
-                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:'1px solid rgba(198,198,198,.08)'}}>
-                          <span style={{fontSize:11,fontWeight:700,color:'var(--tx)'}}>{section.title}</span>
-                          {selCount>0&&<span style={{fontSize:9,fontWeight:700,background:'var(--tx)',color:'#fff',padding:'2px 7px',borderRadius:100}}>{selCount}</span>}
-                        </div>
-                        <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'10px 12px'}}>
-                          {section.cats.map(c=>{
-                            const sel=form.categories.includes(c.label)
-                            return (
-                              <div key={c.label} onClick={()=>toggleArr('categories',c.label)} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'6px 11px',borderRadius:100,cursor:'pointer',fontSize:11.5,fontWeight:sel?700:500,background:sel?'var(--tx)':'var(--surface-2)',color:sel?'#fff':'var(--t3)',transition:'all .15s',border:sel?'none':'1px solid rgba(198,198,198,.1)'}}>
-                                <span style={{fontSize:13}}>{c.em}</span>
-                                {c.label}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {/* MKT-06b : catégories servies alignées sur le référentiel MeereoShop (11) */}
+                  <div style={{marginBottom:10,background:'#fff',borderRadius:14,boxShadow:'0 20px 40px rgba(0,0,0,.04)',overflow:'hidden'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:'1px solid rgba(198,198,198,.08)'}}>
+                      <span style={{fontSize:11,fontWeight:700,color:'var(--tx)'}}>Catégories que vous fournissez</span>
+                    </div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:5,padding:'10px 12px'}}>
+                      {FRN_CATEGORIES.map(c=>{
+                        const sel=form.categories.includes(c.label)
+                        return (
+                          <div key={c.id} onClick={()=>toggleArr('categories',c.label)} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'6px 11px',borderRadius:100,cursor:'pointer',fontSize:11.5,fontWeight:sel?700:500,background:sel?'var(--tx)':'var(--surface-2)',color:sel?'#fff':'var(--t3)',transition:'all .15s',border:sel?'none':'1px solid rgba(198,198,198,.1)'}}>
+                            <span style={{fontSize:13}}>{c.ico}</span>
+                            {c.label}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </>)}
 
                 {/* ──────── FOURNISSEUR STEP 4: PREMIERS PRODUITS ──────── */}
@@ -1429,11 +1458,14 @@ export default function Onboarding() {
                           <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#fff',borderRadius:12,boxShadow:'0 20px 40px rgba(0,0,0,.04)'}}>
                             {p.photoUrl
                               ? <img src={p.photoUrl} alt="" style={{width:44,height:44,borderRadius:8,objectFit:'cover',flexShrink:0}} />
-                              : <div style={{width:44,height:44,borderRadius:8,background:'var(--surface-2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{(form.categories.find(c=>c===p.category)?FRN_CAT_SECTIONS.flatMap(s=>s.cats).find(c=>c.label===p.category):null)?.em||<Package size={18}/>}</div>
+                              : <div style={{width:44,height:44,borderRadius:8,background:'var(--surface-2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:18}}>{FRN_CATEGORIES.find(c=>c.label===p.category)?.ico||<Package size={18}/>}</div>
                             }
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:12,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div>
-                              <div style={{fontSize:10.5,color:'var(--t3)'}}>{p.category||'—'} · {p.price?p.price+' FCFA':'Prix sur devis'} {p.unit}</div>
+                              <div style={{fontSize:12,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:6}}>
+                                {p.name}
+                                {p.isPublished===false && <span style={{fontSize:8,fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',background:'rgba(255,149,0,.12)',color:'#c26a00',padding:'1px 6px',borderRadius:100}}>Brouillon</span>}
+                              </div>
+                              <div style={{fontSize:10.5,color:'var(--t3)'}}>{p.category||'—'} · {p.price?p.price+' FCFA':'Prix sur devis'} {p.unit} · Stock {p.stock||0}</div>
                             </div>
                             <button type="button" className="ob-btn-out" style={{padding:'4px 10px',fontSize:11,width:'auto'}} onClick={()=>set('products',form.products.filter((_,j)=>j!==i))}>×</button>
                           </div>
@@ -1441,6 +1473,12 @@ export default function Onboarding() {
                       </div>
                     </div>
                   )}
+
+                  {/* MKT-06d : compteur de quota gratuit */}
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',background:'rgba(52,199,89,.06)',border:'1px solid rgba(52,199,89,.15)',borderRadius:10,marginBottom:12}}>
+                    <span style={{fontSize:11,fontWeight:700,color:'var(--tx)'}}>{Math.min(form.products.length,5)}/5 produits gratuits</span>
+                    {form.products.length>=5 && <span style={{fontSize:10,color:'#c26a00'}}>Au-delà : forfait requis (produit en brouillon)</span>}
+                  </div>
 
                   {/* Formulaire ajout produit */}
                   <div style={{background:'var(--surface-2)',borderRadius:16,padding:16}}>
@@ -1465,17 +1503,28 @@ export default function Onboarding() {
                             <option value="/forfait">/forfait</option>
                           </select>
                         </div>
-                        <select className="ob-input-v2 ob-select" value={prodCat} onChange={e=>setProdCat(e.target.value)}>
-                          <option value="">Catégorie</option>
-                          {form.categories.map(c=><option key={c} value={c}>{c}</option>)}
-                          {form.categories.length===0&&FRN_CAT_SECTIONS.flatMap(s=>s.cats).map(c=><option key={c.label} value={c.label}>{c.label}</option>)}
-                        </select>
+                        <div className="rg-2" style={{gap:6}}>
+                          {/* MKT-06a : stock disponible obligatoire */}
+                          <input className="ob-input-v2" type="number" min="0" placeholder="Stock disponible *" value={prodStock} onChange={e=>setProdStock(e.target.value)} />
+                          {/* MKT-06b : catégorie depuis le référentiel MeereoShop unique */}
+                          <select className="ob-input-v2 ob-select" value={prodCat} onChange={e=>setProdCat(e.target.value)}>
+                            <option value="">Catégorie *</option>
+                            {(form.categories.length ? FRN_CATEGORIES.filter(c=>form.categories.includes(c.label)) : FRN_CATEGORIES).map(c=><option key={c.id} value={c.label}>{c.label}</option>)}
+                          </select>
+                        </div>
+                        {/* MKT-06c : visibilité marketplace + statut par défaut annoncé */}
+                        <label style={{display:'flex',alignItems:'center',gap:8,fontSize:11.5,color:'var(--t2)',cursor:'pointer',marginTop:2}}>
+                          <input type="checkbox" checked={prodVisible} onChange={e=>setProdVisible(e.target.checked)} />
+                          Visible dans le Marketplace dès la publication
+                        </label>
                       </div>
                     </div>
                     <button type="button" className="ob-btn-out" style={{width:'100%',marginTop:10,padding:'10px',fontWeight:700}} onClick={()=>{
                       if(!prodName.trim()){showToast('Nom du produit requis','orange');return}
-                      set('products',[...form.products,{name:prodName.trim(),price:prodPrice,unit:prodUnit,category:prodCat,photoUrl:prodPhoto}])
-                      setProdName('');setProdPrice('');setProdUnit('/unité');setProdCat('');setProdPhoto(null)
+                      if(!prodCat){showToast('Sélectionnez une catégorie','orange');return}
+                      if(prodStock===''||isNaN(parseInt(prodStock))){showToast('Indiquez le stock disponible','orange');return}
+                      set('products',[...form.products,{name:prodName.trim(),price:prodPrice,unit:prodUnit,category:prodCat,stock:parseInt(prodStock)||0,photoUrl:prodPhoto,isPublished:prodVisible}])
+                      setProdName('');setProdPrice('');setProdUnit('/unité');setProdCat('');setProdStock('');setProdPhoto(null);setProdVisible(true)
                       showToast('Produit ajouté','green')
                     }}>+ Ajouter ce produit</button>
                   </div>
@@ -1604,7 +1653,7 @@ export default function Onboarding() {
                     </div>
                   )}
 
-                  {/* CAS 3: Clé en main → MEEREO + KAI + Banque partenaire */}
+                  {/* CAS 3: Clé en main → MEEREO + KAi + Banque partenaire */}
                   {cleEnMain && (
                     <div className="wiz-action-hero">
                       <div className="wiz-action-hero-icon" style={{background:'rgba(124,58,237,.2)'}}>
@@ -1840,6 +1889,20 @@ export default function Onboarding() {
                   </div>
                 </>})()}
 
+                {/* ──────── INS-10 : consentement CGU (étape compte) ──────── */}
+                {wizStep===1 && (
+                  <div style={{marginTop:14,display:'flex',flexDirection:'column',gap:8}}>
+                    <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t2)',cursor:'pointer',lineHeight:1.5}}>
+                      <input type="checkbox" checked={!!form.cgu} onChange={e=>set('cgu',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
+                      <span>J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>conditions générales d'utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>politique de confidentialité</a>. *</span>
+                    </label>
+                    <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t3)',cursor:'pointer',lineHeight:1.5}}>
+                      <input type="checkbox" checked={!!form.comms} onChange={e=>set('comms',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
+                      <span>J'accepte de recevoir les communications commerciales de MEEREO (facultatif).</span>
+                    </label>
+                  </div>
+                )}
+
                 {/* ──────── NAVIGATION ──────── */}
                 <div className="wiz-nav">
                   {wizStep < totalSteps && (
@@ -1855,8 +1918,8 @@ export default function Onboarding() {
                       <button className="ob-btn-blk" onClick={() => handleFinish()}>Accéder au Cockpit →</button>
                     </div>
                   ) : (
-                    <button className="ob-btn-blk" onClick={()=>{
-                      // INS-06: validation par étape — bloquer si l'étape courante est invalide
+                    <button className="ob-btn-blk" disabled={!!validateCurrentStep()} style={validateCurrentStep()?{opacity:.5,cursor:'not-allowed'}:undefined} onClick={()=>{
+                      // INS-01/06: validation par étape — bouton désactivé + garde au clic
                       const stepError = validateCurrentStep()
                       if (stepError) {
                         showToast(stepError, 'orange'); return

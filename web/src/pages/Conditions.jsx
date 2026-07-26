@@ -28,7 +28,7 @@ export default function Conditions() {
 
         <section style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 10 }}>3. Services proposés</h2>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO propose des outils de gestion de projets, de coordination entre acteurs du BTP, un marketplace de matériaux, un système d'appels d'offres, un suivi de chantier, une gestion documentaire et un assistant intelligent (KAI). Les fonctionnalités peuvent évoluer sans préavis.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--t2)' }}>MEEREO propose des outils de gestion de projets, de coordination entre acteurs du BTP, un marketplace de matériaux, un système d'appels d'offres, un suivi de chantier, une gestion documentaire et un assistant intelligent (KAi). Les fonctionnalités peuvent évoluer sans préavis.</p>
         </section>
 
         <section style={{ marginBottom: 28 }}>

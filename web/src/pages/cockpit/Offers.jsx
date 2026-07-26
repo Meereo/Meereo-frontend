@@ -513,12 +513,12 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 )
               })()}
 
-              {/* Analyse KAI */}
+              {/* Analyse KAi */}
               {selected.note && (
                 <div style={{ marginBottom: 20, padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', borderLeft: '3px solid var(--tx)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: 10, fontWeight: 600, color: '#7C3AED' }}>K</span></div>
-                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Analyse <span style={{ color: '#7C3AED' }}>KAI</span></span>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)' }}>Analyse <span style={{ color: '#7C3AED' }}>KAi</span></span>
                   </div>
                   <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{selected.note}</div>
                 </div>

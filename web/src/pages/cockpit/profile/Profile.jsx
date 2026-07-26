@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useMeereo } from '../../../hooks/useMeereoStore'
 import Modal from '../../../components/shared/Modal'
 import MeereoLogo from '../../../components/shared/MeereoLogo'
+import CompanyLogo from '../../../components/shared/CompanyLogo'
 import { api } from '../../../services/api/client'
 import SectionRenderer from '../../../components/sections-builder/SectionRenderer'
 import { Star } from 'lucide-react'
@@ -232,11 +233,8 @@ export default function Profile() {
       {/* NAV */}
       <nav className="pp-nav">
         <div className="pp-nav-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {ob.logoFileUrl && ob.activeLogoType === 'uploaded' ? (
-            <img src={ob.logoFileUrl} alt={proName} style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: ob.logoColor || '#191c1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12, fontWeight: 700 }}>{proInitials}</div>
-          )}
+          {/* NAV-04 / QAL-02 : logo via source unique CompanyLogo */}
+          <CompanyLogo pro={ob} size={32} />
           <span style={{ fontWeight: 600 }}>{proName || 'MEEREO'}</span>
           <span>Profil professionnel</span>
         </div>

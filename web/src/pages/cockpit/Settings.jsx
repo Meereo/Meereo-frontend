@@ -364,7 +364,7 @@ export default function Settings({ showToast }) {
 
             {tab === 'donnees' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* KAI Pro — redirige vers onglet Abonnement */}
+                {/* KAi Pro — redirige vers onglet Abonnement */}
                 {(() => {
                   const allEnt = store.kaiEntitlement || {}
                   const ent = allEnt.pro || {}
@@ -373,10 +373,10 @@ export default function Settings({ showToast }) {
                     <div style={{ padding: 20, background: isActive ? 'rgba(124,58,237,.03)' : 'var(--s2)', borderRadius: 12, border: isActive ? '1px solid rgba(124,58,237,.1)' : '1px solid var(--border-subtle)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: isActive ? '#7C3AED' : 'var(--t4)', flexShrink: 0 }} />
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>KAI {isActive ? 'Pro' : 'Standard'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>KAi {isActive ? 'Pro' : 'Standard'}</div>
                       </div>
                       {isActive
-                        ? <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>KAI Pro est actif jusqu'au {formatDateFR(ent.goldEndDate)}</div>
+                        ? <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>KAi Pro est actif jusqu'au {formatDateFR(ent.goldEndDate)}</div>
                         : <div style={{ fontSize: 11, color: 'var(--t3)' }}>Plan Standard — {ent.quotaUsed || 0}/{ent.quotaLimit || 25} analyses ce mois</div>
                       }
                       <button className="btn btn-sm" style={{ marginTop: 10, fontSize: 11 }} onClick={() => setTab('abonnement')}>Gérer mon abonnement →</button>

@@ -44,7 +44,11 @@
       "Bash(python3 -c ':*)",
       "Bash(python -c ':*)",
       "Bash(xxd)",
-      "Bash(node -c src/routes/conversations.js)"
+      "Bash(node -c src/routes/conversations.js)",
+      "Bash(awk '/^model Project /,/^}/' server/prisma/schema.prisma)",
+      "Bash(npm run *)",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(node_modules/.bin/eslint src/pages/Onboarding.jsx src/components/shared/ProSearch.jsx src/pages/supplier/Supplier.jsx src/pages/cockpit/Suppliers.jsx src/pages/cockpit/profile/Profile.jsx src/pages/client/Client.jsx src/pages/ResetPassword.jsx)"
     ]
   }
 }

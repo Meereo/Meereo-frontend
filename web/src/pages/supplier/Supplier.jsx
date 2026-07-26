@@ -158,12 +158,18 @@ export default function Supplier() {
 
   useEffect(() => {
     api.products.getMine()
-      .then(backendProds => {
-        if (!Array.isArray(backendProds) || backendProds.length === 0) return
+      .then(res => {
+        // MKT-01: /products/mine renvoie { products, quota } (ancien contrat: tableau brut)
+        const backendProds = Array.isArray(res) ? res : (res?.products || [])
+        const quota = Array.isArray(res) ? null : (res?.quota || null)
         updateStore(prev => {
           const backendIds = new Set(backendProds.map(p => p.id))
           const localOnly = (prev.products || []).filter(p => String(p.id).startsWith('prod_') && !backendIds.has(p.id))
-          return { ...prev, products: [...backendProds, ...localOnly] }
+          return {
+            ...prev,
+            products: backendProds.length ? [...backendProds, ...localOnly] : prev.products,
+            productQuota: quota || prev.productQuota,
+          }
         })
       })
       .catch(() => {})

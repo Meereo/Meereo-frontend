@@ -352,12 +352,12 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ width: 56, height: 56, borderRadius: 16, background: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><span style={{ fontSize: 24, fontWeight: 600, color: '#fff' }}>K</span></div>
                   <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-.5px', marginBottom: 8 }}>Vos documents entreprise</div>
                   <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto' }}>
-                    Integrez vos documents administratifs et juridiques ici. <span style={{ color: '#7C3AED', fontWeight: 600 }}>KAI</span> les utilisera automatiquement pour completer vos reponses aux appels d'offres — RCCM, attestations, references, bilans...
+                    Integrez vos documents administratifs et juridiques ici. <span style={{ color: '#7C3AED', fontWeight: 600 }}>KAi</span> les utilisera automatiquement pour completer vos reponses aux appels d'offres — RCCM, attestations, references, bilans...
                   </div>
                 </div>
                 <div style={{ padding: '0 28px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { icon: <Zap size={18}/>, title: 'Réponse automatique', desc: 'KAI joint vos documents quand vous répondez à un AO' },
+                    { icon: <Zap size={18}/>, title: 'Réponse automatique', desc: 'KAi joint vos documents quand vous répondez à un AO' },
                     { icon: <Lock size={18}/>, title: 'Sécurisé', desc: 'Vos documents ne sont partagés qu\'avec votre accord' },
                     { icon: <RefreshCcw size={18}/>, title: 'Toujours à jour', desc: 'Mettez à jour un document et il sera actualisé partout' },
                   ].map((f, i) => (
@@ -396,7 +396,7 @@ export default function Exchange({ showToast, onNavigate }) {
                 </div>
                 {d.status === 'missing' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(186,26,26,.06)', color: 'var(--err)' }}>Non fourni</span>}
                 {d.status === 'uploaded' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(52,199,89,.08)', color: 'var(--ok)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={8}/> Ajouté</span>}
-                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAI</span>}
+                {d.status === 'generated' && <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(124,58,237,.08)', color: '#7C3AED' }}>Généré par KAi</span>}
                 {d.status === 'missing' ? (
                   <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => { const newEntry = { id: d.id, status: 'uploaded', uploadedAt: new Date().toISOString() }; const next = [...(store.entrepriseDocs || []), newEntry]; updateStore(prev => ({ ...prev, entrepriseDocs: next })); api.usersApi.updatePrefs({ entrepriseDocs: next }).catch(e => console.warn('[Exchange]', e.message)); showToast && showToast('Document ajouté') }}>Ajouter</button>
                 ) : (
@@ -1072,7 +1072,7 @@ export default function Exchange({ showToast, onNavigate }) {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, fontWeight: 600 }}>{d.nom}</div>
-                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.type} à {d.status === 'generated' ? 'Généré par KAI' : 'Ajouté'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>{d.type} à {d.status === 'generated' ? 'Généré par KAi' : 'Ajouté'}</div>
                         </div>
                       </div>
                     )

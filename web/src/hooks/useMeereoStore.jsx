@@ -2,11 +2,13 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 // projectsRepository: selectors only — no seed
 import { ROLES, isAllowed, getProjectRole } from '../domain/permissions'
 import { computePhaseProgress } from '../domain/projectAggregates'
+import { PROJECT_COLOR_PALETTE } from '../domain/status'
 import { api, setInMemoryToken } from '../services/api/client'
 import { getSocket, disconnectSocket, onConversationUpdated, offConversationUpdated } from '../services/socket'
 
 // Palette de couleurs projet — sobres, premium, variées
-const PROJECT_COLORS = ['#2563EB', '#7C3AED', '#0891B2', '#DC2626', '#16A34A', '#F59E0B', '#EA580C', '#6366F1', '#0F766E', '#BE185D', '#92400E', '#4338CA', '#6B7280']
+// PRJ-09 : source unique de la palette projet (domain/status.js)
+const PROJECT_COLORS = PROJECT_COLOR_PALETTE
 const autoProjectColor = (existingProjects) => {
   const used = new Set((existingProjects || []).map(p => p.color).filter(Boolean))
   const available = PROJECT_COLORS.filter(c => !used.has(c))
@@ -2345,16 +2347,24 @@ export function MeereoProvider({ children }) {
       unit: product.unit,
       description: product.description,
       photoUrl: product.photoUrl || null,
+      stock: product.stock || 0,
+      isPublished: product.isPublished,
       sponsored: product.sponsored,
       flash: product.flash,
       flashPrice: product.flashPrice || null,
     }).then(saved => {
-      // Remplacer l'ID local par l'ID PostgreSQL
-      if (saved?.id && saved.id !== product.id) {
+      // Remplacer l'ID local par l'ID PostgreSQL + refléter le statut de publication réel
+      // (MKT-06g : le serveur peut forcer le brouillon si le quota gratuit est dépassé)
+      if (saved?.id) {
         updateStore(prev => ({
           ...prev,
-          products: prev.products.map(p => p.id === product.id ? { ...p, id: saved.id } : p),
+          products: prev.products.map(p => p.id === product.id
+            ? { ...p, id: saved.id, isPublished: saved.isPublished }
+            : p),
         }))
+      }
+      if (saved?.isOverQuota) {
+        showToast('⚠️ Quota gratuit atteint (5 produits) — ce produit reste en brouillon jusqu’à souscription d’un forfait', 'orange')
       }
     }).catch(e => console.warn('[addProduct] Backend sync failed:', e.message))
     log('PRODUCT_ADDED', { name: product.name })

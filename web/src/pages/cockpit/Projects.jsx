@@ -210,7 +210,7 @@ function ProjetModal({ isOpen, onClose, showToast }) {
               Désignez le professionnel qui suivra votre projet et gérera son avancement.
             </div>
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-              {[['email', '✉️ Par email'], ['annuaire', "🔍 Depuis l'annuaire"], ['kai', '🤖 KAI me recommande'], ['decouverte', '👀 Découvrir MEEREO']].map(([k, l]) => (
+              {[['email', '✉️ Par email'], ['annuaire', "🔍 Depuis l'annuaire"], ['kai', '🤖 KAi me recommande'], ['decouverte', '👀 Découvrir MEEREO']].map(([k, l]) => (
                 <button key={k} type="button"
                   onClick={() => { setProMode(k); setSelectedPro(null); setProSearch('') }}
                   style={{ flex: '1 1 45%', padding: '7px 10px', borderRadius: 8, border: proMode === k ? '2px solid var(--tx)' : '1px solid var(--border-subtle)', background: proMode === k ? 'rgba(0,0,0,.03)' : 'var(--surface-1)', fontFamily: 'var(--f)', fontSize: 12, fontWeight: proMode === k ? 700 : 400, cursor: 'pointer', color: 'var(--tx)' }}>
@@ -265,9 +265,9 @@ function ProjetModal({ isOpen, onClose, showToast }) {
 
             {proMode === 'kai' && (
               <div style={{ padding: '14px 16px', background: 'rgba(147,51,234,.04)', border: '1px solid rgba(147,51,234,.15)', borderRadius: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#9333EA', marginBottom: 6 }}>🤖 Accompagnement KAI</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#9333EA', marginBottom: 6 }}>🤖 Accompagnement KAi</div>
                 <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5 }}>
-                  KAI analysera votre projet (type, localisation, besoins) et vous proposera une sélection de bureaux d'architecture adaptés.
+                  KAi analysera votre projet (type, localisation, besoins) et vous proposera une sélection de bureaux d'architecture adaptés.
                   Un appel d'offres sera publié automatiquement pour trouver le professionnel idéal.
                 </div>
               </div>

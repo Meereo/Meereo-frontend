@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { DSPageHeader, DSKpiStrip, DSFilterBar, DSSearchBar , DSEmptyState } from '../../design/components'
+import CompanyLogo from '../../components/shared/CompanyLogo'
 
 const stars = n => <>{Array.from({length: Math.floor(n)}, (_, i) => <Star key={i} size={11} fill="#F59E0B" strokeWidth={0}/>)}{n % 1 >= .5 ? '½' : ''}</>
 
@@ -110,16 +111,11 @@ export default function Suppliers({ showToast, openModal, onNavigate }) {
             </div>
           )}
           {filtered.map((f, idx) => {
-            const initials = f.nom.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
             return (
               <div key={idx} className="card" style={{ padding: 18 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                  {f.logoUrl
-                    ? <img src={f.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
-                    : <div style={{ width: 44, height: 44, borderRadius: 10, background: f.color || 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{initials}</span>
-                      </div>
-                  }
+                  {/* QAL-02 : logo via source unique CompanyLogo (placeholder unifié, jamais d'image cassée) */}
+                  <CompanyLogo pro={{ entreprise: f.nom, logoFileUrl: f.logoUrl, logoColor: f.color, activeLogoType: f.logoUrl ? 'uploaded' : 'generated' }} size={44} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
                       <span style={{ fontSize: 13, fontWeight: 600 }}>{f.nom}</span>

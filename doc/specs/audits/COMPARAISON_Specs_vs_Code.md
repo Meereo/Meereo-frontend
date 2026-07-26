@@ -235,7 +235,7 @@
 | Compteur mis à jour **temps réel** | Compteur mis à jour au prochain fetch | ⚠️ PARTIEL |
 | **Optimistic UI** (WhatsApp/Slack/Messenger) | Pas d'insertion optimiste avant réponse serveur | ❌ KO |
 
-> 🔧 **ACTION :** (1) Insérer la conversation optimistiquement dans le store avant la réponse serveur. (2) Réconcilier avec l'id réel au retour. (3) Sélectionner automatiquement la nouvelle conversation. Cf. [Annexe 3, A3.1](Annexe_3_Diagnostic_Technique.md).
+> 🔧 **ACTION :** (1) Insérer la conversation optimistiquement dans le store avant la réponse serveur. (2) Réconcilier avec l'id réel au retour. (3) Sélectionner automatiquement la nouvelle conversation. Cf. [Annexe 3, A3.1](../Annexe_3_Diagnostic_Technique.md).
 
 ---
 
@@ -476,7 +476,7 @@
 | Modification **répercutée automatiquement** partout | Cache navigateur non invalidé | ❌ KO |
 | Placeholder unique en cas d'absence | Gestion incohérente (image cassée vs initiales) | ❌ KO |
 
-> 🔧 **ACTION ARCHITECTURALE :** (1) Créer `<CompanyLogo companyId={id} />` et `useCompanyLogo(id)` centralisés. (2) URL versionnée (hash) à chaque remplacement. (3) Placeholder unique (initiales). (4) Recenser et remplacer toutes les occurrences dans le code. Cf. [Annexe 3, A3.3](Annexe_3_Diagnostic_Technique.md).
+> 🔧 **ACTION ARCHITECTURALE :** (1) Créer `<CompanyLogo companyId={id} />` et `useCompanyLogo(id)` centralisés. (2) URL versionnée (hash) à chaque remplacement. (3) Placeholder unique (initiales). (4) Recenser et remplacer toutes les occurrences dans le code. Cf. [Annexe 3, A3.3](../Annexe_3_Diagnostic_Technique.md).
 
 ---
 

@@ -109,7 +109,7 @@ const QUICK = {
   fournisseur: ['Mes produits', 'Mes commandes', 'Mes paiements', 'Booster visibilité'],
 }
 
-// ── KAI Onboarding — first-time welcome messages per role ──
+// ── KAi Onboarding — first-time welcome messages per role ──
 const KAI_ONBOARDING = {
   pro: {
     title: 'Bienvenue sur votre espace professionnel',
@@ -177,7 +177,7 @@ function useTyping(text, active, speed = 28) {
   return { displayed, done }
 }
 
-// ── KAI Animated Onboarding Component ──
+// ── KAi Animated Onboarding Component ──
 function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onComplete }) {
   const { store } = useMeereo()
   const ob = KAI_ONBOARDING[context] || KAI_ONBOARDING.pro
@@ -191,7 +191,7 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
   const hasArchi = situation.includes('déjà un architecte')
   const ctaText = context === 'client'
     ? cleEnMain
-      ? 'MEEREO prend en charge la mise en place de votre projet. KAI vous accompagnera et vous tiendra informé des prochaines étapes.'
+      ? 'MEEREO prend en charge la mise en place de votre projet. KAi vous accompagnera et vous tiendra informé des prochaines étapes.'
       : hasArchi
         ? 'Votre professionnel vous invitera à rejoindre votre projet. En attendant, explorez votre espace.'
         : 'Votre demande est publiée. Vous serez notifié dès qu\u2019un professionnel vous répondra. En attendant, explorez votre espace.'
@@ -394,7 +394,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const onboardingDone = store.kaiOnboardingDone || {}
     if (onboardingDone[context]) return
     if (!store.user) return
-    // Auto-open KAI panel with onboarding view after a brief delay
+    // Auto-open KAi panel with onboarding view after a brief delay
     const timer = setTimeout(() => {
       setKaiState('appearing')
       setTimeout(() => {
@@ -453,7 +453,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     }
   }, [store.user, store._hydrated, store.kaiOnboardingDone, kaiOpen, offersCount, aoWithoutOffers.length, decPending, context])
 
-  // ── KAI Inactivity Detection — gentle nudge after 20s ──
+  // ── KAi Inactivity Detection — gentle nudge after 20s ──
   useEffect(() => {
     if (!store.user || kaiOpen || proactiveShown.current) return
     const onboardingDone = store.kaiOnboardingDone || {}
@@ -726,7 +726,7 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
         </div>
       )}
 
-      {/* ═══ KAI PANEL ═══ */}
+      {/* ═══ KAi PANEL ═══ */}
       {kaiOpen && (
         <div ref={panelRef} className="k10-panel show" style={kaiPos.x != null ? { left: kaiPos.x, bottom: 'auto', top: kaiPos.y, transform: 'none' } : undefined}>
 

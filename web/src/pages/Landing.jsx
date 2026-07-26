@@ -4,7 +4,7 @@ import MeereoLogo from '../components/shared/MeereoLogo'
 
 /* ••
    MEEREO LANDING — SIGNATURE VERSION
-   Multi-acteurs à Cockpit à KAI à Premium à Fidèle au produit
+   Multi-acteurs à Cockpit à KAi à Premium à Fidèle au produit
 •• */
 
 //  MINI UI 
@@ -52,7 +52,7 @@ function CockpitFull() {
             <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'radial-gradient(circle at 35% 28%,rgba(124,58,237,.15),transparent 55%)', pointerEvents:'none' }}/>
             <span style={{ fontSize:9, fontWeight:700, color:'#7C3AED', position:'relative', zIndex:1 }}>K</span>
           </div>
-          <span style={{ fontSize:11, fontWeight:700 }}>KAI</span>
+          <span style={{ fontSize:11, fontWeight:700 }}>KAi</span>
           <span style={{ fontSize:8, color:'#16A34A', fontWeight:600, marginLeft:'auto' }}>En ligne</span>
         </div>
         <p style={{ fontSize:11, lineHeight:1.5, color:'#999', margin:0 }}>2 décisions en attente. Budget engagé à 62 %. Prochain jalon : gros-œuvre le 15 mai.</p>
@@ -93,14 +93,14 @@ function KaiMini() {
           <span style={{ fontSize:18, fontWeight:700, color:'#7C3AED', position:'relative', zIndex:1, lineHeight:1 }}>K</span>
         </div>
         <div>
-          <div style={{ fontSize:14, fontWeight:700 }}>KAI</div>
+          <div style={{ fontSize:14, fontWeight:700 }}>KAi</div>
           <div style={{ fontSize:10, color:'#16A34A', fontWeight:500 }}>Connecté à vos données</div>
         </div>
       </div>
       <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
         <div style={{ alignSelf:'flex-end', maxWidth:'76%', padding:'11px 16px', borderRadius:'16px 16px 4px 16px', background:'#191c1d', color:'#fff', fontSize:13, lineHeight:1.5 }}>Compare les offres du lot CVC</div>
         <div style={{ alignSelf:'flex-start', maxWidth:'88%', padding:'14px 16px', borderRadius:'16px 16px 16px 4px', background:'#f5f5f7', fontSize:13, lineHeight:1.65 }}>
-          <div style={{ fontSize:10, fontWeight:700, color:'#7C3AED', letterSpacing:'.04em', marginBottom:8 }}>ANALYSE KAI</div>
+          <div style={{ fontSize:10, fontWeight:700, color:'#7C3AED', letterSpacing:'.04em', marginBottom:8 }}>ANALYSE KAi</div>
           3 offres reçues pour le lot CVC.<br/><br/>
           <strong>Recommandation :</strong> CLIM Pro CI — 14,6 M FCFA, délai 45j.<br/>
           Meilleur ratio qualité/coét sur ce lot.
@@ -131,7 +131,7 @@ function KaiBar({ size='md', dark }) {
         <div style={{ position:'absolute', bottom:lg?0:-1, right:lg?0:-1, width:lg?10:9, height:lg?10:9, borderRadius:'50%', background:'#34c759', border:'2px solid #fff' }}/>
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
-        <div style={{ fontSize:txtFs, fontWeight:700, color:'#111', letterSpacing:'.03em' }}>KAI</div>
+        <div style={{ fontSize:txtFs, fontWeight:700, color:'#111', letterSpacing:'.03em' }}>KAi</div>
         <div style={{ fontSize:subFs, color:'#999', fontWeight:500 }}>Assistant personnel IA</div>
       </div>
     </div>
@@ -167,7 +167,7 @@ export default function Landing() {
               </div>
             </div>
             <nav className="lp-n" style={{ display:'flex', gap:20 }}>
-              {[['Système','sys'],['Fonctionnalités','feat'],['KAI','kai']].map(([l,id])=>(
+              {[['Système','sys'],['Fonctionnalités','feat'],['KAi','kai']].map(([l,id])=>(
                 <a key={id} onClick={()=>scroll(id)} style={{ fontSize:12.5, color:'rgba(255,255,255,.45)', cursor:'pointer', fontWeight:500, transition:'color .15s', textDecoration:'none' }} onMouseOver={e=>e.target.style.color='#fff'} onMouseOut={e=>e.target.style.color='rgba(255,255,255,.45)'}>{l}</a>
               ))}
             </nav>
@@ -199,9 +199,9 @@ export default function Landing() {
             {/* micro text */}
             <p style={{ marginTop:28, fontSize:11.5, color:'rgba(255,255,255,.3)', margin:'28px auto 0' }}>Lancé en Côte d'Ivoire à Déploiement progressif en Afrique de l'Ouest</p>
           </div>
-          {/* Cockpit + KAI bar floating */}
+          {/* Cockpit + KAi bar floating */}
           <div style={{ maxWidth:920, margin:'56px auto 0', padding:'0 28px 64px', position:'relative' }}>
-            {/* KAI bar — floating left, above cockpit */}
+            {/* KAi bar — floating left, above cockpit */}
             <div style={{ position:'absolute', top:-28, left:48, zIndex:3 }} className="lp-kai-float">
               <KaiBar size="md" dark />
             </div>
@@ -360,7 +360,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* •• S6 — KAI •• */}
+        {/* •• S6 — KAi •• */}
         <section id="kai" style={{ background:'#0a0a0a', color:'#fff', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', top:'20%', left:'50%', transform:'translateX(-50%)', width:'50%', height:'50%', background:'radial-gradient(ellipse,rgba(255,255,255,.025),transparent 65%)', pointerEvents:'none' }}/>
           <div style={{ maxWidth:1200, margin:'0 auto', padding:'96px 28px', position:'relative' }}>
@@ -376,7 +376,7 @@ export default function Landing() {
                 Analyse en continu, recommandations actionnables et pilotage autonome de certaines tâches. KAi vous assiste activement dans chaque décision.
               </p>
             </div>
-            {/* KAI capabilities cards */}
+            {/* KAi capabilities cards */}
             <div style={{ maxWidth:600, margin:'0 auto 36px' }} className="lp-kai-caps">
               {[
                 {t:'Rapports chantier',d:'En langage naturel, générés depuis vos données.'},
@@ -457,7 +457,7 @@ export default function Landing() {
             <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'1.5px', color:'rgba(255,255,255,.25)', margin:0 }}>Produit</div>
             <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6, fontSize:12, color:'rgba(255,255,255,.5)' }}>
               <span style={{cursor:'pointer'}} onClick={()=>scroll('feat')}>Fonctionnalités</span>
-              <span style={{cursor:'pointer'}} onClick={()=>scroll('kai')}>KAI</span>
+              <span style={{cursor:'pointer'}} onClick={()=>scroll('kai')}>KAi</span>
               <span style={{cursor:'pointer'}} onClick={()=>scroll('sys')}>Multi-acteurs</span>
             </div>
           </div>

@@ -112,7 +112,7 @@ export default function Home({ ctx }) {
             } else if (cleEnMain) {
               eyebrow = 'Prise en charge MEEREO'
               title = 'MEEREO organise votre projet'
-              text = 'Nous prenons en charge la mise en place de votre projet. KAI vous accompagnera et vous tiendra informé des prochaines étapes.'
+              text = 'Nous prenons en charge la mise en place de votre projet. KAi vous accompagnera et vous tiendra informé des prochaines étapes.'
               action = 'Les professionnels adaptés seront identifiés et proposés au bon moment. Vous pouvez aussi explorer par vous-même.'
               cta = 'Explorer la plateforme'
               ctaPage = 'marketplace'

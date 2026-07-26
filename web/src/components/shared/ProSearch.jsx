@@ -1,9 +1,36 @@
 import { Check, Star } from 'lucide-react'
 import { METIERS_AO } from '../../data/ao'
-import ProAvatar from './ProAvatar'
+import CompanyLogo from './CompanyLogo'
+import { api } from '../../services/api/client'
 
 export default function ProSearch({ ctx }) {
-  const { proSearch, setProSearch, proMetier, setProMetier, filteredPros, navigate, updateStore, showToast } = ctx
+  const { proSearch, setProSearch, proMetier, setProMetier, filteredPros, navigate, showToast } = ctx
+
+  // MSG-02 : créer une vraie conversation backend (fini le message factice en store local)
+  const handleContact = async (p) => {
+    if (!p?.id) { showToast('Ce professionnel n’est pas joignable pour le moment', 'red'); return }
+    try {
+      const convRes = await api.conversations.create({ participantId: p.id })
+      const conv = convRes?.conversation || convRes
+      if (conv?.id) {
+        await api.conversations.sendMessage(conv.id, { text: 'Bonjour, je souhaite vous contacter pour un projet.' })
+        api.notifications.create({
+          targetUserId: p.id,
+          type: 'contact_request',
+          message: 'Nouvelle demande de contact',
+          link: '/messages',
+        }).catch(() => {})
+        sessionStorage.setItem('meereo_open_conv', conv.id)
+        showToast('Message envoyé à ' + p.nom, 'green')
+        navigate('/client/messages')
+      } else {
+        showToast('Impossible de démarrer la conversation', 'red')
+      }
+    } catch (e) {
+      showToast('Erreur : ' + (e.message || 'envoi impossible'), 'red')
+    }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
@@ -28,7 +55,7 @@ export default function ProSearch({ ctx }) {
         {filteredPros.map((p, i) => (
           <div key={i} className="card" style={{ padding: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <ProAvatar nom={p.nom} size={42} />
+              <CompanyLogo pro={{ entreprise: p.nom, logoFileUrl: p.logoUrl, logoColor: p.logoColor, activeLogoType: p.activeLogoType }} size={42} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{p.nom}</span>
@@ -51,10 +78,7 @@ export default function ProSearch({ ctx }) {
             <div style={{ display: 'flex', gap: 6 }}>
               {p.publicId && <button className="btn btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => navigate(`/pro/${p.slug || p.publicId}`)}>Voir profil</button>}
               {p.pagePublished !== false && (
-                <button className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => {
-                  updateStore(prev => ({ ...prev, messages: [...(prev.messages || []), { id: 'msg_' + Date.now(), dest: p.nom, sujet: 'Demande de contact', texte: 'Bonjour, je souhaite vous contacter pour un projet.', type: 'contact', createdAt: new Date().toISOString() }] }))
-                  showToast('Demande de contact envoyée à ' + p.nom)
-                }}>Contacter</button>
+                <button className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => handleContact(p)}>Contacter</button>
               )}
             </div>
           </div>

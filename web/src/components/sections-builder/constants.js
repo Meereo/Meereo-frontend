@@ -15,7 +15,8 @@ export const SECTION_CATEGORIES = [
   { id: "team",           label: "Equipe" },
   { id: "certifications", label: "Certifications" },
   { id: "references",     label: "References" },
-  { id: "reviews",        label: "Avis" },
+  // AVS-01 : la section « Avis » est entièrement générée par le système (source centralisée).
+  // Elle n'est plus proposée à l'édition manuelle dans la palette.
   { id: "coordinates",    label: "Coordonnees" },
   { id: "contact",        label: "Contact" },
 ];
@@ -359,41 +360,6 @@ export const SECTION_TEMPLATES = [
   },
 
   // ── 09 AVIS ET SATISFACTION ──────────────────────────────────────────────
-  {
-    type: "review-testimony",
-    category: "reviews",
-    name: "Avis — Temoignage",
-    defaultData: {
-      quote: "Chaque decision a ete documentee et validee avant d'avancer : nous savions a tout moment ou en etait le projet.",
-      author: "K. Toure — maitre d'ouvrage",
-      project: "RESIDENCE IVOIRE \u00B7 LIVREE 2024",
-      verified: true,
-    },
-  },
-  {
-    type: "review-journal",
-    category: "reviews",
-    name: "Avis — Journal",
-    defaultData: {
-      reviews: [
-        { id: "a1", date: "JANV. 2025", quote: "Livraison dans les delais annonces, reserves levees en trois semaines.", author: "K. Toure", project: "Residence Ivoire", verified: true },
-        { id: "a2", date: "SEPT. 2023", quote: "La coordination des bureaux d'etudes a ete prise en main de bout en bout.", author: "Societe Horizon", project: "Siege Horizon", verified: true },
-        { id: "a3", date: "MARS 2023", quote: "Des choix de materiaux adaptes au climat, un budget tenu.", author: "A. Kouassi", project: "Immeuble Lagune", verified: true },
-      ],
-    },
-  },
-  {
-    type: "review-structured",
-    category: "reviews",
-    name: "Avis — Retour structure",
-    defaultData: {
-      context: "Residence de 32 logements a Cocody, mission de conception architecturale confiee en 2022 via un appel d'offres MEEREO.",
-      delivered: "Esquisses, permis de construire, dossiers de consultation, coordination des etudes, assistance a la reception.",
-      feedback: "Un deroulement sans surprise : chaque jalon valide, chaque document au bon endroit, une equipe qui repond.",
-      author: "K. Toure — maitre d'ouvrage \u00B7 Residence Ivoire, livree 2024",
-      verified: true,
-    },
-  },
 
   // ── 10 COORDONNEES ───────────────────────────────────────────────────────
   {

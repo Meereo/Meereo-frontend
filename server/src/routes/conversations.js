@@ -84,6 +84,14 @@ router.get('/', requireAuth, async (req, res, next) => {
       counts.forEach(({ convId, count }) => { unreadCounts[convId] = count })
     }
 
+    // MSG-04: résoudre le nom des projets liés (libellé contextuel côté client/pro)
+    const projectIds = [...new Set(participations.map(p => p.conversation.projectId).filter(Boolean))]
+    const projectNames = {}
+    if (projectIds.length > 0) {
+      const projects = await prisma.project.findMany({ where: { id: { in: projectIds } }, select: { id: true, nom: true } })
+      projects.forEach(pr => { projectNames[pr.id] = pr.nom })
+    }
+
     let conversations = participations.map((p) => {
       const c = p.conversation
       const lastMsg = c.messages[0] || null
@@ -92,8 +100,12 @@ router.get('/', requireAuth, async (req, res, next) => {
         id: c.id,
         title: c.title,
         isGroup: c.isGroup,
+        type: c.type,
         aoId: c.aoId,
         offerId: c.offerId,
+        projectId: c.projectId,
+        missionId: c.missionId,
+        projectName: c.projectId ? (projectNames[c.projectId] || null) : null,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
         participants: c.participants.map((pp) => mapParticipantUser(pp.user)),

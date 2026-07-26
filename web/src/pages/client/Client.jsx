@@ -155,12 +155,17 @@ export default function Client() {
       .then(data => setApiPros((data || []).map(u => ({
         id: u.id,
         publicId: u.publicId || null,
-        nom: u.company || u.name || '',
+        nom: u.nom || u.company || u.name || '',
         metier: u.metier || '',
         ville: u.ville || '',
         note: 0,
         verified: u.verified || false,
         avatar: u.avatar || null,
+        // QAL-02 : champs logo pour affichage via CompanyLogo (source unique)
+        logoUrl: u.logoUrl || null,
+        logoColor: u.logoColor || null,
+        activeLogoType: u.activeLogoType || 'generated',
+        pagePublished: u.pagePublished,
       }))))
       .catch(() => {})
   }, [])

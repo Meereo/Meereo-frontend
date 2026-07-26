@@ -65,6 +65,10 @@ router.post('/', requireAuth, async (req, res, next) => {
       where: { supplierId: req.user.id, isPublished: true, status: 'active' },
     })
     const isOverQuota = publishedCount >= FREE_PRODUCT_QUOTA
+    // MKT-06g / FIN-03: au-delà du quota gratuit, le produit est créé en brouillon
+    // (non publié) tant qu'un forfait n'est pas souscrit. Le frontend informe via isOverQuota.
+    const requestedPublish = req.body.isPublished !== undefined ? !!req.body.isPublished : true
+    const isPublished = isOverQuota ? false : requestedPublish
     const product = await prisma.product.create({
       data: {
         supplierId: req.user.id,
@@ -80,13 +84,14 @@ router.post('/', requireAuth, async (req, res, next) => {
         garantieUrl: garantieUrl || null,
         garantieDuree: garantieDuree || null,
         stock: parseInt(stock) || 0,
+        isPublished,
         sponsored: sponsored || false,
         flash: flash || false,
         flashPrice: flashPrice ? parseFloat(flashPrice) : null,
         flashDuration: flashDuration || null,
       },
     })
-    res.status(201).json(product)
+    res.status(201).json({ ...product, isOverQuota })
   } catch (e) {
     next(e)
   }

@@ -10,6 +10,7 @@ import Landing from './pages/Landing'
 import Conditions from './pages/Conditions'
 import Privacy from './pages/Privacy'
 import Validation from './pages/Validation'
+import ResetPassword from './pages/ResetPassword'
 import GlobalNav from './components/shared/GlobalNav'
 import Toast from './components/shared/Toast'
 import NotifPanel from './components/shared/NotifPanel'
@@ -134,6 +135,8 @@ export default function App() {
         <Route path="/conditions" element={<Conditions />} />
         <Route path="/confidentialite" element={<Privacy />} />
         <Route path="/validation" element={<Validation />} />
+        {/* INS-07 — cible du lien de réinitialisation envoyé par e-mail */}
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       <GlobalNav />
       <Toast />

@@ -181,7 +181,7 @@ const en = {
   'nav.clients': 'Clients',
   'nav.tenders': 'Tenders',
   'nav.offers': 'Offers',
-  'nav.markets': 'Contracts',
+  'nav.markets': 'Markets',
   'nav.marketplace': 'Marketplace',
   'nav.orders': 'Orders',
   'nav.pageBuilder': 'Edit my page',
@@ -334,7 +334,7 @@ i18n.use(initReactI18next).init({
     fr: { translation: fr },
     en: { translation: en },
   },
-  lng: localStorage.getItem('meereo_lang') || navigator.language?.startsWith('en') ? 'en' : 'fr',
+  lng: localStorage.getItem('meereo_lang') || (navigator.language?.startsWith('en') ? 'en' : 'fr'),
   fallbackLng: 'fr',
   interpolation: { escapeValue: false },
 })
