@@ -107,7 +107,7 @@ export default function Validation() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Signalement enregistré</div>
-            <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5 }}>Le prestataire a été informé de votre retour.</div>
+            <div style={{ fontSize: 13, color: '#777', lineHeight: 1.5 }}>Le professionnel a été informé de votre retour.</div>
           </div>
         ) : !req ? (
           <div style={{ padding: '48px 28px', textAlign: 'center' }}>
@@ -124,13 +124,13 @@ export default function Validation() {
                 <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>Projet</div>
                 <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{project?.nom || project?.name || 'Projet'}</div>
                 <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#666' }}>
-                  <span>Prestataire : <strong style={{ color: '#111' }}>{req.requestedByName}</strong></span>
+                  <span>Professionnel : <strong style={{ color: '#111' }}>{req.requestedByName}</strong></span>
                   {project?.adresse && <span>{project.adresse}</span>}
                 </div>
               </div>
 
               <div style={{ fontSize: 14, color: '#222', lineHeight: 1.6, marginBottom: 20 }}>
-                Le prestataire vous indique que le projet est terminé. <strong>Confirmez-vous la réception et la conformité des travaux ?</strong>
+                Le professionnel vous indique que le projet est terminé. <strong>Confirmez-vous la réception et la conformité des travaux ?</strong>
               </div>
 
               {req.message && (

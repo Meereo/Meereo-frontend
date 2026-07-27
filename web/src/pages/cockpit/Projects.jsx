@@ -583,7 +583,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     </div>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 600, color: '#34C759' }}>Mission terminée — validation requise</div>
-                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Votre prestataire a déclaré ce projet comme terminé</div>
+                      <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Le professionnel a déclaré ce projet comme terminé</div>
                     </div>
                   </div>
                   <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>
@@ -1253,7 +1253,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
               {/* Tab: Intervenant externe */}
               {memberTab === 'externe' && (
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'rgba(37,99,235,.04)', borderRadius: 8, lineHeight: 1.5, border: '1px solid rgba(37,99,235,.08)' }}>Les intervenants externes sont des partenaires, prestataires ou structures qui interviennent sur ce projet.</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'rgba(37,99,235,.04)', borderRadius: 8, lineHeight: 1.5, border: '1px solid rgba(37,99,235,.08)' }}>Les intervenants externes sont des partenaires, entreprises ou structures qui interviennent sur ce projet.</div>
                   <div><label className="form-label">Nom / Structure *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Ex: BET Sigma, Entreprise Koné..." /></div>
                   <div className="modal-row">
                     <div><label className="form-label">Métier / Rôle *</label>

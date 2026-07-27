@@ -33,7 +33,7 @@ export default function Home({ ctx }) {
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 600, color: '#34C759' }}>Projet terminé — validation requise</div>
-              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Votre prestataire a déclaré le projet <strong>{clotureProj?.nom || 'votre projet'}</strong> comme terminé</div>
+              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Le professionnel a déclaré le projet <strong>{clotureProj?.nom || 'votre projet'}</strong> comme terminé</div>
             </div>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>
@@ -380,7 +380,7 @@ export default function Home({ ctx }) {
               <div style={{ padding: 0 }}>
                 {(() => {
                   const fromEquipe = proj?.equipe || []
-                  const fromMarkets = projMarkets.filter(m => m.entreprise).map(m => ({ nom: m.entreprise, role: m.lot || 'Prestataire', statut: 'actif' }))
+                  const fromMarkets = projMarkets.filter(m => m.entreprise).map(m => ({ nom: m.entreprise, role: m.lot || 'Intervenant', statut: 'actif' }))
                   const allTeam = [...fromEquipe]
                   fromMarkets.forEach(fm => { if (!allTeam.some(t => t.nom === fm.nom)) allTeam.push(fm) })
                   return allTeam
@@ -388,7 +388,7 @@ export default function Home({ ctx }) {
                   <div style={{ padding: '20px 18px', textAlign: 'center', fontSize: 12, color: 'var(--t4)' }}>L'équipe sera visible une fois le projet démarré</div>
                 ) : ((() => {
                   const fromEquipe = proj?.equipe || []
-                  const fromMarkets = projMarkets.filter(m => m.entreprise).map(m => ({ nom: m.entreprise, role: m.lot || 'Prestataire', statut: 'actif' }))
+                  const fromMarkets = projMarkets.filter(m => m.entreprise).map(m => ({ nom: m.entreprise, role: m.lot || 'Intervenant', statut: 'actif' }))
                   const allTeam = [...fromEquipe]
                   fromMarkets.forEach(fm => { if (!allTeam.some(t => t.nom === fm.nom)) allTeam.push(fm) })
                   return allTeam

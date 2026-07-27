@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import CompanyLogo from '../../components/shared/CompanyLogo'
 import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { createPortal } from 'react-dom'
@@ -9,6 +10,7 @@ import { useMeereo } from '../../hooks/useMeereoStore'
 import { useMergedData } from '../../hooks/useMergedData'
 import { api } from '../../services/api/client'
 import PaymentBadge from '../../components/shared/PaymentBadge'
+import PanelErrorBoundary from '../../components/PanelErrorBoundary'
 import { recommendRail, RAIL_META, RAILS, PAY_STATUS, calculateCommission } from '../../domain/fintech'
 import { MARKET_STATUS, getStatusLabel, PHASE_LABELS, normalizePhase } from '../../domain/status'
 import { DSPageHeader, DSKpiStrip, DSFilterBar, DSEmptyState } from '../../design/components'
@@ -144,7 +146,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             {(() => { const av = getEntrepriseAvatar(entreprise); return (
               <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-                {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+                {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CompanyLogo name={typeof entrepriseName !== 'undefined' ? entrepriseName : entreprise} size={44} style={{ width: '100%', height: '100%' }} />}
               </div>
             )})()}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -220,33 +222,39 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
       {detail && (() => {
         const proj = (store.projects || []).find(p => p.id === detail.projectId)
         const inter = INTERVENANTS_DATA.find(i => i.nom === detail.entreprise)
-        const initials = detail.entreprise.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+        // AOF-05 : aucune valeur issue de l'API n'est rendue sans conversion garantie.
+        const entrepriseName = String(detail.entreprise || detail.supplier?.company || '').trim()
+        const initials = (entrepriseName || '—').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+        const montantNum = Number(String(detail.montant ?? '').replace(/[\s\u00A0]/g, '').replace(',', '.'))
+        const montantAffiche = Number.isFinite(montantNum) && montantNum > 0 ? formatShort(parseBudget(String(montantNum))) : '—'
+        const avancement = Number.isFinite(Number(detail.avancement)) ? Number(detail.avancement) : 0
         return createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setDetail(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+          <PanelErrorBoundary label="détail du marché" resetKey={detail.id} onClose={() => setDetail(null)}>
             {/* Hero */}
             <div style={{ padding: '22px 24px 16px', background: 'linear-gradient(145deg,#0f1011,#2a2c2d)', color: '#fff', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {(() => { const av = getEntrepriseAvatar(detail.entreprise); return (
                     <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, flexShrink: 0, overflow: 'hidden' }}>
-                      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+                      {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CompanyLogo name={typeof entrepriseName !== 'undefined' ? entrepriseName : entreprise} size={44} style={{ width: '100%', height: '100%' }} />}
                     </div>
                   )})()}
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{detail.entreprise || detail.supplier?.company || '—'}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>{entrepriseName || '—'}</div>
                     <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)' }}>{detail.lot || '—'} · {getStatusLabel(detail.statut)}</div>
                   </div>
                 </div>
                 <button onClick={() => setDetail(null)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,.6)' }}>×</button>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px', marginBottom: 4 }}>{formatShort(parseBudget(detail.montant || '0'))}</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-1.5px', marginBottom: 4 }}>{montantAffiche}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)' }}>Avancement</span>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>{detail.avancement}%</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>{avancement}%</span>
               </div>
               <div style={{ marginTop: 6, height: 4, background: 'rgba(255,255,255,.1)', borderRadius: 100, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: '#F59E0B', borderRadius: 100, width: detail.avancement + '%' }} />
+                <div style={{ height: '100%', background: '#F59E0B', borderRadius: 100, width: avancement + '%' }} />
               </div>
             </div>
 
@@ -386,6 +394,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
                 return null
               })()}
             </div>
+          </PanelErrorBoundary>
           </div>
         </div>
         , document.body)

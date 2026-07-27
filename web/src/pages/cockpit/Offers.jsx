@@ -361,7 +361,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
               {/* Message prestataire */}
               {selected.message && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du prestataire</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du professionnel</div>
                   <div style={{ fontSize: 13, color: 'var(--tx)', lineHeight: 1.65, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', borderLeft: '3px solid var(--tx)' }}>"{selected.message}"</div>
                 </div>
               )}
@@ -384,13 +384,13 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                     {selected.docs.map((d, i) => {
                       const fileUrl = d.url || d.fileUrl || null
                       const openDoc = () => {
-                        if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
+                        if (!fileUrl) { showToast && showToast("Fichier non disponible — contactez le professionnel"); return }
                         // Validate URL scheme before opening (security)
                         try { const u = new URL(fileUrl); if (!['https:', 'http:', 'data:'].includes(u.protocol) && !fileUrl.startsWith('data:')) { showToast && showToast('URL invalide'); return } } catch { /* data: URIs throw, treat as safe */ }
                         setViewerDoc({ url: fileUrl, name: d.n || d.name || 'Document' })
                       }
                       const downloadDoc = () => {
-                        if (!fileUrl) { showToast && showToast('Fichier non disponible — contactez le prestataire'); return }
+                        if (!fileUrl) { showToast && showToast("Fichier non disponible — contactez le professionnel"); return }
                         const a = document.createElement('a')
                         a.href = fileUrl
                         a.download = d.n || d.name || 'document'
@@ -420,7 +420,7 @@ export default function Offers({ showToast, openModal, onNavigate }) {
                 ) : (
                   <div style={{ padding: '16px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px dashed var(--border-card)', textAlign: 'center' }}>
                     <div style={{ fontSize: 12, color: 'var(--t4)' }}>Aucun document fourni avec cette offre</div>
-                    <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Vous pouvez demander des pièces complémentaires au prestataire</div>
+                    <div style={{ fontSize: 11, color: 'var(--t4)', marginTop: 4 }}>Vous pouvez demander des pièces complémentaires au professionnel</div>
                   </div>
                 )}
               </div>

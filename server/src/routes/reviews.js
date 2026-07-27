@@ -29,6 +29,16 @@ router.post('/', requireAuth, async (req, res, next) => {
     if (!targetId) throw createError('targetId requis', 400)
     if (!note || note < 1 || note > 5) throw createError('Note entre 1 et 5 requise', 400)
 
+    // AVS-07 : vérifier EN BASE l'entité qui reçoit l'avis.
+    // 1. Jamais soi-même (le modal a déjà présenté le client à la place de
+    //    l'entreprise titulaire — ce garde-fou rend l'erreur impossible en base).
+    if (targetId === req.user.id) throw createError("Vous ne pouvez pas vous évaluer vous-même", 400)
+    // 2. Le destinataire d'une évaluation de fin de projet est une ENTREPRISE
+    //    (professionnel ou intervenant), jamais un compte client.
+    const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, type: true } })
+    if (!target) throw createError('Destinataire introuvable', 404)
+    if (target.type === 'client') throw createError("Un avis de fin de projet s'adresse à l'entreprise titulaire, pas à un client", 400)
+
     // Vérifier que l'auteur a collaboré avec la cible sur un projet
     const hasCollaboration = await prisma.projectMember.findFirst({
       where: {

@@ -408,7 +408,7 @@ export default function Client() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>
                   </div>
                   <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>Arrêter ce projet ?</div>
-                  <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55 }}>Le projet sera marqué comme <strong>arrêté</strong> pour vous et votre prestataire. Les données restent accessibles dans les archives.</div>
+                  <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.55 }}>Le projet sera marqué comme <strong>arrêté</strong> pour vous et le professionnel. Les données restent accessibles dans les archives.</div>
                   <div style={{ fontSize: 12, fontWeight: 600, marginTop: 8 }}>« {proj?.nom} »</div>
                 </div>
                 <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>

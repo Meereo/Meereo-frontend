@@ -742,10 +742,10 @@ export default function Exchange({ showToast, onNavigate }) {
                     <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-1.5px', lineHeight: 1 }}>{formatBudgetDisplay(selectedOffer.montant)}</div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginTop: 5 }}>Délai : {selectedOffer.delai || '—'}</div>
                   </div>
-                  {/* Message du prestataire */}
+                  {/* Message du professionnel */}
                   {selectedOffer.message && (
                     <div className="card" style={{ padding: '16px 18px', marginBottom: 20 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du prestataire</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Message du professionnel</div>
                       <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{selectedOffer.message}</div>
                     </div>
                   )}

@@ -1,7 +1,6 @@
 ﻿import { Smartphone } from 'lucide-react'
 import KaiSubscription from '../../components/shared/KaiSubscription'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
-import { setLanguage } from '../../config/i18n'
 
 const PTABS = [
   { id: 'entreprise', label: 'Mon entreprise' },
@@ -126,19 +125,6 @@ export default function Settings({ ctx }) {
                   </div>
                 </div>
               ))}
-              {/* SYS-04/SYS-06 : sélecteur de langue FR/EN (parité avec cockpit & client) */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 13, color: 'var(--t2)' }}>Langue de l'interface</span>
-                <select
-                  className="form-input"
-                  style={{ width: 160 }}
-                  defaultValue={localStorage.getItem('meereo_lang') || 'fr'}
-                  onChange={e => { setLanguage(e.target.value); showToast(e.target.value === 'en' ? 'Language changed to English' : 'Langue changée en Français') }}
-                >
-                  <option value="fr">Français</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
             </div>
           )}
 

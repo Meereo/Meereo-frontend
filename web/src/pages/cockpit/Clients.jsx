@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
+import CompanyLogo from '../../components/shared/CompanyLogo'
 import Modal from '../../components/shared/Modal'
 import { createPortal } from 'react-dom'
 import { Users, User, Mail, Phone, Trash2 } from 'lucide-react'
@@ -22,7 +23,7 @@ function ClientModal({ isOpen, onClose, showToast }) {
     setSubmitted(true)
     if (!f.nom.trim()) return
     try {
-      const created = await api.contacts.create({ type: 'client', nom: f.nom, email: f.email || null, tel: f.tel || null, poste: f.poste || null, statut: f.statut || null, entreprise: f.contact || null })
+      const created = await api.contacts.create({ type: 'client', role: f.type || null, nom: f.nom, email: f.email || null, tel: f.tel || null, poste: f.poste || null, statut: f.statut || null, entreprise: f.contact || null })
       updateStore(prev => ({ ...prev, contacts: [...(prev.contacts || []), created], clients: [...(prev.clients || []), created] }))
       emitEvent('client_created', { name: f.nom })
       showToast('Client créé')
@@ -117,33 +118,45 @@ export default function Clients({ openModal, showToast }) {
 
   const total = allClients.length
   const actifs = allClients.filter(c => c.statut === 'actif').length
-  const filtered = search ? allClients.filter(c => (c.nom + (c.contact || '') + (c.email || '') + (c.type || '')).toLowerCase().includes(search.toLowerCase())) : allClients
+  const filtered = search ? allClients.filter(c => (c.nom + (c.contact || '') + (c.email || '') + (c.role || '')).toLowerCase().includes(search.toLowerCase())) : allClients
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editClient) return
-    api.contacts.update(editClient.id, editClient).catch(() => showToast && showToast('Erreur de sauvegarde', 'red'))
-    updateStore(prev => ({
-      ...prev,
-      contacts: (prev.contacts || []).map(c => c.id === editClient.id ? { ...c, ...editClient } : c)
-    }))
-    setEditClient(null)
-    showToast && showToast('Client mis à jour')
+    // AVS-06 : le discriminant `type` n'est JAMAIS envoyé ni modifié —
+    // la fiche reste possédée par le professionnel et reste un 'client'.
+    const { type: _ignored, ...payload } = editClient
+    try {
+      const saved = await api.contacts.update(editClient.id, payload)
+      updateStore(prev => ({
+        ...prev,
+        contacts: (prev.contacts || []).map(c => c.id === editClient.id ? { ...c, ...saved, type: 'client' } : c)
+      }))
+      setEditClient(null)
+      showToast && showToast('Client mis à jour')
+    } catch (e) {
+      // Échec serveur → la fiche reste affichée telle quelle, rien n'est perdu.
+      showToast && showToast('Erreur de sauvegarde — aucune modification appliquée', 'red')
+    }
   }
 
-  const doDelete = (id) => {
-    api.contacts.delete(id).catch(() => showToast && showToast('Erreur lors de la suppression', 'red'))
-    updateStore(prev => ({
-      ...prev,
-      contacts: (prev.contacts || []).filter(c => c.id !== id)
-    }))
+  const doDelete = async (id) => {
+    try {
+      await api.contacts.delete(id)
+      updateStore(prev => ({
+        ...prev,
+        contacts: (prev.contacts || []).filter(c => c.id !== id)
+      }))
+      showToast && showToast('Client supprimé')
+    } catch (e) {
+      showToast && showToast('Erreur lors de la suppression — la fiche est conservée', 'red')
+    }
     setDeleteConfirm(null)
-    showToast && showToast('Client supprimé')
   }
 
   return (
     <div>
       <DSPageHeader title="Clients" subtitle={`${total} clients · ${actifs} actifs`}>
-        <button className="btn btn-sm" onClick={() => { exportCSV(allClients.map(c => ({ nom: c.nom, type: c.type, statut: c.statut, contact: c.contact, email: c.email, tel: c.tel })), 'clients_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
+        <button className="btn btn-sm" onClick={() => { exportCSV(allClients.map(c => ({ nom: c.nom, categorie: c.role || '', statut: c.statut, contact: c.contact, email: c.email, tel: c.tel })), 'clients_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateClient(true)}>+ Nouveau client</button>
       </DSPageHeader>
 
@@ -183,11 +196,11 @@ export default function Clients({ openModal, showToast }) {
               <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                 {clientPhoto
                   ? <img src={clientPhoto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none' }} />
-                  : <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                  : <CompanyLogo name={c.nom} size={36} rounded />
                 }
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="card-title" style={{ fontSize: 13 }}>{c.nom}</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.type}</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role || '—'}</div>
                 </div>
                 <span className={`status-pill ${c.statut === 'actif' ? 'status-done' : 'status-pending'}`}>{c.statut}</span>
               </div>
@@ -220,7 +233,7 @@ export default function Clients({ openModal, showToast }) {
               <div><label className="form-label">Nom / Raison sociale</label><input className="form-input" value={editClient.nom} onChange={e => setEditClient(p => ({ ...p, nom: e.target.value }))} /></div>
               <div className="modal-row">
                 <div><label className="form-label">Type</label>
-                  <select className="form-input" value={editClient.type} onChange={e => setEditClient(p => ({ ...p, type: e.target.value }))}>
+                  <select className="form-input" value={editClient.role || 'Promoteur'} onChange={e => setEditClient(p => ({ ...p, role: e.target.value }))}>
                     <option>Promoteur</option><option>Particulier</option><option>SCI</option><option>Collectivité</option><option>État</option><option>Entreprise</option>
                   </select>
                 </div>

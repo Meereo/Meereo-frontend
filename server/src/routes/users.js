@@ -10,7 +10,16 @@ router.get('/pros', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { q, metier, ville: villeFilter, verified: verifiedFilter, secteur } = req.query
-    const where = { type: 'pro' }
+    // INS-20 : les comptes dont l'entreprise est suspendue (doublon de RCCM en
+    // cours de vérification) sont retirés de l'annuaire — données conservées.
+    const where = {
+      type: 'pro',
+      OR: [
+        { proProfile: null },
+        { proProfile: { entrepriseId: null } },
+        { proProfile: { entrepriseRef: { suspended: false } } },
+      ],
+    }
     if (metier && metier !== 'all') where.metier = metier
     if (verifiedFilter === 'true') where.verified = true
 
@@ -116,7 +125,14 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
     const skip = (page - 1) * limit
 
     const users = await prisma.user.findMany({
-      where: { type: 'fournisseur' },
+      where: {
+        type: 'fournisseur',
+        OR: [
+          { fournisseurProfile: null },
+          { fournisseurProfile: { entrepriseId: null } },
+          { fournisseurProfile: { entrepriseRef: { suspended: false } } },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -468,6 +484,28 @@ router.patch('/me/onboarding', requireAuth, async (req, res) => {
       const caller = await prisma.user.findUnique({ where: { id: req.user.id }, select: { verified: true } })
       if (caller?.verified) {
         delete sanitized.rccm
+      }
+    }
+    // INS-20 : unicité inter-rôles du RCCM et du NCC, appliquée aussi en MODIFICATION.
+    // La même règle qu'à l'inscription : un numéro déjà détenu par un autre compte
+    // (Professionnel OU Fournisseur) est refusé — jamais silencieusement ignoré.
+    for (const field of ['rccm', 'ncc']) {
+      const value = sanitized[field]
+      if (!value) continue
+      const [inPro, inFournisseur, inEntreprise] = await Promise.all([
+        prisma.proProfile.findUnique({ where: { [field]: value }, select: { userId: true } }),
+        prisma.fournisseurProfile.findUnique({ where: { [field]: value }, select: { userId: true } }),
+        // INS-20 : la table Entreprise est la porteuse de l'unicité après migration
+        prisma.entreprise ? prisma.entreprise.findUnique({ where: { [field]: value }, select: { id: true, proProfiles: { select: { userId: true }, take: 1 }, fournisseurProfiles: { select: { userId: true }, take: 1 } } }).catch(() => null) : null,
+      ])
+      const entrepriseOwner = inEntreprise ? (inEntreprise.proProfiles?.[0] || inEntreprise.fournisseurProfiles?.[0] || null) : null
+      const owner = inPro || inFournisseur || entrepriseOwner
+      if (owner && owner.userId !== req.user.id) {
+        return res.status(409).json({
+          error: field === 'rccm'
+            ? 'Ce numéro RCCM est déjà enregistré par une autre entreprise'
+            : 'Ce numéro de contribuable est déjà enregistré par une autre entreprise',
+        })
       }
     }
     const current = await prisma.user.findUnique({

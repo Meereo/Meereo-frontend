@@ -8,7 +8,6 @@ import KaiSubscription from '../../components/shared/KaiSubscription'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
 import { METIERS_AO } from '../../data/ao'
 import { api } from '../../services/api/client'
-import { setLanguage } from '../../config/i18n'
 
 const TABS = [
   { id: 'profil', label: 'Profil' },
@@ -328,22 +327,6 @@ export default function Settings({ showToast }) {
                   )
                 })}
 
-                {/* SYS-04: Sélecteur de langue FR/EN */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 13, color: 'var(--t2)' }}>Langue de l'interface</span>
-                  <select
-                    className="form-input"
-                    style={{ width: 160 }}
-                    defaultValue={localStorage.getItem('meereo_lang') || 'fr'}
-                    onChange={e => {
-                      setLanguage(e.target.value)
-                      showToast && showToast(e.target.value === 'en' ? 'Language changed to English' : 'Langue changée en Français')
-                    }}
-                  >
-                    <option value="fr">Français</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
               </div>
             )}
 

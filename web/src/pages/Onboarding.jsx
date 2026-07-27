@@ -35,8 +35,8 @@ const CARDS = [
   { id:'pro', step:'02', title:'Je suis professionnel',
     icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
     iconBg:'rgba(124,58,237,.08)',
-    description:'Architecte, entreprise, BET ou prestataire : centralisez vos missions, vos offres, vos équipes et votre exécution.',
-    tags:['Architecte','BTP','BET','Prestataire'],
+    description:'Architecte, entreprise, BET ou bureau de contrôle : centralisez vos missions, vos offres, vos équipes et votre exécution.',
+    tags:['Architecte','BTP','BET','Entreprise'],
     stats:[{label:'AO',value:'Publier'},{label:'Projets',value:'Piloter'},{label:'Equipe',value:'Coordonner'}],
   },
   { id:'fournisseur', step:'03', title:'Je suis fournisseur',
@@ -1712,7 +1712,7 @@ export default function Onboarding() {
                       {num:'4',color:'#16A34A',title:"Suivez & payez en sécurité",desc:"Phase par phase, jalons validés, paiement déclenché via Wave, Orange Money ou MTN."},
                     ] : hasArchi ? [
                       {num:'1',color:'#16A34A',title:"Invitation envoyée à votre architecte",desc:"Il rejoint Meereo et crée le projet avec vos informations. Vous serez automatiquement lié."},
-                      {num:'2',color:'#7C3AED',title:"L'architecte constitue l'équipe",desc:"Il lance les AO pour les entreprises, BET et prestataires nécessaires."},
+                      {num:'2',color:'#7C3AED',title:"L'architecte constitue l'équipe",desc:"Il lance les AO pour les entreprises et BET nécessaires."},
                       {num:'3',color:'#0891B2',title:"Commandez sur le Marketplace",desc:"Matériaux liés à votre chantier, livrés directement sur site."},
                       {num:'4',color:'#16A34A',title:"Suivez & payez en sécurité",desc:"Validation par jalons, paiements sécurisés, tableau de bord temps réel."},
                     ] : cleEnMain ? [

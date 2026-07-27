@@ -99,7 +99,15 @@ router.post('/', requireAuth, async (req, res, next) => {
   try {
     const { aoId, entreprise, montant, delai, message, technique, docs } = req.body
     if (!aoId) throw createError('aoId requis', 400)
-    if (!montant) throw createError('Montant requis', 400)
+    // AOF-03 / FIN-04 : un montant strictement positif ET un délai sont obligatoires.
+    // Un zéro ne doit jamais se confondre avec une absence de saisie.
+    const montantNum = Number(String(montant ?? '').replace(/[\s\u00A0]/g, '').replace(',', '.'))
+    if (!Number.isFinite(montantNum) || montantNum <= 0) {
+      throw createError('Un montant strictement positif est requis pour soumettre une offre', 400)
+    }
+    if (!delai || !String(delai).trim()) {
+      throw createError('Un délai est requis pour soumettre une offre', 400)
+    }
 
     const prisma = getPrisma()
 
@@ -119,8 +127,8 @@ router.post('/', requireAuth, async (req, res, next) => {
       where: { aoId_supplierId: { aoId, supplierId: req.user.id } },
       update: {
         entreprise: entreprise || '',
-        montant: String(montant),
-        delai: delai || '',
+        montant: String(montantNum),
+        delai: String(delai).trim(),
         message: message || '',
         technique: technique || '',
         docs: safeDocs,
@@ -129,8 +137,8 @@ router.post('/', requireAuth, async (req, res, next) => {
         aoId,
         supplierId: req.user.id,
         entreprise: entreprise || req.user.company || req.user.name || '',
-        montant: String(montant),
-        delai: delai || '',
+        montant: String(montantNum),
+        delai: String(delai).trim(),
         message: message || '',
         technique: technique || '',
         docs: safeDocs,
@@ -176,6 +184,12 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       allowed.statut = req.body.statut
       // Persister l'acceptation (qui + quand) lors de l'acceptation d'une offre
       if (req.body.statut === 'accepted') {
+        // FIN-04 : vérifier le montant AVANT toute mutation (refus des autres offres,
+        // fermeture de l'AO, création du marché). Un marché ne doit jamais naître à 0 FCFA.
+        const checkMontant = Number(String(existing.montant ?? '').replace(/[\s\u00A0]/g, '').replace(',', '.'))
+        if (!Number.isFinite(checkMontant) || checkMontant <= 0) {
+          throw createError("Cette offre n'a pas de montant valide — elle ne peut pas être acceptée en l'état", 422)
+        }
         allowed.acceptedBy = user.id
         allowed.acceptedAt = new Date()
       }
@@ -222,8 +236,14 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       await prisma.aO.update({ where: { id: existing.aoId }, data: { status: 'attributed' } }).catch(() => {})
 
       // AOF-01 A6: créer automatiquement le marché signé
+      // FIN-04 : le marché reprend fidèlement le montant et le délai de l'offre acceptée.
+      // Le montant a été validé en amont (avant toute mutation) — aucun fallback '0'.
+      const offerMontant = Number(String(existing.montant ?? '').replace(/[\s\u00A0]/g, '').replace(',', '.'))
       try {
-        await prisma.market.create({
+        // Idempotence : un seul marché par offre, quel que soit le nombre de fois où
+        // l'événement d'acceptation est déclenché (même principe que MSG-04/pairHash).
+        const alreadyCreated = await prisma.market.findFirst({ where: { offerId: existing.id } })
+        if (!alreadyCreated) await prisma.market.create({
           data: {
             title: existing.ao?.title || 'Marché',
             supplierId: existing.supplierId,
@@ -231,7 +251,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
             aoId: existing.aoId,
             projectId: existing.ao?.projectId || null,
             offerId: existing.id,
-            montant: existing.montant || '0',
+            montant: String(offerMontant),
             delai: existing.delai || '',
             statut: 'signed',
             signedAt: new Date(),

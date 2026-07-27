@@ -295,6 +295,34 @@ router.post('/', requireAuth, async (req, res, next) => {
     if (participantIds && Array.isArray(participantIds)) {
       // ─── Groupe ───────────────────────────────────────────────────────────
       const allIds = [...new Set([myId, ...participantIds.filter(Boolean)])]
+      // MSG-08 : garde-fou d'IDEMPOTENCE — une seule conversation de groupe par
+      // projet (ou par mission), quel que soit le nombre de fois où l'événement
+      // de lancement est déclenché. Même principe que le pairHash de MSG-04.
+      if (projectId || missionId) {
+        const existingGroup = await prisma.conversation.findFirst({
+          where: {
+            isGroup: true,
+            ...(projectId ? { projectId } : { missionId }),
+          },
+          include: {
+            participants: { include: { user: PARTICIPANT_USER_SELECT } },
+            messages: true,
+          },
+        })
+        if (existingGroup) {
+          // Rattacher les participants manquants au groupe existant plutôt
+          // que d'en créer un second (MSG-07 : extension, pas duplication).
+          const existingIds = new Set(existingGroup.participants.map(p => p.userId))
+          const missing = allIds.filter(uid => !existingIds.has(uid))
+          if (missing.length > 0) {
+            await prisma.conversationParticipant.createMany({
+              data: missing.map(uid => ({ conversationId: existingGroup.id, userId: uid })),
+              skipDuplicates: true,
+            })
+          }
+          return res.status(200).json({ conversation: existingGroup, created: false })
+        }
+      }
       console.log('[conversations] Creating group — myId:', myId, '| participantIds:', participantIds, '| allIds:', allIds)
       const conv = await prisma.conversation.create({
         data: {

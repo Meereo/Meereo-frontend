@@ -48,7 +48,14 @@
       "Bash(awk '/^model Project /,/^}/' server/prisma/schema.prisma)",
       "Bash(npm run *)",
       "Bash(node_modules/.bin/vite build *)",
-      "Bash(node_modules/.bin/eslint src/pages/Onboarding.jsx src/components/shared/ProSearch.jsx src/pages/supplier/Supplier.jsx src/pages/cockpit/Suppliers.jsx src/pages/cockpit/profile/Profile.jsx src/pages/client/Client.jsx src/pages/ResetPassword.jsx)"
+      "Bash(node_modules/.bin/eslint src/pages/Onboarding.jsx src/components/shared/ProSearch.jsx src/pages/supplier/Supplier.jsx src/pages/cockpit/Suppliers.jsx src/pages/cockpit/profile/Profile.jsx src/pages/client/Client.jsx src/pages/ResetPassword.jsx)",
+      "Bash(mkdir -p /tmp/onboarding)",
+      "Bash(unzip -o \"C:/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/doc/files.zip\" -d /tmp/onboarding)",
+      "Bash(cp __TRACKED_VAR__/offers.js server/src/routes/offers.js)",
+      "Bash(cp __TRACKED_VAR__/users.js server/src/routes/users.js)",
+      "Bash(cp __TRACKED_VAR__/conversations.js server/src/routes/conversations.js)",
+      "Bash(cp __TRACKED_VAR__/reviews.js server/src/routes/reviews.js)",
+      "Bash(cp __TRACKED_VAR__/PanelErrorBoundary.jsx web/src/components/shared/PanelErrorBoundary.jsx)"
     ]
   }
 }

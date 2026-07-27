@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react'
+import CompanyLogo from '../../components/shared/CompanyLogo'
 import { Ruler, ClipboardList, HardHat as HardHatIcon, Wrench, Package, Sofa, CheckCircle2 as CheckCircle2Icon, Check, Star } from 'lucide-react'
 import { CHANTIER_PHASES } from '../../data/chantier'
 import { api } from '../../services/api/client'
@@ -37,11 +38,18 @@ export default function Progress({ ctx }) {
   // Check if client already reviewed this project's pro
   const alreadyReviewed = (store?.reviews || []).some(r => r.projectId === proj?.id)
 
-  // Find the pro (owner) of the project
+  // AVS-07 — Le destinataire de l'évaluation est l'ENTREPRISE TITULAIRE du marché.
+  // Jamais le client (proj.client), jamais le propriétaire du projet (ownerId, qui
+  // côté client EST le client lui-même). Priorité :
+  //   1. le marché signé du projet (supplierId = entreprise attributaire)
+  //   2. le membre projet de rôle pro
+  //   3. le champ entreprise du projet
+  // Si aucune entreprise identifiable : PAS de modal d'évaluation (mieux vaut aucune
+  // invitation qu'un avis adressé à la mauvaise entité).
+  const projectMarket = (store?.markets || []).find(m => m.projectId === proj?.id && (m.statut === 'signed' || m.statut === 'en_cours' || m.statut === 'completed'))
   const proMember = (store?.projectMembers || []).find(m => m.projectId === proj?.id && (m.role === 'pro_admin' || m.role === 'PRO_ADMIN' || m.role === 'ADMIN'))
-    || (store?.projectMembers || []).find(m => m.projectId === proj?.id && m.userId === proj?.ownerId)
-  const proName = proMember?.userName || proj?.client || proj?.entreprise || 'Prestataire'
-  const proId = proMember?.userId || proj?.ownerId || null
+  const proName = projectMarket?.entreprise || projectMarket?.supplier?.company || proMember?.userName || proj?.entreprise || ''
+  const proId = projectMarket?.supplierId || proMember?.userId || null
 
   const submitRating = async () => {
     if (ratings.stars < 1) return
@@ -163,7 +171,7 @@ export default function Progress({ ctx }) {
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ok)' }}>Mission terminée</div>
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>
-            Votre prestataire a déclaré la mission comme terminée. Confirmez-vous la bonne réception du projet ?
+            Le professionnel a déclaré la mission comme terminée. Confirmez-vous la bonne réception du projet ?
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--ok)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', fontSize: 13 }} onClick={() => {
@@ -200,19 +208,32 @@ export default function Progress({ ctx }) {
         </div>
       )}
 
-      {/* Intervenants du projet — visibles par le client */}
+      {/* QAL-08 (27/07) — deux blocs séparés : qui porte le marché, et qui
+          travaille sous sa responsabilité. */}
+      {proName && (
+        <div style={{ marginTop: 24, marginBottom: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Professionnel</div>
+          <div className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <CompanyLogo name={proName} size={36} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{proName}</div>
+              <div style={{ fontSize: 10, color: 'var(--t3)' }}>Titulaire du marché</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bloc « Intervenants » : MASQUÉ s'il est vide — cas majoritaire
+          (règle d'affichage dérivé, PRJ-11). */}
       {(() => {
-        const projIntervenants = (store?.projectMembers || []).filter(m => m.projectId === proj?.id && m.userId !== proj?.ownerId && m.userId !== proj?.clientId && m.userId !== store?.user?.id)
+        const projIntervenants = (store?.projectMembers || []).filter(m => m.projectId === proj?.id && m.userId !== proj?.ownerId && m.userId !== proj?.clientId && m.userId !== store?.user?.id && m.userId !== proId)
         if (projIntervenants.length === 0) return null
         return (
-          <div style={{ marginTop: 24, marginBottom: 24 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Intervenants du projet</div>
+          <div style={{ marginTop: 16, marginBottom: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Intervenants</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {projIntervenants.map(m => (
                 <div key={m.id} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0 }}>
-                    {(m.userName || '?').charAt(0).toUpperCase()}
-                  </div>
+                  <CompanyLogo name={m.userName || '?'} size={32} rounded />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600 }}>{m.userName || 'Intervenant'}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{m.role || 'Membre'}</div>
@@ -290,7 +311,7 @@ export default function Progress({ ctx }) {
           </div>
         </div>
       )}
-      {/* MODAL: Évaluer le prestataire */}
+      {/* MODAL: Évaluer le professionnel */}
       {ratingModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setRatingModal(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 500, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,.2)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
@@ -299,7 +320,7 @@ export default function Progress({ ctx }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Projet terminé</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Évaluer le prestataire</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Évaluer le professionnel</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{proj?.nom}</div>
                 </div>
                 <button onClick={() => setRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -312,7 +333,7 @@ export default function Progress({ ctx }) {
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{(ratingModal.targetName || '?').slice(0, 2).toUpperCase()}</div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{ratingModal.targetName}</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>Prestataire du projet</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>Professionnel titulaire du marché</div>
                 </div>
               </div>
 
@@ -329,9 +350,9 @@ export default function Progress({ ctx }) {
 
               <div style={{ marginTop: 14 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>Commentaire (optionnel)</label>
-                <textarea placeholder="Partagez votre expérience avec ce prestataire..." value={ratings.comment} onChange={e => setRatings(prev => ({ ...prev, comment: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', resize: 'vertical', minHeight: 60 }} />
+                <textarea placeholder="Partagez votre expérience avec ce professionnel..." value={ratings.comment} onChange={e => setRatings(prev => ({ ...prev, comment: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', resize: 'vertical', minHeight: 60 }} />
               </div>
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--t4)', lineHeight: 1.5 }}>Votre avis sera visible sur le profil public du prestataire et contribuera à son score de satisfaction.</div>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--t4)', lineHeight: 1.5 }}>Votre avis sera visible sur le profil public du professionnel et contribuera à son score de satisfaction.</div>
             </div>
 
             {/* Footer */}

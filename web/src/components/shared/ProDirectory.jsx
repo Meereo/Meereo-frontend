@@ -41,11 +41,17 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
     const params = { page: 1, limit: PAGE_SIZE }
     if (search.trim()) params.q = search.trim()
     if (metier !== 'all') params.metier = metier
-    api.professionals.getWithPagination(params)
-      .then(res => {
+    Promise.all([
+      api.professionals.getWithPagination(params).catch(() => []),
+      // ANN-06 : les fournisseurs figurent dans l'annuaire, au même titre que
+      // les professionnels — leur fiche est une vitrine (aucune action de contact).
+      api.getFournisseurs().catch(() => []),
+    ])
+      .then(([res, fRes]) => {
         const data = res?.data || res || []
-        setPros(Array.isArray(data) ? data : [])
-        setTotal(res?.total || (Array.isArray(data) ? data.length : 0))
+        const fData = (fRes?.data || fRes || []).map(u => ({ ...u, __fournisseur: true }))
+        setPros([...(Array.isArray(data) ? data : []), ...(Array.isArray(fData) ? fData : [])])
+        setTotal((res?.total || (Array.isArray(data) ? data.length : 0)) + (Array.isArray(fData) ? fData.length : 0))
       })
       .catch(() => setPros([]))
       .finally(() => setLoading(false))
@@ -76,10 +82,11 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
 
   // Normalise: API returns { publicId, nom, metier, ville, verified, avatar, logoUrl, logoColor, slogan }
   const allPros = pros.map(u => ({
+    type:      u.__fournisseur ? 'fournisseur' : 'pro',
     id:        u.id,
     publicId:  u.publicId || null,
     nom:       u.nom || u.company || u.name || '',
-    metier:    u.metier || '',
+    metier:    u.metier || u.specialite || '',
     ville:     u.ville || '',
     note:      0,
     verified:  u.verified || false,
@@ -101,9 +108,9 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>Annuaire des professionnels</div>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.3px' }}>Annuaire</div>
             <div style={{ fontSize: 11.5, color: 'var(--t3)', marginTop: 2 }}>
-              {loading ? 'Chargement…' : `${total || allPros.length} professionnel${(total || allPros.length) > 1 ? 's' : ''} sur MEEREO`}
+              {loading ? 'Chargement…' : `${allPros.filter(p => p.type !== 'fournisseur').length} professionnel(s) · ${allPros.filter(p => p.type === 'fournisseur').length} fournisseur(s) sur MEEREO`}
             </div>
           </div>
           <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -140,7 +147,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
             <div className="rg-2" style={{ gap: 10 }}>
               {filtered.slice(0, page * PAGE_SIZE).map(p => {
                 return (
-                  <div key={p.id} onClick={() => { onClose(); navigate(p.publicId ? `/pro/${p.publicId}` : '/pro') }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
+                  <div key={p.id} onClick={() => { onClose(); if (p.type === 'fournisseur') { navigate('/client', { state: { page: 'marketplace', fournisseur: p.nom } }) } else { navigate(p.publicId ? `/pro/${p.publicId}` : '/pro') } }} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-card)', borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all .15s', display: 'flex', flexDirection: 'column', gap: 10 }} onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.08)'; e.currentTarget.style.transform = 'translateY(-2px)' }} onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <Avatar nom={p.nom} logoUrl={p.logoUrl} logoColor={p.logoColor} size={44} />
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -152,7 +159,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
                       </div>
                     </div>
                     <div>
-                      {(() => { const mc = p.logoColor || '#6B7280'; return <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: p.slogan ? 4 : 0 }}>{p.metier}</span> })()
+                      {(() => { const mc = p.type === 'fournisseur' ? '#EA580C' : (p.logoColor || '#6B7280'); return <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: mc + '14', color: mc, display: 'inline-block', marginBottom: p.slogan ? 4 : 0 }}>{p.type === 'fournisseur' ? ('Fournisseur' + (p.metier ? ' · ' + p.metier : '')) : p.metier}</span> })()
                       }
                       {p.slogan && <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.4 }}>{p.slogan}</div>}
                     </div>
@@ -161,7 +168,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
                         {p.note > 0 && <><Star size={11} fill="#F59E0B" strokeWidth={0}/><span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>{p.note}</span></>}
                         {p.projets > 0 && <span style={{ fontSize: 10, color: 'var(--t4)', marginLeft: 6 }}>{p.projets} projets</span>}
                       </div>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)' }}>Voir →</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)' }}>{p.type === 'fournisseur' ? 'Voir le catalogue →' : 'Voir →'}</span>
                     </div>
                   </div>
                 )

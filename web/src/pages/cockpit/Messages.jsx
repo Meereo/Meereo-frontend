@@ -90,7 +90,7 @@ const getDirectContacts = (projects = [], store = {}) => {
 }
 const EXTERNAL_PROS = []
 
-const srcLabel = s => s === 'client' ? 'MOA' : s === 'equipe' ? 'Equipe' : s === 'prestataire' ? 'Prestataire' : 'Externe'
+const srcLabel = s => s === 'client' ? 'MOA' : s === 'equipe' ? 'Equipe' : s === 'prestataire' ? 'Professionnel' : 'Externe'
 const srcColor = s => s === 'externe' ? '#F59E0B' : s === 'client' ? '#16A34A' : '#7C3AED'
 
 function ChatHeader({ active, navigate, showToast, setShowInvite, setInviteSearch, setShowParticipants, projects, onAction }) {
@@ -719,19 +719,30 @@ export default function Messages({ showToast }) {
 
   const directContacts = getDirectContacts(store.projects || [], store)
   // Include all registered backend users as searchable contacts
+  // MKT-07 / MSG-01 (restriction du 27/07) : le FOURNISSEUR n'est pas contactable
+  // par messagerie — la Marketplace est son seul point d'entrée transactionnel.
   const registeredUserContacts = (store.users || [])
-    .filter(u => u.id !== store.user?.id && u.status !== 'deleted' && u.name)
+    .filter(u => u.id !== store.user?.id && u.status !== 'deleted' && u.name && u.type !== 'fournisseur')
     .map(u => ({
       nom: u.name,
-      role: u.type === 'pro' ? 'Professionnel' : u.type === 'client' ? 'Client' : u.type === 'fournisseur' ? 'Fournisseur' : 'Utilisateur',
-      source: (u.type === 'pro' || u.type === 'fournisseur') ? 'prestataire' : 'client',
+      role: u.type === 'pro' ? 'Professionnel' : u.type === 'client' ? 'Client' : 'Utilisateur',
+      source: u.type === 'pro' ? 'prestataire' : 'client',
       direct: true, registered: true, email: u.email || '', userId: u.id,
     }))
+  // MSG-10 : l'utilisateur courant est exclu de TOUTE liste de destinataires,
+  // par identifiant, par nom ET par e-mail (les contacts issus des projets n'ont
+  // pas toujours d'userId).
+  const selfName = (store.user?.name || '').trim().toLowerCase()
+  const selfEmail = (store.user?.email || '').trim().toLowerCase()
+  const notSelf = c =>
+    (!c.userId || c.userId !== store.user?.id) &&
+    (!selfName || (c.nom || '').trim().toLowerCase() !== selfName) &&
+    (!selfEmail || (c.email || '').trim().toLowerCase() !== selfEmail)
   const allSearchable = [
     ...directContacts,
     ...registeredUserContacts.filter(u => !directContacts.find(d => d.nom === u.nom)),
     ...EXTERNAL_PROS.filter(e => !directContacts.find(d => d.nom === e.nom)).map(e => ({ ...e, source: 'externe', direct: false })),
-  ]
+  ].filter(notSelf)
   const newConvFiltered = newConvSearch
     ? allSearchable.filter(c => (c.nom + c.role).toLowerCase().includes(newConvSearch.toLowerCase()))
     : allSearchable.slice(0, 30)
@@ -813,7 +824,7 @@ export default function Messages({ showToast }) {
     const isInvited = c.direct && !c.registered
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={onClick} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-        <div style={{ width: 36, height: 36, borderRadius: 18, background: !c.direct ? 'rgba(255,149,0,.1)' : isInvited ? 'rgba(107,114,128,.08)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: !c.direct ? '#F59E0B' : isInvited ? '#9CA3AF' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+        <CompanyLogo name={c.nom} size={36} rounded={c.source === 'client' || c.source === 'equipe'} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
           <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}{c.ville ? ' à ' + c.ville : ''}</div>
@@ -874,7 +885,7 @@ export default function Messages({ showToast }) {
               <input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'var(--f)', color: 'var(--tx)' }} />
             </div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {[['all', 'Tout'], ['equipe', 'Equipe'], ['client', 'Clients'], ['entreprise', 'Prestataires'], ['groupe', 'Groupes'], ['demande', 'Demandes'], ['archives', 'Archivés']].map(([k, l]) => (
+              {[['all', 'Tout'], ['equipe', 'Equipe'], ['client', 'Clients'], ['entreprise', 'Professionnels'], ['groupe', 'Groupes'], ['demande', 'Demandes'], ['archives', 'Archivés']].map(([k, l]) => (
                 <button key={k} className={`filter-pill ${msgTab === k ? 'active' : ''}`} onClick={() => setMsgTab(k)} style={{ fontSize: 10.5 }}>{l}{k === 'archives' && archivedCount > 0 ? ` (${archivedCount})` : ''}</button>
               ))}
             </div>

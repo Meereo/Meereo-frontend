@@ -117,7 +117,7 @@ const KAI_ONBOARDING = {
     sections: [
       { icon: <BarChart2 size={14}/>, label: 'Tableau de bord', desc: 'Vue d’ensemble de vos projets, vos actions urgentes et votre activité.' },
       { icon: <Folder size={14}/>, label: 'Projets', desc: 'Créez et pilotez vos projets de A à Z : phases, budget, intervenants.' },
-      { icon: <ClipboardList size={14}/>, label: 'Appels d’offres', desc: 'Publiez des AO, recevez des offres et sélectionnez vos prestataires.' },
+      { icon: <ClipboardList size={14}/>, label: 'Appels d’offres', desc: 'Publiez des AO, recevez des offres et sélectionnez vos professionnels.' },
       { icon: <Package size={14}/>, label: 'Marketplace', desc: 'Commandez des matériaux et suivez vos livraisons en temps réel.' },
       { icon: <MessageSquare size={14}/>, label: 'Messages', desc: 'Échangez avec vos clients, intervenants et partenaires.' },
     ],

@@ -401,7 +401,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
     if (!storeInters.find(i => i.nom === nom)) {
       const partner = allPartners.find(p => p.id === id || p.nom === nom)
       const newInter = {
-        id: 'i_' + Date.now(), nom, role: partner?.specialite || 'Prestataire',
+        id: 'i_' + Date.now(), nom, role: partner?.specialite || 'Intervenant',
         email: '', tel: '', photo: '',
         statut: 'actif', entreprise: true, ville: partner?.ville || 'Abidjan',
         note: partner?.note || 0, projets: [proj?.nom || ''],
@@ -438,7 +438,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
   const doCreateInter = () => {
     if (!newInter.nom.trim()) return
     const newId = 'i_' + Date.now()
-    const interObj = { id: newId, nom: newInter.nom, role: newInter.role || 'Prestataire', email: newInter.email || '', tel: newInter.tel || '', photo: '', statut: 'actif', entreprise: false, ville: 'Abidjan', note: 0, projets: [proj?.nom || ''], profilUrl: '' }
+    const interObj = { id: newId, nom: newInter.nom, role: newInter.role || 'Intervenant', email: newInter.email || '', tel: newInter.tel || '', photo: '', statut: 'actif', entreprise: false, ville: 'Abidjan', note: 0, projets: [proj?.nom || ''], profilUrl: '' }
     updateStore(prev => ({ ...prev, intervenants: [...(prev.intervenants || []), interObj] }))
     const entry = { type: 'plateforme', id: newId, nom: newInter.nom }
     if (assignModal.taskId) {
@@ -948,12 +948,12 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
         </div>
       )}
 
-      {/* MODAL: Évaluer un prestataire */}
+      {/* MODAL: Évaluer un intervenant */}
       {evalPresta && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'modalIn .18s ease' }} onClick={() => setEvalPresta(null)}>
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 16, width: 460, boxShadow: '0 24px 80px rgba(0,0,0,.18)', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '22px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>Évaluer le prestataire</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px', marginBottom: 4 }}>Évaluer le professionnel</div>
               <div style={{ fontSize: 12, color: 'var(--t3)' }}>{evalPresta.nom} à Mission terminee</div>
             </div>
             <div style={{ padding: '20px 24px' }}>
@@ -961,7 +961,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#fff', flexShrink: 0 }}>{evalPresta.nom.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}</div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{evalPresta.nom}</div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>Prestataire</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)' }}>Intervenant</div>
                 </div>
               </div>
               {[['stars', 'Note globale'], ['qualite', 'Qualite du travail'], ['delais', 'Respect des delais'], ['communication', 'Communication']].map(([field, label]) => (
@@ -1033,7 +1033,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>Confirmation client</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Évaluer le prestataire</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.4px' }}>Évaluer le professionnel</div>
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 3 }}>{clientRatingModal.projNom} à {clientRatingModal.client}</div>
                 </div>
                 <button onClick={() => setClientRatingModal(null)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--t3)' }}>×</button>
@@ -1063,7 +1063,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
 
               <div style={{ marginTop: 14 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', display: 'block', marginBottom: 4 }}>Commentaire (optionnel)</label>
-                <textarea placeholder="Votre experience avec ce prestataire..." value={clientRatingModal.ratings.comment} onChange={e => setClientRatingModal(prev => ({ ...prev, ratings: { ...prev.ratings, comment: e.target.value } }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', resize: 'vertical', minHeight: 60 }} />
+                <textarea placeholder="Votre experience avec ce professionnel..." value={clientRatingModal.ratings.comment} onChange={e => setClientRatingModal(prev => ({ ...prev, ratings: { ...prev.ratings, comment: e.target.value } }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border-card)', borderRadius: 10, fontSize: 12, fontFamily: 'var(--f)', background: 'var(--s2)', outline: 'none', color: 'var(--tx)', resize: 'vertical', minHeight: 60 }} />
               </div>
             </div>
 
@@ -1079,7 +1079,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
                 // Persist to backend
                 try { await api.reviews.create({ targetId: clientRatingModal.prestaId, projectId: clientRatingModal.projId, note: r.stars, qualite: r.qualite, delais: r.delais, communication: r.communication, comment: r.comment }) } catch (e) { console.warn('[Worksite] review API:', e.message) }
                 setClientRatingModal(null)
-                showToast && showToast('Merci ! Votre avis a été publié sur le profil du prestataire')
+                showToast && showToast("Merci ! Votre avis a été publié sur le profil du professionnel")
               }}>Envoyer mon évaluation</button>
             </div>
           </div>

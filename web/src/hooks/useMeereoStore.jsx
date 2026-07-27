@@ -1553,7 +1553,7 @@ export function MeereoProvider({ children }) {
       api.notifications.create({
         targetUserId: proj.clientId,
         type: 'cloture_request',
-        message: `${store.onboardingData?.entreprise || store.user?.name || 'Le prestataire'} a déclaré le projet "${proj.nom || 'Projet'}" comme terminé. Confirmez la réception.`,
+        message: `${store.onboardingData?.entreprise || store.user?.name || 'Le professionnel'} a déclaré le projet "${proj.nom || 'Projet'}" comme terminé. Confirmez la réception.`,
         link: '/client',
       }).catch(() => {})
     }
@@ -1927,7 +1927,7 @@ export function MeereoProvider({ children }) {
             { n: 'Contrôle', label: 'Contrôle qualité', done: false },
             { n: 'Livraison', label: 'Livraison & réception', done: false },
           ],
-          equipe: [{ nom: offer.entreprise || offer.supplierName || '', role: aoObj?.lot || 'Prestataire', statut: 'actif' }],
+          equipe: [{ nom: offer.entreprise || offer.supplierName || '', role: aoObj?.lot || 'Intervenant', statut: 'actif' }],
         }
       }
       // Heritage complet AO + Offre → Marche avec acteurs identifiés
@@ -2133,9 +2133,20 @@ export function MeereoProvider({ children }) {
             .map(pm => pm.userId)
             .filter(Boolean)
           const convProjectId = backendProjectId || market?.projectId || null
-          // Toujours créer en groupe pour conserver le titre et que les deux parties voient la conversation
-          console.log('[acceptOffer] Creating conversation with participantIds:', [supplierId, ...extraMembers])
-          const convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
+          // ARBITRAGE v1.52 (MSG-04/MSG-08) : « fusion tant qu'il n'y a qu'un
+          // professionnel, séparation dès le premier intervenant ».
+          // Titulaire seul → AUCUN groupe : le fil direct 1:1 sert de fil de
+          // projet. S'il existe déjà, le serveur (pairHash unique) le renvoie.
+          // Des intervenants existent déjà → groupe projet, créé de façon
+          // idempotente par projectId côté serveur (MSG-08).
+          let convRes
+          if (extraMembers.length === 0) {
+            console.log('[acceptOffer] Titulaire seul → fil direct 1:1 (aucun groupe créé)')
+            convRes = await api.conversations.create({ participantId: supplierId, projectId: convProjectId })
+          } else {
+            console.log('[acceptOffer] Intervenants présents → groupe projet:', [supplierId, ...extraMembers])
+            convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
+          }
           const backendConv = convRes?.conversation || convRes
           console.log('[acceptOffer] Backend conv created:', backendConv?.id, '| participants:', backendConv?.participants?.length)
           if (backendConv?.id) {
@@ -2145,7 +2156,7 @@ export function MeereoProvider({ children }) {
               const shaped = {
                 id: backendConv.id,
                 nom: backendConv.title || autoConvData?.nom || convTitle,
-                isGroup: true,
+                isGroup: !!backendConv.isGroup,
                 participants: (backendConv.participants || []).map(p => p.user?.id || p.userId).filter(Boolean),
                 title: backendConv.title || convTitle,
                 marketId: market?.id,
