@@ -55,12 +55,14 @@ const FEATURES = [
   { num:'04', dot:'#7C3AED', title:'KAi — Assistant personnel IA', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets avec précision.' },
 ]
 
-/* ── Client data (SIMPLIFIED — 2 steps) ── */
-const CLIENT_STEPS = [{n:1,label:'Mon compte'},{n:2,label:'Prêt à démarrer'}]
-const CLIENT_TITLES = ['Créez votre compte','Bienvenue sur MEEREO']
+/* ── Client data (INS-15: 3 steps + écran final) ── */
+const CLIENT_STEPS = [{n:1,label:'Mon compte'},{n:2,label:'Mon projet'},{n:3,label:'Ma situation'}]
+const CLIENT_TITLES = ['Créez votre compte','Décrivez votre projet','Votre situation','Bienvenue sur MEEREO']
 const CLIENT_SUBS = [
-  'Renseignez vos informations essentielles. Vous pourrez compléter votre profil et créer votre premier projet depuis votre cockpit.',
-  'Votre espace est prêt. Créez votre premier projet en quelques clics.',
+  'Renseignez vos informations essentielles.',
+  'Quelques informations sur votre projet.',
+  'Comment souhaitez-vous avancer ?',
+  'Votre espace est prêt.',
 ]
 const PT_TYPES = [
   {em:<Home size={20}/>,label:'Villa / Maison'},
@@ -82,12 +84,14 @@ const CLIENT_PROC = [
   {num:'4',color:'#16A34A',title:"Suivez & payez en sécurité",desc:"Phase par phase, jalons validés, paiement déclenché. Wave, Orange Money, MTN ou virement."},
 ]
 
-/* ── Pro data ── */
-/* ── Pro data (SIMPLIFIED — 2 steps) ── */
-const PRO_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon espace pro'}]
-const PRO_TITLES = ['Créez votre espace professionnel','Votre cockpit est prêt']
+/* ── Pro data (INS-15: 4 steps + écran final) ── */
+const PRO_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon identité'},{n:3,label:'Mes services'},{n:4,label:'Mon portfolio'}]
+const PRO_TITLES = ['Créez votre espace professionnel','Identité visuelle','Vos services','Votre portfolio','Votre cockpit est prêt']
 const PRO_SUBS = [
-  'Renseignez votre entreprise et vos coordonnées. Logo, portfolio, services et équipe pourront être complétés depuis votre cockpit.',
+  'Renseignez votre entreprise et vos coordonnées.',
+  'Créez votre identité visuelle.',
+  'Décrivez vos services et votre expertise.',
+  'Ajoutez vos réalisations et votre équipe.',
   'Accédez à votre espace et commencez à recevoir des appels d\'offres.',
 ]
 const PRO_SECTEURS = [
@@ -127,13 +131,16 @@ function logoContentStyle(shape) {
 }
 const LOGO_TYPOS = ['Gras','Serif','Léger']
 
-/* ── Fournisseur data ── */
-/* ── Fournisseur data (SIMPLIFIED — 2 steps) ── */
-const FRN_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon espace fournisseur'}]
-const FRN_TITLES = ['Créez votre espace fournisseur','Votre marketplace est prête']
+/* ── Fournisseur data (INS-15: 5 steps + écran final) ── */
+const FRN_STEPS = [{n:1,label:'Ma structure'},{n:2,label:'Mon identité'},{n:3,label:'Mon catalogue'},{n:4,label:'Mes produits'},{n:5,label:'Mes zones'}]
+const FRN_TITLES = ['Créez votre espace fournisseur','Identité visuelle','Vos catégories','Vos produits','Zones de livraison','Votre marketplace est prête']
 const FRN_SUBS = [
-  'Renseignez votre entreprise et vos coordonnées. Catalogue, produits et zones de livraison pourront être complétés depuis votre espace.',
-  'Accédez à votre espace et commencez à vendre sur le Marketplace MEEREO.',
+  'Renseignez votre entreprise et vos coordonnées.',
+  'Ajoutez votre logo.',
+  'Sélectionnez vos catégories de produits.',
+  'Ajoutez votre premier produit.',
+  'Définissez vos zones de livraison.',
+  'Accédez à votre espace et commencez à vendre.',
 ]
 const FRN_CAT_SECTIONS = [
   {title:'Matériaux de construction',cats:[
@@ -345,6 +352,7 @@ export default function Onboarding() {
   const [prodPhoto, setProdPhoto] = useState(null)
   const [prodStock, setProdStock] = useState('')      // MKT-06a
   const [prodVisible, setProdVisible] = useState(true) // MKT-06c
+  const [prodDesc, setProdDesc] = useState('')        // MKT-06: description
   const [showAOConfirm, setShowAOConfirm] = useState(false)
   const [showPageBuilder, setShowPageBuilder] = useState(false)
   const [pageSections, setPageSections] = useState([])
@@ -370,6 +378,8 @@ export default function Onboarding() {
     portfolioFiles:[], coverFile:null, coverUrl:null, team:[],
     // Fournisseur
     categories:[], zones:[], delaiLivraison:'',
+    // MKT-06: moyens d'encaissement fournisseur
+    paymentMethods: [], // ['orange_money', 'mtn_momo', 'wave']
     products:[], // [{name,price,unit,category,photoUrl}]
   }
   const [form, setForm] = useState(savedWiz.current?.form ? { ...defaultForm, ...savedWiz.current.form } : defaultForm)
@@ -424,6 +434,14 @@ export default function Onboarding() {
     return 'Format attendu : CI-0000000-A'
   }
   const rccmError = form.rccm ? validateRCCM(form.rccm) : null
+  // INS-08: phone format validation — minimum 8 digits
+  const validatePhone = (tel) => {
+    if (!tel?.trim()) return null
+    const digits = tel.replace(/\D/g, '')
+    if (digits.length < 8) return 'Le numéro doit contenir au moins 8 chiffres'
+    if (digits.length > 15) return 'Numéro trop long'
+    return null
+  }
 
   // ─── INS-06: Route guard — empêcher l'accès à une étape sans avoir validé les précédentes ───
   // Au chargement (restauration sessionStorage ou accès direct), on vérifie que step 1 est OK avant d'autoriser step 2+
@@ -449,18 +467,13 @@ export default function Onboarding() {
         if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre structure'
         if (!form.ville?.trim()) return 'Veuillez indiquer votre ville'                      // INS-08
         if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        const telErrP = validatePhone(form.tel); if (telErrP) return telErrP                 // INS-08 format
         if (!form.secteurs?.length) return 'Sélectionnez au moins un secteur d\'activité'     // INS-11
         if (!(form.email || '').includes('@')) return 'Adresse email professionnelle invalide'  // INS-06
         if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
         if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
         if (rccmError) return rccmError
         if (nccError) return nccError
-      }
-      if (wizStep === 2) {
-        const email = form.emailPro || form.email || ''
-        if (!email || !email.includes('@')) return 'Veuillez renseigner une adresse email professionnelle valide'
-        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
-        if (form.passwordConfirm && form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
       }
     }
     if (userType === 'client') {
@@ -469,13 +482,9 @@ export default function Onboarding() {
         if (!form.nom?.trim()) return 'Veuillez renseigner votre nom'
         if (!(form.email || '').includes('@')) return 'Adresse email invalide'               // INS-06
         if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        const telErrC = validatePhone(form.tel); if (telErrC) return telErrC                 // INS-08 format
         if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
         if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
-      }
-      if (wizStep === 2) {
-        const email = form.email || ''
-        if (!email || !email.includes('@')) return 'Veuillez renseigner une adresse email valide'
-        if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
       }
     }
     if (userType === 'fournisseur') {
@@ -483,11 +492,16 @@ export default function Onboarding() {
         if (!form.entreprise?.trim()) return 'Veuillez renseigner le nom de votre entreprise'
         if (!form.ville?.trim()) return 'Veuillez indiquer votre ville'                      // INS-08
         if (!form.tel?.trim()) return 'Veuillez renseigner votre numéro de téléphone'        // INS-08
+        const telErrF = validatePhone(form.tel); if (telErrF) return telErrF                 // INS-08 format
         if (!(form.email || '').includes('@')) return 'Adresse email invalide'               // INS-06
         if (!form.password || form.password.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères'
         if (form.password !== form.passwordConfirm) return 'Les mots de passe ne correspondent pas'
         if (rccmError) return rccmError
         if (nccError) return nccError
+      }
+      // MKT-06: payment method required before final screen
+      if (wizStep === 5) {
+        if (!form.paymentMethods?.length) return 'Sélectionnez au moins un moyen d\'encaissement'
       }
       if (wizStep === 2) {
         const email = form.emailPro || form.email || ''
@@ -1506,6 +1520,10 @@ export default function Onboarding() {
                             <option value="/forfait">/forfait</option>
                           </select>
                         </div>
+                        {/* MKT-01: prix 0 = "sur devis" explicite */}
+                        {prodPrice===''&&<div style={{fontSize:10,color:'#F59E0B',marginTop:-2,marginBottom:2}}>Laisser vide = prix sur devis</div>}
+                        {/* MKT-06: description produit */}
+                        <textarea className="ob-input-v2" placeholder="Description du produit (facultatif)" value={prodDesc} onChange={e=>setProdDesc(e.target.value)} rows={2} style={{resize:'vertical',minHeight:40}} />
                         <div className="rg-2" style={{gap:6}}>
                           {/* MKT-06a : stock disponible obligatoire */}
                           <input className="ob-input-v2" type="number" min="0" placeholder="Stock disponible *" value={prodStock} onChange={e=>setProdStock(e.target.value)} />
@@ -1526,8 +1544,8 @@ export default function Onboarding() {
                       if(!prodName.trim()){showToast('Nom du produit requis','orange');return}
                       if(!prodCat){showToast('Sélectionnez une catégorie','orange');return}
                       if(prodStock===''||isNaN(parseInt(prodStock))){showToast('Indiquez le stock disponible','orange');return}
-                      set('products',[...form.products,{name:prodName.trim(),price:prodPrice,unit:prodUnit,category:prodCat,stock:parseInt(prodStock)||0,photoUrl:prodPhoto,isPublished:prodVisible}])
-                      setProdName('');setProdPrice('');setProdUnit('/unité');setProdCat('');setProdStock('');setProdPhoto(null);setProdVisible(true)
+                      set('products',[...form.products,{name:prodName.trim(),price:prodPrice,unit:prodUnit,category:prodCat,stock:parseInt(prodStock)||0,photoUrl:prodPhoto,isPublished:prodVisible,description:prodDesc.trim()}])
+                      setProdName('');setProdPrice('');setProdUnit('/unité');setProdCat('');setProdStock('');setProdPhoto(null);setProdVisible(true);setProdDesc('')
                       showToast('Produit ajouté','green')
                     }}>+ Ajouter ce produit</button>
                   </div>
@@ -1587,6 +1605,31 @@ export default function Onboarding() {
                         <option value="Sur devis">Sur devis</option>
                       </select>
                     </Field>
+                  </div>
+
+                  {/* MKT-06: Moyens d'encaissement */}
+                  <div style={{marginTop:18}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--tx)',marginBottom:10,textTransform:'uppercase',letterSpacing:'.04em'}}>Moyens d'encaissement *</div>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {[
+                        {id:'orange_money',label:'Orange Money',icon:'🟠',desc:'Paiement mobile Orange'},
+                        {id:'mtn_momo',label:'MTN MoMo',icon:'🟡',desc:'Paiement mobile MTN'},
+                        {id:'wave',label:'Wave',icon:'🔵',desc:'Paiement mobile Wave'},
+                      ].map(pm=>{
+                        const sel=form.paymentMethods.includes(pm.id)
+                        return <div key={pm.id} onClick={()=>toggleArr('paymentMethods',pm.id)} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:sel?'rgba(52,199,89,.06)':'#fff',border:sel?'2px solid rgba(52,199,89,.3)':'1px solid rgba(198,198,198,.15)',borderRadius:12,cursor:'pointer',transition:'all .15s'}}>
+                          <span style={{fontSize:20}}>{pm.icon}</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'var(--tx)'}}>{pm.label}</div>
+                            <div style={{fontSize:10,color:'var(--t3)'}}>{pm.desc}</div>
+                          </div>
+                          <div style={{width:20,height:20,borderRadius:6,border:sel?'2px solid #34C759':'2px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',background:sel?'#34C759':'transparent',transition:'all .15s'}}>
+                            {sel&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                          </div>
+                        </div>
+                      })}
+                    </div>
+                    {!form.paymentMethods?.length && <div style={{fontSize:10,color:'#EA580C',marginTop:6}}>Sélectionnez au moins un moyen d'encaissement pour pouvoir vendre</div>}
                   </div>
                 </>)}
 
@@ -1738,7 +1781,7 @@ export default function Onboarding() {
                   <div className="wiz-welcome-top">
                     <div className="wiz-welcome-check"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div className="wiz-welcome-title">Bienvenue{form.prenom?`, ${form.prenom}`:''}</div>
-                    <div className="wiz-welcome-sub">Votre espace fournisseur est prêt. Vos produits sont sur le Marketplace.</div>
+                    <div className="wiz-welcome-sub">{form.paymentMethods?.length>0 && form.products?.length>0 && form.zones?.length>0 ? 'Votre boutique est opérationnelle. Vos produits sont sur le Marketplace.' : 'Votre compte est créé. Configurez vos produits, zones et moyens de paiement pour commencer à vendre.'}</div>
                     <span className="wiz-welcome-id">ID · MFR-2026-{Math.floor(1000+Math.random()*9000)}</span>
                   </div>
                   <div className="wiz-recap">
@@ -1748,6 +1791,7 @@ export default function Onboarding() {
                     {form.products.length>0&&<div className="wiz-recap-row"><span className="wiz-recap-label">Produits</span><span className="wiz-recap-value wiz-recap-green">{form.products.length} produit{form.products.length>1?'s':''} sur le Marketplace</span></div>}
                     {form.zones.length>0&&<div className="wiz-recap-row"><span className="wiz-recap-label">Zones</span><span className="wiz-recap-value">{form.zones.join(', ')}</span></div>}
                     {form.delaiLivraison&&<div className="wiz-recap-row"><span className="wiz-recap-label">Délai</span><span className="wiz-recap-value">{form.delaiLivraison}</span></div>}
+                    {form.paymentMethods?.length>0&&<div className="wiz-recap-row"><span className="wiz-recap-label">Encaissement</span><span className="wiz-recap-value wiz-recap-green">{form.paymentMethods.map(m=>m==='orange_money'?'Orange Money':m==='mtn_momo'?'MTN MoMo':'Wave').join(', ')}</span></div>}
                   </div>
                   {/* Aperçu produits */}
                   {form.products.length>0 && (
@@ -1906,13 +1950,13 @@ export default function Onboarding() {
                   </div>
                 )}
 
-                {/* ──────── NAVIGATION ──────── */}
+                {/* ──────── NAVIGATION (INS-15: écran final = totalSteps+1) ──────── */}
                 <div className="wiz-nav">
-                  {wizStep < totalSteps && (
+                  {wizStep <= totalSteps && (
                     <button className="ob-btn-out" onClick={()=>wizStep===1?setScreen('type'):setWizStep(s=>s-1)}>← {wizStep===1?'Rôle':'Retour'}</button>
                   )}
-                  {/* Pro step 5: two action buttons */}
-                  {wizStep===totalSteps && userType==='pro' ? (
+                  {/* Écran final pro: deux boutons */}
+                  {wizStep > totalSteps && userType==='pro' ? (
                     <div style={{display:'flex',gap:8}}>
                       <button className="ob-btn-out" onClick={() => {
                         const slug = store?.user?.slug || store?.user?.publicId
@@ -1920,27 +1964,18 @@ export default function Onboarding() {
                       }}>Voir mon profil public</button>
                       <button className="ob-btn-blk" onClick={() => handleFinish()}>Accéder au Cockpit →</button>
                     </div>
+                  ) : wizStep > totalSteps ? (
+                    <button className="ob-btn-blk" onClick={() => handleFinish()}>
+                      {userType==='client'?'Mon cockpit →':'Mon espace fournisseur →'}
+                    </button>
                   ) : (
                     <button className="ob-btn-blk" disabled={!!validateCurrentStep()} style={validateCurrentStep()?{opacity:.5,cursor:'not-allowed'}:undefined} onClick={()=>{
-                      // INS-01/06: validation par étape — bouton désactivé + garde au clic
                       const stepError = validateCurrentStep()
-                      if (stepError) {
-                        showToast(stepError, 'orange'); return
-                      }
-                      if(wizStep===totalSteps) handleFinish()
-                      else {
-                        if(userType==='pro' && wizStep===4) showToast('Génération du profil en cours…','blue')
-                        setWizStep(s=>s+1)
-                      }
+                      if (stepError) { showToast(stepError, 'orange'); return }
+                      if(userType==='pro' && wizStep===totalSteps) showToast('Génération du profil en cours…','blue')
+                      setWizStep(s=>s+1)
                     }}>
-                      {wizStep===totalSteps
-                        ? (userType==='client'?'Mon cockpit →':'Mon espace fournisseur →')
-                        : userType==='pro' && wizStep===4
-                          ? 'Générer mon profil public'
-                          : wizStep===totalSteps-1
-                            ? 'Finaliser mon profil'
-                            : 'Étape suivante'
-                      } {wizStep<totalSteps&&<ArrowSVG />}
+                      {wizStep===totalSteps ? 'Finaliser' : 'Étape suivante'} <ArrowSVG />
                     </button>
                   )}
                 </div>

@@ -265,7 +265,7 @@ router.post('/register', async (req, res, next) => {
       'projectType','location','surface','budget','description','situation',
       'architecteEmail','delaiLivraison','secteurs','services','categories',
       'zones','cockpitTeam','logoFileUrl','photoUrl','coverUrl','entreprise',
-      'activeLogoType',
+      'activeLogoType','paymentMethods',
     ])
     const initialOd = {}
     for (const [k, v] of Object.entries(req.body)) {

@@ -55,7 +55,13 @@
       "Bash(cp __TRACKED_VAR__/users.js server/src/routes/users.js)",
       "Bash(cp __TRACKED_VAR__/conversations.js server/src/routes/conversations.js)",
       "Bash(cp __TRACKED_VAR__/reviews.js server/src/routes/reviews.js)",
-      "Bash(cp __TRACKED_VAR__/PanelErrorBoundary.jsx web/src/components/shared/PanelErrorBoundary.jsx)"
+      "Bash(cp __TRACKED_VAR__/PanelErrorBoundary.jsx web/src/components/shared/PanelErrorBoundary.jsx)",
+      "Bash(rm -rf /tmp/onboarding)",
+      "Bash(rm -rf /tmp/*.tmp)",
+      "Bash(du -sh /tmp/*)",
+      "Bash(node --check src/routes/auth.js)",
+      "Bash(node --check src/validators/auth.js)",
+      "Bash(node --check src/routes/projects.js)"
     ]
   }
 }

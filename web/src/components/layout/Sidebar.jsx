@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FLAG_SHOW_FINANCE, FLAG_SHOW_AO, FLAG_SHOW_MARKETPLACE, FLAG_SHOW_MESSAGES } from '../../config/featureFlags'
+import { useState, useEffect } from 'react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { logoShapeStyle } from '../../utils/logoShape'
 import { useMergedData } from '../../hooks/useMergedData'
 import { useDevise } from '../../hooks/useDevise'
+import { api } from '../../services/api/client'
 import MeereoLogo from '../shared/MeereoLogo'
 import KaiQuota from '../shared/KaiQuota'
 import './Sidebar.css'
@@ -120,10 +122,24 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
   const { format: fmtMoney } = useDevise()
   const nav = useNavigate()
 
+  // Fetch review score for pro users
+  const [reviewScore, setReviewScore] = useState(null)
+  useEffect(() => {
+    if (!store.user?.id || store.user?.type === 'client') return
+    api.reviews.getAll({ targetId: store.user.id })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const avg = data.reduce((s, r) => s + (r.note || 0), 0) / data.length
+          setReviewScore({ avg: avg.toFixed(1), count: data.length })
+        }
+      })
+      .catch(() => {})
+  }, [store.user?.id, store.user?.type])
+
   // Dynamic badge counts — projets de l'utilisateur connecté uniquement
   const userId = store.user?.id
   const memberProjectIds = new Set((store.projectMembers || []).filter(m => m.userId === userId).map(m => m.projectId))
-  const projCount = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted' && (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))).length
+  const projCount = (store.projects || []).filter(p => p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'deleted' && p.status !== 'completed' && !['CLOTURE_VALIDE_EXTERNE','CLOTURE_VALIDE_MEEREO'].includes(p.clotureStatus) && (p.ownerId === userId || p.clientId === userId || memberProjectIds.has(p.id))).length
   const { badgeCounts: merged } = useMergedData()
   const badgeCounts = { projects: projCount, offers: merged.offresEnAttente, messages: merged.messagesNonLus, newAos: merged.aoOuverts }
 
@@ -222,6 +238,13 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
           <div>
             {identity.displayName && <div className="sidebar-user-name">{identity.displayName}</div>}
             {(identity.company || identity.role || identity.roleLabel) && <div className="sidebar-user-role">{identity.company || identity.role || identity.roleLabel}</div>}
+            {reviewScore && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--tx)' }}>{reviewScore.avg}</span>
+                <span style={{ fontSize: 9, color: 'var(--t4)' }}>({reviewScore.count} avis)</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
