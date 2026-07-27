@@ -9,7 +9,7 @@ const DropLine = ({ active }) => (
   <div className={`h-1.5 rounded-full mx-4 transition-all duration-150 ${active ? "bg-blue-400 opacity-100 my-0.5" : "bg-transparent opacity-0 my-0"}`} />
 );
 
-function SectionWrapper({ section, index, total, isSelected, isHovered, onSelect, onHover, onMoveUp, onMoveDown, onDuplicate, onDelete, onDragStart, onDragOver, onDrop, dropBeforeActive, dropAfterActive }) {
+function SectionWrapper({ section, index, total, isSelected, isHovered, onSelect, onHover, onMoveUp, onMoveDown, onDuplicate, onDelete, onDragStart, onDragOver, onDrop, dropBeforeActive, dropAfterActive, profileOverrides }) {
   return (
     <div draggable onDragStart={() => onDragStart(index)} onDragOver={(e) => { e.preventDefault(); onDragOver(index); }} onDrop={() => onDrop(index)}>
       <DropLine active={dropBeforeActive} />
@@ -33,14 +33,14 @@ function SectionWrapper({ section, index, total, isSelected, isHovered, onSelect
           <div className="w-px h-4 bg-gray-200" />
           <button title="Delete" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"><Icon name="trash" size={13} /></button>
         </div>
-        <div className="pointer-events-none"><SectionRenderer section={section} /></div>
+        <div className="pointer-events-none"><SectionRenderer section={section} profileOverrides={profileOverrides} /></div>
       </div>
       {dropAfterActive && <DropLine active={true} />}
     </div>
   );
 }
 
-export default function Canvas({ sections, selectedId, onSelect, onUpdate, onMove, onDuplicate, onDelete, onDropFromLibrary, device }) {
+export default function Canvas({ sections, selectedId, onSelect, onUpdate, onMove, onDuplicate, onDelete, onDropFromLibrary, device, profileOverrides }) {
   const [hoveredId, setHoveredId] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
@@ -79,7 +79,8 @@ export default function Canvas({ sections, selectedId, onSelect, onUpdate, onMov
                 <SectionWrapper key={section.id} section={section} index={i} total={sections.length} isSelected={selectedId === section.id} isHovered={hoveredId === section.id}
                   onSelect={onSelect} onHover={setHoveredId} onMoveUp={() => onMove(i, i - 1)} onMoveDown={() => onMove(i, i + 1)} onDuplicate={() => onDuplicate(section.id)} onDelete={() => onDelete(section.id)}
                   onDragStart={handleSectionDragStart} onDragOver={handleSectionDragOver} onDrop={handleSectionDrop}
-                  dropBeforeActive={dropIndex === i && dragIndex !== null && dragIndex !== i} dropAfterActive={i === sections.length - 1 && dropIndex === i && dragIndex !== null && dragIndex !== i} />
+                  dropBeforeActive={dropIndex === i && dragIndex !== null && dragIndex !== i} dropAfterActive={i === sections.length - 1 && dropIndex === i && dragIndex !== null && dragIndex !== i}
+                  profileOverrides={profileOverrides} />
               ))}
               <div className={`m-4 rounded-2xl border-2 border-dashed p-6 text-center text-sm transition-all ${isDragOver ? "border-blue-400 bg-blue-50 text-blue-400" : "border-gray-100 text-gray-300"}`}>
                 {isDragOver ? "Déposer ici" : "+ Ajouter une section"}

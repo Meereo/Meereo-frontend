@@ -728,8 +728,21 @@ const paymentRequestsApi = {
   delete: (id)        => apiFetch(`/payment-requests/${id}`, 'DELETE', null, true),
 }
 
+// ─── Onboarding v2 — /api/onboarding ─────────────────────────────────────────
+
+const onboarding = {
+  steps:          (role) => apiFetch(`/onboarding/steps/${role}`),
+  emailAvailable: (email, role) => apiFetch('/onboarding/email-available', 'POST', { email, role }),
+  createDraft:    (data) => apiFetch('/onboarding/draft', 'POST', data),
+  getDraft:       (id) => apiFetch(`/onboarding/draft/${id}`),
+  validateStep:   (data) => apiFetch('/onboarding/validate', 'POST', data),
+  submit:         (data) => apiFetch('/onboarding/submit', 'POST', data),
+  uploadLogo:     (formData) => apiFetchForm('/onboarding/logo', 'POST', formData),
+}
+
 export const api = {
   auth,
+  onboarding,
   upload,
   users:               usersApi,
   projects:            projectsApi,

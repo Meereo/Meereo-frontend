@@ -1,13 +1,23 @@
-import { TextField, ImageField, CheckboxField, Divider } from "./_fields";
+import { TextField, ImageField, Divider } from "./_fields";
+
+// INS-04 / INS-17 : les champs dérivés (companyName, category, location,
+// verified) sont injectés depuis le profil, jamais saisis.
+// Seuls restent éditables : photo de couverture, slogan, URL, textes de boutons.
+
 export default function HeroEditor({ data, sectionType, onChange }) {
   const set = (k, v) => onChange({ ...data, [k]: v });
   return (
     <div>
+      {/* Champs dérivés — lecture seule */}
+      <div style={{ fontSize: 12, color: '#888', padding: '8px 0 12px', borderBottom: '1px solid #eee', marginBottom: 12 }}>
+        <div><strong>Nom</strong> : {data.companyName || <em style={{ color: '#bbb' }}>dérivé du profil</em>}</div>
+        <div><strong>Catégorie</strong> : {data.category || <em style={{ color: '#bbb' }}>dérivée des secteurs</em>}</div>
+        <div><strong>Localisation</strong> : {data.location || <em style={{ color: '#bbb' }}>dérivée de la ville</em>}</div>
+        <div><strong>Badge vérifié</strong> : {data.verified ? '✓ affiché' : <em style={{ color: '#bbb' }}>dérivé de la vérification INS-04</em>}</div>
+      </div>
+
       <ImageField label="Logo" value={data.logoSrc || ""} onChange={(v) => set("logoSrc", v)} />
-      <TextField label="Nom de l'entreprise" value={data.companyName} onChange={(v) => set("companyName", v)} />
-      <TextField label="Categorie" value={data.category} onChange={(v) => set("category", v)} />
-      <TextField label="Localisation" value={data.location} onChange={(v) => set("location", v)} />
-      <CheckboxField label="Professionnel vérifié" checked={data.verified ?? true} onChange={(v) => set("verified", v)} />
+
       {sectionType === "hero-editorial" && (
         <>
           <Divider />

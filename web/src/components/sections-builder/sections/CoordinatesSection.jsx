@@ -1,18 +1,18 @@
-// sections/CoordinatesSection.jsx — PP-10 Coordonnees (3 variantes)
+// sections/CoordinatesSection.jsx — PP-10 Coordonnées (3 variantes)
 
 export function CoordMap({ data }) {
   return (
-    <section className="py-14">
+    <section className="py-20 max-[760px]:py-12">
       <div className="max-w-[1080px] mx-auto px-7">
         <div className="grid grid-cols-1 max-[760px]:grid-cols-1 min-[761px]:grid-cols-[1fr_1.2fr] gap-[30px]">
           <div>
-            <span className="font-pp-mono text-[11px] tracking-[0.14em] uppercase text-pp-ink-3 mb-[18px] block">
-              Coordonnees
+            <span className="text-[22px] font-semibold tracking-[-0.01em] text-mo-text mb-[18px] block">
+              Coordonnées
             </span>
             <dl className="text-[14.5px]">
               {data.address && (
                 <>
-                  <dt className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-3 mt-3.5">
+                  <dt className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint mt-3.5">
                     Adresse
                   </dt>
                   <dd className="mt-[3px] font-medium">{data.address}</dd>
@@ -20,15 +20,15 @@ export function CoordMap({ data }) {
               )}
               {data.phone && (
                 <>
-                  <dt className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-3 mt-3.5">
-                    Telephone
+                  <dt className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint mt-3.5">
+                    Téléphone
                   </dt>
                   <dd className="mt-[3px] font-medium pp-num">{data.phone}</dd>
                 </>
               )}
               {data.email && (
                 <>
-                  <dt className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-3 mt-3.5">
+                  <dt className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint mt-3.5">
                     E-mail
                   </dt>
                   <dd className="mt-[3px] font-medium">{data.email}</dd>
@@ -36,7 +36,7 @@ export function CoordMap({ data }) {
               )}
               {data.url && (
                 <>
-                  <dt className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-3 mt-3.5">
+                  <dt className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint mt-3.5">
                     Sur MEEREO
                   </dt>
                   <dd className="mt-[3px] font-medium">{data.url}</dd>
@@ -45,7 +45,7 @@ export function CoordMap({ data }) {
             </dl>
           </div>
           <div
-            className="pp-ph aspect-[16/10] relative"
+            className="pp-ph aspect-[16/10] relative rounded-mo"
             role="img"
             aria-label="Plan de situation"
           >
@@ -59,30 +59,30 @@ export function CoordMap({ data }) {
 
 export function CoordSheet({ data }) {
   return (
-    <section className="py-14">
+    <section className="py-20 max-[760px]:py-12">
       <div className="max-w-[1080px] mx-auto px-7">
-        <span className="font-pp-mono text-[11px] tracking-[0.14em] uppercase text-pp-ink-3 mb-[18px] block">
-          Coordonnees
+        <span className="text-[22px] font-semibold tracking-[-0.01em] text-mo-text mb-[18px] block">
+          Coordonnées
         </span>
         {data.address && (
-          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-pp-line first:border-t first:border-pp-ink text-[14.5px] [&:first-of-type]:border-t [&:first-of-type]:border-pp-ink">
-            <span className="font-pp-mono text-[11px] tracking-[0.12em] uppercase text-pp-ink-3 pt-[3px]">
+          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-mo-line first:border-t first:border-mo-line text-[14.5px] [&:first-of-type]:border-t [&:first-of-type]:border-mo-line">
+            <span className="text-[11px] tracking-[0.12em] uppercase text-mo-hint pt-[3px]">
               Adresse
             </span>
             <span>{data.address}</span>
           </div>
         )}
         {data.phone && (
-          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-pp-line text-[14.5px]">
-            <span className="font-pp-mono text-[11px] tracking-[0.12em] uppercase text-pp-ink-3 pt-[3px]">
-              Telephone
+          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-mo-line text-[14.5px]">
+            <span className="text-[11px] tracking-[0.12em] uppercase text-mo-hint pt-[3px]">
+              Téléphone
             </span>
             <span className="pp-num">{data.phone}</span>
           </div>
         )}
         {data.email && (
-          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-pp-line text-[14.5px]">
-            <span className="font-pp-mono text-[11px] tracking-[0.12em] uppercase text-pp-ink-3 pt-[3px]">
+          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-mo-line text-[14.5px]">
+            <span className="text-[11px] tracking-[0.12em] uppercase text-mo-hint pt-[3px]">
               E-mail
             </span>
             <a
@@ -94,8 +94,8 @@ export function CoordSheet({ data }) {
           </div>
         )}
         {data.website && (
-          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-pp-line text-[14.5px]">
-            <span className="font-pp-mono text-[11px] tracking-[0.12em] uppercase text-pp-ink-3 pt-[3px]">
+          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-mo-line text-[14.5px]">
+            <span className="text-[11px] tracking-[0.12em] uppercase text-mo-hint pt-[3px]">
               Site Internet
             </span>
             <a
@@ -107,9 +107,9 @@ export function CoordSheet({ data }) {
           </div>
         )}
         {data.socials && (
-          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-pp-line text-[14.5px]">
-            <span className="font-pp-mono text-[11px] tracking-[0.12em] uppercase text-pp-ink-3 pt-[3px]">
-              Reseaux
+          <div className="grid grid-cols-1 max-[560px]:grid-cols-1 max-[560px]:gap-0.5 min-[561px]:grid-cols-[180px_1fr] gap-[18px] py-[13px] border-b border-mo-line text-[14.5px]">
+            <span className="text-[11px] tracking-[0.12em] uppercase text-mo-hint pt-[3px]">
+              Réseaux
             </span>
             <span>{data.socials}</span>
           </div>
@@ -121,19 +121,19 @@ export function CoordSheet({ data }) {
 
 export function CoordFooter({ data }) {
   return (
-    <section className="bg-pp-ink text-white py-13">
+    <section className="bg-mo-text text-white py-20 max-[760px]:py-12">
       <div className="max-w-[1080px] mx-auto px-7">
         <div className="grid grid-cols-1 max-[760px]:grid-cols-1 max-[760px]:gap-5 min-[761px]:grid-cols-[1.3fr_1fr_1fr_1fr] gap-[26px]">
           <div>
             <div className="text-[19px] font-semibold tracking-[-0.01em]">
               {data.companyName}
             </div>
-            <div className="text-[13px] text-pp-ink-4 mt-1">
+            <div className="text-[13px] text-mo-hint mt-1">
               {data.category}
             </div>
           </div>
           <div>
-            <h3 className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-4 font-medium mb-2.5">
+            <h3 className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint font-medium mb-2.5">
               Adresse
             </h3>
             <p className="text-[13.5px] text-white no-underline leading-[1.7]">
@@ -141,7 +141,7 @@ export function CoordFooter({ data }) {
             </p>
           </div>
           <div>
-            <h3 className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-4 font-medium mb-2.5">
+            <h3 className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint font-medium mb-2.5">
               Contact
             </h3>
             <p className="text-[13.5px] text-white no-underline leading-[1.7]">
@@ -149,7 +149,7 @@ export function CoordFooter({ data }) {
                 <>
                   <a
                     href={`tel:${data.phone.replace(/\s/g, "")}`}
-                    className="pp-num text-white no-underline hover:underline hover:underline-offset-[3px]"
+                    className="pp-num text-white no-underline hover:underline hover:underline-offset-[3px] motion-reduce:transition-none"
                   >
                     {data.phone}
                   </a>
@@ -159,7 +159,7 @@ export function CoordFooter({ data }) {
               {data.email && (
                 <a
                   href={`mailto:${data.email}`}
-                  className="text-white no-underline hover:underline hover:underline-offset-[3px]"
+                  className="text-white no-underline hover:underline hover:underline-offset-[3px] motion-reduce:transition-none"
                 >
                   {data.email}
                 </a>
@@ -167,7 +167,7 @@ export function CoordFooter({ data }) {
             </p>
           </div>
           <div>
-            <h3 className="font-pp-mono text-[10.5px] tracking-[0.12em] uppercase text-pp-ink-4 font-medium mb-2.5">
+            <h3 className="text-[10.5px] tracking-[0.12em] uppercase text-mo-hint font-medium mb-2.5">
               En ligne
             </h3>
             <p className="text-[13.5px] text-white no-underline leading-[1.7]">
@@ -175,7 +175,7 @@ export function CoordFooter({ data }) {
                 <>
                   <a
                     href="#"
-                    className="text-white no-underline hover:underline hover:underline-offset-[3px]"
+                    className="text-white no-underline hover:underline hover:underline-offset-[3px] motion-reduce:transition-none"
                   >
                     {data.website}
                   </a>
@@ -185,7 +185,7 @@ export function CoordFooter({ data }) {
               {data.url && (
                 <a
                   href="#"
-                  className="text-white no-underline hover:underline hover:underline-offset-[3px]"
+                  className="text-white no-underline hover:underline hover:underline-offset-[3px] motion-reduce:transition-none"
                 >
                   {data.url}
                 </a>

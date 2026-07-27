@@ -11,7 +11,7 @@ import "./pp-foundations.css";
 const deepClone = (x) => JSON.parse(JSON.stringify(x));
 const reorder = (arr, from, to) => { const next = [...arr]; const [item] = next.splice(from, 1); next.splice(to, 0, item); return next; };
 
-function PreviewModal({ sections, onClose }) {
+function PreviewModal({ sections, onClose, profileOverrides }) {
   useEffect(() => { const fn = (e) => e.key === "Escape" && onClose(); window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [onClose]);
   return (
     <div className="fixed inset-0 z-[200] flex flex-col bg-gray-900">
@@ -19,7 +19,7 @@ function PreviewModal({ sections, onClose }) {
         <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400" /><span className="text-sm font-medium text-gray-300">Aperçu</span></div>
         <button onClick={onClose} className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition-colors">✕ Fermer</button>
       </div>
-      <div className="flex-1 overflow-auto bg-white pp-page">{sections.map((s) => <SectionRenderer key={s.id} section={s} />)}</div>
+      <div className="flex-1 overflow-auto bg-white pp-page">{sections.map((s) => <SectionRenderer key={s.id} section={s} profileOverrides={profileOverrides} />)}</div>
     </div>
   );
 }
@@ -28,7 +28,7 @@ function PreviewModal({ sections, onClose }) {
 // onSave(sections): called when user saves
 // onPublish(sections): called when user publishes
 // onClose: called when user closes the builder
-export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle, publicUrl }) {
+export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle, publicUrl, profileOverrides }) {
   const [sections, setSections] = useState(() => initialSections?.length ? deepClone(initialSections) : deepClone(DEFAULT_PAGE));
   const [selectedId, setSelectedId] = useState(null);
   const [pageTitle, setPageTitle] = useState(initialTitle || "Ma page pro");
@@ -83,10 +83,10 @@ export default function SectionsBuilder({ initialSections, onSave: onSaveProp, o
         onSave={handleSave} onPreview={() => setShowPreview(true)} onPublish={handlePublish} onClose={onClose} device={device} setDevice={setDevice} publicUrl={publicUrl} />
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <LeftSidebar onAdd={addSection} onDragStart={setDraggedTemplate} />
-        <Canvas sections={sections} selectedId={selectedId} onSelect={setSelectedId} onUpdate={handleUpdate} onMove={handleMove} onDuplicate={handleDuplicate} onDelete={handleDelete} onDropFromLibrary={handleDropFromLibrary} device={device} />
+        <Canvas sections={sections} selectedId={selectedId} onSelect={setSelectedId} onUpdate={handleUpdate} onMove={handleMove} onDuplicate={handleDuplicate} onDelete={handleDelete} onDropFromLibrary={handleDropFromLibrary} device={device} profileOverrides={profileOverrides} />
         <RightSidebar section={selectedSection} onChange={handleUpdate} />
       </div>
-      {showPreview && <PreviewModal sections={sections} onClose={() => setShowPreview(false)} />}
+      {showPreview && <PreviewModal sections={sections} onClose={() => setShowPreview(false)} profileOverrides={profileOverrides} />}
       <Toast show={toast.show} message={toast.message} />
     </div>
   );

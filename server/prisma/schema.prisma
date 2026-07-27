@@ -135,6 +135,13 @@ model User {
   // Project Missions (responsable)
   projectMissionResponsibilities ProjectMission[] @relation("ProjectMissionResponsible")
 
+  // Onboarding v2 — moyens de paiement sortants (fournisseurs)
+  payoutMethods PayoutMethod[]
+
+  // Onboarding v2 — comptes liés (posé, pas encore utilisé)
+  primaryAccountLinks AccountLink[] @relation("PrimaryAccountLinks")
+  linkedAccountLinks  AccountLink[] @relation("LinkedAccountLinks")
+
   @@map("users")
 }
 
@@ -207,6 +214,10 @@ model ProProfile {
   ncc        String? @unique // Numéro de Contribuable (NCC/NIF) — unique par entreprise
   tel        String
 
+  // Rattachement à l'entité juridique (Onboarding v2)
+  entrepriseId  String?
+  entrepriseRef Entreprise? @relation(fields: [entrepriseId], references: [id], onDelete: SetNull)
+
   // Activité
   secteurs String[] // ex: ["Architecture & Design", "Gros Œuvre & Génie Civil"]
   services String[] // sous-services sélectionnés
@@ -255,6 +266,10 @@ model FournisseurProfile {
   rccm       String? @unique // Registre du Commerce — unique par entreprise
   ncc        String? @unique // Numéro de Contribuable (NCC/NIF) — unique par entreprise
   tel        String
+
+  // Rattachement à l'entité juridique (Onboarding v2)
+  entrepriseId  String?
+  entrepriseRef Entreprise? @relation(fields: [entrepriseId], references: [id], onDelete: SetNull)
 
   // Identité visuelle
   logoColor   String  @default("#1D1D1F")
@@ -1259,5 +1274,75 @@ model KnowledgeEdge {
   createdAt  DateTime @default(now())
 
   @@map("knowledge_edges")
+}
+
+// ─── Onboarding v2 — Entité juridique (entreprise) ─────────────────────────
+// Porteuse de l'unicité RCCM/NCC. Les profils (ProProfile, FournisseurProfile)
+// pointent vers cette table via entrepriseId.
+
+model Entreprise {
+  id               String    @id @default(cuid())
+  legalName        String    // Raison sociale (mappé sur « nom » côté onboarding)
+  rccm             String?   @unique
+  ncc              String?   @unique
+  suspended        Boolean   @default(false)
+  suspendedAt      DateTime?
+  suspensionReason String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  proProfiles         ProProfile[]
+  fournisseurProfiles FournisseurProfile[]
+
+  @@map("entreprises")
+}
+
+// ─── Onboarding v2 — Brouillon d'inscription (30 jours, jamais de MDP) ─────
+
+model OnboardingDraft {
+  id        String   @id @default(cuid())
+  email     String
+  role      UserType
+  data      Json     @default("{}")  // Toutes les données wizard sauf le mot de passe
+  expiresAt DateTime                 // Créé à now() + 30 jours
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, role])
+  @@index([expiresAt])
+  @@map("onboarding_drafts")
+}
+
+// ─── Onboarding v2 — Moyen de paiement sortant (fournisseur) ────────────────
+
+model PayoutMethod {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // orange_money | mtn_momo | wave | bank_transfer
+  label     String   @default("")
+  details   Json     @default("{}")
+  isDefault Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("payout_methods")
+}
+
+// ─── Onboarding v2 — Comptes liés (posé, pas utilisé) ──────────────────────
+// Le lien ne naît JAMAIS d'une égalité de RCCM — uniquement d'une action
+// authentifiée explicite (Partie II du dossier d'intégration).
+
+model AccountLink {
+  id            String   @id @default(cuid())
+  primaryUserId String
+  primaryUser   User     @relation("PrimaryAccountLinks", fields: [primaryUserId], references: [id], onDelete: Cascade)
+  linkedUserId  String
+  linkedUser    User     @relation("LinkedAccountLinks", fields: [linkedUserId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@unique([primaryUserId, linkedUserId])
+  @@map("account_links")
 }
 

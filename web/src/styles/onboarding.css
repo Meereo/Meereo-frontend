@@ -1633,3 +1633,24 @@
 @media (min-width: 769px) and (max-width: 1024px) {
   .ob-panel-dark { width: 360px; padding: 28px 32px; }
 }
+
+/* ─── Onboarding v2 — Chip / Tab / Situation ──────────────────────────────── */
+
+.ob-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600;
+  border: 1px solid var(--border-card, #e5e7eb); background: transparent;
+  color: var(--t2, #555); cursor: pointer; transition: all .15s;
+  font-family: var(--f, inherit);
+}
+.ob-chip:hover { border-color: #7C3AED; color: #7C3AED; }
+.ob-chip.active { background: #7C3AED; color: #fff; border-color: #7C3AED; }
+
+.ob-tab {
+  padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border-card, #e5e7eb); background: transparent;
+  color: var(--t2, #555); cursor: pointer; transition: all .15s;
+  font-family: var(--f, inherit);
+}
+.ob-tab:hover { border-color: #7C3AED; }
+.ob-tab.active { background: #111; color: #fff; border-color: #111; }

@@ -5,11 +5,10 @@ export default function CoordinatesEditor({ data, sectionType, onChange }) {
   return (
     <div>
       {(sectionType === "coord-footer") && (
-        <>
-          <TextField label="Nom de l'entreprise" value={data.companyName || ""} onChange={(v) => set("companyName", v)} />
-          <TextField label="Catégorie" value={data.category || ""} onChange={(v) => set("category", v)} />
-          <Divider />
-        </>
+        <div style={{ fontSize: 12, color: '#888', padding: '0 0 12px', borderBottom: '1px solid #eee', marginBottom: 12 }}>
+          <div><strong>Nom</strong> : {data.companyName || <em style={{ color: '#bbb' }}>dérivé du profil</em>}</div>
+          <div><strong>Catégorie</strong> : {data.category || <em style={{ color: '#bbb' }}>dérivée des secteurs</em>}</div>
+        </div>
       )}
       <TextField label="Adresse" value={data.address || ""} onChange={(v) => set("address", v)} multiline />
       <TextField label="Téléphone" value={data.phone || ""} onChange={(v) => set("phone", v)} />

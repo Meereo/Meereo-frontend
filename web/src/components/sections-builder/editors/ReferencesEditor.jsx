@@ -11,7 +11,7 @@ export default function ReferencesEditor({ data, sectionType, onChange }) {
 
   return (
     <div>
-      <ListHeader label="References" onAdd={addRef} />
+      <ListHeader label="Références" onAdd={addRef} />
       {(data.references || []).map((r) => (
         <ListItemWrapper key={r.id} onRemove={() => removeRef(r.id)}>
           <TextField label="Projet" value={r.project} onChange={(v) => updateRef(r.id, "project", v)} />

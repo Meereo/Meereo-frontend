@@ -10,6 +10,16 @@ export default function PageBuilder() {
   const slug = store.user?.slug || store.user?.publicId
   const publicUrl = slug ? `${window.location.origin}/pro/${slug}` : null
 
+  // Champs dérivés du profil — injectés dans les sections hero/coord-footer
+  // pour que companyName, category, location et verified ne soient jamais saisis.
+  const od = store.onboardingData || {}
+  const profileOverrides = {
+    companyName: od.entreprise || store.user?.company || store.user?.name || '',
+    category: (od.secteurs || []).join(' · ') || '',
+    location: [od.ville || store.user?.ville || '', od.pays || ''].filter(Boolean).join(', '),
+    verified: store.user?.verified || false,
+  }
+
   useEffect(() => {
     api.usersApi.getPageSections()
       .then(res => setSections(res.sections || []))
@@ -41,6 +51,7 @@ export default function PageBuilder() {
         onPublish={handleSave}
         onClose={() => window.history.back()}
         publicUrl={publicUrl}
+        profileOverrides={profileOverrides}
       />
     </div>
   )

@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+/* ═══ Page Pro — auto-hébergement polices (aucun @import Google Fonts) ═══ */
+@layer base {
+  @font-face {
+    font-family: 'Instrument Serif';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/InstrumentSerif-Italic.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Syne';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Syne-Regular.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Syne';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/Syne-Medium.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Syne';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/fonts/Syne-SemiBold.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Syne';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/Syne-Bold.woff2') format('woff2');
+  }
+}
+
 /* ═══ MEEREO Design Tokens — Tailwind v4 @theme ═══ */
 @theme {
   /* Surface Hierarchy — The Monochrome Constraint */
@@ -49,7 +88,31 @@
   /* Spacing */
   --spacing-gallery: 5.5rem;
 
-  /* ── Page Pro (PP) tokens ── */
+  /* ── Page Pro — charte homogénéisée (mo-) ── */
+  --font-mo-serif: 'Instrument Serif', Georgia, serif;
+  --font-mo-sans: 'Syne', system-ui, sans-serif;
+
+  --color-mo-bg: #f8f9fa;
+  --color-mo-surface: #f3f4f5;
+  --color-mo-card: #ffffff;
+  --color-mo-text: #191c1d;
+  --color-mo-muted: #474747;
+  --color-mo-hint: #9a9a9a;
+  --color-mo-line: rgba(25, 28, 29, 0.08);
+  --color-mo-ok: #6ee7b7;
+  --color-mo-okbg: rgba(110, 231, 183, 0.14);
+
+  --radius-mo: 14px;
+  --radius-mo-sm: 8px;
+
+  --shadow-mo: 0 20px 40px rgba(0, 0, 0, 0.04);
+  --shadow-mo-sm: 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-mo-lg: 0 24px 48px rgba(0, 0, 0, 0.18);
+
+  --backdrop-blur-mo: 24px;
+  --backdrop-blur-mo-sm: 8px;
+
+  /* ── Page Pro (PP) tokens — legacy ── */
   --color-pp-black: #000000;
   --color-pp-ink: #0A0A0A;
   --color-pp-ink-2: #3D3D3D;

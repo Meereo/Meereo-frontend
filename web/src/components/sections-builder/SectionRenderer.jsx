@@ -46,8 +46,26 @@ const REGISTRY = {
   "contact-band": ContactBand,
 };
 
-export default function SectionRenderer({ section }) {
+// Types de sections dont les champs dérivés (companyName, category, location,
+// verified) sont injectés depuis le profil et non depuis la saisie utilisateur.
+const PROFILE_INJECTED_TYPES = new Set([
+  'hero-banner', 'hero-editorial', 'hero-compact', 'coord-footer',
+]);
+
+export default function SectionRenderer({ section, profileOverrides }) {
   const Component = REGISTRY[section.type];
   if (!Component) return <div className="p-8 bg-gray-50 text-center text-gray-400 text-sm">Section inconnue : {section.type}</div>;
-  return <Component data={section.data} />;
+
+  // Injecter les champs dérivés du profil sur les sections concernées
+  let data = section.data;
+  if (profileOverrides && PROFILE_INJECTED_TYPES.has(section.type)) {
+    data = { ...data };
+    if (profileOverrides.companyName) data.companyName = profileOverrides.companyName;
+    if (profileOverrides.category)    data.category = profileOverrides.category;
+    if (profileOverrides.location)    data.location = profileOverrides.location;
+    // verified : dérivé de la vérification INS-04 — false si non vérifié
+    data.verified = !!profileOverrides.verified;
+  }
+
+  return <Component data={data} />;
 }

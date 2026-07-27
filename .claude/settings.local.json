@@ -62,7 +62,21 @@
       "Bash(node --check src/routes/auth.js)",
       "Bash(node --check src/validators/auth.js)",
       "Bash(node --check src/routes/projects.js)",
-      "Bash(node --check src/routes/users.js)"
+      "Bash(node --check src/routes/users.js)",
+      "Bash(unzip -l doc/files.zip)",
+      "Bash(node -c server/src/adapters/accountsAdapter.js)",
+      "Bash(node -c server/src/adapters/companiesAdapter.js)",
+      "Bash(node -c server/src/adapters/draftsAdapter.js)",
+      "Bash(node -c server/src/adapters/onboardingTxAdapter.js)",
+      "Bash(node -c server/src/adapters/passwordAdapter.js)",
+      "Bash(node -c server/src/routes/onboarding.js)",
+      "Bash(node -c server/src/utils/onboardingMail.js)",
+      "Bash(node -c server/src/index.js)",
+      "Bash(node -c server/src/adapters/sessionAdapter.js)",
+      "Bash(node -c server/src/adapters/index.js)",
+      "Bash(wc:*)",
+      "Bash(node -c web/src/hooks/useStepForm.js)",
+      "Bash(node -c server/src/__tests__/onboarding.integration.js)"
     ]
   }
 }
