@@ -778,7 +778,7 @@ export default function Worksite({ openModal, showToast, onNavigate }) {
       </div>
 
       {/* PRJ-07: "Valider le projet" en bas — aboutissement du parcours */}
-      {proj && (() => {
+      {proj && !['DEMANDE_CLOTURE_ENVOYEE','EN_ATTENTE_VALIDATION_CLIENT','CLOTURE_VALIDE_EXTERNE','CLOTURE_VALIDE_MEEREO'].includes(proj.clotureStatus) && (() => {
         const allComplete = globalPct >= 100
         return (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: allComplete ? '18px 22px' : '14px 20px', marginTop: 8, marginBottom: 16, background: allComplete ? 'rgba(52,199,89,.06)' : 'var(--surface-1)', border: allComplete ? '2px solid rgba(52,199,89,.25)' : '1px solid var(--border-card)', borderRadius: 12 }}>

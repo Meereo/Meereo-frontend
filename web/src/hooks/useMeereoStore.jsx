@@ -1591,7 +1591,7 @@ export function MeereoProvider({ children }) {
       return {
         ...prev,
         clotureRequests: (prev.clotureRequests || []).map(r => r.id === clotureIdOrProjectId ? { ...r, status: newStatus, validatedAt: new Date().toISOString(), clientComment: comment || '' } : r),
-        projects: (prev.projects || []).map(p => p.id === projectId ? { ...p, clotureStatus: newStatus, ...(accept ? { status: 'completed' } : {}) } : p),
+        projects: (prev.projects || []).map(p => p.id === projectId ? { ...p, clotureStatus: newStatus, ...(accept ? { status: 'archived', archivedAt: new Date().toISOString() } : {}) } : p),
       }
     })
     // Syncer vers le backend
@@ -1599,7 +1599,7 @@ export function MeereoProvider({ children }) {
       const newStatus = accept ? 'CLOTURE_VALIDE_EXTERNE' : 'CLOTURE_REFUSEE'
       api.projects.update(projectId, {
         clotureStatus: newStatus,
-        ...(accept ? { status: 'completed' } : {}),
+        ...(accept ? { status: 'archived', archivedAt: new Date().toISOString() } : {}),
       }).catch(e => console.warn('[respondCloture] Backend sync failed:', e.message))
       // Notifier le pro
       const proj = (storeRef.current.projects || []).find(p => p.id === projectId)
