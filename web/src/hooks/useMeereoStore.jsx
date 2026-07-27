@@ -868,7 +868,6 @@ export function MeereoProvider({ children }) {
         console.warn('[MEEREO] Login fallback also failed:', loginErr.message)
       }
     }
-    setSuppressSessionExpired(false) // Re-enable session expired modal after register flow
     log('USER_CREATED', { name: user.name, type: user.type })
     addNotif('Bienvenue sur MEEREO, ' + (user.name || user.company) + '\u00a0!', 'green', null, 'dashboard')
     return user

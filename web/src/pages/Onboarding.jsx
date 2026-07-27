@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import MoneyInput from '../components/shared/MoneyInput'
 import compressImage from '../utils/compressImage'
-import { api } from '../services/api/client'
+import { api, setSuppressSessionExpired } from '../services/api/client'
 import { useMeereo } from '../hooks/useMeereoStore'
 import { MKT_CATS } from '../data/marketplace'
 import '../styles/onboarding.css'
@@ -624,6 +624,9 @@ export default function Onboarding() {
         api.auth.sendVerification(m.email).catch(() => {})
       })
     }
+
+    // Re-enable session expired modal now that all post-signup API calls are done
+    setSuppressSessionExpired(false)
 
     // 8. Redirect — navigate() via React Router (évite le rechargement complet de page)
     setTimeout(() => {
