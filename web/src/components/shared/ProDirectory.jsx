@@ -45,7 +45,7 @@ export default function ProDirectory({ open, onClose, initialSearch = '' }) {
       api.professionals.getWithPagination(params).catch(() => []),
       // ANN-06 : les fournisseurs figurent dans l'annuaire, au même titre que
       // les professionnels — leur fiche est une vitrine (aucune action de contact).
-      api.getFournisseurs().catch(() => []),
+      api.usersApi.getFournisseurs().catch(() => []),
     ])
       .then(([res, fRes]) => {
         const data = res?.data || res || []

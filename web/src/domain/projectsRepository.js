@@ -68,7 +68,10 @@ export function getUserProjects(store, userId, userEmail) {
   )
 }
 
-/** Projets actifs uniquement (ni archivés, ni arrêtés, ni supprimés) */
+/** Projets actifs uniquement (ni archivés, ni arrêtés, ni supprimés, ni clôturés) */
 export function getUserActiveProjects(store, userId, userEmail) {
-  return getUserProjects(store, userId, userEmail).filter(p => p.status !== 'archived' && p.status !== 'stopped')
+  return getUserProjects(store, userId, userEmail).filter(p =>
+    p.status !== 'archived' && p.status !== 'stopped' && p.status !== 'completed' &&
+    !['CLOTURE_VALIDE_EXTERNE', 'CLOTURE_VALIDE_MEEREO'].includes(p.clotureStatus)
+  )
 }

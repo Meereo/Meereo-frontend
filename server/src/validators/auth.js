@@ -63,7 +63,7 @@ const registerBaseSchema = z.object({
   }),
   // Champs optionnels passés par le store
   company: z.string().max(200).trim().optional(),
-  phone: optionalPhone,
+  phone: phoneField.optional(), // INS-08: validated format when present (front enforces presence)
   avatar: z.string().url('URL avatar invalide').optional().or(z.literal('')),
   metier: z.string().max(100).optional(),
   ville: z.string().max(100).optional(),
@@ -149,6 +149,8 @@ const registerFournisseurProfileSchema = z.object({
   categories: z.array(z.string().max(100)).max(30).optional(),
   zones: z.array(z.string().max(100)).max(50).optional(),
   delaiLivraison: z.string().max(100).optional(),
+  // MKT-06: moyens d'encaissement
+  paymentMethods: z.array(z.enum(['orange_money', 'mtn_momo', 'wave'])).max(3).optional(),
 
   products: z
     .array(
@@ -158,6 +160,8 @@ const registerFournisseurProfileSchema = z.object({
         unit: z.string().max(50).optional(),
         category: z.string().max(100).optional(),
         photoUrl: z.string().optional(),
+        stock: z.union([z.string(), z.number()]).optional(),
+        description: z.string().max(2000).optional(),
       })
     )
     .max(50)
