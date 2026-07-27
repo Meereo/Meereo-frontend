@@ -131,16 +131,19 @@ router.post('/', requireAuth, async (req, res, next) => {
       },
     })
 
-    // Auto-créer une conversation de type "projet"
-    await prisma.conversation.create({
-      data: {
-        title: 'Projet : ' + nom,
-        isGroup: true,
-        type: 'projet',
-        projectId: project.id,
-        participants: { create: [{ userId: req.user.id }] },
-      },
-    }).catch(() => {}) // non-blocking
+    // Auto-créer une conversation de type "projet" (sauf si créé depuis une acceptation d'offre,
+    // car acceptOffer crée déjà la conversation avec le fournisseur comme participant)
+    if (!sourceAoId) {
+      await prisma.conversation.create({
+        data: {
+          title: 'Projet : ' + nom,
+          isGroup: true,
+          type: 'projet',
+          projectId: project.id,
+          participants: { create: [{ userId: req.user.id }] },
+        },
+      }).catch(() => {}) // non-blocking
+    }
 
     // Auto-créer un contact CRM si un client est désigné
     if (clientId && clientId !== req.user.id) {

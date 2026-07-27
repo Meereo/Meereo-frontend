@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import { ROLES, isAllowed, getProjectRole } from '../domain/permissions'
 import { computePhaseProgress } from '../domain/projectAggregates'
 import { PROJECT_COLOR_PALETTE } from '../domain/status'
-import { api, setInMemoryToken } from '../services/api/client'
+import { api, setInMemoryToken, setSuppressSessionExpired } from '../services/api/client'
 import { getSocket, disconnectSocket, onConversationUpdated, offConversationUpdated } from '../services/socket'
 
 // Palette de couleurs projet — sobres, premium, variées
@@ -664,6 +664,7 @@ export function MeereoProvider({ children }) {
   // ═══ REGISTER — Creates account on backend, keeps user logged in and redirects.
   const createUser = useCallback(async (data) => {
     justCreated.current = true // Skip boot hydration for fresh accounts
+    setSuppressSessionExpired(true) // Don't show "session expirée" modal during register flow
     const user = {
       id: 'u_' + Date.now(),
       type: data.type || 'pro',
@@ -790,6 +791,7 @@ export function MeereoProvider({ children }) {
             _onboardingByUser: updatedObs,
             _token: res.token,
             _hydrated: true,
+            _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
             aos: apiAos,
             offers: apiOffers,
             projects: apiProjects,
@@ -844,6 +846,7 @@ export function MeereoProvider({ children }) {
               _onboardingByUser: updatedObs,
               _token: loginRes.token,
               _hydrated: true,
+              _cachedUser: { id: realUser.id, type: realUser.type, name: realUser.name },
               aos: apiAos,
               offers: apiOffers,
               projects: apiProjects,
@@ -865,6 +868,7 @@ export function MeereoProvider({ children }) {
         console.warn('[MEEREO] Login fallback also failed:', loginErr.message)
       }
     }
+    setSuppressSessionExpired(false) // Re-enable session expired modal after register flow
     log('USER_CREATED', { name: user.name, type: user.type })
     addNotif('Bienvenue sur MEEREO, ' + (user.name || user.company) + '\u00a0!', 'green', null, 'dashboard')
     return user

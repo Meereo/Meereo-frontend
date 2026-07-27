@@ -37,6 +37,10 @@ export function setInMemoryToken(token) {
 let _onSessionExpired = null
 export function setSessionExpiredCallback(cb) { _onSessionExpired = cb }
 
+// Flag pour supprimer le modal « session expirée » pendant le register flow
+let _suppressSessionExpired = false
+export function setSuppressSessionExpired(v) { _suppressSessionExpired = !!v }
+
 /**
  * Retourne le JWT courant — mémoire en priorité, puis sessionStorage (après refresh).
  * @returns {string|null}
@@ -82,7 +86,7 @@ async function apiFetch(path, method = 'GET', body = null, withAuth = false) {
       setInMemoryToken(null)
       try { sessionStorage.removeItem('meereo_session_token'); sessionStorage.removeItem('meereo_cached_user') } catch {}
       // NAV-06: déclencher le modal « session expirée » au lieu d'afficher un message technique
-      if (_onSessionExpired) _onSessionExpired()
+      if (_onSessionExpired && !_suppressSessionExpired) _onSessionExpired()
     }
     // NAV-06: ne jamais exposer de message technique brut à l'utilisateur
     const rawMsg = data?.error || data?.message || ''
@@ -121,7 +125,7 @@ async function apiFetchForm(path, method = 'POST', formData) {
     if (res.status === 401) {
       setInMemoryToken(null)
       try { sessionStorage.removeItem('meereo_session_token'); sessionStorage.removeItem('meereo_cached_user') } catch {}
-      if (_onSessionExpired) _onSessionExpired()
+      if (_onSessionExpired && !_suppressSessionExpired) _onSessionExpired()
     }
     const rawMsg = data?.error || data?.message || ''
     const msg = res.status === 401

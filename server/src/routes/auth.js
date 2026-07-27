@@ -294,7 +294,7 @@ router.post('/register', async (req, res, next) => {
     //    (entreprise référencée qui s'inscrit → retrouve ses messages)
     try {
       const pending = await prisma.pendingMessage.findMany({
-        where: { recipientEmail: email.toLowerCase(), delivered: false },
+        where: { recipientEmail: base.email.toLowerCase(), delivered: false },
       })
       for (const pm of pending) {
         // Créer la conversation 1:1 entre l'expéditeur et le nouvel inscrit

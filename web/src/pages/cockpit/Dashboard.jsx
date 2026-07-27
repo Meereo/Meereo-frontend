@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
-import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin, Users, Image } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
+import { Radio, Package, Settings, ClipboardList, MessageSquare, AlertCircle, Wallet, BarChart2, FileText, User, CheckCircle2, Pin, Users, Image, Star } from 'lucide-react'
+import { api } from '../../services/api/client'
 // RECENT_ACTIVITY mock removed — store.activities is source of truth
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -69,6 +70,15 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
   const userFirstName = uid.company || uid.displayName || uid.firstName || ''
 
   const [actTab, setActTab] = useState('all')
+  const [receivedReviews, setReceivedReviews] = useState([])
+
+  // Fetch reviews received by this pro
+  useEffect(() => {
+    if (!store.user?.id) return
+    api.reviews.getAll({ targetId: store.user.id })
+      .then(data => { if (Array.isArray(data)) setReceivedReviews(data) })
+      .catch(() => {})
+  }, [store.user?.id])
 
   const allProjetsRaw = useMemo(() => getUserActiveProjects(store, store.user?.id, store.user?.email), [store.projects, store.user, store.projectMembers])
   // Enrich each project with computed avancement (phase + étapes + stored + marchés liés)
@@ -341,6 +351,47 @@ export default function Dashboard({ onNavigate, openModal, openProDir }) {
           </div>
         )
       })()}
+
+      {/* Avis clients reçus */}
+      {receivedReviews.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)' }}>Avis clients ({receivedReviews.length})</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Star size={12} fill="#F59E0B" stroke="#F59E0B" />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx)' }}>{(receivedReviews.reduce((s, r) => s + (r.note || 0), 0) / receivedReviews.length).toFixed(1)}</span>
+              <span style={{ fontSize: 10, color: 'var(--t4)' }}>/ 5</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {receivedReviews.slice(0, 5).map(r => (
+              <div key={r.id} style={{ padding: '14px 16px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: 'var(--t2)' }}>{(r.author?.name || '?')[0].toUpperCase()}</div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx)' }}>{r.author?.name || 'Client'}</div>
+                      {r.author?.company && <div style={{ fontSize: 10, color: 'var(--t4)' }}>{r.author.company}</div>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {[1,2,3,4,5].map(n => <Star key={n} size={11} fill={n <= r.note ? '#F59E0B' : 'none'} stroke={n <= r.note ? '#F59E0B' : 'var(--t4)'} />)}
+                  </div>
+                </div>
+                {r.comment && <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.5 }}>{r.comment}</div>}
+                {(r.qualite || r.delais || r.communication) && (
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    {r.qualite && <span style={{ fontSize: 10, color: 'var(--t4)' }}>Qualité: {r.qualite}/5</span>}
+                    {r.delais && <span style={{ fontSize: 10, color: 'var(--t4)' }}>Délais: {r.delais}/5</span>}
+                    {r.communication && <span style={{ fontSize: 10, color: 'var(--t4)' }}>Communication: {r.communication}/5</span>}
+                  </div>
+                )}
+                {r.createdAt && <div style={{ fontSize: 9, color: 'var(--t4)', marginTop: 6 }}>{new Date(r.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Activité récente — feed unifié avec filtres catégoriels */}
       {(() => {
