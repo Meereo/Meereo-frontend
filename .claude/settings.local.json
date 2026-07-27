@@ -61,7 +61,8 @@
       "Bash(du -sh /tmp/*)",
       "Bash(node --check src/routes/auth.js)",
       "Bash(node --check src/validators/auth.js)",
-      "Bash(node --check src/routes/projects.js)"
+      "Bash(node --check src/routes/projects.js)",
+      "Bash(node --check src/routes/users.js)"
     ]
   }
 }

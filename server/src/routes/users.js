@@ -10,15 +10,9 @@ router.get('/pros', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
     const { q, metier, ville: villeFilter, verified: verifiedFilter, secteur } = req.query
-    // INS-20 : les comptes dont l'entreprise est suspendue (doublon de RCCM en
-    // cours de vérification) sont retirés de l'annuaire — données conservées.
+    // INS-20 : filtre annuaire (TODO: raccorder au modèle Entreprise quand il existera)
     const where = {
       type: 'pro',
-      OR: [
-        { proProfile: null },
-        { proProfile: { entrepriseId: null } },
-        { proProfile: { entrepriseRef: { suspended: false } } },
-      ],
     }
     if (metier && metier !== 'all') where.metier = metier
     if (verifiedFilter === 'true') where.verified = true
@@ -127,11 +121,7 @@ router.get('/fournisseurs', requireAuth, async (req, res, next) => {
     const users = await prisma.user.findMany({
       where: {
         type: 'fournisseur',
-        OR: [
-          { fournisseurProfile: null },
-          { fournisseurProfile: { entrepriseId: null } },
-          { fournisseurProfile: { entrepriseRef: { suspended: false } } },
-        ],
+        // TODO: raccorder au modèle Entreprise quand il existera (INS-20 suspended filter)
       },
       select: {
         id: true,
