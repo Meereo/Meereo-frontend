@@ -549,6 +549,10 @@ export default function Messages({ showToast }) {
       if (activeId === convId) setActiveId(null)
       showToast && showToast(t('messages.deleted'))
     } else if (type === 'quit') {
+      // Persist: remove current user from conversation participants in backend
+      if (!String(convId).startsWith('conv_')) {
+        api.conversations.delete(convId).catch(() => {})
+      }
       updateConv(convId, c => ({
         ...c,
         _deleted: true,
