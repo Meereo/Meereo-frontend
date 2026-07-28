@@ -109,6 +109,22 @@ const VILLES_CI = [
   'Abengourou','Grand-Bassam',
 ]
 
+// Liste de pays (INS — le client n'est pas forcément en Afrique).
+// Côte d'Ivoire en tête, puis reste du monde par ordre alphabétique.
+const COUNTRIES = [
+  "Côte d'Ivoire",
+  'Afrique du Sud', 'Algérie', 'Allemagne', 'Angola', 'Arabie saoudite', 'Argentine',
+  'Australie', 'Autriche', 'Bélgique', 'Bénin', 'Brésil', 'Burkina Faso', 'Cameroun',
+  'Canada', 'Chine', 'Congo', 'Congo (RDC)', 'Corée du Sud', 'Danemark', 'Égypte',
+  'Émirats arabes unis', 'Espagne', 'États-Unis', 'Éthiopie', 'Finlande', 'France',
+  'Gabon', 'Ghana', 'Grèce', 'Guinée', 'Inde', 'Indonésie', 'Irlande', 'Italie',
+  'Japon', 'Kenya', 'Liban', 'Libye', 'Luxembourg', 'Madagascar', 'Mali', 'Maroc',
+  'Maurice', 'Mauritanie', 'Mexique', 'Niger', 'Nigéria', 'Norvège', 'Pays-Bas',
+  'Pologne', 'Portugal', 'Qatar', 'République tchèque', 'Roumanie', 'Royaume-Uni',
+  'Russie', 'Rwanda', 'Sénégal', 'Suède', 'Suisse', 'Tchad', 'Togo', 'Tunisie',
+  'Turquie', 'Autre',
+]
+
 const PHONE_PREFIXES = [
   { code: '+225', flag: '🇨🇮', country: "Côte d'Ivoire" },
   { code: '+221', flag: '🇸🇳', country: 'Sénégal' },
@@ -325,6 +341,8 @@ export default function Onboarding() {
     secteurs: [],
     // SupplierStructureStep extra fields
     categories: [], deliveryModes: [], zones: [], delaiLivraison: '',
+    // Photo de profil (client — INS)
+    photoUrl: null,
     // LogoStep
     logoColor: '#1D1D1F', logoShape: 'Hexagone', logoTypo: 'Gras', logoTab: 'generate', logoFileUrl: null,
     // SupplierPayoutStep (MKT-06 §4)
@@ -346,7 +364,10 @@ export default function Onboarding() {
   const { isValid } = useStepForm(form, schema)
 
   // ─── Role metadata ───────────────────────────────────────────────────
-  const roleMeta = userType ? ROLE_META[userType] : ROLE_META.client
+  // Sur l'écran de sélection, userType est encore null : on thème depuis
+  // selectedRole pour que la couleur du bouton change dès la sélection (INS).
+  const themeRole = userType || selectedRole
+  const roleMeta = ROLE_META[themeRole] || ROLE_META.client
   const dataActiveRole = roleMeta?.dataRole || 'client'
   // Total steps including "role" as step 1
   const totalSteps = steps.length + 1
@@ -420,6 +441,19 @@ export default function Onboarding() {
     } catch { /* keep compressed preview */ }
   }
 
+  // ─── Photo de profil client (réutilise l'endpoint /onboarding/logo) ───
+  const handlePhotoUpload = async (e) => {
+    const f = e.target.files[0]; if (!f) return
+    if (f.size > 10 * 1024 * 1024) { showToast('Fichier trop volumineux — 10 Mo max', 'red'); return }
+    const compressed = await compressImage(f, 400, 0.85)
+    set('photoUrl', compressed)
+    try {
+      const fd = new FormData(); fd.append('logo', f)
+      const res = await api.onboarding.uploadLogo(fd)
+      if (res.url) set('photoUrl', res.url)
+    } catch { /* on conserve l'aperçu compressé */ }
+  }
+
   // ─── Submit (NAV-07 : session ouverte dans la même réponse) ───────────
   const handleSubmit = async () => {
     if (submitting) return
@@ -457,6 +491,7 @@ export default function Onboarding() {
           prenom: form.prenom, nom: form.nom,
           tel: `${form.telPrefix} ${form.tel}`.trim(),
           ville: form.ville, pays: form.pays,
+          photoUrl: form.photoUrl || undefined,
         })
       } else if (userType === 'fournisseur') {
         Object.assign(profile, {
@@ -513,7 +548,19 @@ export default function Onboarding() {
 
       setSuppressSessionExpired(false)
 
-      // Build warnings for DoneStep
+      // INS — connexion automatique + redirection vers la plateforme.
+      // On établit la session DANS le store React (store.user), sinon les
+      // gardes de route (RoleGuard) éjectent l'utilisateur vers l'inscription.
+      showToast('Compte créé — bienvenue sur MEEREO !', 'green')
+      const dest = userType === 'client' ? '/client'
+        : userType === 'fournisseur' ? '/fournisseur' : '/cockpit'
+      let logged = null
+      try { logged = await loginUser(form.email, form.password) } catch { /* repli ci-dessous */ }
+      if (logged) { navigate(dest); return }
+
+      // Repli : la session cookie/Bearer est déjà ouverte — on montre l'écran
+      // de fin, dont les boutons rechargent en dur (le boot ré-hydrate alors
+      // la session et redirige proprement vers la plateforme).
       const warnings = []
       if (userType === 'fournisseur' && !form.productName?.trim()) {
         warnings.push('Catalogue vide — ajoutez vos premiers produits depuis votre espace.')
@@ -740,7 +787,7 @@ export default function Onboarding() {
             <h1 className="ob-title-v5">{steps[wizStep-1]?.label ? `${steps[wizStep-1].label}.` : ''}</h1>
 
             {/* ── STEP CONTENT ── */}
-            {renderStep(userType, currentStepKey, form, set, toggleArr, handleLogoUpload)}
+            {renderStep(userType, currentStepKey, form, set, toggleArr, handleLogoUpload, handlePhotoUpload)}
 
             {/* ── NAVIGATION ── */}
             <div className="wiz-nav-v5">
@@ -770,9 +817,11 @@ export default function Onboarding() {
               email={doneData.email}
               warnings={doneData.warnings}
               onNavigate={() => {
-                if (userType === 'client') navigate('/client')
-                else if (userType === 'fournisseur') navigate('/fournisseur')
-                else navigate('/cockpit')
+                // Rechargement dur : le boot ré-hydrate la session (Bearer +
+                // cookie) et le RoleGuard laisse alors passer vers la plateforme.
+                const dest = userType === 'client' ? '/client'
+                  : userType === 'fournisseur' ? '/fournisseur' : '/cockpit'
+                window.location.href = dest
               }}
             />
           </div>
@@ -786,9 +835,9 @@ export default function Onboarding() {
 // STEP RENDERERS — source: steps.parts.tsx du paquet, habillage v5
 // ═════════════════════════════════════════════════════════════════════════════
 
-function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload) {
+function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload, handlePhotoUpload) {
   // AccountStep — shared across all roles
-  if (stepKey === 'account') return <AccountStep role={role} form={form} set={set} />
+  if (stepKey === 'account') return <AccountStep role={role} form={form} set={set} handlePhotoUpload={handlePhotoUpload} />
   // Structure — role-specific
   if (stepKey === 'structure') {
     if (role === 'pro') return <ProStructureStep form={form} set={set} toggleArr={toggleArr} />
@@ -804,25 +853,34 @@ function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload) {
 
 // ── AccountStep (Votre compte) — source: steps.parts.tsx AccountStep ────────
 
-function AccountStep({ role, form, set }) {
+function AccountStep({ role, form, set, handlePhotoUpload }) {
+  const isClient = role === 'client'
   return <>
     <p className="ob-lede-v5" style={{marginTop:-10}}>Ces informations sont obligatoires pour créer votre espace.</p>
+    {isClient && <ProfilePhotoField form={form} handlePhotoUpload={handlePhotoUpload} set={set} />}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Prénom" required><input className="ob-input" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Jean-Marc" autoComplete="given-name"/></Field>
-      <Field label="Nom" required><input className="ob-input" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Troh" autoComplete="family-name"/></Field>
+      <Field label="Prénom" required><input className="ob-input" name="ob-prenom" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Prénom" autoComplete="off"/></Field>
+      <Field label="Nom" required><input className="ob-input" name="ob-nom" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Nom" autoComplete="off"/></Field>
     </div>
     <Field label="Adresse e-mail" required>
       <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@entreprise.com" autoComplete="email"/>
     </Field>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <PhoneField form={form} set={set} />
-      <Field label="Ville" required={role !== 'client'}>
+    {/* Téléphone sur toute la largeur (INS — zone plus lisible) */}
+    <PhoneField form={form} set={set} />
+    {isClient ? (
+      <Field label="Pays">
+        <select className="ob-input" value={form.pays} onChange={e=>set('pays',e.target.value)}>
+          {COUNTRIES.map(c=><option key={c}>{c}</option>)}
+        </select>
+      </Field>
+    ) : (
+      <Field label="Ville" required>
         <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
           <option value="">— Choisir —</option>
           {VILLES_CI.map(v=><option key={v}>{v}</option>)}
         </select>
       </Field>
-    </div>
+    )}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
       <Field label="Mot de passe" required hint="10 caractères minimum, une lettre, un chiffre.">
         <PasswordInput value={form.password} onChange={v=>set('password',v)} placeholder="10+ caractères" />
@@ -1190,14 +1248,41 @@ function LegalField({ label, value, onChange, regex, hint, errMsg, placeholder }
 
 // ─── Shared sub-components ──────────────────────────────────────────────────
 
+function ProfilePhotoField({ form, handlePhotoUpload, set }) {
+  const fileRef = useRef()
+  const initials = `${form.prenom?.[0] || ''}${form.nom?.[0] || ''}`.toUpperCase()
+  return (
+    <div className="ob-field">
+      <label className="ob-label-v2">Photo de profil</label>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <div style={{width:64,height:64,borderRadius:'50%',flexShrink:0,overflow:'hidden',background:'var(--role-client-bg,#F3E9E2)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid var(--border-card,#e5e5e5)'}}>
+          {form.photoUrl
+            ? <img src={form.photoUrl} alt="Photo de profil" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+            : <span style={{fontSize:20,fontWeight:700,color:'var(--role-client,#D9622B)'}}>{initials || '👤'}</span>}
+        </div>
+        <div>
+          <input ref={fileRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handlePhotoUpload} style={{display:'none'}} />
+          <button type="button" className="ob-btn-out" onClick={()=>fileRef.current?.click()}>
+            {form.photoUrl ? 'Changer la photo' : 'Ajouter une photo'}
+          </button>
+          {form.photoUrl && (
+            <button type="button" className="ob-btn-out" style={{marginLeft:8}} onClick={()=>set('photoUrl',null)}>Retirer</button>
+          )}
+          <div style={{fontSize:10,color:'var(--t4)',marginTop:6}}>Facultatif · PNG, JPG ou WebP — 10 Mo max</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PhoneField({ form, set }) {
   return (
     <Field label="Téléphone" required hint="Ex. : +225 07 07 12 34 56">
-      <div style={{display:'flex',gap:6}}>
-        <select className="ob-input" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:100,flexShrink:0}}>
+      <div style={{display:'flex',gap:8}}>
+        <select className="ob-input" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:130,flexShrink:0,height:48,fontSize:15}}>
           {PHONE_PREFIXES.map(p=><option key={p.code} value={p.code}>{p.flag} {p.code}</option>)}
         </select>
-        <input className="ob-input" value={form.tel} onChange={e=>set('tel',e.target.value)} placeholder="07 07 12 34 56" style={{flex:1}} autoComplete="tel"/>
+        <input className="ob-input" value={form.tel} onChange={e=>set('tel',e.target.value)} placeholder="07 07 12 34 56" style={{flex:1,height:48,fontSize:15,letterSpacing:'.02em'}} autoComplete="tel"/>
       </div>
     </Field>
   )

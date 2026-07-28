@@ -95,7 +95,9 @@
       "Bash(npx playwright:*)",
       "Bash(npx puppeteer:*)",
       "Bash(npm list:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git stash *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

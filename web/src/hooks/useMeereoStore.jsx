@@ -892,6 +892,11 @@ export function MeereoProvider({ children }) {
           slug: res.user.slug || null,
           wallet: 0,
         }
+        // Poser le token en mémoire + sessionStorage (Bearer) — indispensable
+        // pour que les appels withAuth suivants (sync 30s, WS) s'authentifient
+        // même si le cookie httpOnly n'est pas renvoyé. Sinon : 401 → déconnexion
+        // automatique après la 1re page (cohérence avec le boot /auth/me).
+        setInMemoryToken(res.token)
         // 2. Hydrate business data from PostgreSQL
         const [apiAos, apiOffers, apiProjects, apiMarkets, apiMissions, apiProjectMembers, apiFournisseurs, apiContacts, apiKaiEnt, apiKaiConvs, apiKaiMem, apiPrefs, apiOnboarding] = await Promise.all([
           api.aos.getAll().catch(() => []),
@@ -1024,6 +1029,7 @@ export function MeereoProvider({ children }) {
               avatar: migrateRes.user.avatar || localUser.avatar || '',
               wallet: 0,
             }
+            setInMemoryToken(migrateRes.token)
             updateStore(prev => {
               const savedObs = { ...(prev._onboardingByUser || {}) }
               const ob = prev.onboardingData || savedObs[localUser.id] || null
