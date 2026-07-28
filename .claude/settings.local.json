@@ -87,7 +87,15 @@
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"bad@test.ci\", \"name\": \"X\", \"type\": \"client\"}')",
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"frn@test.ci\", \"password\": \"SecurePass123\", \"name\": \"FRN\", \"type\": \"fournisseur\"}')",
       "Bash(kill %1)",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(node -e \"const http = require\\('http'\\); http.get\\('http://localhost:3000/api/onboarding/steps/client', \\(res\\) => { let d=''; res.on\\('data', c => d+=c\\); res.on\\('end', \\(\\) => console.log\\(res.statusCode, d\\)\\); }\\).on\\('error', e => console.log\\('ERR', e.message\\)\\);\")",
+      "Bash(node -e \"const http = require\\('http'\\); const r = http.get\\('http://localhost:3000/api/onboarding/steps/client', \\(res\\) => { let d=''; res.on\\('data', c => d+=c\\); res.on\\('end', \\(\\) => console.log\\(res.statusCode, d\\)\\); }\\); r.on\\('error', e => console.log\\('ERR:', e.message\\)\\);\")",
+      "Bash(node:*)",
+      "Bash(netstat -ano)",
+      "Bash(npx playwright:*)",
+      "Bash(npx puppeteer:*)",
+      "Bash(npm list:*)",
+      "Bash(npm ls:*)"
     ]
   }
 }

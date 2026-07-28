@@ -301,6 +301,7 @@ export default function Onboarding() {
   const [selectedRole, setSelectedRole] = useState('client') // role selection on role screen
   const [wizStep, setWizStep] = useState(1)
   const [steps, setSteps] = useState([])          // from GET /api/onboarding/steps/:role
+  const [stepsLoading, setStepsLoading] = useState(false)
   const [draftId, setDraftId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [doneData, setDoneData] = useState(null)  // { email, warnings }
@@ -355,9 +356,13 @@ export default function Onboarding() {
   // ─── Fetch steps from API when role is selected (INS-15) ──────────────
   useEffect(() => {
     if (!userType) return
+    let cancelled = false
+    setStepsLoading(true)
     api.onboarding.steps(userType)
-      .then(data => setSteps(data.steps || []))
-      .catch(() => setSteps([]))
+      .then(data => { if (!cancelled) setSteps(data.steps || []) })
+      .catch(() => { if (!cancelled) setSteps([]) })
+      .finally(() => { if (!cancelled) setStepsLoading(false) })
+    return () => { cancelled = true }
   }, [userType])
 
   // ─── Save draft to server at each step transition (INS-13) ────────────
@@ -394,6 +399,7 @@ export default function Onboarding() {
   }, [wizStep])
 
   const startWizard = useCallback((type) => {
+    setSteps([])
     setUserType(type)
     setScreen('wizard')
     setWizStep(1)
@@ -683,8 +689,45 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* ════ WIZARD SCREEN — loading state ════ */}
+      {screen === 'wizard' && stepsLoading && (
+        <div className="ob-screen">
+          <PageHeader />
+          <div className="ob-card-v5 wide" style={{textAlign:'center',padding:'60px 40px'}}>
+            <div className="ob-eyebrow-v5">
+              <span>Inscription · <span className="ob-role-dot">{roleMeta.label}</span></span>
+            </div>
+            <p className="ob-lede-v5" style={{marginTop:20}}>Chargement du formulaire…</p>
+          </div>
+        </div>
+      )}
+
+      {/* ════ WIZARD SCREEN — error state (API failed, no steps) ════ */}
+      {screen === 'wizard' && !stepsLoading && steps.length === 0 && (
+        <div className="ob-screen">
+          <PageHeader />
+          <div className="ob-card-v5 wide" style={{textAlign:'center',padding:'60px 40px'}}>
+            <div className="ob-eyebrow-v5">
+              <span>Inscription · <span className="ob-role-dot">{roleMeta.label}</span></span>
+            </div>
+            <h1 className="ob-title-v5">Oups.</h1>
+            <p className="ob-lede-v5">Impossible de charger le formulaire. Vérifiez votre connexion et réessayez.</p>
+            <div className="wiz-nav-v5">
+              <button className="ob-btn-out" style={{flex:1}} onClick={goBack}>← Retour</button>
+              <button className="ob-btn-role" style={{flex:1}} onClick={() => {
+                setStepsLoading(true)
+                api.onboarding.steps(userType)
+                  .then(data => setSteps(data.steps || []))
+                  .catch(() => setSteps([]))
+                  .finally(() => setStepsLoading(false))
+              }}>Réessayer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ════ WIZARD SCREEN (single column + stepper) ════ */}
-      {screen === 'wizard' && steps.length > 0 && (
+      {screen === 'wizard' && !stepsLoading && steps.length > 0 && (
         <div className="ob-screen">
           <PageHeader />
           <div className="ob-card-v5 wide">
