@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback } from 'react'
+import { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react'
 import {
   HardHat, Wrench, Shield, Layers, Droplets, Snowflake, Zap, Sun, Droplet, Leaf,
   Sofa, BedDouble, UtensilsCrossed, ChefHat, Briefcase, Armchair, Building2, Trees, Car,
@@ -68,33 +68,30 @@ const PAYOUT_METHODS = [
 ]
 
 // ─── UI Constants ───────────────────────────────────────────────────────────
+// Couleurs de rôle v5 : Client #D9622B · Professionnel #743EE4 · Fournisseur #418FAF
 
-const CARDS = [
-  { id:'client', step:'01', title:'Je suis client',
-    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EA580C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-    iconBg:'rgba(234,88,12,.08)',
-    description:'Pilotez votre projet de construction, rénovation ou aménagement.',
-    tags:['Logement','Commerce','Immeuble','Rénovation'],
-  },
-  { id:'pro', step:'02', title:'Je suis professionnel',
-    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
-    iconBg:'rgba(124,58,237,.08)',
-    description:'Centralisez vos missions, vos offres, vos équipes et votre exécution.',
-    tags:['BTP','BET','Architecture','Entreprise'],
-  },
-  { id:'fournisseur', step:'03', title:'Je suis fournisseur',
-    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0891B2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>,
-    iconBg:'rgba(8,145,178,.08)',
-    description:'Référencez vos produits, recevez des demandes et gérez vos commandes.',
-    tags:['Matériaux','Équipements','Services','Commandes'],
-  },
-]
+const ROLE_META = {
+  client:      { label: 'Client',       dataRole: 'client', color: '#D9622B' },
+  pro:         { label: 'Professionnel', dataRole: 'pro',   color: '#743EE4' },
+  fournisseur: { label: 'Fournisseur',  dataRole: 'four',   color: '#418FAF' },
+}
 
-const FEATURES = [
-  { num:'01', dot:'#EA580C', title:"Bourse des appels d'offres", desc:'Publiez vos besoins, comparez des offres qualifiées et composez votre équipe projet.' },
-  { num:'02', dot:'#16A34A', title:'Marketplace intégrée', desc:'Accédez aux matériaux et équipements, commandez et faites livrer directement sur chantier.' },
-  { num:'03', dot:'#0891B2', title:'Suivi & paiements sécurisés', desc:"Pilotez l'avancement, validez les étapes et sécurisez chaque flux financier." },
-  { num:'04', dot:'#7C3AED', title:'Intelligence artificielle', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets.' },
+const V5_ROLES = [
+  { id: 'client', dataRole: 'client',
+    title: 'Je suis client',
+    desc: 'Pilotez votre projet de construction, rénovation ou aménagement avec clarté et suivi.',
+    icon: <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>,
+  },
+  { id: 'pro', dataRole: 'pro',
+    title: 'Je suis professionnel',
+    desc: 'Architecte, entreprise, BET ou prestataire : centralisez missions, offres et équipes.',
+    icon: <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+  },
+  { id: 'fournisseur', dataRole: 'four',
+    title: 'Je suis fournisseur',
+    desc: 'Référencez vos produits et services, recevez des demandes et gérez vos commandes.',
+    icon: <svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg>,
+  },
 ]
 
 const LOGO_COLORS = [
@@ -131,24 +128,12 @@ const FRN_ZONE_SECTIONS = [
   {title:'Couverture',zones:['Tout le territoire national','Zones rurales & villages']},
 ]
 
+// ─── Regex format RCCM / NCC (validation visuelle uniquement — INS-01) ─────
+const RCCM_RE = /^CI-ABJ-\d{4}-[A-Z]-\d{4,6}$/
+const TAX_RE = /^CI-\d{7}-[A-Z]$/
+
 // ─── SVG Components ─────────────────────────────────────────────────────────
 
-const ConstructionSVG = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 260" fill="none" style={{width:'100%',display:'block'}}>
-    <line x1="0" y1="232" x2="420" y2="232" stroke="#BBBBBB" strokeWidth="2"/>
-    <rect x="14" y="190" width="52" height="26" rx="4" stroke="#BBBBBB" strokeWidth="1.5"/>
-    <line x1="58" y1="198" x2="92" y2="152" stroke="#BBBBBB" strokeWidth="3" strokeLinecap="round"/>
-    <rect x="138" y="72" width="84" height="160" stroke="#BFBFBF" strokeWidth="1.8"/>
-    <line x1="138" y1="112" x2="222" y2="112" stroke="#CCCCCC" strokeWidth="1.2"/>
-    <line x1="138" y1="148" x2="222" y2="148" stroke="#CCCCCC" strokeWidth="1.2"/>
-    <rect x="166" y="196" width="24" height="36" rx="2" stroke="#CCCCCC" strokeWidth="1.5"/>
-    <line x1="276" y1="8" x2="276" y2="232" stroke="#BBBBBB" strokeWidth="2.8" strokeLinecap="round"/>
-    <line x1="276" y1="12" x2="390" y2="12" stroke="#BBBBBB" strokeWidth="2.2"/>
-    <rect x="318" y="190" width="88" height="32" rx="3" stroke="#BBBBBB" strokeWidth="1.5"/>
-    <circle cx="333" cy="226" r="9" stroke="#BBBBBB" strokeWidth="1.8"/>
-    <circle cx="388" cy="226" r="9" stroke="#BBBBBB" strokeWidth="1.8"/>
-  </svg>
-)
 const LogoSVG = () => (
   <svg width="36" height="36" viewBox="0 0 44 44" fill="none" style={{borderRadius:10,flexShrink:0}}>
     <rect width="44" height="44" fill="#1D1D1F"/><rect x="2" y="2" width="40" height="40" stroke="#FFFFFF" strokeWidth="2"/>
@@ -157,7 +142,43 @@ const LogoSVG = () => (
   </svg>
 )
 const CheckSVG = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-const ArrowSVG = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+const ArrowSVG = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+
+// ─── Page Header (gabarit unique v5 — 15 écrans) ───────────────────────────
+
+const PageHeader = memo(function PageHeader() {
+  return (
+    <header className="page-head">
+      <div className="ph-brand">
+        <div className="ph-mark">MEE<br/>REO</div>
+        <div className="ph-name">MEEREO</div>
+        <div className="ph-sep" />
+        <div className="ph-kind">Plateforme BTP et immobilier</div>
+      </div>
+      <p className="ph-tag">Tout votre projet, piloté d'un seul endroit.</p>
+      <div className="ph-pillars">
+        <span className="ph-p">Appels d'offres</span>
+        <span className="ph-p">Marketplace</span>
+        <span className="ph-p">Paiements</span>
+        <span className="ph-p is-kai">KAi, votre IA personnelle</span>
+      </div>
+    </header>
+  )
+})
+
+// ─── Stepper (barre d'étapes horizontale, couleur du rôle) ─────────────────
+
+function Stepper({ total, current }) {
+  return (
+    <div className="ob-stepper-v5">
+      {Array.from({ length: total }, (_, i) => {
+        const idx = i + 1
+        const cls = idx < current ? 'on' : idx === current ? 'now' : ''
+        return <i key={i} className={cls} />
+      })}
+    </div>
+  )
+}
 
 // ─── Shared Components ──────────────────────────────────────────────────────
 
@@ -186,41 +207,6 @@ const Chips = ({ items, selected, onToggle, multi = true }) => (
     })}
   </div>
 )
-
-const WizardLeftPanel = memo(function WizardLeftPanel({ steps, currentStep }) {
-  return (
-    <div className="wiz-panel-left">
-      <ConstructionSVG />
-      <div className="wiz-left-fade" />
-      <div className="wiz-left-content">
-        <div className="ob-logo-row"><LogoSVG /><div><div className="ob-logo-name">Meereo</div><div className="ob-logo-sub">Plateforme BTP & Immobilier — Cote d'Ivoire</div></div></div>
-        <div className="wiz-left-mid">
-          <div className="wiz-left-label">Votre inscription</div>
-          <div className="wiz-steps-col">
-            {steps.map((s,i) => {
-              const stepNum = i + 1
-              const active = currentStep === stepNum
-              const done = currentStep > stepNum
-              return (
-                <div key={s.key}>
-                  <div className={`wiz-step-row ${active ? 'active' : ''}`}>
-                    <div className={`wiz-step-num ${done||active ? 'filled' : ''}`}>{done ? <CheckSVG /> : stepNum}</div>
-                    <span className={`wiz-step-text ${active ? 'active' : ''}`}>{s.label}</span>
-                  </div>
-                  {i < steps.length-1 && <div className="wiz-step-line" />}
-                </div>
-              )
-            })}
-          </div>
-          <div className="wiz-security-card">
-            <div className="wiz-security-title" style={{display:'flex',alignItems:'center',gap:5}}><Lock size={13}/> Vos données sont protégées</div>
-            <div className="wiz-security-desc">Chiffrement SSL · Conformité RGPD · Hébergement sécurisé</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-})
 
 // ─── Validation helpers ─────────────────────────────────────────────────────
 
@@ -310,7 +296,9 @@ export default function Onboarding() {
 
   // ─── State ──────────────────────────────────────────────────────────────
   const [screen, setScreen] = useState('auth')   // auth | wizard | done
+  const [authView, setAuthView] = useState('login') // login | forgot | sent | role
   const [userType, setUserType] = useState(null)  // pro | client | fournisseur
+  const [selectedRole, setSelectedRole] = useState('client') // role selection on role screen
   const [wizStep, setWizStep] = useState(1)
   const [steps, setSteps] = useState([])          // from GET /api/onboarding/steps/:role
   const [draftId, setDraftId] = useState(null)
@@ -321,6 +309,9 @@ export default function Onboarding() {
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [showLoginPwd, setShowLoginPwd] = useState(false)
+
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState('')
 
   // Form state — single object for all roles
   const [form, setForm] = useState({
@@ -352,6 +343,14 @@ export default function Onboarding() {
   const schemaKey = userType && currentStepKey ? `${userType}_${currentStepKey}` : null
   const schema = schemaKey ? SCHEMAS[schemaKey] || {} : {}
   const { isValid } = useStepForm(form, schema)
+
+  // ─── Role metadata ───────────────────────────────────────────────────
+  const roleMeta = userType ? ROLE_META[userType] : ROLE_META.client
+  const dataActiveRole = roleMeta?.dataRole || 'client'
+  // Total steps including "role" as step 1
+  const totalSteps = steps.length + 1
+  // Current step index (role=1, then wizard steps)
+  const currentStepIdx = wizStep + 1
 
   // ─── Fetch steps from API when role is selected (INS-15) ──────────────
   useEffect(() => {
@@ -391,7 +390,7 @@ export default function Onboarding() {
 
   const goBack = useCallback(() => {
     if (wizStep > 1) setWizStep(s => s - 1)
-    else { setScreen('auth'); setSteps([]) }
+    else { setScreen('auth'); setAuthView('role'); setSteps([]) }
   }, [wizStep])
 
   const startWizard = useCallback((type) => {
@@ -557,118 +556,182 @@ export default function Onboarding() {
   // ═══════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="onboarding-shell">
+    <div className="onboarding-shell" data-active-role={dataActiveRole}>
 
-      {/* ════ AUTH SCREEN ════ */}
+      {/* ════ AUTH SCREENS (login / forgot / sent / role) ════ */}
       {screen === 'auth' && (
         <div className="ob-screen">
-          <div className="ob-left">
-            <div className="ob-z1">
-              <div className="ob-logo-row"><span style={{fontSize:28,lineHeight:1}}>🇨🇮</span><LogoSVG /><div><div className="ob-brand">MEEREO</div><div className="ob-brand-sub">Plateforme BTP et Immobilier — Côte-d'Ivoire</div></div></div>
-              <div className="ob-z3"><span className="ob-z3-dot" /> ACTUELLEMENT DISPONIBLE QU'EN CÔTE D'IVOIRE</div>
-            </div>
-            <div className="ob-z2" />
-            <h1 className="ob-z4">Structure, pilote et sécurise<br/><em>vos projets</em><br/><em>immobiliers.</em></h1>
-            <p className="ob-z5">Centralisez chaque acteur, chaque étape et chaque décision sur une seule plateforme.</p>
-            <div className="ob-z6">
-              {FEATURES.map(f => (
-                <div key={f.num} className="ob-z6-item"><span className="ob-z6-num">{f.num}</span><div><div className="ob-z6-hdr"><div className="ob-z6-dot" style={{background:f.dot}} /><div className="ob-z6-title">{f.title}</div></div><div className="ob-z6-text">{f.desc}</div></div></div>
-              ))}
-            </div>
-          </div>
-          <div className="ob-panel-white ob-panel-white--auth">
-            <div className="ob-auth-content">
-              <div className="ob-auth-intro">
-                <div className="ob-badge" style={{marginBottom:14}}><div className="ob-badge-dot" style={{width:8,height:8}} /><span style={{fontSize:13}}>Choisissez votre rôle sur la plateforme</span></div>
-                <div className="ob-auth-headline">Une entrée pensée pour chaque acteur du projet.</div>
-              </div>
-              <div className="ob-auth-card">
-                <div className="ob-auth-card-title">Accédez à votre espace MEEREO</div>
-                <div style={{fontSize:11.5,fontWeight:500,color:'var(--t4)',marginTop:10}}>Votre centre de pilotage immobilier.</div>
+          <PageHeader />
 
-                {/* Login */}
-                <div style={{marginTop:18}}>
-                  <Field label="Email"><input className="ob-input" type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} placeholder="mon@email.ci" onKeyDown={e=>e.key==='Enter'&&handleLogin()}/></Field>
-                  <Field label="Mot de passe">
-                    <div style={{position:'relative'}}>
-                      <input className="ob-input" type={showLoginPwd?'text':'password'} value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} placeholder="••••••••" onKeyDown={e=>e.key==='Enter'&&handleLogin()} style={{paddingRight:40}}/>
-                      <button type="button" onClick={()=>setShowLoginPwd(!showLoginPwd)} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:12,color:'var(--t3)'}}>{showLoginPwd?'Masquer':'Voir'}</button>
+          {/* ── LOGIN ── */}
+          {authView === 'login' && (
+            <div className="ob-card-v5">
+              <div className="ob-eyebrow-v5">Connexion</div>
+              <h1 className="ob-title-v5">Bienvenue.</h1>
+              <p className="ob-lede-v5">Heureux de vous revoir.</p>
+
+              <div className="ob-field">
+                <label className="ob-label-v5">Email</label>
+                <input className="ob-input-v5" type="email" value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)} placeholder="contact@entreprise.com"
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+              </div>
+              <div className="ob-field">
+                <div className="ob-label-row-v5">
+                  <label className="ob-label-v5" style={{marginBottom:0}}>Mot de passe</label>
+                  <span className="ob-link-v5" onClick={() => setAuthView('forgot')}>Mot de passe oublié ?</span>
+                </div>
+                <div style={{position:'relative',marginTop:8}}>
+                  <input className="ob-input-v5" type={showLoginPwd ? 'text' : 'password'}
+                    value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
+                    placeholder="••••••••" onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    style={{paddingRight:60}} />
+                  <button type="button" className="ob-reveal-v5" onClick={() => setShowLoginPwd(!showLoginPwd)}>
+                    {showLoginPwd ? 'Masquer' : 'Afficher'}
+                  </button>
+                </div>
+              </div>
+
+              <button className="ob-btn-role" style={{background:'var(--ink)',marginTop:8}} onClick={handleLogin}>
+                Connexion
+              </button>
+              <div className="ob-divider-v5">ou</div>
+              <button className="ob-btn-sec-v5" style={{width:'100%'}} onClick={() => setAuthView('role')}>
+                Créer un espace
+              </button>
+              <div className="ob-trust">
+                <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                Connexion sécurisée · SSL · RGPD
+              </div>
+            </div>
+          )}
+
+          {/* ── FORGOT PASSWORD ── */}
+          {authView === 'forgot' && (
+            <div className="ob-card-v5">
+              <div className="ob-eyebrow-v5">Récupération</div>
+              <h1 className="ob-title-v5">Mot de passe oublié.</h1>
+              <p className="ob-lede-v5">Saisissez votre email : nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+
+              <div className="ob-field">
+                <label className="ob-label-v5">Email</label>
+                <input className="ob-input-v5" type="email" value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)} placeholder="contact@entreprise.com"
+                  onKeyDown={e => e.key === 'Enter' && setAuthView('sent')} />
+              </div>
+              <button className="ob-btn-role" style={{background:'var(--ink)',marginTop:8}}
+                onClick={() => setAuthView('sent')}>
+                Envoyer le lien
+              </button>
+              <div className="ob-foot-v5">
+                ← <span className="link" onClick={() => setAuthView('login')}>Retour à la connexion</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── EMAIL SENT ── */}
+          {authView === 'sent' && (
+            <div className="ob-card-v5">
+              <div className="ob-eyebrow-v5">Récupération</div>
+              <h1 className="ob-title-v5">Vérifiez vos emails.</h1>
+              <p className="ob-lede-v5">Un lien de réinitialisation vient d'être envoyé. Il est valable 30 minutes.</p>
+
+              <div className="ob-msg-ok">
+                <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+                <span>Si aucun email n'arrive, vérifiez vos spams ou réessayez dans quelques instants.</span>
+              </div>
+              <div className="ob-foot-v5">
+                ← <span className="link" onClick={() => setAuthView('login')}>Retour à la connexion</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── ROLE SELECTION (Vous êtes…) ── */}
+          {authView === 'role' && (
+            <div className="ob-card-v5 wide">
+              <div className="ob-eyebrow-v5">
+                <span>Inscription</span>
+                <span className="ob-step-count-v5">Étape 1</span>
+              </div>
+              <h1 className="ob-title-v5">Vous êtes…</h1>
+              <p className="ob-lede-v5">Choisissez le rôle qui correspond à votre activité. Votre parcours sera adapté.</p>
+
+              <div className="ob-roles-v5">
+                {V5_ROLES.map(r => (
+                  <div key={r.id} className={`ob-role-v5 ${selectedRole === r.id ? 'sel' : ''}`}
+                    data-role={r.dataRole}
+                    onClick={() => setSelectedRole(r.id)}>
+                    <div className="ob-role-ic-v5">{r.icon}</div>
+                    <div style={{flex:1}}>
+                      <div className="ob-role-t-v5">{r.title}</div>
+                      <div className="ob-role-d-v5">{r.desc}</div>
                     </div>
-                  </Field>
-                  <button className="ob-btn-blk" style={{width:'100%',marginTop:10}} onClick={handleLogin}>Se connecter</button>
-                </div>
-
-                {/* Role selection */}
-                <div style={{marginTop:28}}>
-                  <div style={{fontSize:13,fontWeight:600,marginBottom:12,color:'var(--t2)'}}>Ou créez votre espace</div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                    {CARDS.map(c => (
-                      <button key={c.id} className="ob-role-card" onClick={() => startWizard(c.id)}>
-                        <div style={{width:36,height:36,borderRadius:10,background:c.iconBg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{c.icon}</div>
-                        <div style={{flex:1,textAlign:'left'}}>
-                          <div style={{fontSize:13,fontWeight:700}}>{c.title}</div>
-                          <div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>{c.description}</div>
-                        </div>
-                        <ArrowSVG />
-                      </button>
-                    ))}
+                    <div className="ob-role-radio-v5" />
                   </div>
-                </div>
+                ))}
+              </div>
+
+              <button className="ob-btn-role" style={{marginTop:8}}
+                onClick={() => startWizard(selectedRole)}>
+                Continuer →
+              </button>
+              <div className="ob-foot-v5">
+                Déjà un compte ? <span className="link" onClick={() => setAuthView('login')}>Se connecter</span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* ════ WIZARD SCREEN ════ */}
+      {/* ════ WIZARD SCREEN (single column + stepper) ════ */}
       {screen === 'wizard' && steps.length > 0 && (
         <div className="ob-screen">
-          <WizardLeftPanel steps={steps} currentStep={wizStep} />
-          <div className="ob-panel-white">
-            <div className="ob-form-wrap" style={{maxWidth:440}}>
-              <div className="ob-form-title">{steps[wizStep-1]?.label || ''}</div>
+          <PageHeader />
+          <div className="ob-card-v5 wide">
+            <div className="ob-eyebrow-v5">
+              <span>Inscription · <span className="ob-role-dot">{roleMeta.label}</span></span>
+              <span className="ob-step-count-v5">Étape {currentStepIdx}</span>
+            </div>
+            <Stepper total={totalSteps} current={currentStepIdx} />
 
-              {/* ── STEP CONTENT ── */}
-              {renderStep(userType, currentStepKey, form, set, toggleArr, handleLogoUpload)}
+            <h1 className="ob-title-v5">{steps[wizStep-1]?.label ? `${steps[wizStep-1].label}.` : ''}</h1>
 
-              {/* ── NAVIGATION ── */}
-              <div className="wiz-nav">
-                <button className="ob-btn-out" onClick={goBack}>
-                  {wizStep === 1 ? '← Rôle' : '← Retour'}
-                </button>
-                <button
-                  className="ob-btn-blk"
-                  disabled={!isValid || submitting}
-                  style={(!isValid || submitting) ? {opacity:.5,cursor:'not-allowed'} : undefined}
-                  onClick={goNext}
-                >
-                  {submitting ? 'Création...' : wizStep === steps.length ? 'Créer mon compte' : 'Étape suivante'}
-                  {!submitting && wizStep < steps.length && <> <ArrowSVG /></>}
-                </button>
-              </div>
+            {/* ── STEP CONTENT ── */}
+            {renderStep(userType, currentStepKey, form, set, toggleArr, handleLogoUpload)}
 
+            {/* ── NAVIGATION ── */}
+            <div className="wiz-nav-v5">
+              <button className="ob-btn-out" style={{flex:2}} onClick={goBack}>
+                {wizStep === 1 ? '← Rôle' : '← Retour'}
+              </button>
+              <button
+                className="ob-btn-role"
+                style={{flex:3, ...((!isValid || submitting) ? {opacity:.5,cursor:'not-allowed'} : {})}}
+                disabled={!isValid || submitting}
+                onClick={goNext}
+              >
+                {submitting ? 'Création...' : wizStep === steps.length ? 'Créer mon compte' : 'Continuer →'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ════ DONE SCREEN (DoneStep du paquet) ════ */}
+      {/* ════ DONE SCREEN (role-specific) ════ */}
       {screen === 'done' && doneData && (
         <div className="ob-screen">
-          <WizardLeftPanel steps={steps} currentStep={steps.length + 1} />
-          <div className="ob-panel-white">
-            <div className="ob-form-wrap" style={{maxWidth:440}}>
-              <DoneStep
-                role={userType}
-                email={doneData.email}
-                warnings={doneData.warnings}
-                onNavigate={() => {
-                  if (userType === 'client') navigate('/client')
-                  else if (userType === 'fournisseur') navigate('/fournisseur')
-                  else navigate('/cockpit')
-                }}
-              />
-            </div>
+          <PageHeader />
+          <div className="ob-card-v5" style={{maxWidth: userType === 'client' ? 560 : 440}}>
+            <DoneStep
+              role={userType}
+              email={doneData.email}
+              warnings={doneData.warnings}
+              onNavigate={() => {
+                if (userType === 'client') navigate('/client')
+                else if (userType === 'fournisseur') navigate('/fournisseur')
+                else navigate('/cockpit')
+              }}
+            />
           </div>
         </div>
       )}
@@ -677,7 +740,7 @@ export default function Onboarding() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// STEP RENDERERS — source: steps.parts.tsx du paquet, habillage Tailwind actuel
+// STEP RENDERERS — source: steps.parts.tsx du paquet, habillage v5
 // ═════════════════════════════════════════════════════════════════════════════
 
 function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload) {
@@ -700,72 +763,82 @@ function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload) {
 
 function AccountStep({ role, form, set }) {
   return <>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Ces informations sont obligatoires pour créer votre espace.</p>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Prénom" required><input className="ob-input" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Kofi" autoComplete="given-name"/></Field>
-      <Field label="Nom" required><input className="ob-input" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Yao" autoComplete="family-name"/></Field>
+      <Field label="Prénom" required><input className="ob-input" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Jean-Marc" autoComplete="given-name"/></Field>
+      <Field label="Nom" required><input className="ob-input" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Troh" autoComplete="family-name"/></Field>
     </div>
     <Field label="Adresse e-mail" required>
-      <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@monentreprise.ci" autoComplete="email"/>
+      <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@entreprise.com" autoComplete="email"/>
     </Field>
-    <PhoneField form={form} set={set} />
-    <Field label="Ville" required={role !== 'client'}>
-      <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
-        <option value="">— Choisir —</option>
-        {VILLES_CI.map(v=><option key={v}>{v}</option>)}
-      </select>
-    </Field>
-    <Field label="Mot de passe" required hint="10 caractères minimum, une lettre, un chiffre.">
-      <PasswordInput value={form.password} onChange={v=>set('password',v)} placeholder="10+ caractères" />
-    </Field>
-    <Field label="Confirmation du mot de passe" required>
-      <input className="ob-input" type="password" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} placeholder="••••••••" autoComplete="new-password"/>
-    </Field>
-    {/* INS-10 — consentements explicites, jamais pré-cochés */}
-    <div style={{marginTop:14,display:'flex',flexDirection:'column',gap:8}}>
-      <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t2)',cursor:'pointer',lineHeight:1.5}}>
-        <input type="checkbox" checked={!!form.cgu} onChange={e=>set('cgu',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
-        <span>J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>conditions générales</a> et la <a href="/confidentialite" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>politique de confidentialité</a>. *</span>
-      </label>
-      <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t3)',cursor:'pointer',lineHeight:1.5}}>
-        <input type="checkbox" checked={!!form.comms} onChange={e=>set('comms',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
-        <span>Recevoir les communications MEEREO (facultatif).</span>
-      </label>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <PhoneField form={form} set={set} />
+      <Field label="Ville" required={role !== 'client'}>
+        <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
+          <option value="">— Choisir —</option>
+          {VILLES_CI.map(v=><option key={v}>{v}</option>)}
+        </select>
+      </Field>
     </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <Field label="Mot de passe" required hint="10 caractères minimum, une lettre, un chiffre.">
+        <PasswordInput value={form.password} onChange={v=>set('password',v)} placeholder="10+ caractères" />
+      </Field>
+      <Field label="Confirmer" required>
+        <input className="ob-input" type="password" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} placeholder="••••••••" autoComplete="new-password"/>
+      </Field>
+    </div>
+    {/* INS-10 — consentements explicites, jamais pré-cochés */}
+    <label className="ob-cgu-v5">
+      <input type="checkbox" checked={!!form.cgu} onChange={e=>set('cgu',e.target.checked)} />
+      <span>J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer">conditions générales d'utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener noreferrer">politique de confidentialité</a>. *
+        <small>Version 2026-07-CI-v1 — votre acceptation est horodatée et conservée</small>
+      </span>
+    </label>
   </>
 }
 
-// ── ProStructureStep (Votre entreprise) — source: steps.parts.tsx ────────────
+// ── ProStructureStep (Votre structure) — avec validation RCCM/NCC visuelle ──
 
 function ProStructureStep({ form, set, toggleArr }) {
   return <>
-    <Field label="Raison sociale" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Mon cabinet"/></Field>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Renseignez votre entreprise. Logo, portfolio et équipe se complètent ensuite depuis le cockpit.</p>
+    <Field label="Nom de la structure" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Ex : Traoré Architecture & Design"/></Field>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Numéro RCCM" required hint="Format : CI-ABJ-AAAA-X-NNNNN">
-        <input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/>
-      </Field>
-      <Field label="N° de contribuable" required>
-        <input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="1234567A"/>
-      </Field>
+      <LegalField label="N° RCCM" value={form.rccm} onChange={v=>set('rccm',v)}
+        regex={RCCM_RE} hint="Format : CI-ABJ-AAAA-X-NNNNN" errMsg="Format attendu : CI-ABJ-AAAA-X-NNNNN"
+        placeholder="CI-ABJ-2024-B-12345" />
+      <LegalField label="N° Contribuable" value={form.ncc} onChange={v=>set('ncc',v)}
+        regex={TAX_RE} hint="Format : CI-NNNNNNN-X" errMsg="Format attendu : CI-NNNNNNN-X"
+        placeholder="CI-0000000-A" />
     </div>
     <Field label="Secteurs d'activité" required>
       <Chips items={PRO_SECTEURS} selected={form.secteurs} onToggle={v=>toggleArr('secteurs',v)} />
     </Field>
+    <div className="ob-msg-ok" style={{marginTop:16}}>
+      <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+      <span><strong>Vérification en deux temps.</strong> Numéros uniques et liés à un seul compte MEEREO. La <strong>vérification officielle par KAi</strong> aura lieu au dépôt de votre RCCM (section Documents) et activera le badge « Vérifié par MEEREO ».</span>
+    </div>
   </>
 }
 
-// ── SupplierStructureStep (Votre entreprise) — source: steps.parts.tsx ───────
-// Inclut catégories vendues, modes et zones de livraison, délai (MKT-06 §2-3).
+// ── SupplierStructureStep (Votre structure) — avec validation RCCM/NCC ──────
 
 function SupplierStructureStep({ form, set, toggleArr }) {
   return <>
-    <Field label="Raison sociale" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="MatériCI SARL"/></Field>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Renseignez votre entreprise. Catalogue et zones de livraison se complètent depuis votre espace.</p>
+    <Field label="Nom de l'entreprise" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Ex : Matériaux Pro CI"/></Field>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Numéro RCCM" required hint="Format : CI-ABJ-AAAA-X-NNNNN">
-        <input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/>
-      </Field>
-      <Field label="N° de contribuable" required>
-        <input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="1234567A"/>
-      </Field>
+      <LegalField label="N° RCCM" value={form.rccm} onChange={v=>set('rccm',v)}
+        regex={RCCM_RE} hint="Format : CI-ABJ-AAAA-X-NNNNN" errMsg="Format attendu : CI-ABJ-AAAA-X-NNNNN"
+        placeholder="CI-ABJ-2024-B-12345" />
+      <LegalField label="N° Contribuable" value={form.ncc} onChange={v=>set('ncc',v)}
+        regex={TAX_RE} hint="Format : CI-NNNNNNN-X" errMsg="Format attendu : CI-NNNNNNN-X"
+        placeholder="CI-0000000-A" />
+    </div>
+    <div className="ob-msg-ok" style={{marginTop:16}}>
+      <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+      <span><strong>Vérification en deux temps.</strong> Numéros uniques et liés à un seul compte MEEREO. La <strong>vérification officielle par KAi</strong> aura lieu au dépôt de votre RCCM et activera le badge « Vérifié par MEEREO ».</span>
     </div>
     <Field label="Catégories vendues" required>
       <Chips items={MARKETPLACE_CATEGORIES} selected={form.categories} onToggle={v=>toggleArr('categories',v)} />
@@ -792,7 +865,7 @@ function SupplierStructureStep({ form, set, toggleArr }) {
 function LogoStep({ form, set, handleLogoUpload }) {
   const fileRef = useRef()
   return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Facultatif. Sans logo, vos initiales vous représentent — vous pourrez en ajouter un à tout moment.</div>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Générez un logo avec KAi, ou importez le vôtre. Un seul logo reste actif.</p>
     <div style={{display:'flex',gap:10,marginBottom:16}}>
       <button className={`ob-tab ${form.logoTab==='generate'?'active':''}`} onClick={()=>set('logoTab','generate')}>Générer</button>
       <button className={`ob-tab ${form.logoTab==='upload'?'active':''}`} onClick={()=>set('logoTab','upload')}>Uploader</button>
@@ -842,22 +915,28 @@ function LogoStep({ form, set, handleLogoUpload }) {
 
 function SupplierPayoutStep({ form, set }) {
   return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Les acheteurs vous règlent directement. Ce numéro reçoit vos paiements.</div>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Les acheteurs vous règlent directement. Ce numéro reçoit vos paiements.</p>
+    <div className="ob-msg-info" style={{marginBottom:16}}>
+      <span><strong>MEEREO n'encaisse pas à votre place.</strong> Sans ce moyen de réception, aucune vente n'est possible — et rien ne peut être rattrapé côté plateforme.</span>
+    </div>
     <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
       {PAYOUT_METHODS.map(m => (
         <button key={m.id} type="button" onClick={()=>set('payoutType',m.id)}
-          style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:10,border:form.payoutType===m.id?'2px solid #7C3AED':'1px solid var(--border-card)',background:form.payoutType===m.id?'rgba(124,58,237,.04)':'transparent',cursor:'pointer',textAlign:'left'}}>
+          className={`ob-payout-pick ${form.payoutType===m.id ? 'active' : ''}`}
+          style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:10,border:form.payoutType===m.id?'2px solid var(--role-four)':'1px solid var(--border-card)',background:form.payoutType===m.id?'rgba(65,143,175,.04)':'transparent',cursor:'pointer',textAlign:'left'}}>
           <span style={{fontSize:20}}>{m.icon}</span>
           <span style={{fontSize:13,fontWeight:600}}>{m.label}</span>
         </button>
       ))}
     </div>
-    <Field label="Numéro mobile" required hint="Un numéro mobile est requis pour le Mobile Money.">
-      <input className="ob-input" value={form.payoutPhone} onChange={e=>set('payoutPhone',e.target.value)} placeholder="+225 07 00 00 00" autoComplete="tel"/>
-    </Field>
-    <Field label="Titulaire du compte" required>
-      <input className="ob-input" value={form.payoutHolder} onChange={e=>set('payoutHolder',e.target.value)} placeholder="Nom complet du titulaire"/>
-    </Field>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <Field label="Numéro mobile" required hint="Un numéro mobile est requis pour le Mobile Money.">
+        <input className="ob-input" value={form.payoutPhone} onChange={e=>set('payoutPhone',e.target.value)} placeholder="+225 07 00 00 00" autoComplete="tel"/>
+      </Field>
+      <Field label="Titulaire du compte" required>
+        <input className="ob-input" value={form.payoutHolder} onChange={e=>set('payoutHolder',e.target.value)} placeholder="Nom complet du titulaire"/>
+      </Field>
+    </div>
   </>
 }
 
@@ -867,16 +946,18 @@ function SupplierPayoutStep({ form, set }) {
 function SupplierProductStep({ form, set, toggleArr }) {
   const onQuote = form.pricingMode === 'ON_QUOTE'
   return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Facultatif. Vous pourrez enrichir votre catalogue depuis votre espace.</div>
-    <Field label="Nom du produit"><input className="ob-input" value={form.productName} onChange={e=>set('productName',e.target.value)} placeholder="Ciment CEM II 42.5"/></Field>
-    <Field label="Catégorie">
-      <Chips items={MARKETPLACE_CATEGORIES} selected={form.productCategory ? [form.productCategory] : []}
-        onToggle={v => set('productCategory', form.productCategory === v ? '' : v)} multi={false} />
-    </Field>
-    <Field label="Unité de vente">
-      <Chips items={SALE_UNITS} selected={form.productUnit ? [form.productUnit] : []}
-        onToggle={v => set('productUnit', form.productUnit === v ? '' : v)} multi={false} />
-    </Field>
+    <p className="ob-lede-v5" style={{marginTop:-10}}>Référencez un premier matériau pour lancer votre catalogue. Vous en ajouterez d'autres depuis votre espace.</p>
+    <Field label="Nom du produit"><input className="ob-input" value={form.productName} onChange={e=>set('productName',e.target.value)} placeholder="Ex : Ciment CPA 42.5 — sac 50 kg"/></Field>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <Field label="Catégorie">
+        <Chips items={MARKETPLACE_CATEGORIES} selected={form.productCategory ? [form.productCategory] : []}
+          onToggle={v => set('productCategory', form.productCategory === v ? '' : v)} multi={false} />
+      </Field>
+      <Field label="Unité de vente">
+        <Chips items={SALE_UNITS} selected={form.productUnit ? [form.productUnit] : []}
+          onToggle={v => set('productUnit', form.productUnit === v ? '' : v)} multi={false} />
+      </Field>
+    </div>
     <Field label="Stock disponible">
       <input className="ob-input" type="number" value={form.productStock} onChange={e=>set('productStock',e.target.value)} placeholder="100" min="0"/>
     </Field>
@@ -898,38 +979,120 @@ function SupplierProductStep({ form, set, toggleArr }) {
         <Package size={14} /> Catalogue vide — vous pourrez ajouter des produits plus tard.
       </div>
     )}
+    <div className="ob-foot-v5" style={{marginTop:16}}>
+      <span className="link" onClick={() => {}}>Passer cette étape</span>
+    </div>
   </>
 }
 
-// ── DoneStep — source: steps.parts.tsx DoneStep ─────────────────────────────
-// INS-09 : le bandeau AFFICHE L'ADRESSE pour permettre à l'utilisateur de
-// voir une éventuelle faute de frappe.
+// ── DoneStep — role-specific (v5) ──────────────────────────────────────────
+// Client : « Et maintenant ? » + actions
+// Pro : « Votre cockpit est prêt »
+// Fournisseur : « Votre marketplace est prête » + avertissement catalogue vide
 
 function DoneStep({ role, email, warnings, onNavigate }) {
-  return (
-    <div style={{textAlign:'center',padding:'24px 0'}}>
-      <div style={{width:56,height:56,borderRadius:'50%',background:'rgba(22,163,74,.08)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
-        <CheckCircle2 size={28} color="#16A34A" />
-      </div>
-      <div className="ob-form-title" style={{marginBottom:8}}>Votre compte est créé</div>
+  // ── Client done ──
+  if (role === 'client') {
+    return (
+      <div>
+        <div className="ob-eyebrow-v5">
+          <span>Inscription · Client</span>
+          <span className="ob-step-count-v5">Dernière étape</span>
+        </div>
+        <h1 className="ob-title-v5">Et maintenant ?</h1>
+        <p className="ob-lede-v5">Votre compte est créé et vous êtes déjà connecté. Voici comment démarrer.</p>
 
-      {/* INS-09 — bandeau de vérification d'adresse */}
-      <div style={{padding:'14px 16px',borderRadius:12,background:'rgba(37,99,235,.06)',border:'1px solid rgba(37,99,235,.15)',marginBottom:16,textAlign:'left'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-          <Mail size={14} color="#2563EB" />
-          <span style={{fontSize:12,fontWeight:600,color:'#2563EB'}}>Confirmez votre adresse</span>
+        <div className="ob-msg-ok">
+          <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+          <span>Votre compte est créé et vous êtes déjà connecté.</span>
         </div>
-        <div style={{fontSize:11.5,color:'var(--t2)',lineHeight:1.5}}>
-          Un lien de vérification a été envoyé à <strong>{email}</strong>.
+
+        {/* INS-09 — bandeau de correction d'adresse */}
+        <div className="ob-msg-info" style={{marginTop:16}}>
+          <span><strong>Confirmez votre adresse.</strong> Un lien a été envoyé à <strong>{email}</strong>.{' '}
+            <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Renvoyer le lien</a> · {' '}
+            <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Corriger mon adresse</a>
+          </span>
         </div>
-        <div style={{display:'flex',gap:8,marginTop:10}}>
-          <button className="ob-btn-out" style={{fontSize:11,padding:'5px 12px'}}>Renvoyer le lien</button>
-          <button className="ob-btn-out" style={{fontSize:11,padding:'5px 12px'}}>Corriger mon adresse</button>
+
+        <button className="ob-btn-role btn-tall" style={{marginTop:20}} onClick={onNavigate}>
+          Publier un appel d'offres
+          <span className="sub">Recevez plusieurs devis d'entreprises qualifiées à comparer</span>
+        </button>
+        <button className="ob-btn-sec-v5" style={{marginTop:12}} onClick={onNavigate}>
+          Chercher un professionnel dans l'annuaire
+          <span className="sub">Parcourez les architectes et entreprises disponibles</span>
+        </button>
+
+        <div className="ob-foot-v5" style={{marginTop:16}}>
+          <span className="link" onClick={onNavigate}>Accéder à mon espace</span>
         </div>
+      </div>
+    )
+  }
+
+  // ── Pro done ──
+  if (role === 'pro') {
+    return (
+      <div>
+        <div className="ob-eyebrow-v5">
+          <span>Inscription · Professionnel</span>
+          <span className="ob-step-count-v5">Terminé</span>
+        </div>
+        <h1 className="ob-title-v5">Votre cockpit est prêt.</h1>
+        <p className="ob-lede-v5">Votre espace professionnel est configuré. Vous pouvez recevoir des appels d'offres.</p>
+
+        <div className="ob-msg-ok">
+          <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+          <span>Page publique, missions, équipe et messagerie sont accessibles depuis votre cockpit.</span>
+        </div>
+
+        <div className="ob-msg-info" style={{marginTop:16}}>
+          <span><strong>Confirmez votre adresse.</strong> Un lien a été envoyé à <strong>{email}</strong>.{' '}
+            <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Renvoyer le lien</a> · {' '}
+            <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Corriger mon adresse</a>
+          </span>
+        </div>
+
+        <div className="ob-msg-info" style={{marginTop:10}}>
+          <span>Votre <strong>page publique est créée en brouillon</strong>. Elle ne sera visible qu'une fois publiée depuis votre espace.</span>
+        </div>
+
+        <button className="ob-btn-role" style={{marginTop:20}} onClick={onNavigate}>
+          Accéder au cockpit →
+        </button>
+      </div>
+    )
+  }
+
+  // ── Fournisseur done ──
+  return (
+    <div>
+      <div className="ob-eyebrow-v5">
+        <span>Inscription · Fournisseur</span>
+        <span className="ob-step-count-v5">Terminé</span>
+      </div>
+      <h1 className="ob-title-v5">Votre marketplace est prête.</h1>
+      <p className="ob-lede-v5">Votre espace fournisseur est configuré. Vous pouvez commencer à vendre sur MEEREO.</p>
+
+      <div className="ob-msg-ok">
+        <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+        <span>Catalogue, commandes, ventes et zones de livraison sont accessibles depuis votre espace.</span>
+      </div>
+
+      <div className="ob-msg-info" style={{marginTop:16}}>
+        <span><strong>Confirmez votre adresse.</strong> Un lien a été envoyé à <strong>{email}</strong>.{' '}
+          <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Renvoyer le lien</a> · {' '}
+          <a href="#" onClick={e=>e.preventDefault()} style={{color:'var(--ink)',textDecoration:'underline'}}>Corriger mon adresse</a>
+        </span>
+      </div>
+
+      <div className="ob-msg-info" style={{marginTop:10}}>
+        <span>Votre <strong>page publique est créée en brouillon</strong>. Elle ne sera visible qu'une fois publiée depuis votre espace.</span>
       </div>
 
       {warnings.length > 0 && (
-        <div style={{marginBottom:16,textAlign:'left'}}>
+        <div style={{marginTop:10}}>
           {warnings.map(w => (
             <div key={w} style={{padding:'8px 12px',borderRadius:8,background:'rgba(234,88,12,.06)',fontSize:11,color:'#B45309',marginBottom:6,lineHeight:1.5}}>
               {w}
@@ -938,15 +1101,46 @@ function DoneStep({ role, email, warnings, onNavigate }) {
         </div>
       )}
 
-      {role !== 'client' && (
-        <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.5,marginBottom:16}}>
-          Votre page publique est créée en <strong>brouillon</strong>. Elle ne sera visible qu'une fois publiée depuis votre espace.
+      <button className="ob-btn-role" style={{marginTop:20}} onClick={onNavigate}>
+        Accéder à mon espace →
+      </button>
+    </div>
+  )
+}
+
+// ─── Legal Field (RCCM / NCC — validation visuelle à la frappe) ─────────────
+// La validité du formulaire reste pilotée par useStepForm + SCHEMAS.
+// Ce composant ne fournit que la FORME visuelle des états (items 4 du v5).
+
+function LegalField({ label, value, onChange, regex, hint, errMsg, placeholder }) {
+  const upper = value.toUpperCase()
+  const empty = !upper.trim()
+  const valid = !empty && regex.test(upper)
+  const invalid = !empty && !regex.test(upper)
+
+  return (
+    <div className="ob-field">
+      <label className="ob-label-v2">{label} *</label>
+      <input
+        className={`ob-input ob-legal-input ${valid ? 'legal-ok' : ''} ${invalid ? 'legal-err' : ''}`}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{textTransform:'uppercase'}}
+      />
+      {empty && <div className="ob-legal-hint">{hint}</div>}
+      {valid && (
+        <div className="ob-legal-status s-ok">
+          <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+          Format valide
         </div>
       )}
-
-      <button className="ob-btn-blk" style={{width:'100%'}} onClick={onNavigate}>
-        Accéder à mon espace
-      </button>
+      {invalid && (
+        <div className="ob-legal-status s-err">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <span>{errMsg}</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<!--
+  ════════════════════════════════════════════════════════════════════════════
+  MEEREO — PARCOURS D'INSCRIPTION · v5 — 28 juillet 2026
+  Base : meereo_parcours_complet_v2.html (schéma en réseau + 14 animations KAi,
+  intégralement conservés). Référentiel : MEEREO_Specifications_v1.52.md
+
+  CE QUI CHANGE PAR RAPPORT À LA v2 — treize décisions prises depuis le 25/07 :
+
+   1. Mot de passe : 8 → 10 caractères, une lettre et un chiffre  (Annexe 1/2)
+   2. Téléphone obligatoire, format E.164, sans vérification SMS      (INS-08)
+   3. Ville obligatoire pour le pro et le fournisseur, pas le client  (INS-08)
+   4. Acceptation des CGU, versionnée et horodatée                    (INS-10)
+   5. Fil d'étapes dérivé du rôle : 2 / 4 / 6, plus 5 en dur          (INS-15)
+   6. Étape « premier projet » du client SUPPRIMÉE            (décision 27/07)
+   7. Recommandation KAi de fin de parcours retirée : sans données
+      d'entrée, elle serait une affirmation inventée                  (INS-16)
+   8. Étape d'ENCAISSEMENT ajoutée au fournisseur — sans elle il
+      terminait son inscription sans pouvoir vendre                (MKT-06 §4)
+   9. Numéro mobile exigé pour l'encaissement (pas de ligne fixe)  (MKT-06 §4)
+  10. « Sur devis » devient un ÉTAT explicite, plus un prix à zéro    (FIN-04)
+  11. Bandeau de correction d'adresse e-mail, affichant l'adresse     (INS-09)
+  12. Page publique créée EN BROUILLON                       (décision 27/07)
+  13. Brouillon serveur : aucun mot de passe conservé                 (INS-13)
+
+  ── v4 · retour MEEREO du 28/07 ────────────────────────────────────────────
+  14. Les carrés derrière les icônes du schéma sont RETIRÉS. La boîte est
+      conservée (alignement des traits), seuls fond et bordure disparaissent.
+      Le hub MEEREO garde la sienne : elle ancre le schéma et porte les halos.
+  15. Les couleurs de rôle de l'application existante sont reprises, mesurées
+      au pixel : Client #D9622B · Professionnel #743EE4 · Fournisseur #418FAF.
+  16. Chaque trait du schéma porte la couleur de son rôle. Le violet cesse
+      d'être la couleur du réseau — il ne signale plus que KAi, conformément à
+      la règle de sens inscrite dans les jetons.
+  17. La couleur suit l'utilisateur dans tout le parcours : cartes de choix,
+      fil d'étapes, pastille du libellé de rôle, bouton principal.
+
+  ── v5 · 28/07 ────────────────────────────────────────────────────────────
+  18. LA COLONNE DE GAUCHE EST RETIRÉE. Une seule colonne, la carte centrée.
+  19. Le discours du panneau est repris par un EN-TÊTE DE PAGE, injecté au-dessus
+      de la carte sur les quinze écrans depuis un gabarit unique :
+        MEEREO · Plateforme BTP et immobilier
+        « Tout votre projet, piloté d'un seul endroit. »
+        Appels d'offres · Marketplace · Paiements · KAi, votre IA personnelle
+  20. Correctifs : les constantes RCCM_RE / TAX_RE / TAKEN, disparues avec
+      buildReco(), sont restaurées — sans elles les parcours Professionnel et
+      Fournisseur ne pouvaient pas être terminés. Et le sous-titre du bouton
+      final du client n'est plus violet sur fond orange.
+
+  ⚠️ CONSÉQUENCE À CONNAÎTRE : le schéma en réseau et les animations KAi
+  vivaient DANS ce panneau. Ils ne sont plus visibles. Leur code reste dans le
+  fichier, inerte — `.brand{display:none}` suffit à les rétablir.
+  ════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEEREO — Parcours d'entrée complet</title>
+<style>
+  :root{
+    --noir:#08080A;--noir-deep:#050506;
+    --ink:#16181A;--grey:#727276;--grey-soft:#9A9A9E;
+    --line:#EAEAEC;--line-2:#F1F1F3;--bg:#FCFCFD;
+    --dark-line:rgba(255,255,255,.07);--dark-line-strong:rgba(255,255,255,.14);
+    --on-dark:#F6F5F3;--on-dark-dim:rgba(246,245,243,.46);--on-dark-faint:rgba(246,245,243,.22);
+    --panel:#111114;--panel-2:#17171B;--panel-line:rgba(255,255,255,.09);
+    --green:#2F9E5B;
+    /* ── Tokens KAi — identiques au design system KAi (KAi-specification-fonctionnement.md §9) ── */
+    --kai-avatar-bg:#15121F;
+    --kai-accent:#9086E8;--kai-accent-ring:rgba(144,134,232,.35);--kai-accent-dim:rgba(144,134,232,.14);
+    --kai-success:#2F9E5B;
+    --kai-pro-bg:#EEEDFE;--kai-pro-text:#3C3489;
+    --kai-on-dark:#F5F4FC;
+    /* Règle de sens (rappel) : le violet KAi ne sert qu'à signaler l'identité/l'attention de KAi — jamais un état de sélection ou de validation générique. */
+    /* ── Couleurs de rôle — PRÉLEVÉES sur l'application existante (28/07/2026) ──
+       Valeurs mesurées au pixel sur la capture du sélecteur de profil, non
+       estimées à l'œil :
+         Client       trait #D9622B  ·  fond #FCF3EE
+         Professionnel trait #743EE4  ·  fond #F4F0FD
+         Fournisseur   trait #418FAF  ·  fond #F0F6F9
+       Les variantes « -lit » sont éclaircies pour le panneau noir : #743EE4 et
+       #418FAF perdent trop de contraste sur #08080A. Sur fond clair, ce sont
+       les valeurs exactes de l'application qui s'appliquent. */
+    --role-client:#D9622B;--role-client-bg:#FCF3EE;--role-client-lit:#E8814F;
+    --role-pro:#743EE4;   --role-pro-bg:#F4F0FD;   --role-pro-lit:#9A73F0;
+    --role-four:#418FAF;  --role-four-bg:#F0F6F9;  --role-four-lit:#6BAECB;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+
+  /* ─────── SHELL : vitrine gauche + zone droite ─────── */
+  /* ── 28/07/2026 — la colonne de gauche est retirée : une seule colonne, la
+     carte est centrée. Le discours du panneau vitrine est repris par l'en-tête
+     de page, au-dessus de la carte. ── */
+  .screen{display:none;grid-template-columns:1fr;min-height:100vh}
+  .screen.active{display:grid;animation:screenIn .32s ease-out both}
+  @keyframes screenIn{from{opacity:0}to{opacity:1}}
+
+  /* ⚠️ display:none doit rester DANS cette règle. Une règle .brand{display:none}
+     ajoutée plus haut serait écrasée par celle-ci : même spécificité, déclarée
+     après. Le reste des propriétés est conservé pour pouvoir rétablir le
+     panneau en changeant une seule valeur. */
+  .brand{display:none;position:relative;overflow:hidden;background:var(--noir);color:var(--on-dark);
+    padding:52px 52px;flex-direction:column;justify-content:space-between;isolation:isolate}
+  .brand::before{content:"";position:absolute;inset:0;z-index:-3;
+    background:radial-gradient(120% 90% at 18% 6%, #131316 0%, #0A0A0C 44%, var(--noir-deep) 100%)}
+  .grid-layer{position:absolute;inset:0;z-index:-2;pointer-events:none;
+    background-image:linear-gradient(var(--dark-line) 1px,transparent 1px),linear-gradient(90deg,var(--dark-line) 1px,transparent 1px);
+    background-size:54px 54px;
+    -webkit-mask-image:radial-gradient(130% 100% at 15% 12%, #000 0%, rgba(0,0,0,.45) 55%, transparent 88%);
+            mask-image:radial-gradient(130% 100% at 15% 12%, #000 0%, rgba(0,0,0,.45) 55%, transparent 88%);opacity:.85}
+  .cote{position:absolute;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--on-dark-faint);z-index:-2}
+  .cote-a{left:16px;top:150px}.cote-b{right:40px;bottom:40px}
+  .halo{position:absolute;z-index:-1;top:-160px;right:-140px;width:520px;height:520px;pointer-events:none;
+    background:radial-gradient(circle at center, rgba(255,255,255,.10) 0%, rgba(255,255,255,.035) 42%, transparent 72%);
+    filter:blur(16px);animation:haloDrift 16s ease-in-out infinite}
+  @keyframes haloDrift{0%,100%{transform:translate(0,0) scale(1);opacity:.75}50%{transform:translate(-40px,64px) scale(1.14);opacity:1}}
+
+  .brand-top{position:relative}
+  .logo-row{display:flex;align-items:center;gap:13px;margin-bottom:32px}
+  /* Logo officiel MEEREO (26/07/2026) : carré noir, "MEE" / "REO" empilés en blanc — ne pas remplacer par un monogramme. */
+  .logo-mark{width:46px;height:46px;border-radius:10px;background:var(--noir);color:#fff;border:1px solid rgba(255,255,255,.4);
+    font-family:var(--sans);font-weight:700;font-size:9.5px;letter-spacing:.03em;line-height:1.4;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .logo-mark span{display:block}
+  .logo-name{font-weight:700;font-size:16px;letter-spacing:.16em}
+  .logo-sub{font-size:9.5px;letter-spacing:.18em;color:var(--on-dark-dim);margin-top:4px;text-transform:uppercase}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--on-dark-dim);
+    display:flex;align-items:center;gap:9px;margin-bottom:16px}
+  .eyebrow::before{content:"";width:20px;height:1px;background:var(--dark-line-strong)}
+  .accroche{font-family:var(--serif);font-size:clamp(28px,2.8vw,40px);line-height:1.05;font-weight:500;letter-spacing:-.018em;max-width:14ch}
+  .accroche em{font-style:italic}.accroche .thin{color:var(--on-dark-dim);font-style:italic}
+
+  /* aperçu réseau (vitrine) — remplace l'ancien mockup cockpit 3D (25/07/2026).
+     26/07/2026 (v2) : refonte du hub — un seul MEEREO au centre (mark du logo), Client/Professionnel/Fournisseur
+     gravitent autour, toujours visibles et connectés, flux de particules continu = "toujours en train de circuler".
+     Périmètre de cette refonte : uniquement .network et son contenu. Rien d'autre dans l'onboarding n'a changé,
+     et le JS existant (highlight par data-role, cycle avec la carte "Espace MEEREO") n'a pas été touché. */
+  .preview{position:relative;margin:0 0 24px}
+  /* CORRECTIF GÉOMÉTRIE (26/07/2026) — les nœuds sont positionnés en % du conteneur, les traits en unités du viewBox.
+     Tant que le conteneur n'avait pas le ratio exact du viewBox, "meet" recentrait le SVG et les traits
+     n'atteignaient plus les icônes (visible : lignes qui s'arrêtaient dans le vide).
+     Fix : le conteneur porte le ratio 350/252 du viewBox → 1 unité SVG = 1% relatif identique aux nœuds, à toute taille. */
+  .network{position:relative;width:100%;max-width:350px;margin:0 auto;aspect-ratio:350/252}
+  .network .net-lines{position:absolute;inset:0;width:100%;height:100%}
+  .network .net-lines path{stroke-width:1.1;fill:none;vector-effect:non-scaling-stroke;
+    animation:netPulse 5s ease-in-out infinite;transition:stroke .3s ease,opacity .3s ease,stroke-width .3s ease}
+  /* les 3 connexions au hub portent une légère teinte violette même au repos — le réseau ne "dort" jamais */
+  .network /* Décision du 28/07 : chaque trait porte la couleur de son rôle. Le violet
+     cesse d'être la couleur du réseau ; il reste celle de KAi partout ailleurs
+     — avatar, bulles — où il ne croise aucun rôle. La règle inscrite dans les
+     jetons reste donc vraie : une couleur, une signification. */
+  .net-lines path.spoke{stroke:var(--kai-accent-ring)}
+  .network .net-lines path.spoke[data-role="client"]{stroke:var(--role-client-lit);opacity:.55}
+  .network .net-lines path.spoke[data-role="pro"]   {stroke:var(--role-pro-lit);opacity:.55}
+  .network .net-lines path.spoke[data-role="four"]  {stroke:var(--role-four-lit);opacity:.55}
+  .network .net-lines path.spoke:nth-of-type(2){animation-delay:.7s}
+  .network .net-lines path.spoke:nth-of-type(3){animation-delay:1.4s}
+  .network .net-lines path.spoke:nth-of-type(4){animation-delay:2.1s}
+  /* lien secondaire Pro ↔ Fournisseur : les deux échangent aussi directement (Marketplace), pas seulement via le hub */
+  .network .net-lines path.cross{stroke:var(--dark-line-strong);stroke-dasharray:2 3;animation-duration:6s;opacity:.4}
+  @keyframes netPulse{0%,100%{opacity:.45}50%{opacity:.85}}
+  /* ligne mise en évidence — synchronisée avec la carte "Espace MEEREO" ci-dessous (état événementiel, cf. §11 du design system KAi) */
+  .network .net-lines path.hl{opacity:1;stroke-width:1.9;animation:netPulseHl 1.3s ease-in-out infinite}
+  .network .net-lines path.hl[data-role="client"]{stroke:var(--role-client-lit);opacity:1}
+  .network .net-lines path.hl[data-role="pro"]   {stroke:var(--role-pro-lit);opacity:1}
+  .network .net-lines path.hl[data-role="four"]  {stroke:var(--role-four-lit);opacity:1}
+  @keyframes netPulseHl{0%,100%{opacity:.65}50%{opacity:1}}
+  .net-particle{filter:drop-shadow(0 0 3px currentColor)}
+  .net-particle-dim{filter:none;opacity:.6}
+  .net-node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+  /* Les tuiles des trois rôles sont retirées : les icônes flottent directement
+     sur le noir. La BOÎTE est conservée — seuls le fond et la bordure
+     disparaissent — pour que les traits restent accrochés aux icônes.
+     Le hub MEEREO garde la sienne : elle ancre le schéma et porte les halos. */
+  .net-ic{position:relative;width:40px;height:40px;border-radius:11px;border:none;
+    background:transparent;display:flex;align-items:center;justify-content:center;transition:box-shadow .3s ease,filter .3s ease}
+  .net-ic svg{width:19px;height:19px;stroke:var(--on-dark);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .net-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--on-dark-dim);white-space:nowrap;transition:color .3s ease}
+  /* La mise en évidence ne peut plus s'appuyer sur une bordure : il n'y en a
+     plus. C'est un halo diffus de la couleur du rôle. */
+  .net-node.hl .net-ic{box-shadow:none}
+  .net-node[data-role="client"] .net-ic svg{stroke:var(--role-client-lit)}
+  .net-node[data-role="pro"]    .net-ic svg{stroke:var(--role-pro-lit)}
+  .net-node[data-role="four"]   .net-ic svg{stroke:var(--role-four-lit)}
+  .net-node[data-role]:not(.hl) .net-ic svg{opacity:.5;transition:opacity .3s ease}
+  .net-node.hl .net-ic svg{opacity:1}
+  .net-node.hl[data-role="client"] .net-ic{filter:drop-shadow(0 0 11px rgba(217,98,43,.55))}
+  .net-node.hl[data-role="pro"]    .net-ic{filter:drop-shadow(0 0 11px rgba(116,62,228,.6))}
+  .net-node.hl[data-role="four"]   .net-ic{filter:drop-shadow(0 0 11px rgba(65,143,175,.6))}
+  .net-node.hl .net-label{color:var(--kai-on-dark)}
+  .net-check{position:absolute;bottom:-3px;right:-3px;width:13px;height:13px;border-radius:50%;
+    background:var(--kai-success);border:2px solid var(--noir);display:flex;align-items:center;justify-content:center}
+  .net-check svg{width:7px;height:7px;stroke:#fff;stroke-width:3;fill:none}
+  /* Hub central = MEEREO elle-même (même mark que le logo, cf. .logo-mark) — "une seule plateforme" doit se lire d'un coup d'œil */
+  .net-center{z-index:1}
+  .net-center .net-ic{width:58px;height:58px;border-radius:16px;background:var(--noir);border:1px solid rgba(255,255,255,.4);
+    flex-direction:column;color:#fff;font-family:var(--sans);font-weight:700;font-size:8.5px;letter-spacing:.03em;line-height:1.4;text-align:center}
+  .net-center .net-ic span{display:block}
+  .net-center::before{content:"";position:absolute;inset:-15px;border-radius:27px;border:1px solid var(--kai-accent-ring);
+    animation:hubHalo 3.4s ease-in-out infinite;pointer-events:none}
+  .net-center::after{content:"";position:absolute;inset:-28px;border-radius:38px;border:1px solid var(--kai-accent-dim);
+    animation:hubHalo 3.4s ease-in-out infinite 1.1s;pointer-events:none}
+  @keyframes hubHalo{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:.1}}
+  /* Message explicite : le diagramme montre un écosystème, cette légende dit que c'est un choix (26/07/2026) */
+  .net-caption{font-family:var(--mono);font-size:10px;letter-spacing:.03em;color:var(--on-dark-dim);text-align:center;margin:2px 0 16px;line-height:1.5}
+
+  /* ─── Carte "Espace · MEEREO" — réintégrée (26/07/2026), contenu qui bascule Client/Pro/Fournisseur ─── */
+  .mini-cockpit{position:relative;border:1px solid var(--panel-line);border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .mc-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--panel-line)}
+  .mc-bar i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16)}
+  .mc-bar b{margin-left:8px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-dim);font-family:var(--mono);flex:1}
+  .mc-role{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--kai-accent);
+    padding:4px 10px;border:1px solid var(--kai-accent-ring);border-radius:999px;transition:opacity .25s ease}
+  /* padding-bottom élargi : la carte KAi flotte en overlap sur le coin bas-droit (cf. .kai) — 26/07/2026,
+     corrige le chevauchement qui coupait le stat "Offres reçues" ; revient à 16px en mobile où KAi n'est plus en overlap */
+  .mc-body{padding:16px 16px 62px;transition:opacity .3s ease}
+  .mc-body.fade{opacity:0}
+  .mc-proj{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+  .mc-proj strong{font-size:13.5px;color:var(--on-dark);font-weight:600}
+  .mc-proj span{font-family:var(--mono);font-size:10px;color:var(--on-dark-dim)}
+  .mc-stats{display:flex;gap:10px}
+  .mc-stat{flex:1;border:1px solid var(--panel-line);border-radius:11px;padding:12px}
+  .mc-stat b{display:block;font-family:var(--serif);font-size:21px;font-weight:500;color:var(--on-dark);line-height:1}
+  .mc-stat span{display:block;font-size:9.5px;color:var(--on-dark-dim);margin-top:6px;letter-spacing:.03em;text-transform:uppercase;font-family:var(--mono)}
+
+  .kai{position:absolute;bottom:-16px;right:-14px;display:flex;align-items:center;gap:12px;padding:13px 16px;
+    border:1px solid var(--panel-line);border-radius:14px;background:rgba(20,20,24,.92);backdrop-filter:blur(8px);max-width:290px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+  .kai-avatar-wrap{position:relative;flex-shrink:0}
+  .kai-avatar{position:relative;width:34px;height:34px;border-radius:11px;background:var(--kai-avatar-bg);color:var(--kai-on-dark);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;
+    box-shadow:0 0 0 1px rgba(255,255,255,.09);animation:kaiBreathe 3.6s ease-in-out infinite}
+  .kai-avatar::after{content:"";position:absolute;inset:-5px;border-radius:15px;border:1px solid rgba(255,255,255,.10);animation:kaiRing 3.6s ease-in-out infinite}
+  @keyframes kaiBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes kaiRing{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:.12}}
+  .kai-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:var(--kai-success);border:2px solid #141418;animation:kaiPulse 2.2s ease-in-out infinite}
+  @keyframes kaiPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:.7}}
+  .kai-txt strong{display:block;font-size:12.5px;color:var(--on-dark);font-weight:600}
+  .kai-txt small{display:block;font-size:11px;color:var(--on-dark-dim);margin-top:2px}
+
+  /* Lettre "K" — porte l'accent violet KAi (seul usage de --kai-accent hors panneau de recommandation) */
+  .kai-k{color:var(--kai-accent);display:inline-block;position:relative}
+  /* Comportement idle "vivant" (KAi-specification-fonctionnement.md §12) — gestes déclenchés en JS, jamais en boucle fixe */
+  @keyframes kaiNod{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
+  .kai-avatar-wrap.gest-nod{animation:kaiNod .55s ease-in-out}
+  @keyframes kaiGlance{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+  .kai-k.gest-glance{animation:kaiGlance .5s ease-in-out}
+  @keyframes kaiBlink{0%,100%{opacity:1}50%{opacity:.35}}
+  .kai-k.gest-blink{animation:kaiBlink .45s ease-in-out}
+
+  .brand-bottom{position:relative}
+  .features-inline{display:flex;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--on-dark-dim);margin-bottom:22px}
+  .features-inline .dot{margin:0 11px;opacity:.45}
+  .stats{display:flex;gap:9px;flex-wrap:wrap}
+  .stat{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--on-dark-dim);border:0.5px solid var(--dark-line-strong);padding:6px 12px;border-radius:999px;white-space:nowrap}
+
+  /* ─────── ZONE DROITE ─────── */
+  .auth{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:48px 24px;
+    background:radial-gradient(90% 55% at 50% 0%, #FFFFFF 0%, var(--bg) 62%);overflow-y:auto}
+  .card{position:relative;width:100%;max-width:440px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:42px 40px;
+    box-shadow:0 1px 1px rgba(16,18,20,.03),0 8px 20px rgba(16,18,20,.05),0 24px 60px rgba(16,18,20,.07);
+    animation:cardIn .5s cubic-bezier(.16,1,.3,1) .05s both}
+  .card.wide{max-width:560px}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .eyebrow-c{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--grey-soft);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+  .step-count{font-size:10px;color:var(--grey-soft)}
+  h1.title{font-family:var(--serif);font-size:clamp(26px,3.6vw,34px);line-height:1.08;font-weight:500;letter-spacing:-.02em;margin-bottom:9px}
+  .lede{font-size:14.5px;color:var(--grey);margin-bottom:30px;line-height:1.55}
+
+  .field{margin-bottom:17px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+  .field-row{display:flex;justify-content:space-between;align-items:baseline}
+  .link{font-size:12.5px;color:var(--grey);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .16s,color .16s;cursor:pointer}
+  .link:hover{color:var(--ink);border-bottom-color:var(--ink)}
+  .input-wrap{position:relative}
+  input,select{width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 15px;font-size:15px;font-family:var(--sans);color:var(--ink);background:#fff;transition:border-color .16s,box-shadow .16s}
+  input::placeholder{color:#BEBEC1}
+  input:focus,select:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px rgba(22,24,26,.06)}
+  .reveal{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12.5px;color:var(--grey);cursor:pointer;background:none;border:none;font-family:var(--sans);padding:4px 7px;border-radius:7px}
+  .reveal:hover{color:var(--ink);background:#F3F3F4}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+  .btn{width:100%;height:52px;border-radius:12px;font-size:15px;font-weight:600;font-family:var(--sans);cursor:pointer;border:1px solid transparent;transition:transform .12s cubic-bezier(.16,1,.3,1),background .16s,box-shadow .16s,border-color .16s}
+  .btn:active{transform:scale(.98)}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--ink)}
+  .btn-primary{background:var(--ink);color:#fff;margin-top:8px;box-shadow:0 1px 2px rgba(0,0,0,.1),0 4px 14px rgba(16,18,20,.14)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1),0 10px 28px rgba(16,18,20,.2)}
+  .btn-primary:hover:active{transform:translateY(-1px) scale(.98)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;pointer-events:none}
+  .btn-secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .btn-secondary:hover{border-color:var(--ink);transform:translateY(-1px)}
+  .btn-secondary:hover:active{transform:translateY(-1px) scale(.98)}
+  .divider{display:flex;align-items:center;gap:14px;margin:22px 0;color:#C2C2C5;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .trust{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:26px;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--grey-soft)}
+  .trust svg{width:13px;height:13px;stroke:var(--grey-soft);fill:none;stroke-width:1.6}
+  .foot-link{text-align:center;margin-top:22px;font-size:13px;color:var(--grey)}
+  .foot-link a{color:var(--ink);font-weight:600;text-decoration:none;cursor:pointer;border-bottom:1px solid transparent}
+  .foot-link a:hover{border-bottom-color:var(--ink)}
+
+  /* Bannière de reprise — "on se souvient de vous" (règle des workflows jamais bloqués, 26/07/2026) */
+  .resume{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--kai-accent-dim);border:1px solid var(--kai-accent-ring);border-radius:12px;
+    padding:13px 16px;margin-bottom:24px;animation:cardIn .5s cubic-bezier(.16,1,.3,1) both}
+  .resume-txt b{display:block;font-size:12.5px;font-weight:600;color:var(--ink)}
+  .resume-txt span{display:block;font-size:11.5px;color:var(--grey);margin-top:2px}
+  .resume-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .resume-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;
+    font-family:var(--sans);cursor:pointer;transition:transform .14s cubic-bezier(.16,1,.3,1)}
+  .resume-btn:hover{transform:translateY(-1px)}
+  .resume-btn:active{transform:scale(.97)}
+  .resume-btn:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
+  .resume-clear{font-size:11.5px;color:var(--grey);cursor:pointer;border-bottom:1px solid transparent;transition:border-color .16s,color .16s}
+  .resume-clear:hover{color:var(--ink);border-bottom-color:var(--ink)}
+
+  /* stepper — progression sur une échelle fixe de 5 (le maximum, atteint par le parcours Fournisseur) */
+  .stepper{display:flex;gap:6px;margin-bottom:26px}
+  .stepper i{height:3px;flex:1;border-radius:99px;background:var(--line);transition:background .3s ease}
+  .stepper i.on{background:var(--ink)}
+  /* Décision du 28/07 — « partout dans le parcours ». Le fil d'étapes, le
+     libellé de rôle et les boutons portent la couleur du rôle choisi, du
+     premier écran au dernier. Le violet KAi n'y figure plus : il ne signale
+     que KAi. */
+  .stepper i.now{background:var(--kai-accent)}
+  [data-active-role="client"] .stepper i.now{background:var(--role-client)}
+  [data-active-role="pro"]    .stepper i.now{background:var(--role-pro)}
+  [data-active-role="four"]   .stepper i.now{background:var(--role-four)}
+
+  .role-label{position:relative;padding-left:13px}
+  .role-label::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:7px;height:7px;border-radius:50%;background:var(--grey-soft);transition:background .3s ease}
+  [data-active-role="client"] .role-label::before{background:var(--role-client)}
+  [data-active-role="pro"]    .role-label::before{background:var(--role-pro)}
+  [data-active-role="four"]   .role-label::before{background:var(--role-four)}
+
+  /* Seul le FOND change : l'ombre et le relief du bouton restent ceux du
+     système. On teinte, on ne redessine pas. */
+  [data-active-role="client"] .auth .btn-primary{background:var(--role-client)}
+  [data-active-role="pro"]    .auth .btn-primary{background:var(--role-pro)}
+  [data-active-role="four"]   .auth .btn-primary{background:var(--role-four)}
+  #s-login .btn-primary{background:var(--ink)}
+
+  @keyframes selectSettle{0%{transform:scale(1)}45%{transform:scale(1.015)}100%{transform:scale(1)}}
+
+  /* choix de rôle */
+  .roles{display:flex;flex-direction:column;gap:12px;margin-bottom:8px}
+  .role{border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;transition:border-color .16s,box-shadow .16s,transform .14s;display:flex;gap:14px;align-items:flex-start}
+  .role:hover{border-color:#C9C9CC;transform:translateY(-1px)}
+  /* La carte sélectionnée prend l'anneau de son rôle, plus le noir générique.
+     C'est le même code couleur que le sélecteur de profil de l'application. */
+  .role.sel{animation:selectSettle .3s ease}
+  .role[data-role="client"].sel{border-color:var(--role-client);box-shadow:0 0 0 3px rgba(217,98,43,.12)}
+  .role[data-role="pro"].sel   {border-color:var(--role-pro);   box-shadow:0 0 0 3px rgba(116,62,228,.12)}
+  .role[data-role="four"].sel  {border-color:var(--role-four);  box-shadow:0 0 0 3px rgba(65,143,175,.14)}
+  /* Pastille colorée en permanence — comme dans l'application : le fond très
+     clair et le trait saturé identifient le rôle avant même la sélection. */
+  .role-ic{width:40px;height:40px;border-radius:11px;background:var(--line-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .16s}
+  .role[data-role="client"] .role-ic{background:var(--role-client-bg)}
+  .role[data-role="pro"]    .role-ic{background:var(--role-pro-bg)}
+  .role[data-role="four"]   .role-ic{background:var(--role-four-bg)}
+  .role-ic svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:1.7}
+  .role[data-role="client"] .role-ic svg{stroke:var(--role-client)}
+  .role[data-role="pro"]    .role-ic svg{stroke:var(--role-pro)}
+  .role[data-role="four"]   .role-ic svg{stroke:var(--role-four)}
+  .role-t{font-size:15px;font-weight:600;margin-bottom:3px}
+  .role-d{font-size:12.5px;color:var(--grey);line-height:1.45}
+  .role-radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;margin-left:auto;position:relative;transition:border-color .16s}
+  .role[data-role="client"].sel .role-radio{border-color:var(--role-client)}
+  .role[data-role="pro"].sel    .role-radio{border-color:var(--role-pro)}
+  .role[data-role="four"].sel   .role-radio{border-color:var(--role-four)}
+  .role.sel .role-radio::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ink)}
+  .role[data-role="client"].sel .role-radio::after{background:var(--role-client)}
+  .role[data-role="pro"].sel    .role-radio::after{background:var(--role-pro)}
+  .role[data-role="four"].sel   .role-radio::after{background:var(--role-four)}
+
+  /* type projet / logo */
+  .grid-pick{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
+  .pick{border:1px solid var(--line);border-radius:12px;padding:18px 12px;text-align:center;cursor:pointer;transition:border-color .16s,transform .14s}
+  .pick:hover{border-color:#C9C9CC;transform:translateY(-1px)}
+  .pick.sel{border-color:var(--ink);box-shadow:0 0 0 3px rgba(22,24,26,.06);animation:selectSettle .3s ease}
+  .pick svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.6;margin-bottom:9px}
+  .pick span{display:block;font-size:12.5px;font-weight:600}
+  .msg-ok{background:var(--line-2);border-radius:12px;padding:16px;font-size:13px;color:var(--ink);line-height:1.5;margin-bottom:8px;display:flex;gap:11px;align-items:flex-start}
+  .msg-ok svg{width:18px;height:18px;stroke:var(--kai-success);fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
+  .code-row{display:flex;gap:10px;justify-content:space-between;margin-bottom:8px}
+  .code-row input{text-align:center;font-family:var(--mono);font-size:22px;font-weight:600;padding:0;height:60px}
+
+  /* champs légaux : format + états de validation (INS-01) */
+  input.legal{font-family:var(--mono);letter-spacing:.02em;text-transform:uppercase}
+  .hint{font-size:11.5px;color:var(--grey-soft);margin-top:6px;font-family:var(--mono);letter-spacing:.02em}
+  .field.ok input{border-color:var(--kai-success);box-shadow:0 0 0 3px rgba(47,158,91,.08)}
+  .field.err input{border-color:#C0392B;box-shadow:0 0 0 3px rgba(192,57,43,.08)}
+  .field .status{font-size:11.5px;margin-top:6px;display:none;align-items:center;gap:5px}
+  .field.ok .status.s-ok{display:flex;color:var(--kai-success)}
+  .field.err .status.s-err{display:flex;color:#C0392B}
+  .field .status svg{width:13px;height:13px;fill:none;stroke-width:2}
+  .field.ok .status.s-ok svg{stroke:var(--kai-success)}
+  .field.err .status.s-err svg{stroke:#C0392B}
+  .field.ok .hint,.field.err .hint{display:none}
+
+  /* nav proto (barre flottante, hors design) */
+  .proto-nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99;
+    display:flex;gap:4px;background:rgba(20,20,22,.9);backdrop-filter:blur(10px);padding:6px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .proto-nav button{background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    padding:7px 12px;border-radius:999px;cursor:pointer;transition:background .16s,color .16s;text-transform:uppercase}
+  .proto-nav button:hover{color:#fff}
+  .proto-nav button.on{background:#fff;color:#111}
+
+  @media (max-width:1100px){
+    .screen.active{grid-template-columns:1fr}
+    .brand{padding:34px 24px 30px}
+    .accroche{font-size:clamp(26px,7vw,34px);max-width:none}
+    /* pas d'override de hauteur ici : .network doit garder le ratio 350/252 sinon les traits se désalignent des icônes */
+    .kai{position:static;margin-top:16px;max-width:none}
+    .mc-body{padding-bottom:16px}
+    .auth{padding:32px 20px 80px}.halo{width:340px;height:340px}
+    .card{padding:34px 26px}.cote{display:none}
+    .grid-pick{grid-template-columns:1fr 1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ─── Générateur de logo (INS-02) ─── */
+  .logo-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .logo-tab{display:flex;align-items:center;justify-content:center;gap:9px;height:52px;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:600;transition:border-color .16s,background .16s}
+  .logo-tab svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .logo-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .logo-preview{position:relative;height:190px;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;
+    background:linear-gradient(145deg,#1a1a1e,#0d0d10);border:1px solid var(--line)}
+  .logo-preview .glyph{width:74px;height:74px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--serif);font-weight:600;font-size:34px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.04);transition:background-color .25s ease,border-color .25s ease}
+  @keyframes glyphPop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+  .logo-preview .glyph.pop{animation:glyphPop .32s cubic-bezier(.16,1,.3,1)}
+  .logo-preview .glyph.hex{clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+  .logo-preview .glyph.circle{border-radius:50%}
+  .logo-preview .glyph.square{border-radius:12px}
+  .logo-preview .glyph.diamond{transform:rotate(45deg)}.logo-preview .glyph.diamond span{transform:rotate(-45deg)}
+  .logo-preview .glyph.triangle{clip-path:polygon(50% 0,100% 100%,0 100%)}
+  .logo-preview .lp-name{color:#fff;font-size:15px;font-weight:600}
+  .logo-preview .lp-sub{color:rgba(255,255,255,.4);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+  .ctrl-label{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-soft);margin:16px 0 9px;font-family:var(--mono)}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .sw{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:transform .12s}
+  .sw:hover{transform:scale(1.08)}.sw.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;transition:border-color .16s,background .16s}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* États focus — clavier (finition premium, 26/07/2026) : un anneau cohérent sur toutes les cartes/puces cliquables */
+  .role:focus-visible,.pick:focus-visible,.chip:focus-visible,.logo-tab:focus-visible,.sw:focus-visible,
+  .upload:focus-visible,.mat-photo:focus-visible{outline:none;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--ink)}
+  .link:focus-visible,.foot-link a:focus-visible,.resume-clear:focus-visible{outline:none;box-shadow:0 0 0 2px var(--kai-accent-ring);border-radius:3px}
+  .reveal:focus-visible{outline:none;box-shadow:0 0 0 2px var(--kai-accent-ring)}
+
+  .logo-actions{display:flex;gap:10px;margin-top:18px}
+  .logo-actions .btn{margin-top:0}
+  /* upload zone */
+  .upload{border:1.5px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:border-color .16s,background .16s,transform .14s}
+  .upload:hover{border-color:#C9C9CC;background:#FAFAFB;transform:translateY(-1px)}
+  .upload .up-ic{width:52px;height:52px;border-radius:50%;background:var(--line-2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .upload .up-ic svg{width:20px;height:20px;stroke:var(--grey);fill:none;stroke-width:1.6}
+  .upload strong{display:block;font-size:14.5px;margin-bottom:5px}
+  .upload span{font-size:12px;color:var(--grey)}
+  .upload .fmt{display:flex;gap:16px;justify-content:center;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--grey-soft);letter-spacing:.06em}
+  /* matériau */
+  .mat-photo{height:120px;border:1.5px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:2px;transition:border-color .16s,background .16s,transform .14s}
+  .mat-photo:hover{border-color:#C9C9CC;background:#FAFAFB;transform:translateY(-1px)}
+  .mat-photo svg{width:22px;height:22px;stroke:var(--grey);fill:none;stroke-width:1.6}
+  .mat-photo span{font-size:12px;color:var(--grey)}
+  /* ── Ajouts v3 — aucune règle existante n'est modifiée ── */
+  .picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .picks .pick{padding:13px 12px;font-size:12.5px;font-weight:600}
+  .msg-info{display:flex;gap:10px;align-items:flex-start;background:var(--line-2);border-radius:12px;
+    padding:12px 14px;font-size:12.5px;color:var(--grey);line-height:1.5}
+  .cgu-row{display:flex;gap:11px;align-items:flex-start;margin:16px 0 4px;font-size:12.5px;
+    color:var(--grey);line-height:1.55;cursor:pointer}
+  .cgu-row input{margin-top:2px;width:16px;height:16px;accent-color:var(--ink);flex:0 0 auto}
+  .cgu-row a{color:var(--ink);text-decoration:underline}
+  .cgu-row small{display:block;color:var(--grey-soft);font-size:11.5px;margin-top:3px}
+  .req-role{color:var(--grey-soft);font-weight:400}
+  /* ── En-tête de page — reprend le discours qui vivait dans le panneau ── */
+  .page-head{width:100%;max-width:560px;text-align:center}
+  .page-head .ph-brand{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px}
+  .page-head .ph-mark{width:38px;height:38px;border-radius:11px;background:var(--noir);color:var(--on-dark);
+    display:grid;place-items:center;font-family:var(--sans);font-weight:700;font-size:9px;letter-spacing:.06em;line-height:1.05;text-align:center}
+  .page-head .ph-name{font-family:var(--sans);font-weight:700;font-size:16px;letter-spacing:.16em}
+  .page-head .ph-kind{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--grey-soft)}
+  .page-head .ph-sep{width:1px;height:18px;background:var(--line)}
+  .page-head .ph-tag{font-family:var(--serif);font-size:29px;line-height:1.2;color:var(--ink);margin:0 0 18px}
+  .page-head .ph-pillars{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .page-head .ph-p{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--grey);
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;white-space:nowrap}
+  .page-head .ph-p.is-kai{color:var(--kai-pro-text);background:var(--kai-pro-bg);border-color:transparent}
+  @media(max-width:620px){
+    .page-head .ph-tag{font-size:23px}
+    .page-head .ph-p{font-size:11.5px;padding:5px 12px}
+  }
+  .price-wrap{position:relative}
+  .price-wrap .cur{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:12.5px;color:var(--grey-soft)}
+  /* ─── Aiguillage KAi (recommandation fin de parcours client) ─── */
+  .kai-reco{display:flex;gap:13px;align-items:flex-start;background:linear-gradient(145deg,#1a1a1e,#0e0e11);border:1px solid var(--kai-accent-dim);border-radius:16px;padding:20px;margin-bottom:20px}
+  .kai-reco .kai-avatar{position:relative;width:38px;height:38px;border-radius:12px;background:var(--kai-avatar-bg);color:var(--kai-on-dark);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.1);animation:kaiBreathe 3.6s ease-in-out infinite}
+  .kai-reco .kai-avatar::after{content:"";position:absolute;inset:-5px;border-radius:16px;border:1px solid var(--kai-accent-ring);animation:kaiRing 3.6s ease-in-out infinite}
+  .kai-reco .kai-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:var(--kai-success);border:2px solid #15121F;animation:kaiPulse 2.2s ease-in-out infinite}
+  .kai-reco .rc-name{font-size:12px;font-weight:700;color:#fff;letter-spacing:.02em;margin-bottom:2px;display:flex;align-items:center;gap:7px}
+  .kai-reco .rc-name small{font-family:var(--mono);font-size:9.5px;font-weight:400;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase}
+  .kai-reco .rc-msg{font-size:13.5px;line-height:1.55;color:rgba(246,245,243,.86)}
+  .kai-reco .rc-msg b{color:#fff}
+  .reco-recap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .reco-recap .rp{font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--grey);border:1px solid var(--line);padding:7px 12px;border-radius:999px}
+  .reco-recap .rp b{color:var(--ink);font-weight:600}
+  .btn-primary .sub{display:block;font-size:11px;font-weight:400;opacity:.7;margin-top:2px;letter-spacing:.01em}
+  /* Le libellé "Recommandé par KAi" est le seul repère violet hors panneau KAi — signal d'attention explicitement rattaché à KAi (règle de sens des couleurs) */
+  /* Supprimé le 28/07/2026. Cette règle colorait le sous-titre en violet KAi,
+     au temps où le bouton portait « Recommandé par KAi » sur fond noir : le
+     violet signalait alors KAi, et c'était juste. La recommandation a été
+     retirée et le bouton porte désormais la couleur du rôle — un sous-titre
+     violet sur fond orange est illisible, et ne renvoie plus à rien.
+     Il reprend le style commun : blanc à 70 %. */
+  .btn.btn-tall{height:auto;padding:15px 18px;text-align:left;display:flex;flex-direction:column;align-items:flex-start}
+  .btn.btn-tall.btn-secondary .sub{opacity:.55;color:var(--grey)}
+</style>
+</head>
+<body>
+
+<!-- Panneau vitrine réutilisable (injecté par JS dans chaque écran) -->
+<!-- En-tête injecté en haut de chaque écran, comme l'était le panneau vitrine -->
+<template id="page-head-template">
+  <header class="page-head">
+    <div class="ph-brand">
+      <div class="ph-mark">MEE<br>REO</div>
+      <div class="ph-name">MEEREO</div>
+      <div class="ph-sep"></div>
+      <div class="ph-kind">Plateforme BTP et immobilier</div>
+    </div>
+    <p class="ph-tag">Tout votre projet, piloté d'un seul endroit.</p>
+    <div class="ph-pillars">
+      <span class="ph-p">Appels d'offres</span>
+      <span class="ph-p">Marketplace</span>
+      <span class="ph-p">Paiements</span>
+      <span class="ph-p is-kai">KAi, votre IA personnelle</span>
+    </div>
+  </header>
+</template>
+
+<template id="brand-template">
+  <div class="grid-layer"></div><span class="cote cote-a">A—01</span><span class="cote cote-b">N 05°21′ W 04°01′</span><div class="halo"></div>
+  <div class="brand-top">
+    <div class="logo-row"><div class="logo-mark"><span>MEE</span><span>REO</span></div><div><div class="logo-name">MEEREO</div><div class="logo-sub">Plateforme BTP &amp; Immobilier</div></div></div>
+    <div class="eyebrow">Côte d'Ivoire · Afrique de l'Ouest</div>
+    <h1 class="accroche">Tout votre <em>projet</em>, <span class="thin">piloté d'un seul endroit.</span></h1>
+  </div>
+  <div class="preview">
+    <div class="network">
+      <svg class="net-lines" viewBox="0 0 350 252" preserveAspectRatio="xMidYMid meet">
+        <path class="cross" d="M78,24 Q175,4 272,24"/>
+        <path class="spoke" data-role="pro" id="ln-pro" d="M149,93 L74,37"/>
+        <path class="spoke" data-role="four" id="ln-four" d="M201,93 L276,37"/>
+        <path class="spoke" data-role="client" id="ln-client" d="M175,138 L175,184"/>
+        <!-- Particules : flux continu et permanent (état ambiant, jamais déclenché) — "les informations circulent en continu" -->
+        <circle class="net-particle" r="2.4" fill="var(--role-pro-lit)"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#ln-pro"/></animateMotion></circle>
+        <circle class="net-particle" r="2.4" fill="var(--role-four-lit)"><animateMotion dur="3.1s" begin="0.5s" repeatCount="indefinite"><mpath href="#ln-four"/></animateMotion></circle>
+        <circle class="net-particle" r="2.4" fill="var(--role-client-lit)"><animateMotion dur="3.5s" begin="1s" repeatCount="indefinite"><mpath href="#ln-client"/></animateMotion></circle>
+        <circle class="net-particle net-particle-dim" r="1.8" fill="var(--on-dark-dim)"><animateMotion dur="5.2s" begin="1.6s" repeatCount="indefinite"><mpath href="#ln-pro"/></animateMotion></circle>
+      </svg>
+      <div class="net-node net-center" style="left:50%;top:44.4%">
+        <div class="net-ic"><span>MEE</span><span>REO</span></div>
+      </div>
+      <!-- Pro et Fournisseur strictement au même niveau (top identique) et remontés — cf. retour du 26/07/2026.
+           Icônes BTP : casque de chantier / matériaux empilés / logement. Même densité de tracé (3 éléments chacune). -->
+      <div class="net-node" data-role="pro" style="left:16%;top:13.5%">
+        <div class="net-ic"><svg viewBox="0 0 24 24"><path d="M3.5 16.5h17"/><path d="M6.8 16.5v-3.2a5.2 5.2 0 0 1 10.4 0v3.2"/><path d="M12 8.1v8.4"/></svg><span class="net-check"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span></div>
+        <span class="net-label">Professionnel</span>
+      </div>
+      <div class="net-node" data-role="four" style="left:84%;top:13.5%">
+        <div class="net-ic"><svg viewBox="0 0 24 24"><rect x="8" y="4.5" width="8" height="6" rx="1"/><rect x="2.5" y="13.5" width="8" height="6" rx="1"/><rect x="13.5" y="13.5" width="8" height="6" rx="1"/></svg><span class="net-check"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span></div>
+        <span class="net-label">Fournisseur</span>
+      </div>
+      <div class="net-node" data-role="client" style="left:50%;top:84.1%">
+        <div class="net-ic"><svg viewBox="0 0 24 24"><path d="M3.2 10.6 12 3.8l8.8 6.8"/><path d="M5.6 9.4V20h12.8V9.4"/><path d="M10 20v-5.4h4V20"/></svg><span class="net-check"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span></div>
+        <span class="net-label">Client</span>
+      </div>
+    </div>
+    <div class="net-caption">Client · Professionnel · Fournisseur — choisissez votre profil, votre espace s'adapte</div>
+    <div class="mini-cockpit">
+      <div class="mc-bar"><i></i><i></i><i></i><b>Espace · MEEREO</b><span class="mc-role">Client</span></div>
+      <div class="mc-body">
+        <div class="mc-proj"><strong class="mc-title">Villa Cocody</strong><span class="mc-sub">64% réalisé</span></div>
+        <div class="mc-stats">
+          <div class="mc-stat"><b class="mc-s1">20–50M</b><span class="mc-s1l">Budget FCFA</span></div>
+          <div class="mc-stat"><b class="mc-s2">3</b><span class="mc-s2l">Offres reçues</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="kai"><div class="kai-avatar-wrap"><div class="kai-avatar"><span class="kai-k">K</span><span class="kai-dot"></span></div></div><div class="kai-txt"><strong>KAi veille sur vos projets</strong><small>Suivi, budget et décisions, en continu.</small></div></div>
+  </div>
+  <div class="brand-bottom">
+    <div class="features-inline"><span>Appels d'offres</span><span class="dot">/</span><span>Marketplace</span><span class="dot">/</span><span>Paiements</span><span class="dot">/</span><span>KAi</span></div>
+    <div class="stats"><span class="stat">Côte d'Ivoire</span><span class="stat">BTP &amp; Immobilier</span><span class="stat">IA intégrée</span></div>
+  </div>
+</template>
+
+<!-- ═══ LOGIN ═══ -->
+<section class="screen active" id="s-login"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div id="resume-banner"></div>
+  <div class="eyebrow-c">Connexion</div><h1 class="title">Bienvenue.</h1><p class="lede">Heureux de vous revoir.</p>
+  <div class="field"><label>Email</label><div class="input-wrap"><input type="email" placeholder="contact@entreprise.com"></div></div>
+  <div class="field"><div class="field-row"><label>Mot de passe</label><a class="link" onclick="go('s-forgot')">Mot de passe oublié ?</a></div><div class="input-wrap"><input type="password" placeholder="••••••••"><button class="reveal" onclick="tp(this)">Afficher</button></div></div>
+  <button class="btn btn-primary">Connexion</button><div class="divider">ou</div>
+  <button class="btn btn-secondary" onclick="go('s-role')">Créer un espace</button>
+  <div class="trust"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Connexion sécurisée · SSL · RGPD</div>
+</div></main></section>
+
+<!-- ═══ MOT DE PASSE OUBLIÉ ═══ -->
+<section class="screen" id="s-forgot"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div class="eyebrow-c">Récupération</div><h1 class="title">Mot de passe oublié.</h1><p class="lede">Saisissez votre email : nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+  <div class="field"><label>Email</label><div class="input-wrap"><input type="email" placeholder="contact@entreprise.com"></div></div>
+  <button class="btn btn-primary" onclick="go('s-sent')">Envoyer le lien</button>
+  <div class="foot-link">← <a onclick="go('s-login')">Retour à la connexion</a></div>
+</div></main></section>
+
+<!-- ═══ LIEN ENVOYÉ ═══ -->
+<section class="screen" id="s-sent"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div class="eyebrow-c">Récupération</div><h1 class="title">Vérifiez vos emails.</h1><p class="lede">Un lien de réinitialisation vient d'être envoyé. Il est valable 30 minutes.</p>
+  <div class="msg-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span>Si aucun email n'arrive, vérifiez vos spams ou réessayez dans quelques instants.</span></div>
+  <button class="btn btn-secondary" onclick="go('s-reset')" style="margin-top:14px">J'ai reçu le lien</button>
+  <div class="foot-link">← <a onclick="go('s-login')">Retour à la connexion</a></div>
+</div></main></section>
+
+<!-- ═══ RÉINITIALISATION ═══ -->
+<section class="screen" id="s-reset"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div class="eyebrow-c">Récupération</div><h1 class="title">Nouveau mot de passe.</h1><p class="lede">Choisissez un mot de passe d'au moins 10 caractères, contenant au moins une lettre et un chiffre.</p>
+  <div class="field" id="reset-pass"><label>Nouveau mot de passe</label><div class="input-wrap"><input type="password" placeholder="••••••••" oninput="validateReset()"><button class="reveal" onclick="tp(this)">Afficher</button></div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>10 caractères, dont une lettre et un chiffre</span></div></div>
+  <div class="field" id="reset-pass2"><label>Confirmer le mot de passe</label><div class="input-wrap"><input type="password" placeholder="••••••••" oninput="validateReset()"></div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Les mots de passe ne correspondent pas</span></div></div>
+  <button class="btn btn-primary" id="reset-next" onclick="go('s-login')" disabled>Réinitialiser</button>
+  <div class="foot-link">← <a onclick="go('s-login')">Retour à la connexion</a></div>
+</div></main></section>
+
+<!-- ═══ CHOIX DU RÔLE ═══ -->
+<section class="screen" id="s-role"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription</span><span class="step-count">Étape 1</span></div>
+  <div class="stepper"><i class="now"></i><i></i><i></i><i></i><i></i></div>
+  <h1 class="title">Vous êtes…</h1><p class="lede">Choisissez le rôle qui correspond à votre activité. Votre parcours sera adapté.</p>
+  <div class="roles">
+    <div class="role sel" data-role="client" onclick="selRole(this)"><div class="role-ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></div><div><div class="role-t">Je suis client</div><div class="role-d">Pilotez votre projet de construction, rénovation ou aménagement avec clarté et suivi.</div></div><div class="role-radio"></div></div>
+    <div class="role" data-role="pro" onclick="selRole(this)"><div class="role-ic"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><div><div class="role-t">Je suis professionnel</div><div class="role-d">Architecte, entreprise, BET ou prestataire : centralisez missions, offres et équipes.</div></div><div class="role-radio"></div></div>
+    <div class="role" data-role="four" onclick="selRole(this)"><div class="role-ic"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg></div><div><div class="role-t">Je suis fournisseur</div><div class="role-d">Référencez vos produits et services, recevez des demandes et gérez vos commandes.</div></div><div class="role-radio"></div></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('s-account')">Continuer →</button>
+  <div class="foot-link">Déjà un compte ? <a onclick="go('s-login')">Se connecter</a></div>
+</div></main></section>
+
+<!-- ═══ COMPTE (commun) ═══ -->
+<section class="screen" id="s-account"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · <span class="role-label">Client</span></span><span class="step-count">Étape 2</span></div>
+  <div class="stepper"><i class="on"></i><i class="now"></i><i></i><i></i><i></i></div>
+  <h1 class="title">Votre compte.</h1><p class="lede">Ces informations sont obligatoires pour créer votre espace.</p>
+  <div class="two">
+    <div class="field" id="acc-fname"><label>Prénom</label><input type="text" placeholder="Jean-Marc" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Champ requis</span></div></div>
+    <div class="field" id="acc-lname"><label>Nom</label><input type="text" placeholder="Troh" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Champ requis</span></div></div>
+  </div>
+  <div class="field" id="acc-email"><label>Adresse e-mail *</label><input type="email" placeholder="contact@entreprise.com" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Adresse e-mail invalide</span></div></div>
+  <!-- INS-08 — ces deux champs étaient décrits dans SYS-06 sans qu'aucun écran ne les renseigne jamais. -->
+  <div class="two">
+    <div class="field" id="acc-tel"><label>Téléphone *</label><input type="tel" placeholder="+225 07 07 12 34 56" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Numéro invalide — ex. +225 07 07 12 34 56</span></div></div>
+    <div class="field" id="acc-city"><label>Ville <span class="req-role" id="city-req">*</span></label><input type="text" placeholder="Abidjan" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Champ requis</span></div></div>
+  </div>
+  <div class="two">
+    <div class="field" id="acc-pass"><label>Mot de passe *</label><div class="input-wrap"><input type="password" placeholder="10 caractères min." oninput="validateAccount()"><button class="reveal" onclick="tp(this)">Afficher</button></div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>10 caractères, dont une lettre et un chiffre</span></div></div>
+    <div class="field" id="acc-pass2"><label>Confirmer *</label><input type="password" placeholder="••••••••" oninput="validateAccount()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Les mots de passe ne correspondent pas</span></div></div>
+  </div>
+  <!-- INS-10 — sans version conservée ni horodatage, un consentement n'est pas opposable. -->
+  <label class="cgu-row"><input type="checkbox" id="acc-cgu" onchange="validateAccount()">
+    <span>J'accepte les <a href="#" onclick="return false">conditions générales d'utilisation</a> et la
+    <a href="#" onclick="return false">politique de confidentialité</a>. *
+    <small>Version 2026-07-CI-v1 — votre acceptation est horodatée et conservée</small></span></label>
+  <button class="btn btn-primary" id="acc-next" onclick="afterAccount()" disabled>Continuer →</button>
+  <div class="foot-link">← <a onclick="go('s-role')">Retour</a></div>
+</div></main></section>
+
+<!-- ══════════ BRANCHE CLIENT ══════════ -->
+<!-- ══ ÉTAPE « PREMIER PROJET » SUPPRIMÉE — décision MEEREO du 27/07/2026 ══
+     « Elle ne crée aucune action donc pas besoin qu'elle soit là. »
+     Le parcours client compte désormais DEUX étapes : rôle, compte.
+     Conséquence traitée sur l'écran suivant : la recommandation KAi (INS-16)
+     dépendait ENTIÈREMENT de cette étape — type, surface, lieu, budget étaient
+     sa seule matière. Sans elle, une recommandation ne reposerait sur rien :
+     ce serait une affirmation inventée présentée comme un conseil. Retirée. ══ -->
+
+<!-- CLIENT · aiguillage KAi (recommande appel d'offres ou annuaire) -->
+<section class="screen" id="c-done"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Client</span><span class="step-count">Dernière étape</span></div>
+  <h1 class="title">Et maintenant ?</h1><p class="lede">Votre compte est créé et vous êtes déjà connecté. Voici comment démarrer.</p>
+
+  <div class="msg-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span>Votre compte est créé et vous êtes déjà connecté.</span></div>
+
+    <!-- INS-09 — la porte de correction. Le bandeau AFFICHE L'ADRESSE : sans
+       elle, l'utilisateur ne peut pas voir sa faute de frappe, et c'est
+       justement parce qu'il ne reçoit rien qu'il est là. -->
+  <div class="msg-info" style="margin-top:16px"><span><b>Confirmez votre adresse.</b>
+    Un lien a été envoyé à <b id="em-c">votre adresse</b>.
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Renvoyer le lien</a> ·
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Corriger mon adresse</a></span></div>
+<button class="btn btn-primary btn-tall" id="rc-main" onclick="go('s-login')">
+    Publier un appel d'offres
+    <span class="sub">Recevez plusieurs devis d'entreprises qualifiées à comparer</span>
+  </button>
+  <button class="btn btn-secondary btn-tall" id="rc-alt" onclick="go('s-login')" style="margin-top:12px">
+    Chercher un professionnel dans l'annuaire
+    <span class="sub">Parcourez les architectes et entreprises disponibles</span>
+  </button>
+
+  <div class="foot-link">← <a onclick="go('s-account')">Retour</a> · <a onclick="go('s-login')">Accéder à mon espace</a></div>
+</div></main></section>
+
+<!-- ══════════ BRANCHE PROFESSIONNEL ══════════ -->
+<!-- PRO · structure -->
+<section class="screen" id="p-struct"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Professionnel</span><span class="step-count">Étape 3</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="now"></i><i></i><i></i></div>
+  <h1 class="title">Votre structure.</h1><p class="lede">Renseignez votre entreprise. Logo, portfolio et équipe se complètent ensuite depuis le cockpit.</p>
+  <div class="field"><label>Nom de la structure *</label><input type="text" id="p-name" placeholder="Ex : Traoré Architecture &amp; Design"></div>
+  <div class="two">
+    <div class="field" id="p-rccm"><label>N° RCCM *</label><input class="legal" type="text" placeholder="CI-ABJ-2024-B-12345" oninput="checkLegal('p-rccm',this,RCCM_RE,'CI-ABJ-2024-B-12345','p-next')"><div class="hint">Format : CI-ABJ-AAAA-X-NNNNN</div><div class="status s-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Format valide</div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Format attendu : CI-ABJ-AAAA-X-NNNNN</span></div></div>
+    <div class="field" id="p-tax"><label>N° Contribuable *</label><input class="legal" type="text" placeholder="CI-0000000-A" oninput="checkLegal('p-tax',this,TAX_RE,'CI-0000000-A','p-next')"><div class="hint">Format : CI-NNNNNNN-X</div><div class="status s-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Format valide</div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Format attendu : CI-NNNNNNN-X</span></div></div>
+  </div>
+  <label style="display:block;font-size:12.5px;font-weight:600;margin:6px 0 10px">Secteurs d'activité</label>
+  <div class="chips"><div class="chip on" onclick="tog(this)">Architecte &amp; Design</div><div class="chip" onclick="tog(this)">BET structure</div><div class="chip" onclick="tog(this)">BET fluides</div><div class="chip" onclick="tog(this)">Gros œuvre</div><div class="chip" onclick="tog(this)">Second œuvre</div></div>
+  <div class="msg-ok" style="margin-top:16px"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span><strong>Vérification en deux temps.</strong> Numéros uniques et liés à un seul compte MEEREO. La <strong>vérification officielle par KAi</strong> aura lieu au dépôt de votre RCCM (section Documents) et activera le badge « Vérifié par MEEREO ».</span></div>
+  <button class="btn btn-primary" id="p-next" onclick="go('p-logo')" style="margin-top:14px" disabled>Continuer →</button>
+  <div class="foot-link">← <a onclick="go('s-account')">Retour</a></div>
+</div></main></section>
+<!-- PRO · logo (générateur INS-02) -->
+<section class="screen" id="p-logo"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Professionnel</span><span class="step-count">Étape 4</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i><i></i></div>
+  <h1 class="title">Votre logo.</h1><p class="lede">Générez un logo avec KAi, ou importez le vôtre. Un seul logo reste actif.</p>
+  <div class="logo-tabs">
+    <div class="logo-tab on" data-mode="gen" onclick="logoMode(this,'gen','p')"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17l-1.9-5.1L4.5 10l5.6-1.4z"/></svg>Générer avec KAi</div>
+    <div class="logo-tab" data-mode="up" onclick="logoMode(this,'up','p')"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4M4 20h16"/></svg>Mon logo existant</div>
+  </div>
+  <div data-logo-gen="p">
+    <div class="logo-preview"><div class="glyph hex" data-glyph="p"><span>M</span></div><div class="lp-name">Votre Structure</div><div class="lp-sub">Secteur d'activité</div></div>
+    <div class="ctrl-label">Couleur de marque</div><div class="swatches" data-sw="p"><div class="sw on" style="background:#141416" onclick="pickSw(this,'p')"></div><div class="sw" style="background:#2F4EE0" onclick="pickSw(this,'p')"></div><div class="sw" style="background:#2E8FA6" onclick="pickSw(this,'p')"></div><div class="sw" style="background:#7A5CE0" onclick="pickSw(this,'p')"></div><div class="sw" style="background:#D9662B" onclick="pickSw(this,'p')"></div><div class="sw" style="background:#2F9E5B" onclick="pickSw(this,'p')"></div></div>
+    <div class="two" style="margin-top:4px">
+      <div><div class="ctrl-label">Forme</div><div class="chips" data-shape="p"><div class="chip on" onclick="pickShape(this,'p','hex')">Hexagone</div><div class="chip" onclick="pickShape(this,'p','circle')">Cercle</div><div class="chip" onclick="pickShape(this,'p','square')">Carré</div><div class="chip" onclick="pickShape(this,'p','diamond')">Diamant</div><div class="chip" onclick="pickShape(this,'p','triangle')">Triangle</div></div></div>
+    </div>
+    <div class="logo-actions"><button class="btn btn-secondary" onclick="regen('p')">↻ Nouvelle proposition</button></div>
+  </div>
+  <div data-logo-up="p" style="display:none">
+    <div class="upload"><div class="up-ic"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4M4 20h16"/></svg></div><strong>Chargez le logo de votre entreprise</strong><span>Fond transparent recommandé · 5 Mo max</span><div class="fmt"><span>PNG</span><span>SVG</span><span>JPG</span></div></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('p-done')" style="margin-top:18px">Continuer →</button>
+  <div class="foot-link">← <a onclick="go('p-struct')">Retour</a></div>
+</div></main></section>
+<!-- PRO · cockpit prêt -->
+<section class="screen" id="p-done"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div class="eyebrow-c"><span>Inscription · Professionnel</span><span class="step-count">Terminé</span></div>
+  <h1 class="title">Votre cockpit est prêt.</h1><p class="lede">Votre espace professionnel est configuré. Vous pouvez recevoir des appels d'offres.</p>
+  <div class="msg-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span>Page publique, missions, équipe et messagerie sont accessibles depuis votre cockpit.</span></div>
+    <!-- INS-09 — la porte de correction. Le bandeau AFFICHE L'ADRESSE : sans
+       elle, l'utilisateur ne peut pas voir sa faute de frappe, et c'est
+       justement parce qu'il ne reçoit rien qu'il est là. -->
+  <div class="msg-info" style="margin-top:16px"><span><b>Confirmez votre adresse.</b>
+    Un lien a été envoyé à <b id="em-p">votre adresse</b>.
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Renvoyer le lien</a> ·
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Corriger mon adresse</a></span></div>
+  <!-- Décision 27/07 — la page publique est créée EN BROUILLON. Elle n'est ni
+       visible ni référencée tant qu'elle n'est pas publiée : c'est la réponse
+       directe à INS-17, qui constatait une page de démonstration servie en
+       production. -->
+  <div class="msg-info" style="margin-top:10px"><span>Votre <b>page publique est créée en brouillon</b>. Elle ne sera visible qu'une fois publiée depuis votre espace.</span></div>
+<button class="btn btn-primary" onclick="go('s-login')" style="margin-top:14px">Accéder au cockpit →</button>
+</div></main></section>
+
+<!-- ══════════ BRANCHE FOURNISSEUR ══════════ -->
+<!-- FOUR · structure -->
+<section class="screen" id="f-struct"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Fournisseur</span><span class="step-count">Étape 3</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="now"></i><i></i><i></i></div>
+  <h1 class="title">Votre structure.</h1><p class="lede">Renseignez votre entreprise. Catalogue et zones de livraison se complètent depuis votre espace.</p>
+  <div class="field"><label>Nom de l'entreprise *</label><input type="text" id="f-name" placeholder="Ex : Matériaux Pro CI"></div>
+  <div class="two">
+    <div class="field" id="f-rccm"><label>N° RCCM *</label><input class="legal" type="text" placeholder="CI-ABJ-2024-B-12345" oninput="checkLegal('f-rccm',this,RCCM_RE,'CI-ABJ-2024-B-12345','f-next')"><div class="hint">Format : CI-ABJ-AAAA-X-NNNNN</div><div class="status s-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Format valide</div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Format attendu : CI-ABJ-AAAA-X-NNNNN</span></div></div>
+    <div class="field" id="f-tax"><label>N° Contribuable *</label><input class="legal" type="text" placeholder="CI-0000000-A" oninput="checkLegal('f-tax',this,TAX_RE,'CI-0000000-A','f-next')"><div class="hint">Format : CI-NNNNNNN-X</div><div class="status s-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Format valide</div><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Format attendu : CI-NNNNNNN-X</span></div></div>
+  </div>
+  <div class="msg-ok" style="margin-top:16px"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span><strong>Vérification en deux temps.</strong> Numéros uniques et liés à un seul compte MEEREO. La <strong>vérification officielle par KAi</strong> aura lieu au dépôt de votre RCCM et activera le badge « Vérifié par MEEREO ».</span></div>
+  <button class="btn btn-primary" id="f-next" onclick="go('f-logo')" style="margin-top:14px" disabled>Continuer →</button>
+  <div class="foot-link">← <a onclick="go('s-account')">Retour</a></div>
+</div></main></section>
+<!-- FOUR · logo -->
+<section class="screen" id="f-logo"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Fournisseur</span><span class="step-count">Étape 4</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i><i></i></div>
+  <h1 class="title">Votre logo.</h1><p class="lede">Générez un logo avec KAi, ou importez le vôtre. Un seul logo reste actif.</p>
+  <div class="logo-tabs">
+    <div class="logo-tab on" data-mode="gen" onclick="logoMode(this,'gen','f')"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17l-1.9-5.1L4.5 10l5.6-1.4z"/></svg>Générer avec KAi</div>
+    <div class="logo-tab" data-mode="up" onclick="logoMode(this,'up','f')"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4M4 20h16"/></svg>Mon logo existant</div>
+  </div>
+  <div data-logo-gen="f">
+    <div class="logo-preview"><div class="glyph hex" data-glyph="f"><span>M</span></div><div class="lp-name">Votre Entreprise</div><div class="lp-sub">Fournisseur</div></div>
+    <div class="ctrl-label">Couleur de marque</div><div class="swatches" data-sw="f"><div class="sw on" style="background:#141416" onclick="pickSw(this,'f')"></div><div class="sw" style="background:#2F4EE0" onclick="pickSw(this,'f')"></div><div class="sw" style="background:#2E8FA6" onclick="pickSw(this,'f')"></div><div class="sw" style="background:#7A5CE0" onclick="pickSw(this,'f')"></div><div class="sw" style="background:#D9662B" onclick="pickSw(this,'f')"></div><div class="sw" style="background:#2F9E5B" onclick="pickSw(this,'f')"></div></div>
+    <div><div class="ctrl-label">Forme</div><div class="chips" data-shape="f"><div class="chip on" onclick="pickShape(this,'f','hex')">Hexagone</div><div class="chip" onclick="pickShape(this,'f','circle')">Cercle</div><div class="chip" onclick="pickShape(this,'f','square')">Carré</div><div class="chip" onclick="pickShape(this,'f','diamond')">Diamant</div><div class="chip" onclick="pickShape(this,'f','triangle')">Triangle</div></div></div>
+    <div class="logo-actions"><button class="btn btn-secondary" onclick="regen('f')">↻ Nouvelle proposition</button></div>
+  </div>
+  <div data-logo-up="f" style="display:none">
+    <div class="upload"><div class="up-ic"><svg viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4M4 20h16"/></svg></div><strong>Chargez le logo de votre entreprise</strong><span>Fond transparent recommandé · 5 Mo max</span><div class="fmt"><span>PNG</span><span>SVG</span><span>JPG</span></div></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('f-payout')" style="margin-top:18px">Continuer →</button>
+  <div class="foot-link">← <a onclick="go('f-struct')">Retour</a></div>
+</div></main></section>
+<!-- FOUR · premier matériau -->
+<!-- ══ FOUR · ENCAISSEMENT — ÉTAPE AJOUTÉE (MKT-06 §4) ══
+     Sans moyen de réception, le fournisseur terminait son inscription SANS
+     POUVOIR VENDRE. MEEREO n'encaisse pas à sa place (FIN-02) : aucun
+     rattrapage n'est possible côté plateforme. L'étape est donc OBLIGATOIRE,
+     là où le logo et le premier produit restent franchissables.
+     Le parcours fournisseur compte SIX étapes, pas cinq. ══ -->
+<section class="screen" id="f-payout"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Fournisseur</span><span class="step-count">Étape 5</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i><i></i></div>
+  <h1 class="title">Comment serez-vous payé ?</h1>
+  <p class="lede">Les acheteurs vous règlent directement. Ce numéro reçoit vos paiements.</p>
+  <div class="msg-info"><span><b>MEEREO n'encaisse pas à votre place.</b> Sans ce moyen de réception, aucune vente n'est possible — et rien ne peut être rattrapé côté plateforme.</span></div>
+  <label style="display:block;font-size:12.5px;font-weight:600;margin:16px 0 9px">Opérateur *</label>
+  <div class="picks" id="pay-prov">
+    <div class="pick" data-prov="orange-money" onclick="selPick(this);validatePayout()"><span>Orange Money</span></div>
+    <div class="pick" data-prov="mtn-momo" onclick="selPick(this);validatePayout()"><span>MTN MoMo</span></div>
+    <div class="pick" data-prov="wave" onclick="selPick(this);validatePayout()"><span>Wave</span></div>
+    <div class="pick" data-prov="moov-money" onclick="selPick(this);validatePayout()"><span>Moov Money</span></div>
+  </div>
+  <div class="two" style="margin-top:16px">
+    <div class="field" id="pay-tel"><label>Numéro mobile *</label><input type="tel" placeholder="+225 07 07 12 34 56" oninput="validatePayout()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Un numéro mobile est requis — le Mobile Money n'accepte pas les lignes fixes</span></div></div>
+    <div class="field" id="pay-holder"><label>Titulaire du compte *</label><input type="text" placeholder="Nom du titulaire" oninput="validatePayout()"><div class="status s-err"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Champ requis</span></div></div>
+  </div>
+  <button class="btn btn-primary" id="pay-next" onclick="go('f-mat')" disabled style="margin-top:18px">Continuer →</button>
+  <div class="foot-link">← <a onclick="go('f-logo')">Retour</a></div>
+</div></main></section>
+
+<section class="screen" id="f-mat"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card wide">
+  <div class="eyebrow-c"><span>Inscription · Fournisseur</span><span class="step-count">Étape 6</span></div>
+  <div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i></div>
+  <h1 class="title">Votre premier produit.</h1><p class="lede">Référencez un premier matériau pour lancer votre catalogue. Vous en ajouterez d'autres depuis votre espace.</p>
+  <div class="field"><label>Nom du produit *</label><input type="text" id="f-mat-name" placeholder="Ex : Ciment CPA 42.5 — sac 50 kg"></div>
+  <div class="two">
+    <div class="field"><label>Catégorie *</label><select id="f-mat-cat"><option>— Choisir —</option><option>Ciment &amp; liants</option><option>Agrégats &amp; sable</option><option>Fer &amp; acier</option><option>Bois &amp; menuiserie</option><option>Électricité</option><option>Plomberie</option><option>Peinture &amp; finitions</option><option>Équipements</option></select></div>
+    <div class="field"><label>Unité de vente *</label><select id="f-mat-unit"><option>— Choisir —</option><option>Unité</option><option>Sac</option><option>m²</option><option>m³</option><option>Tonne</option><option>Mètre linéaire</option><option>Palette</option><option>Camion</option></select></div>
+  </div>
+  <!-- FIN-04 — « sur devis » est un ÉTAT, plus un prix à zéro. Avec un zéro,
+       aucun écran en aval ne distingue « sur devis », « gratuit » et « non
+       renseigné » : c'est le motif exact de la chaîne financière rompue. -->
+  <label style="display:block;font-size:12.5px;font-weight:600;margin:2px 0 9px">Prix *</label>
+  <div class="picks" id="mat-mode">
+    <div class="pick sel" data-mode="FIXED" onclick="selPick(this);setPriceMode()"><span>Prix ferme</span></div>
+    <div class="pick" data-mode="ON_QUOTE" onclick="selPick(this);setPriceMode()"><span>Sur devis</span></div>
+  </div>
+  <div id="price-row" style="margin-top:14px">
+    <div class="field" style="max-width:280px"><label>Prix unitaire *</label><div class="price-wrap"><input type="text" id="f-mat-price" placeholder="4 500"><span class="cur">FCFA</span></div></div>
+  </div>
+  <div class="msg-info" id="quote-note" style="display:none;margin-bottom:14px"><span>Aucun prix n'est enregistré. Les acheteurs vous adresseront une <b>demande de devis</b> depuis la Marketplace.</span></div>
+  <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:9px">Photo du produit</label>
+  <div class="mat-photo"><svg viewBox="0 0 24 24"><path d="M4 16l4-4 4 4 4-6 4 6"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span>Ajouter une photo · PNG ou JPG</span></div>
+  <button class="btn btn-primary" onclick="go('f-done')" style="margin-top:18px">Continuer →</button>
+  <div class="foot-link">← <a onclick="go('f-payout')">Retour</a> · <a onclick="go('f-done')">Passer cette étape</a></div>
+</div></main></section>
+<!-- FOUR · marketplace prête -->
+<section class="screen" id="f-done"><aside class="brand" data-brand></aside>
+<main class="auth"><div class="card">
+  <div class="eyebrow-c"><span>Inscription · Fournisseur</span><span class="step-count">Terminé</span></div>
+  <h1 class="title">Votre marketplace est prête.</h1><p class="lede">Votre espace fournisseur est configuré. Vous pouvez commencer à vendre sur MEEREO.</p>
+  <div class="msg-ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg><span>Catalogue, commandes, ventes et zones de livraison sont accessibles depuis votre espace.</span></div>
+    <!-- INS-09 — la porte de correction. Le bandeau AFFICHE L'ADRESSE : sans
+       elle, l'utilisateur ne peut pas voir sa faute de frappe, et c'est
+       justement parce qu'il ne reçoit rien qu'il est là. -->
+  <div class="msg-info" style="margin-top:16px"><span><b>Confirmez votre adresse.</b>
+    Un lien a été envoyé à <b id="em-f">votre adresse</b>.
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Renvoyer le lien</a> ·
+    <a href="#" onclick="return false" style="color:var(--ink);text-decoration:underline">Corriger mon adresse</a></span></div>
+  <!-- Décision 27/07 — la page publique est créée EN BROUILLON. Elle n'est ni
+       visible ni référencée tant qu'elle n'est pas publiée : c'est la réponse
+       directe à INS-17, qui constatait une page de démonstration servie en
+       production. -->
+  <div class="msg-info" style="margin-top:10px"><span>Votre <b>page publique est créée en brouillon</b>. Elle ne sera visible qu'une fois publiée depuis votre espace.</span></div>
+<button class="btn btn-primary" onclick="go('s-login')" style="margin-top:14px">Accéder à mon espace →</button>
+</div></main></section>
+
+<!-- nav prototype -->
+<nav class="proto-nav" id="pnav"></nav>
+
+<script>
+  // Injection du panneau vitrine dans chaque écran
+  const tpl = document.getElementById('brand-template').innerHTML;
+  document.querySelectorAll('.brand[data-brand]').forEach(b=>b.innerHTML=tpl);
+
+  // L'en-tête est injecté AVANT la carte, dans chaque écran. Même mécanisme que
+  // le panneau vitrine : un gabarit, treize écrans, aucune duplication.
+  const headTpl = document.getElementById('page-head-template').innerHTML;
+  document.querySelectorAll('main.auth').forEach(m=>m.insertAdjacentHTML('afterbegin', headTpl));
+
+  // Rôle courant → adapte le parcours après l'étape "Compte"
+  let CURRENT_ROLE='client';
+  function selRole(el){
+    el.parentElement.querySelectorAll('.role').forEach(r=>r.classList.remove('sel'));
+    el.classList.add('sel'); CURRENT_ROLE=el.dataset.role;
+    document.querySelectorAll('.role-label').forEach(l=>l.textContent={client:'Client',pro:'Professionnel',four:'Fournisseur'}[CURRENT_ROLE]);
+    // La couleur du rôle est portée par l'élément racine : un seul attribut
+    // pilote le fil d'étapes, le libellé et les boutons de tous les écrans.
+    document.documentElement.setAttribute('data-active-role',CURRENT_ROLE);
+    applyRoleToAccount();
+    if(typeof saveDraft==='function'){const cur=document.querySelector('.screen.active');if(cur)saveDraft(cur.id);}
+  }
+  // Le client n'a plus d'étape projet : il arrive directement sur son espace.
+  // L'adresse saisie est reportée sur les écrans de fin : le bandeau ne sert
+  // à rien s'il n'affiche pas l'adresse que l'utilisateur croit avoir tapée.
+  function showEmail(){
+    const em=fieldVal('acc-email')||'votre adresse';
+    ['em-c','em-p','em-f'].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=em;});
+  }
+  function afterAccount(){ showEmail(); go(CURRENT_ROLE==='client'?'c-done':CURRENT_ROLE==='pro'?'p-struct':'f-struct'); }
+
+  /* INS-15 — le fil d'étapes est DÉRIVÉ du rôle, jamais écrit en dur.
+     Le prototype affichait cinq points pour les trois rôles. Ils en comptent
+     2, 4 et 6. */
+  const STEP_COUNT={client:2,pro:4,four:6};
+
+  /* Au chargement, la carte « Je suis client » porte déjà .sel : l'attribut
+     doit donc être posé d'emblée, sinon le premier écran serait le seul du
+     parcours à ne pas porter la couleur du rôle. */
+  document.documentElement.setAttribute('data-active-role',CURRENT_ROLE);
+  function applyRoleToAccount(){
+    const n=STEP_COUNT[CURRENT_ROLE]||2;
+    const st=document.querySelector('#s-account .stepper');
+    if(st) st.innerHTML='<i class="on"></i><i class="now"></i>'+'<i></i>'.repeat(Math.max(0,n-2));
+    // INS-08 — la ville n'est obligatoire que pour les deux rôles d'entreprise.
+    const req=document.getElementById('city-req');
+    if(req) req.textContent = CURRENT_ROLE==='client' ? '(facultatif)' : '*';
+    if(typeof validateAccount==='function') validateAccount();
+  }
+
+  // Navigation entre écrans
+  const NAV=[['s-login','Login'],['s-forgot','Oublié'],['s-sent','Envoyé'],['s-reset','Reset'],['s-role','Rôle'],['s-account','Compte'],
+    ['c-done','▸Client✓'],['p-struct','▸Pro'],['p-logo','Pro logo'],['p-done','Pro✓'],
+    ['f-struct','▸Four'],['f-logo','Four logo'],['f-payout','Encaissement'],['f-mat','Produit'],['f-done','Four✓']];
+  const pnav=document.getElementById('pnav');
+  NAV.forEach(([id,lbl],i)=>{const b=document.createElement('button');b.textContent=lbl;if(i===0)b.classList.add('on');b.onclick=()=>go(id);pnav.appendChild(b);});
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el=document.getElementById(id); if(el)el.classList.add('active');
+    const btns=pnav.querySelectorAll('button'); btns.forEach(b=>b.classList.remove('on'));
+    const idx=NAV.findIndex(n=>n[0]===id); if(idx>=0)btns[idx].classList.add('on');
+    window.scrollTo(0,0);
+    // Persistance : une arrivée sur un écran de fin clôt le brouillon ; toute autre étape le met à jour.
+    if(typeof saveDraft==='function'){
+      if(id==='c-done'||id==='p-done'||id==='f-done'){clearDraft();}   // INS-13
+      else{saveDraft(id);}
+    }
+  }
+  function tp(b){const i=b.parentElement.querySelector('input');const s=i.type==='password';i.type=s?'text':'password';b.textContent=s?'Masquer':'Afficher';}
+  function selPick(el){el.parentElement.querySelectorAll('.pick').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');
+    if(typeof saveDraft==='function'){const cur=document.querySelector('.screen.active');if(cur)saveDraft(cur.id);}}
+  function tog(el){el.classList.toggle('on');}
+
+  // ── Persistance de session : "jamais bloqué, jamais forcé de recommencer" (règle produit du 26/07/2026) ──
+  // Portée volontaire : identité + informations légales + projet/produit sont sauvegardés.
+  // Les mots de passe (acc-pass/acc-pass2, reset-pass/reset-pass2) ne sont JAMAIS écrits en local, même temporairement —
+  // l'utilisateur les ressaisit à la reprise, comme le ferait toute application soucieuse de sécurité.
+  const DRAFT_KEY='meereo_onboarding_draft_v1';
+  const STEP_LABELS={'s-role':'Choix du profil','s-account':'Votre compte',
+    'p-struct':'Votre structure','p-logo':'Votre logo','f-struct':'Votre structure','f-logo':'Votre logo',
+    'f-payout':'Encaissement','f-mat':'Premier produit'};
+  const ROLE_LABELS={client:'Client',pro:'Professionnel',four:'Fournisseur'};
+  // INS-13 — jamais de mot de passe dans un brouillon : ces identifiants sont
+  // la liste exhaustive de ce qui est conservé, et elle n'en contient aucun.
+  const PERSIST_IDS=['acc-fname','acc-lname','acc-email','acc-tel','acc-city',
+    'p-name','p-rccm','p-tax','f-name','f-rccm','f-tax',
+    'pay-tel','pay-holder','f-mat-name','f-mat-cat','f-mat-unit','f-mat-price'];
+
+  function fieldInput(id){
+    const f=document.getElementById(id); if(!f)return null;
+    return (f.tagName==='INPUT'||f.tagName==='SELECT')?f:f.querySelector('input,select');
+  }
+  function saveDraft(stepId){
+    if(!STEP_LABELS[stepId])return;
+    const data={step:stepId,role:CURRENT_ROLE,fields:{},ts:Date.now()};
+    PERSIST_IDS.forEach(id=>{const el=fieldInput(id);if(el&&el.value)data.fields[id]=el.value;});
+    try{localStorage.setItem(DRAFT_KEY,JSON.stringify(data));}catch(e){}
+  }
+  function loadDraft(){
+    try{const raw=localStorage.getItem(DRAFT_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}
+  }
+  function clearDraft(){
+    try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+    const b=document.getElementById('resume-banner'); if(b)b.innerHTML='';
+  }
+  function applyDraft(d){
+    if(d.role){const roleEl=document.querySelector(`.role[data-role="${d.role}"]`); if(roleEl)selRole(roleEl);}
+    Object.entries(d.fields||{}).forEach(([id,val])=>{const el=fieldInput(id); if(el)el.value=val;});
+    go(d.step);
+    ['p-rccm','p-tax','f-rccm','f-tax'].forEach(id=>{const el=fieldInput(id); if(el&&el.value)el.dispatchEvent(new Event('input'));});
+    if(d.step==='s-account')validateAccount();
+  }
+  function renderResumeBanner(){
+    const holder=document.getElementById('resume-banner'); if(!holder)return;
+    const d=loadDraft();
+    if(!d||!STEP_LABELS[d.step]){holder.innerHTML='';return;}
+    holder.innerHTML='<div class="resume"><div class="resume-txt"><b>Inscription en cours</b><span>'+(ROLE_LABELS[d.role]||'')+' · '+STEP_LABELS[d.step]+'</span></div>'+
+      '<div class="resume-actions"><button class="resume-btn" type="button">Reprendre</button><a class="resume-clear">Recommencer</a></div></div>';
+    holder.querySelector('.resume-btn').onclick=()=>applyDraft(d);
+    holder.querySelector('.resume-clear').onclick=()=>{clearDraft();renderResumeBanner();};
+  }
+  ['input','change'].forEach(evt=>document.addEventListener(evt,(e)=>{
+    if(e.target && e.target.id && PERSIST_IDS.includes(e.target.id)){
+      const cur=document.querySelector('.screen.active'); if(cur)saveDraft(cur.id);
+    }
+  }));
+  renderResumeBanner();
+
+  // Accessibilité clavier des cartes/puces cliquables (finition premium, 26/07/2026) :
+  // ces éléments sont des <div onclick=...> sans sémantique native ; on les rend focusables et activables au clavier.
+  document.querySelectorAll('.role,.pick,.chip,.logo-tab,.sw,.upload,.mat-photo').forEach(el=>{
+    if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');
+  });
+  document.addEventListener('keydown',(e)=>{
+    if((e.key==='Enter'||e.key===' ')&&e.target.matches('.role,.pick,.chip,.logo-tab,.sw,.upload,.mat-photo')){
+      e.preventDefault();e.target.click();
+    }
+  });
+
+  // Aiguillage KAi : lit les saisies du projet et adapte la recommandation.
+  // Règle (proposition, à affiner côté produit) :
+  /* La fonction buildReco() est SUPPRIMÉE avec l'étape projet.
+     Elle construisait la recommandation KAi à partir du type, de la surface,
+     du lieu et du budget. Ces champs n'existent plus : la conserver aurait
+     laissé une fonction qui échoue au premier appel, et surtout la tentation
+     de la remplir de valeurs par défaut — ce que INS-16 interdit. */
+
+  /* ⚠️ RESTAURÉ le 28/07/2026 — ces trois constantes avaient disparu.
+     Elles se trouvaient entre buildReco() et checkLegal() ; en supprimant
+     buildReco j'ai découpé jusqu'à la fonction suivante, emportant ce qui se
+     trouvait entre les deux. Conséquence : saisir un RCCM levait une
+     ReferenceError, syncNext n'était jamais appelée, et les boutons des écrans
+     « Votre structure » restaient désactivés pour toujours — les parcours
+     Professionnel et Fournisseur ne pouvaient pas être terminés. */
+  // Validation légale (INS-01)
+  const RCCM_RE=/^CI-ABJ-\d{4}-[A-Z]-\d{4,6}$/;
+  const TAX_RE=/^CI-\d{7}-[A-Z]$/;
+  const TAKEN=['CI-ABJ-2024-B-99999'];
+
+  function checkLegal(fieldId,input,re,sample,btnId){
+    const f=document.getElementById(fieldId);const errSpan=f.querySelector('.s-err span');
+    let v=input.value.trim().toUpperCase();f.classList.remove('ok','err');
+    if(typeof saveDraft==='function'){const cur=document.querySelector('.screen.active');if(cur)saveDraft(cur.id);}
+    if(v===''){syncNext(btnId);return;}
+    if(v===sample){f.classList.add('err');errSpan.textContent="Ceci est un exemple de format, pas un numéro valide.";syncNext(btnId);return;}
+    if(!re.test(v)){f.classList.add('err');errSpan.textContent=fieldId.endsWith('rccm')?"Format attendu : CI-ABJ-AAAA-X-NNNNN":"Format attendu : CI-NNNNNNN-X";syncNext(btnId);return;}
+    if(TAKEN.includes(v)){f.classList.add('err');errSpan.textContent="Ce numéro est déjà associé à une autre entreprise.";syncNext(btnId);return;}
+    f.classList.add('ok');syncNext(btnId);
+  }
+  function syncNext(btnId){
+    const btn=document.getElementById(btnId);if(!btn)return;
+    const pre=btnId==='p-next'?'p':'f';
+    const ok=document.getElementById(pre+'-rccm').classList.contains('ok')&&document.getElementById(pre+'-tax').classList.contains('ok');
+    btn.disabled=!ok;btn.style.opacity=ok?'1':'.5';btn.style.cursor=ok?'pointer':'not-allowed';
+  }
+
+  // Validation du compte commun (INS-06) et de la réinitialisation (INS-07).
+  // Corrige à la source le bug documenté (email jamais vérifié → impasse en fin de parcours) :
+  // le bouton "Continuer" reste désactivé tant que tout n'est pas valide, donc l'impasse ne peut plus se produire.
+  const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  function setFieldState(fieldId,valid,empty){
+    const f=document.getElementById(fieldId);f.classList.remove('ok','err');
+    if(empty)return;
+    f.classList.add(valid?'ok':'err');
+  }
+  /* ══ RÈGLES PARTAGÉES — une seule source ══════════════════════════════
+     Mot de passe : décision du 27/07/2026 (Annexe 1, pt 2). Dix caractères,
+     au moins une lettre et un chiffre. NI majuscule NI caractère spécial
+     imposés : les règles de composition complexes sont déconseillées par le
+     NIST (SP 800-63B) — elles produisent des contournements prévisibles sans
+     gain réel. Lue par l'inscription ET par la réinitialisation : c'est ce
+     qui corrige l'incohérence relevée par INS-07. */
+  const PWD_MIN=10;
+  const pwOk = v => v.length>=PWD_MIN && /\p{L}/u.test(v) && /\d/.test(v);
+
+  /* INS-08 — téléphone en E.164. Décision du 27/07 : AUCUNE vérification par
+     SMS. Le format est contrôlé, le numéro enregistré, rien de plus.
+     Volontairement permissif : les préfixes n'ont pas pu être confirmés sur
+     une source officielle ARTCI, et un préfixe manquant bloquerait des
+     inscriptions légitimes — c'est le risque le plus coûteux ici. */
+  function normPhoneCI(raw){
+    const c=String(raw||'').replace(/[\s.\-()]/g,'');
+    let d;
+    if(c.startsWith('+225')) d=c.slice(4);
+    else if(c.startsWith('00225')) d=c.slice(5);
+    else if(c.startsWith('225')&&c.length===13) d=c.slice(3);
+    else d=c;
+    return /^\d{10}$/.test(d) ? '+225'+d : null;
+  }
+  const isMobileCI = e => /^\+225(0[157])/.test(e||'');
+
+  function fieldVal(fieldId){
+    const f=document.getElementById(fieldId);const i=f.querySelector('input');
+    return i?i.value.trim():'';
+  }
+  function validateAccount(){
+    const fn=fieldVal('acc-fname'),ln=fieldVal('acc-lname'),em=fieldVal('acc-email'),
+          pw=fieldVal('acc-pass'),pw2=fieldVal('acc-pass2'),
+          tel=fieldVal('acc-tel'),city=fieldVal('acc-city');
+    // INS-08 — la ville est obligatoire pour le pro et le fournisseur, facultative pour le client.
+    const cityRequired = CURRENT_ROLE!=='client';
+    const ph=normPhoneCI(tel), cityOk = cityRequired ? city.length>=2 : true;
+    const cgu=document.getElementById('acc-cgu').checked;   // INS-10
+    setFieldState('acc-fname',fn.length>=2,fn==='');
+    setFieldState('acc-lname',ln.length>=2,ln==='');
+    setFieldState('acc-email',EMAIL_RE.test(em),em==='');
+    setFieldState('acc-tel',!!ph,tel==='');
+    setFieldState('acc-city',cityOk,city==='');
+    setFieldState('acc-pass',pwOk(pw),pw==='');
+    setFieldState('acc-pass2',pwOk(pw2)&&pw2===pw,pw2==='');
+    const ok=fn.length>=2&&ln.length>=2&&EMAIL_RE.test(em)&&!!ph&&cityOk&&pwOk(pw)&&pw2===pw&&pwOk(pw2)&&cgu;
+    const btn=document.getElementById('acc-next');
+    btn.disabled=!ok;btn.style.opacity=ok?'1':'.5';btn.style.cursor=ok?'pointer':'not-allowed';
+    if(typeof saveDraft==='function')saveDraft('s-account');
+  }
+  /* MKT-06 §4 — l'encaissement est OBLIGATOIRE. Le numéro doit être MOBILE :
+     le Mobile Money n'accepte pas les lignes fixes, et un fournisseur qui
+     saisit un fixe se croirait payable sans l'être. */
+  function validatePayout(){
+    const prov=document.querySelector('#pay-prov .pick.sel');
+    const tel=fieldVal('pay-tel'), holder=fieldVal('pay-holder');
+    const ph=normPhoneCI(tel), telOk=!!ph&&isMobileCI(ph);
+    setFieldState('pay-tel',telOk,tel==='');
+    setFieldState('pay-holder',holder.length>=2,holder==='');
+    const ok=!!prov&&telOk&&holder.length>=2;
+    const b=document.getElementById('pay-next');
+    b.disabled=!ok;b.style.opacity=ok?'1':'.5';b.style.cursor=ok?'pointer':'not-allowed';
+  }
+
+  /* FIN-04 — le champ prix est MASQUÉ en mode « sur devis », pas grisé.
+     Un champ grisé laisse croire qu'une valeur existe quelque part ; ici il
+     n'y en a aucune, et c'est précisément le sens de l'état. */
+  function setPriceMode(){
+    const sel=document.querySelector('#mat-mode .pick.sel');
+    const onQuote = sel && sel.dataset.mode==='ON_QUOTE';
+    document.getElementById('price-row').style.display = onQuote?'none':'block';
+    document.getElementById('quote-note').style.display = onQuote?'flex':'none';
+    if(onQuote){ const i=document.getElementById('f-mat-price'); if(i) i.value=''; }
+  }
+
+  function validateReset(){
+    const pw=fieldVal('reset-pass'),pw2=fieldVal('reset-pass2');
+    setFieldState('reset-pass',pwOk(pw),pw==='');
+    setFieldState('reset-pass2',pwOk(pw2)&&pw2===pw,pw2==='');
+    const ok=pwOk(pw)&&pw2===pw&&pwOk(pw2);
+    const btn=document.getElementById('reset-next');
+    btn.disabled=!ok;btn.style.opacity=ok?'1':'.5';btn.style.cursor=ok?'pointer':'not-allowed';
+  }
+
+  // Générateur de logo (INS-02)
+  function logoMode(tab,mode,pre){
+    tab.parentElement.querySelectorAll('.logo-tab').forEach(t=>t.classList.remove('on'));tab.classList.add('on');
+    document.querySelector(`[data-logo-gen="${pre}"]`).style.display=mode==='gen'?'block':'none';
+    document.querySelector(`[data-logo-up="${pre}"]`).style.display=mode==='up'?'block':'none';
+  }
+  function pickSw(el,pre){
+    el.parentElement.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));el.classList.add('on');
+    const g=document.querySelector(`[data-glyph="${pre}"]`);const c=el.style.background;
+    g.style.background=c;g.style.borderColor=c;
+    g.classList.add('pop');g.addEventListener('animationend',()=>g.classList.remove('pop'),{once:true});
+  }
+  function pickShape(el,pre,shape){
+    el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+    const g=document.querySelector(`[data-glyph="${pre}"]`);
+    const shapeClasses=['hex','circle','square','diamond','triangle'].filter(s=>s!==shape);
+    g.classList.remove(...shapeClasses);g.classList.add(shape,'pop');
+    g.addEventListener('animationend',()=>g.classList.remove('pop'),{once:true});
+  }
+  function regen(pre){
+    const shapes=['hex','circle','square','diamond','triangle'];
+    const cols=['#141416','#2F4EE0','#2E8FA6','#7A5CE0','#D9662B','#2F9E5B'];
+    const s=shapes[Math.floor(Math.random()*shapes.length)];const c=cols[Math.floor(Math.random()*cols.length)];
+    const g=document.querySelector(`[data-glyph="${pre}"]`);g.className='glyph '+s+' pop';g.style.background=c;g.style.borderColor=c;
+    g.addEventListener('animationend',()=>g.classList.remove('pop'),{once:true});
+    const sw=document.querySelector(`[data-sw="${pre}"]`);sw.querySelectorAll('.sw').forEach(x=>{x.classList.toggle('on',x.style.background===c||x.style.background===`rgb(${parseInt(c.slice(1,3),16)}, ${parseInt(c.slice(3,5),16)}, ${parseInt(c.slice(5,7),16)})`);});
+    const sh=document.querySelector(`[data-shape="${pre}"]`);sh.querySelectorAll('.chip').forEach((x,i)=>x.classList.toggle('on',shapes[i]===s));
+  }
+
+  // Comportement idle "vivant" de KAi (KAi-specification-fonctionnement.md §12) :
+  // gestes aléatoires (nod / glance / blink), jamais combinés, jamais sur un rythme fixe (intervalle tiré entre 2,6s et 6,8s).
+  // Purement additif : ne touche à aucune fonction existante ci-dessus.
+  (function(){
+    const GESTS=[{cls:'gest-nod',w:40},{cls:'gest-glance',w:35},{cls:'gest-blink',w:25}];
+    function pick(){
+      let r=Math.random()*100,acc=0;
+      for(const g of GESTS){acc+=g.w;if(r<=acc)return g.cls;}
+      return GESTS[0].cls;
+    }
+    function tick(){
+      document.querySelectorAll('.kai-avatar-wrap').forEach(wrap=>{
+        const k=wrap.querySelector('.kai-k');
+        const cls=pick();
+        const target=cls==='gest-nod'?wrap:k;
+        if(!target)return;
+        target.classList.add(cls);
+        target.addEventListener('animationend',()=>target.classList.remove(cls),{once:true});
+      });
+      setTimeout(tick,2600+Math.random()*4200);
+    }
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      setTimeout(tick,2600+Math.random()*4200);
+    }
+  })();
+
+  // Cycle "premium" reliant la carte Espace · MEEREO et le diagramme réseau (26/07/2026).
+  // But : dès l'écran de connexion, faire comprendre les 3 profils (Client / Professionnel / Fournisseur)
+  // et donner un aperçu concret de ce que chacun voit — sans texte explicatif, juste par la démonstration.
+  (function(){
+    const DATA=[
+      {role:'client',label:'Client',title:'Villa Cocody',sub:'64% réalisé',s1:'20–50M',s1l:'Budget FCFA',s2:'3',s2l:'Offres reçues'},
+      {role:'pro',label:'Professionnel',title:'Cabinet ARCH+',sub:'Vérifié par MEEREO',s1:'12',s1l:'Clients suivis',s2:'4',s2l:'AO à traiter'},
+      {role:'four',label:'Fournisseur',title:'MeereoShop',sub:'48 produits en ligne',s1:'6',s1l:'Commandes en cours',s2:'+18%',s2l:'Ventes ce mois'}
+    ];
+    let idx=0;
+    function highlight(root,role){
+      root.querySelectorAll('.net-node[data-role]').forEach(n=>n.classList.toggle('hl',n.dataset.role===role));
+      root.querySelectorAll('.net-lines path[data-role]').forEach(p=>p.classList.toggle('hl',p.dataset.role===role));
+    }
+    function fillText(root,d){
+      const set=(sel,val)=>{const el=root.querySelector(sel);if(el)el.textContent=val;};
+      set('.mc-role',d.label);set('.mc-title',d.title);set('.mc-sub',d.sub);
+      set('.mc-s1',d.s1);set('.mc-s1l',d.s1l);set('.mc-s2',d.s2);set('.mc-s2l',d.s2l);
+    }
+    function apply(root,d,animate){
+      highlight(root,d.role);
+      const body=root.querySelector('.mc-body');
+      if(!body){return;}
+      if(!animate){fillText(root,d);return;}
+      body.classList.add('fade');
+      setTimeout(()=>{fillText(root,d);body.classList.remove('fade');},300);
+    }
+    function tick(first){
+      const d=DATA[idx];
+      document.querySelectorAll('.brand').forEach(root=>apply(root,d,!first));
+      idx=(idx+1)%DATA.length;
+    }
+    tick(true);
+    setInterval(tick,5400);
+  })();
+</script>
+</body>
+</html>

@@ -86,7 +86,8 @@
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{:*)",
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"bad@test.ci\", \"name\": \"X\", \"type\": \"client\"}')",
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"frn@test.ci\", \"password\": \"SecurePass123\", \"name\": \"FRN\", \"type\": \"fournisseur\"}')",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

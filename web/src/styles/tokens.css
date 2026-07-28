@@ -168,6 +168,30 @@
   /* ── Blue (kept for legacy compat — will be phased out) ── */
   --blue: #191c1d;
   --blue-bg: rgba(25,28,29,.04);
+
+  /* ── Role colors (v5 — 28/07/2026) ──
+     Mesurées au pixel sur l'application existante.
+     Client #D9622B · Professionnel #743EE4 · Fournisseur #418FAF */
+  --role-client: #D9622B;
+  --role-client-bg: #FCF3EE;
+  --role-pro: #743EE4;
+  --role-pro-bg: #F4F0FD;
+  --role-four: #418FAF;
+  --role-four-bg: #F0F6F9;
+
+  /* ── v5 typography tokens ── */
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --mono: "SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+
+  /* ── v5 surface tokens ── */
+  --noir: #08080A;
+  --ink: #16181A;
+  --grey: #727276;
+  --grey-soft: #9A9A9E;
+  --line: #EAEAEC;
+  --line-2: #F1F1F3;
+  --v5-bg: #FCFCFD;
+  --green-v5: #2F9E5B;
 }
 
 /* ── Dark Mode ── */
