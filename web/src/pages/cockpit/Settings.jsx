@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Check, User } from 'lucide-react'
 import { useDevise } from '../../hooks/useDevise'
 import { useMeereo } from '../../hooks/useMeereoStore'
+import { generateInviteCode, isValidInviteCode } from '../../utils/inviteCode'
 import { formatDateFR } from '../../utils/helpers'
 import KaiSubscription from '../../components/shared/KaiSubscription'
 import DeleteAccountSection from '../../components/shared/DeleteAccountSection'
@@ -66,7 +67,7 @@ function SecurityForm({ showToast }) {
 
 export default function Settings({ showToast }) {
   const { devise, setDevise, devises, taux, format: fmtMoney } = useDevise()
-  const { store, updateStore, acceptCommissionTerms, hasAcceptedCommissionTerms } = useMeereo()
+  const { store, updateStore } = useMeereo()
   const ob = store.onboardingData || {}
   // NAV-03: persister l'onglet actif dans sessionStorage pour survivre au refresh
   const [tab, setTabState] = useState(() => sessionStorage.getItem('meereo_settings_tab') || 'profil')
@@ -129,8 +130,16 @@ export default function Settings({ showToast }) {
   const [invitePhoto, setInvitePhoto] = useState(null)
   const [editMember, setEditMember] = useState(null)
 
+  // INS-18 — code d'invitation (8 lettres + 1 chiffre)
+  const [inviteCode, setInviteCode] = useState('')
+  const [generatedCode, setGeneratedCode] = useState('')
+
   const inviteMember = () => {
     if (!inviteNom.trim()) return
+    if (!isValidInviteCode(inviteCode)) {
+      showToast && showToast('Code d\'invitation invalide — 8 lettres + 1 chiffre (ex. ABCDEFGH4)', 'orange')
+      return
+    }
     const newMember = {
       id: 'tm_' + Date.now(),
       nom: inviteNom,
@@ -141,12 +150,13 @@ export default function Settings({ showToast }) {
       jobTitle: invitePoste || 'Collaborateur',
       photo: invitePhoto || '',
       photoUrl: invitePhoto || '',
+      inviteCode: inviteCode,
       statut: 'actif',
       online: false,
     }
     setTeam(prev => [...prev, newMember])
     setInviteModal(false)
-    setInviteEmail(''); setInviteNom(''); setInvitePoste(''); setInviteRole('collaborateur'); setInvitePhoto(null)
+    setInviteEmail(''); setInviteNom(''); setInvitePoste(''); setInviteRole('collaborateur'); setInvitePhoto(null); setInviteCode(''); setGeneratedCode('')
     showToast && showToast(inviteNom + ' ajouté à l\'équipe')
   }
 
@@ -375,9 +385,6 @@ export default function Settings({ showToast }) {
                         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>Commissions MEEREO</div>
                         <div style={{ fontSize: 11, color: 'var(--t3)' }}>Mises en relation via MEEREO — commission 5%</div>
                       </div>
-                      {!hasAcceptedCommissionTerms() && (
-                        <button className="btn btn-primary btn-sm" onClick={acceptCommissionTerms}>Accepter les conditions</button>
-                      )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {(store.commissions || []).map(c => (
@@ -498,10 +505,19 @@ export default function Settings({ showToast }) {
                   {ROLES.map(r => <option key={r.id} value={r.id}>{r.label} — {r.desc}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="form-label">Code d'invitation *</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input className="form-input" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} placeholder="ABCDEFGH4" maxLength={9} style={{ fontFamily: 'monospace', letterSpacing: '0.1em', flex: 1 }} />
+                  <button className="btn btn-sm" style={{ fontSize: 10, whiteSpace: 'nowrap' }} onClick={() => { const c = generateInviteCode(); setInviteCode(c); setGeneratedCode(c) }}>Générer</button>
+                </div>
+                {generatedCode && <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 4 }}>Code généré : <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{generatedCode}</span> — communiquez-le au membre.</div>}
+                {inviteCode && !isValidInviteCode(inviteCode) && <div style={{ fontSize: 10, color: 'var(--err)', marginTop: 4 }}>Format attendu : 8 lettres + 1 chiffre (ex. ABCDEFGH4)</div>}
+              </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-sm" onClick={() => setInviteModal(false)}>Annuler</button>
-              <button className="btn btn-primary btn-sm" disabled={!inviteNom.trim()} onClick={inviteMember}>Ajouter au profil</button>
+              <button className="btn btn-primary btn-sm" disabled={!inviteNom.trim() || !isValidInviteCode(inviteCode)} onClick={inviteMember}>Ajouter au profil</button>
             </div>
           </div>
         </div>

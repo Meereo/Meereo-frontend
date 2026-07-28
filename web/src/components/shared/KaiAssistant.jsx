@@ -185,16 +185,8 @@ function KaiOnboardingView({ context, displayName, onDragStart, onDismiss, onCom
   const [visibleSections, setVisibleSections] = useState(0)
   const scrollRef = useRef(null)
 
-  // Adapt CTA for client based on onboarding situation
-  const situation = store.onboardingData?.situation || ''
-  const cleEnMain = situation.includes('clé en main') || situation.includes('MEEREO')
-  const hasArchi = situation.includes('déjà un architecte')
   const ctaText = context === 'client'
-    ? cleEnMain
-      ? 'MEEREO prend en charge la mise en place de votre projet. KAi vous accompagnera et vous tiendra informé des prochaines étapes.'
-      : hasArchi
-        ? 'Votre professionnel vous invitera à rejoindre votre projet. En attendant, explorez votre espace.'
-        : 'Votre demande est publiée. Vous serez notifié dès qu\u2019un professionnel vous répondra. En attendant, explorez votre espace.'
+    ? 'Publiez un appel d\u2019offres pour trouver les professionnels adaptés, ou explorez votre espace.'
     : ob.cta
 
   const titleText = ob.title + (displayName ? ', ' + displayName : '') + '.'

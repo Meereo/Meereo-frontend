@@ -1,9 +1,8 @@
 // ═══════════════════════════════════════════════════════
 //  MEEREO — Commission workflow (clé en main uniquement)
 //
-//  RÈGLE : la commission 5% ne s'applique QUE lorsque
-//  le client a choisi l'option "clé en main" à l'onboarding.
-//  MEEREO introduit les structures → 5% si concrétisé.
+//  RÈGLE : la commission 5% s'applique lorsque MEEREO
+//  introduit les structures → 5% si concrétisé.
 //  Le client ne paie JAMAIS MEEREO pour la mise en relation.
 // ═══════════════════════════════════════════════════════
 
@@ -44,12 +43,6 @@ export const COMMISSION_LABELS = {
   [COMMISSION_STATUS.PAID]:     'Réglée',
   [COMMISSION_STATUS.OVERDUE]:  'En retard',
   [COMMISSION_STATUS.WAIVED]:   'Annulée',
-}
-
-// ── Guard : vérifie si le projet est en mode clé en main ──
-export function isCleEnMain(store) {
-  const situation = store.onboardingData?.situation || ''
-  return situation.includes('clé en main') || situation.includes('MEEREO')
 }
 
 // ── Calcul de la commission ──

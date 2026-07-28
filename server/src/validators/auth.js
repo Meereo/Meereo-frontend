@@ -86,8 +86,6 @@ const registerClientProfileSchema = z.object({
   surface: z.string().max(50).optional(),
   budget: z.string().max(100).optional(),
   description: z.string().max(2000).optional(),
-  situation: z.string().max(200).optional(),
-  architecteEmail: z.string().email('Email architecte invalide').optional().or(z.literal('')),
 })
 
 // ─── Register Pro — wizard complet ────────────────────────────────────────────

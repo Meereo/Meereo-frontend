@@ -1,23 +1,73 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react'
 import {
-  Home, HardHat, Store, Hammer, Pencil,
-  Search, CheckCircle2, Trophy,
-  Wrench, Shield, Layers, Droplets, Snowflake, Zap, Sun, Droplet, Leaf,
+  HardHat, Wrench, Shield, Layers, Droplets, Snowflake, Zap, Sun, Droplet, Leaf,
   Sofa, BedDouble, UtensilsCrossed, ChefHat, Briefcase, Armchair, Building2, Trees, Car,
-  PanelTop, Lock, Eye, Package,
+  PanelTop, Lock, Package, CheckCircle2, Mail,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import compressImage from '../utils/compressImage'
 import { api, setSuppressSessionExpired, setInMemoryToken } from '../services/api/client'
 import { useMeereo } from '../hooks/useMeereoStore'
-import { MKT_CATS } from '../data/marketplace'
 import CompanyLogo from '../components/shared/CompanyLogo'
 import useStepForm from '../hooks/useStepForm'
 import '../styles/onboarding.css'
 
-// ─── Référentiels ───────────────────────────────────────────────────────────
+// ─── Référentiels — source unique (reference-data.ts du paquet) ─────────────
+// Aucune de ces listes ne doit être dupliquée ailleurs (QAL-02).
 
-const FRN_CATEGORIES = MKT_CATS.filter(c => c.id !== 'all')
+const PRO_SECTEURS = [
+  { id: 'architecte-design', label: 'Architecte & Design' },
+  { id: 'bet-structure',     label: 'BET Structure' },
+  { id: 'bet-fluides',       label: 'BET Fluides' },
+  { id: 'gros-oeuvre',       label: 'Gros œuvre' },
+  { id: 'second-oeuvre',     label: 'Second œuvre' },
+  { id: 'vrd',               label: 'VRD & Terrassement' },
+  { id: 'electricite',       label: 'Électricité' },
+  { id: 'plomberie',         label: 'Plomberie & Sanitaire' },
+  { id: 'menuiserie',        label: 'Menuiserie' },
+  { id: 'peinture',          label: 'Peinture & Finitions' },
+]
+
+const MARKETPLACE_CATEGORIES = [
+  { id: 'ciment-liants',   label: 'Ciment & liants' },
+  { id: 'granulats',       label: 'Granulats & sables' },
+  { id: 'acier-ferraille', label: 'Acier & ferraillage' },
+  { id: 'bois',            label: 'Bois & dérivés' },
+  { id: 'carrelage',       label: 'Carrelage & revêtements' },
+  { id: 'peinture',        label: 'Peintures & enduits' },
+  { id: 'electricite',     label: 'Matériel électrique' },
+  { id: 'plomberie',       label: 'Plomberie & sanitaire' },
+  { id: 'menuiserie',      label: 'Menuiserie & fermetures' },
+  { id: 'outillage',       label: 'Outillage & EPI' },
+]
+
+const SALE_UNITS = [
+  { id: 'unite',   label: 'Unité' },
+  { id: 'sac',     label: 'Sac' },
+  { id: 'm2',      label: 'm²' },
+  { id: 'tonne',   label: 'Tonne' },
+  { id: 'm3',      label: 'm³' },
+  { id: 'ml',      label: 'Mètre linéaire' },
+  { id: 'kg',      label: 'Kilogramme' },
+  { id: 'litre',   label: 'Litre' },
+  { id: 'palette', label: 'Palette' },
+  { id: 'camion',  label: 'Camion' },
+  { id: 'lot',     label: 'Lot' },
+]
+
+const DELIVERY_MODES = [
+  { id: 'livraison', label: 'Livraison' },
+  { id: 'retrait',   label: 'Retrait sur site' },
+]
+
+const PAYOUT_METHODS = [
+  { id: 'orange_money', label: 'Orange Money', icon: '🟠' },
+  { id: 'mtn_momo',     label: 'MTN MoMo',     icon: '🟡' },
+  { id: 'wave',         label: 'Wave',          icon: '🔵' },
+  { id: 'bank_transfer', label: 'Virement bancaire', icon: '🏦' },
+]
+
+// ─── UI Constants ───────────────────────────────────────────────────────────
 
 const CARDS = [
   { id:'client', step:'01', title:'Je suis client',
@@ -30,7 +80,7 @@ const CARDS = [
     icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>,
     iconBg:'rgba(124,58,237,.08)',
     description:'Centralisez vos missions, vos offres, vos équipes et votre exécution.',
-    tags:['Architecte','BTP','BET','Entreprise'],
+    tags:['BTP','BET','Architecture','Entreprise'],
   },
   { id:'fournisseur', step:'03', title:'Je suis fournisseur',
     icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0891B2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>,
@@ -47,28 +97,6 @@ const FEATURES = [
   { num:'04', dot:'#7C3AED', title:'Intelligence artificielle', desc:'Analyse, recommandations et orchestration intelligente pour piloter vos projets.' },
 ]
 
-const SITUATIONS = [
-  {icon:<Search size={18}/>,bg:'rgba(234,88,12,.07)',title:"Je n'ai pas encore d'architecte",desc:"La plateforme va m'aider à trouver un architecte via un appel d'offres."},
-  {icon:<CheckCircle2 size={18}/>,bg:'rgba(22,163,74,.07)',title:"J'ai déjà un architecte",desc:"Mon architecte est sur Meereo ou je peux l'inviter."},
-  {icon:<Trophy size={18}/>,bg:'rgba(37,99,235,.07)',title:"Je veux une solution clé en main",desc:"Meereo coordonne l'ensemble — je valide et suis l'avancement."},
-  {icon:<Eye size={18}/>,bg:'rgba(99,102,241,.07)',title:"Je souhaite seulement découvrir",desc:"Explorez sans engagement. Vous pourrez créer un projet plus tard."},
-]
-
-const PRO_SECTEURS = [
-  'Architecte & Design',
-  "Bureau d'étude fluides",
-  "Bureau d'étude de structure",
-  'Construction gros oeuvre',
-  'Construction second oeuvre',
-]
-const PRO_SVC_MAP = {
-  'Architecte & Design':['Aménagement intérieur','Rénovation & réhabilitation','Architecture commerciale','Architecture d\'intérieur','Plans & permis de construire','Maîtrise d\'œuvre'],
-  "Bureau d'étude fluides":['Études thermiques','Études acoustiques','Études électriques','Études CVC','Audit énergétique','Diagnostic technique'],
-  "Bureau d'étude de structure":['Études béton armé','Calculs de structure','Notes de calcul','Plans d\'exécution','Études sismiques','Expertise structure'],
-  'Construction gros oeuvre':['Fondations & terrassement','Béton armé & structure','Maçonnerie','Charpente & toiture','Dallage & plancher','VRD & assainissement'],
-  'Construction second oeuvre':['Peinture & revêtements','Carrelage & faïence','Faux plafond','Menuiserie intérieure','Isolation thermique','Enduits & crépis'],
-}
-
 const LOGO_COLORS = [
   {hex:'#1D1D1F',label:'Noir profond'},{hex:'#1D4ED8',label:'Bleu marine'},{hex:'#0891B2',label:'Bleu acier'},
   {hex:'#7C3AED',label:'Violet'},{hex:'#EA580C',label:'Terracotta'},{hex:'#16A34A',label:'Vert'},
@@ -76,64 +104,6 @@ const LOGO_COLORS = [
 ]
 const LOGO_SHAPES = ['Hexagone','Cercle','Carré','Diamant','Triangle']
 const LOGO_TYPOS = ['Gras','Serif','Léger']
-
-function logoShapeStyle(shape) {
-  switch (shape) {
-    case 'Cercle': return { borderRadius: '50%' }
-    case 'Carré': return { borderRadius: '4px' }
-    case 'Diamant': return { borderRadius: '6px', transform: 'rotate(45deg)' }
-    case 'Triangle': return { clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', borderRadius: 0 }
-    case 'Hexagone': default: return { borderRadius: '12px' }
-  }
-}
-function logoContentStyle(shape) {
-  if (shape === 'Diamant') return { transform: 'rotate(-45deg)', display: 'block' }
-  if (shape === 'Triangle') return { display: 'block', transform: 'translateY(30%)' }
-  return {}
-}
-
-const FRN_CAT_SECTIONS = [
-  {title:'Matériaux de construction',cats:[
-    {em:<HardHat size={14}/>,label:'Gros Œuvre',sub:'Béton, agglos, gravier, sable, ciment'},
-    {em:<Wrench size={14}/>,label:'Structure & Charpente',sub:'Acier, profilés, rond à béton'},
-    {em:<Shield size={14}/>,label:'Isolation & Étanchéité',sub:'Laine de roche, membrane EPDM'},
-    {em:<PanelTop size={14}/>,label:'Menuiseries',sub:'Fenêtres, portes, baies vitrées'},
-    {em:<Layers size={14}/>,label:'Revêtements',sub:'Carrelage, parquet, peinture, enduit'},
-  ]},
-  {title:'Installations techniques',cats:[
-    {em:<Droplets size={14}/>,label:'Plomberie & Sanitaires',sub:'Robinetterie, WC, chauffe-eau'},
-    {em:<Snowflake size={14}/>,label:'CVC & Climatisation',sub:'Splits, VRV, ventilation'},
-    {em:<Zap size={14}/>,label:'Électricité',sub:'Tableaux, câbles, LED'},
-  ]},
-  {title:'Green & Énergie durable',cats:[
-    {em:<Sun size={14}/>,label:'Solaire & Photovoltaïque',sub:'Panneaux solaires, onduleurs'},
-    {em:<Droplet size={14}/>,label:'Traitement de l\'eau',sub:'Filtration, récupération'},
-    {em:<Home size={14}/>,label:'Domotique & Smart Home',sub:'Automatisation, capteurs'},
-    {em:<Leaf size={14}/>,label:'Éco-matériaux',sub:'Isolants naturels, bois certifié'},
-  ]},
-  {title:'Mobilier & Aménagement',cats:[
-    {em:<Sofa size={14}/>,label:'Salon & Séjour'},{em:<BedDouble size={14}/>,label:'Chambre & Literie'},
-    {em:<UtensilsCrossed size={14}/>,label:'Salle à manger'},{em:<ChefHat size={14}/>,label:'Cuisine & Équipements'},
-    {em:<Droplets size={14}/>,label:'Salle de bain'},
-  ]},
-  {title:'Mobilier professionnel',cats:[
-    {em:<Briefcase size={14}/>,label:'Mobilier Bureau'},{em:<Armchair size={14}/>,label:'Mobilier Collectif'},
-    {em:<Building2 size={14}/>,label:'Hôtellerie & Restauration'},
-  ]},
-  {title:'Extérieur',cats:[
-    {em:<Trees size={14}/>,label:'Jardin & Terrasse'},{em:<Wrench size={14}/>,label:'Outillage & Quincaillerie'},
-    {em:<Car size={14}/>,label:'Portails & Accès'},
-  ]},
-]
-
-const FRN_ZONE_SECTIONS = [
-  {title:'Abidjan & communes',zones:['Plateau','Cocody','Marcory','Yopougon','Treichville','Abobo','Adjamé','Koumassi','Port-Bouët','Bingerville','Anyama','Songon']},
-  {title:'Grandes villes',zones:['Bouaké','Yamoussoukro','Daloa','San-Pédro','Korhogo','Man','Gagnoa','Divo','Abengourou','Grand-Bassam']},
-  {title:'Sud & Lagunes',zones:['Dabou','Jacqueville','Tiassalé','Agboville','Adzopé','Aboisso','Bonoua']},
-  {title:'Centre & Nord',zones:['Toumodi','Dimbokro','Bondoukou','Katiola','Ferkessédougou','Odienné','Séguéla','Mankono']},
-  {title:'Ouest & Sud-Ouest',zones:['Soubré','Sassandra','Tabou','Guiglo','Duékoué','Danané','Issia']},
-  {title:'Couverture',zones:['Tout le territoire national','Zones rurales & villages']},
-]
 
 const VILLES_CI = [
   'Abidjan','Plateau','Cocody','Marcory','Yopougon','Treichville','Abobo','Adjamé',
@@ -152,11 +122,13 @@ const PHONE_PREFIXES = [
   { code: '+33',  flag: '🇫🇷', country: 'France' },
 ]
 
-const PAYOUT_METHODS = [
-  { id: 'orange_money', label: 'Orange Money', icon: '🟠' },
-  { id: 'mtn_momo',     label: 'MTN MoMo',     icon: '🟡' },
-  { id: 'wave',          label: 'Wave',          icon: '🔵' },
-  { id: 'bank_transfer', label: 'Virement bancaire', icon: '🏦' },
+const FRN_ZONE_SECTIONS = [
+  {title:'Abidjan & communes',zones:['Plateau','Cocody','Marcory','Yopougon','Treichville','Abobo','Adjamé','Koumassi','Port-Bouët','Bingerville','Anyama','Songon']},
+  {title:'Grandes villes',zones:['Bouaké','Yamoussoukro','Daloa','San-Pédro','Korhogo','Man','Gagnoa','Divo','Abengourou','Grand-Bassam']},
+  {title:'Sud & Lagunes',zones:['Dabou','Jacqueville','Tiassalé','Agboville','Adzopé','Aboisso','Bonoua']},
+  {title:'Centre & Nord',zones:['Toumodi','Dimbokro','Bondoukou','Katiola','Ferkessédougou','Odienné','Séguéla','Mankono']},
+  {title:'Ouest & Sud-Ouest',zones:['Soubré','Sassandra','Tabou','Guiglo','Duékoué','Danané','Issia']},
+  {title:'Couverture',zones:['Tout le territoire national','Zones rurales & villages']},
 ]
 
 // ─── SVG Components ─────────────────────────────────────────────────────────
@@ -189,10 +161,11 @@ const ArrowSVG = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="non
 
 // ─── Shared Components ──────────────────────────────────────────────────────
 
-const Field = ({label,required,error,children}) => (
+const Field = ({label,required,error,hint,children}) => (
   <div className="ob-field">
     <label className="ob-label-v2">{label}{required&&' *'}</label>
     {children}
+    {hint && !error && <div style={{fontSize:10,color:'var(--t4)',marginTop:2}}>{hint}</div>}
     {error && <div style={{fontSize:11,color:'#EF4444',marginTop:3}}>{error}</div>}
   </div>
 )
@@ -261,7 +234,9 @@ const validPhone = (v) => {
 }
 const validPassword = (v) => {
   if (!v) return 'Mot de passe requis'
-  if (v.length < 8) return 'Au moins 8 caractères'
+  if (v.length < 10) return 'Au moins 10 caractères'
+  if (!/[a-zA-Z]/.test(v)) return 'Au moins une lettre'
+  if (!/\d/.test(v)) return 'Au moins un chiffre'
   return null
 }
 const passwordsMatch = (_v, all) => {
@@ -269,48 +244,60 @@ const passwordsMatch = (_v, all) => {
   return null
 }
 const requireCgu = (v) => !v ? 'Acceptation requise' : null
+const requireArr = (msg) => (v) => (!v || v.length === 0) ? msg : null
 
-// ─── Step validation schemas ────────────────────────────────────────────────
+// ─── Step validation schemas — source : schemas.ts du paquet ────────────────
+// L'état du bouton est DÉRIVÉ de ces schémas (INS-06). Jamais posé à la main.
 
 const SCHEMAS = {
-  // Client step 1: identity + credentials
-  client_identity: {
+  // AccountStep — all roles (INS-08 : ville obligatoire pour pro/fournisseur)
+  client_account: {
     prenom: required, nom: required, tel: validPhone,
     email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
     cgu: requireCgu,
   },
-  // Client step 2: situation (optional — any choice is valid, or none)
-  client_situation: {},
+  pro_account: {
+    prenom: required, nom: required, tel: validPhone, ville: required,
+    email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
+    cgu: requireCgu,
+  },
+  fournisseur_account: {
+    prenom: required, nom: required, tel: validPhone, ville: required,
+    email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
+    cgu: requireCgu,
+  },
 
-  // Pro step 1: structure + credentials
+  // ProStructureStep — raison sociale, RCCM, NCC, secteurs (INS-01, INS-11)
   pro_structure: {
-    entreprise: required, ville: required, tel: validPhone,
-    secteurs: (v) => (!v || v.length === 0) ? 'Au moins un secteur' : null,
-    email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
-    cgu: requireCgu,
+    entreprise: required,
+    rccm: required,
+    ncc: required,
+    secteurs: requireArr('Au moins un secteur'),
   },
-  // Pro step 2: logo (franchissable — no required fields)
-  pro_logo: {},
-  // Pro step 3: services
-  pro_services: {},
-  // Pro step 4: portfolio
-  pro_portfolio: {},
 
-  // Fournisseur step 1: structure + credentials
+  // SupplierStructureStep — identité + catégories + livraison (MKT-06 §2-3)
   fournisseur_structure: {
-    entreprise: required, ville: required, tel: validPhone,
-    email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
-    cgu: requireCgu,
+    entreprise: required,
+    rccm: required,
+    ncc: required,
+    categories: requireArr('Au moins une catégorie'),
+    deliveryModes: requireArr('Au moins un mode de livraison'),
+    zones: requireArr('Au moins une zone'),
   },
+
+  // LogoStep — franchissable (INS-12)
+  pro_logo: {},
   fournisseur_logo: {},
-  fournisseur_catalogue: {},
-  // Fournisseur step 4: products (FACULTATIF — arbitrage 9)
-  fournisseur_products: {},
-  // Fournisseur step 5: payout (OBLIGATOIRE)
+
+  // SupplierPayoutStep — obligatoire (MKT-06 §4)
   fournisseur_payout: {
-    payoutType: (v) => !v ? 'Moyen d\'encaissement requis' : null,
+    payoutType: (v) => !v ? 'Opérateur requis' : null,
+    payoutPhone: validPhone,
+    payoutHolder: required,
   },
-  fournisseur_zones: {},
+
+  // SupplierProductStep — facultatif (arbitrage 9)
+  fournisseur_product: {},
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -322,12 +309,13 @@ export default function Onboarding() {
   const { loginUser, showToast } = useMeereo()
 
   // ─── State ──────────────────────────────────────────────────────────────
-  const [screen, setScreen] = useState('auth')   // auth | wizard
+  const [screen, setScreen] = useState('auth')   // auth | wizard | done
   const [userType, setUserType] = useState(null)  // pro | client | fournisseur
   const [wizStep, setWizStep] = useState(1)
-  const [steps, setSteps] = useState([])          // from API
+  const [steps, setSteps] = useState([])          // from GET /api/onboarding/steps/:role
   const [draftId, setDraftId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [doneData, setDoneData] = useState(null)  // { email, warnings }
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('')
@@ -336,28 +324,22 @@ export default function Onboarding() {
 
   // Form state — single object for all roles
   const [form, setForm] = useState({
-    // Credentials (all)
-    email: '', password: '', passwordConfirm: '', cgu: false, comms: false,
-    // Client identity
-    prenom: '', nom: '', civilite: '',
-    // Pro/Fournisseur structure
-    entreprise: '', rccm: '', ncc: '', annee: '',
-    // Shared
-    tel: '', telPrefix: '+225', ville: 'Abidjan', pays: "Côte d'Ivoire",
-    // Pro logo
+    // AccountStep (all roles)
+    prenom: '', nom: '', email: '', tel: '', telPrefix: '+225',
+    ville: '', pays: "Côte d'Ivoire",
+    password: '', passwordConfirm: '', cgu: false, comms: false,
+    // ProStructureStep / SupplierStructureStep
+    entreprise: '', rccm: '', ncc: '',
+    secteurs: [],
+    // SupplierStructureStep extra fields
+    categories: [], deliveryModes: [], zones: [], delaiLivraison: '',
+    // LogoStep
     logoColor: '#1D1D1F', logoShape: 'Hexagone', logoTypo: 'Gras', logoTab: 'generate', logoFileUrl: null,
-    // Pro services
-    secteurs: [], services: [], slogan: '', bio: '', projetsN: '', effectif: '',
-    // Pro portfolio
-    portfolioFiles: [], coverUrl: null, team: [],
-    // Fournisseur
-    categories: [], zones: [], delaiLivraison: '',
-    // Fournisseur payout
-    payoutType: '', payoutLabel: '', payoutPhone: '',
-    // Fournisseur products
-    firstProductName: '', firstProductPrice: '', firstProductUnit: '/unité', firstProductCategory: '',
-    // Client situation
-    situation: null,
+    // SupplierPayoutStep (MKT-06 §4)
+    payoutType: '', payoutPhone: '', payoutHolder: '',
+    // SupplierProductStep (facultatif — arbitrage 9)
+    productName: '', productCategory: '', productUnit: '', productStock: '',
+    pricingMode: 'FIXED', productPrice: '',
   })
 
   const set = useCallback((k, v) => setForm(f => ({ ...f, [k]: v })), [])
@@ -371,18 +353,15 @@ export default function Onboarding() {
   const schema = schemaKey ? SCHEMAS[schemaKey] || {} : {}
   const { isValid } = useStepForm(form, schema)
 
-  // ─── Fetch steps from API when role is selected ───────────────────────
+  // ─── Fetch steps from API when role is selected (INS-15) ──────────────
   useEffect(() => {
     if (!userType) return
     api.onboarding.steps(userType)
       .then(data => setSteps(data.steps || []))
-      .catch(() => {
-        // Fallback if API unavailable — should not happen in normal flow
-        setSteps([])
-      })
+      .catch(() => setSteps([]))
   }, [userType])
 
-  // ─── Save draft to server at each step transition ─────────────────────
+  // ─── Save draft to server at each step transition (INS-13) ────────────
   const saveDraft = useCallback(async (currentForm) => {
     try {
       const { password, passwordConfirm, ...safeData } = currentForm
@@ -395,7 +374,7 @@ export default function Onboarding() {
       const draft = res.draft
       if (draft?.id && !draftId) setDraftId(draft.id)
     } catch {
-      // Draft save failure is non-blocking — user can continue
+      // Draft save failure is non-blocking (INS-13)
     }
   }, [userType, draftId])
 
@@ -422,13 +401,6 @@ export default function Onboarding() {
     setSuppressSessionExpired(true)
   }, [])
 
-  // ─── Photo handling ───────────────────────────────────────────────────
-  const handlePhoto = async (e, field) => {
-    const f = e.target.files[0]; if (!f) return
-    const compressed = await compressImage(f, 400, 0.8)
-    set(field, compressed)
-  }
-
   // ─── Logo upload ──────────────────────────────────────────────────────
   const handleLogoUpload = async (e) => {
     const f = e.target.files[0]; if (!f) return
@@ -436,7 +408,6 @@ export default function Onboarding() {
     const compressed = await compressImage(f, 200, 0.85)
     set('logoFileUrl', compressed)
     set('logoTab', 'upload')
-    // Upload to server in background
     try {
       const fd = new FormData(); fd.append('logo', f)
       const res = await api.onboarding.uploadLogo(fd)
@@ -444,14 +415,14 @@ export default function Onboarding() {
     } catch { /* keep compressed preview */ }
   }
 
-  // ─── Submit ───────────────────────────────────────────────────────────
+  // ─── Submit (NAV-07 : session ouverte dans la même réponse) ───────────
   const handleSubmit = async () => {
     if (submitting) return
     setSubmitting(true)
     try {
       const name = userType === 'client'
         ? `${form.prenom} ${form.nom}`.trim()
-        : form.entreprise || 'Utilisateur'
+        : form.entreprise || `${form.prenom} ${form.nom}`.trim()
 
       const payload = {
         email: form.email,
@@ -469,28 +440,23 @@ export default function Onboarding() {
       if (userType === 'pro') {
         Object.assign(profile, {
           entreprise: form.entreprise, ville: form.ville, pays: form.pays,
-          annee: form.annee || undefined, rccm: form.rccm || undefined, ncc: form.ncc || undefined,
+          rccm: form.rccm, ncc: form.ncc,
           tel: `${form.telPrefix} ${form.tel}`.trim(),
-          secteurs: form.secteurs, services: form.services,
+          secteurs: form.secteurs,
           logoColor: form.logoColor, logoShape: form.logoShape, logoTypo: form.logoTypo,
           logoFileUrl: form.logoTab === 'upload' ? form.logoFileUrl : undefined,
           activeLogoType: form.logoTab === 'upload' && form.logoFileUrl ? 'uploaded' : 'generated',
-          slogan: form.slogan || undefined, bio: form.bio || undefined,
-          projetsN: form.projetsN || undefined, effectif: form.effectif || undefined,
-          portfolioFiles: form.portfolioFiles, cockpitTeam: form.team,
-          coverUrl: form.coverUrl || undefined,
         })
       } else if (userType === 'client') {
         Object.assign(profile, {
-          prenom: form.prenom, nom: form.nom, civilite: form.civilite || undefined,
+          prenom: form.prenom, nom: form.nom,
           tel: `${form.telPrefix} ${form.tel}`.trim(),
           ville: form.ville, pays: form.pays,
-          situation: form.situation || undefined,
         })
       } else if (userType === 'fournisseur') {
         Object.assign(profile, {
           entreprise: form.entreprise, ville: form.ville, pays: form.pays,
-          rccm: form.rccm || undefined, ncc: form.ncc || undefined,
+          rccm: form.rccm, ncc: form.ncc,
           tel: `${form.telPrefix} ${form.tel}`.trim(),
           logoColor: form.logoColor, logoShape: form.logoShape, logoTypo: form.logoTypo,
           logoFileUrl: form.logoTab === 'upload' ? form.logoFileUrl : undefined,
@@ -500,7 +466,7 @@ export default function Onboarding() {
       }
       payload.profile = profile
 
-      // Entreprise (pro/fournisseur)
+      // Entreprise entity (pro/fournisseur — INS-20)
       if ((userType === 'pro' || userType === 'fournisseur') && form.entreprise) {
         payload.entreprise = {
           legalName: form.entreprise,
@@ -509,29 +475,29 @@ export default function Onboarding() {
         }
       }
 
-      // PayoutMethod (fournisseur)
+      // PayoutMethod (fournisseur — MKT-06 §4)
       if (userType === 'fournisseur' && form.payoutType) {
         payload.payoutMethod = {
           type: form.payoutType,
-          label: form.payoutLabel || form.payoutType,
+          label: form.payoutHolder || form.payoutType,
           details: form.payoutPhone ? { phone: form.payoutPhone } : {},
         }
       }
 
-      // First product (facultatif — arbitrage 9)
-      if (userType === 'fournisseur' && form.firstProductName?.trim()) {
+      // First product (facultatif — arbitrage 9, FIN-04 : zéro ≠ sur devis)
+      if (userType === 'fournisseur' && form.productName?.trim()) {
+        const price = form.pricingMode === 'FIXED' ? (parseFloat(form.productPrice) || undefined) : undefined
         payload.firstProduct = {
-          name: form.firstProductName,
-          category: form.firstProductCategory || '',
-          price: parseFloat(form.firstProductPrice) || 0,
-          unit: form.firstProductUnit || '/unité',
+          name: form.productName,
+          category: form.productCategory || '',
+          price,
+          unit: form.productUnit || 'unite',
         }
       }
 
-      // POST /api/onboarding/submit → 201 + { token, user }
       const res = await api.onboarding.submit(payload)
 
-      // Session opened by API (NAV-07) — store token immediately
+      // Session opened by API (NAV-07)
       if (res.token) {
         setInMemoryToken(res.token)
         try { sessionStorage.setItem('meereo_session_token', res.token) } catch {}
@@ -541,31 +507,27 @@ export default function Onboarding() {
       }
 
       setSuppressSessionExpired(false)
-      showToast('Compte créé avec succès !', 'green')
 
-      // Completion message for fournisseur without product
-      if (userType === 'fournisseur' && !form.firstProductName?.trim()) {
-        showToast('Catalogue vide — ajoutez vos premiers produits depuis votre espace', 'orange')
+      // Build warnings for DoneStep
+      const warnings = []
+      if (userType === 'fournisseur' && !form.productName?.trim()) {
+        warnings.push('Catalogue vide — ajoutez vos premiers produits depuis votre espace.')
+      }
+      if (userType !== 'client' && !(form.logoTab === 'upload' && form.logoFileUrl)) {
+        warnings.push('Page publique créée en brouillon. Elle ne sera visible qu\'une fois publiée.')
       }
 
-      // Redirect to workspace — session already active
-      setTimeout(() => {
-        if (userType === 'client') navigate('/client')
-        else if (userType === 'fournisseur') navigate('/fournisseur')
-        else navigate('/cockpit')
-      }, 100)
+      setDoneData({ email: form.email, warnings })
+      setScreen('done')
     } catch (err) {
-      // Handle domain errors from API
+      // INS-06 — une erreur ramène à son étape (step, field)
       if (err.status === 409) {
         showToast(err.message || 'Conflit — email ou RCCM déjà utilisé', 'red')
-        // Navigate back to the credentials step
-        const credStep = steps.findIndex(s => s.key === 'structure' || s.key === 'identity')
-        if (credStep >= 0) setWizStep(credStep + 1)
+        const accountStep = steps.findIndex(s => s.key === 'account')
+        if (accountStep >= 0) setWizStep(accountStep + 1)
       } else if (err.status === 422 && err.errors) {
         const first = err.errors[0]
         showToast(first?.message || 'Données invalides', 'red')
-        // Navigate to the step containing the errored field
-        // For now, go back to step 1
         setWizStep(1)
       } else {
         showToast(err.message || 'Erreur lors de la création du compte', 'red')
@@ -667,21 +629,7 @@ export default function Onboarding() {
               <div className="ob-form-title">{steps[wizStep-1]?.label || ''}</div>
 
               {/* ── STEP CONTENT ── */}
-              {renderStep(userType, currentStepKey, form, set, toggleArr, handlePhoto, handleLogoUpload)}
-
-              {/* ── CGU (only on first step) ── */}
-              {wizStep === 1 && (
-                <div style={{marginTop:14,display:'flex',flexDirection:'column',gap:8}}>
-                  <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t2)',cursor:'pointer',lineHeight:1.5}}>
-                    <input type="checkbox" checked={!!form.cgu} onChange={e=>set('cgu',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
-                    <span>J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>conditions générales</a> et la <a href="/confidentialite" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>politique de confidentialité</a>. *</span>
-                  </label>
-                  <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t3)',cursor:'pointer',lineHeight:1.5}}>
-                    <input type="checkbox" checked={!!form.comms} onChange={e=>set('comms',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
-                    <span>Recevoir les communications MEEREO (facultatif).</span>
-                  </label>
-                </div>
-              )}
+              {renderStep(userType, currentStepKey, form, set, toggleArr, handleLogoUpload)}
 
               {/* ── NAVIGATION ── */}
               <div className="wiz-nav">
@@ -703,113 +651,153 @@ export default function Onboarding() {
           </div>
         </div>
       )}
+
+      {/* ════ DONE SCREEN (DoneStep du paquet) ════ */}
+      {screen === 'done' && doneData && (
+        <div className="ob-screen">
+          <WizardLeftPanel steps={steps} currentStep={steps.length + 1} />
+          <div className="ob-panel-white">
+            <div className="ob-form-wrap" style={{maxWidth:440}}>
+              <DoneStep
+                role={userType}
+                email={doneData.email}
+                warnings={doneData.warnings}
+                onNavigate={() => {
+                  if (userType === 'client') navigate('/client')
+                  else if (userType === 'fournisseur') navigate('/fournisseur')
+                  else navigate('/cockpit')
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// STEP RENDERERS — each returns the JSX for a wizard step
+// STEP RENDERERS — source: steps.parts.tsx du paquet, habillage Tailwind actuel
 // ═════════════════════════════════════════════════════════════════════════════
 
-function renderStep(role, stepKey, form, set, toggleArr, handlePhoto, handleLogoUpload) {
-  // ── CLIENT ──
-  if (role === 'client') {
-    if (stepKey === 'identity') return <ClientIdentityStep form={form} set={set} />
-    if (stepKey === 'situation') return <ClientSituationStep form={form} set={set} />
+function renderStep(role, stepKey, form, set, toggleArr, handleLogoUpload) {
+  // AccountStep — shared across all roles
+  if (stepKey === 'account') return <AccountStep role={role} form={form} set={set} />
+  // Structure — role-specific
+  if (stepKey === 'structure') {
+    if (role === 'pro') return <ProStructureStep form={form} set={set} toggleArr={toggleArr} />
+    if (role === 'fournisseur') return <SupplierStructureStep form={form} set={set} toggleArr={toggleArr} />
   }
-  // ── PRO ──
-  if (role === 'pro') {
-    if (stepKey === 'structure') return <ProStructureStep form={form} set={set} toggleArr={toggleArr} />
-    if (stepKey === 'logo') return <LogoStep form={form} set={set} handleLogoUpload={handleLogoUpload} />
-    if (stepKey === 'services') return <ProServicesStep form={form} set={set} toggleArr={toggleArr} />
-    if (stepKey === 'portfolio') return <ProPortfolioStep form={form} set={set} handlePhoto={handlePhoto} />
-  }
-  // ── FOURNISSEUR ──
-  if (role === 'fournisseur') {
-    if (stepKey === 'structure') return <FrnStructureStep form={form} set={set} />
-    if (stepKey === 'logo') return <LogoStep form={form} set={set} handleLogoUpload={handleLogoUpload} />
-    if (stepKey === 'catalogue') return <FrnCatalogueStep form={form} toggleArr={toggleArr} />
-    if (stepKey === 'products') return <FrnProductsStep form={form} set={set} />
-    if (stepKey === 'payout') return <FrnPayoutStep form={form} set={set} />
-    if (stepKey === 'zones') return <FrnZonesStep form={form} toggleArr={toggleArr} />
-  }
+  // Logo — shared (INS-12 : franchissable)
+  if (stepKey === 'logo') return <LogoStep form={form} set={set} handleLogoUpload={handleLogoUpload} />
+  // Fournisseur-specific
+  if (stepKey === 'payout') return <SupplierPayoutStep form={form} set={set} />
+  if (stepKey === 'product') return <SupplierProductStep form={form} set={set} toggleArr={toggleArr} />
   return null
 }
 
-// ── Client: Identity + Credentials ──────────────────────────────────────────
+// ── AccountStep (Votre compte) — source: steps.parts.tsx AccountStep ────────
 
-function ClientIdentityStep({ form, set }) {
+function AccountStep({ role, form, set }) {
   return <>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Prénom" required><input className="ob-input" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Kofi"/></Field>
-      <Field label="Nom" required><input className="ob-input" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Yao"/></Field>
+      <Field label="Prénom" required><input className="ob-input" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Kofi" autoComplete="given-name"/></Field>
+      <Field label="Nom" required><input className="ob-input" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Yao" autoComplete="family-name"/></Field>
     </div>
+    <Field label="Adresse e-mail" required>
+      <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@monentreprise.ci" autoComplete="email"/>
+    </Field>
     <PhoneField form={form} set={set} />
-    <Field label="Ville">
+    <Field label="Ville" required={role !== 'client'}>
       <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
+        <option value="">— Choisir —</option>
         {VILLES_CI.map(v=><option key={v}>{v}</option>)}
       </select>
     </Field>
-    <CredentialsFields form={form} set={set} />
-  </>
-}
-
-// ── Client: Situation ────────────────────────────────────────────────────────
-
-function ClientSituationStep({ form, set }) {
-  return <>
-    <div style={{fontSize:13,color:'var(--t2)',marginBottom:12}}>Comment souhaitez-vous avancer ?</div>
-    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-      {SITUATIONS.map(s => (
-        <button key={s.title} type="button" className={`ob-situation-card ${form.situation===s.title?'active':''}`}
-          onClick={()=>set('situation',s.title)} style={{textAlign:'left',padding:'12px 14px',borderRadius:12,border:form.situation===s.title?'2px solid #7C3AED':'1px solid var(--border-card)',background:form.situation===s.title?'rgba(124,58,237,.04)':'var(--surface-1)',cursor:'pointer',display:'flex',gap:10,alignItems:'flex-start'}}>
-          <div style={{width:32,height:32,borderRadius:8,background:s.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{s.icon}</div>
-          <div><div style={{fontSize:12,fontWeight:700}}>{s.title}</div><div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>{s.desc}</div></div>
-        </button>
-      ))}
+    <Field label="Mot de passe" required hint="10 caractères minimum, une lettre, un chiffre.">
+      <PasswordInput value={form.password} onChange={v=>set('password',v)} placeholder="10+ caractères" />
+    </Field>
+    <Field label="Confirmation du mot de passe" required>
+      <input className="ob-input" type="password" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} placeholder="••••••••" autoComplete="new-password"/>
+    </Field>
+    {/* INS-10 — consentements explicites, jamais pré-cochés */}
+    <div style={{marginTop:14,display:'flex',flexDirection:'column',gap:8}}>
+      <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t2)',cursor:'pointer',lineHeight:1.5}}>
+        <input type="checkbox" checked={!!form.cgu} onChange={e=>set('cgu',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
+        <span>J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>conditions générales</a> et la <a href="/confidentialite" target="_blank" rel="noopener noreferrer" style={{color:'#7C3AED',fontWeight:600}}>politique de confidentialité</a>. *</span>
+      </label>
+      <label style={{display:'flex',alignItems:'flex-start',gap:8,fontSize:11.5,color:'var(--t3)',cursor:'pointer',lineHeight:1.5}}>
+        <input type="checkbox" checked={!!form.comms} onChange={e=>set('comms',e.target.checked)} style={{marginTop:2,flexShrink:0}} />
+        <span>Recevoir les communications MEEREO (facultatif).</span>
+      </label>
     </div>
   </>
 }
 
-// ── Pro: Structure + Credentials ────────────────────────────────────────────
+// ── ProStructureStep (Votre entreprise) — source: steps.parts.tsx ────────────
 
 function ProStructureStep({ form, set, toggleArr }) {
   return <>
-    <Field label="Nom de la structure" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Mon cabinet"/></Field>
+    <Field label="Raison sociale" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Mon cabinet"/></Field>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Ville" required>
-        <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
-          <option value="">— Choisir —</option>
-          {VILLES_CI.map(v=><option key={v}>{v}</option>)}
-        </select>
+      <Field label="Numéro RCCM" required hint="Format : CI-ABJ-AAAA-X-NNNNN">
+        <input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/>
       </Field>
-      <Field label="Année de création"><input className="ob-input" type="text" value={form.annee} onChange={e=>set('annee',e.target.value)} placeholder="2018" maxLength={4}/></Field>
-    </div>
-    <PhoneField form={form} set={set} />
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="RCCM"><input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/></Field>
-      <Field label="NCC"><input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="CI0000000A"/></Field>
+      <Field label="N° de contribuable" required>
+        <input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="1234567A"/>
+      </Field>
     </div>
     <Field label="Secteurs d'activité" required>
       <Chips items={PRO_SECTEURS} selected={form.secteurs} onToggle={v=>toggleArr('secteurs',v)} />
     </Field>
-    <CredentialsFields form={form} set={set} />
   </>
 }
 
-// ── Shared: Logo step ───────────────────────────────────────────────────────
+// ── SupplierStructureStep (Votre entreprise) — source: steps.parts.tsx ───────
+// Inclut catégories vendues, modes et zones de livraison, délai (MKT-06 §2-3).
+
+function SupplierStructureStep({ form, set, toggleArr }) {
+  return <>
+    <Field label="Raison sociale" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="MatériCI SARL"/></Field>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <Field label="Numéro RCCM" required hint="Format : CI-ABJ-AAAA-X-NNNNN">
+        <input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/>
+      </Field>
+      <Field label="N° de contribuable" required>
+        <input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="1234567A"/>
+      </Field>
+    </div>
+    <Field label="Catégories vendues" required>
+      <Chips items={MARKETPLACE_CATEGORIES} selected={form.categories} onToggle={v=>toggleArr('categories',v)} />
+    </Field>
+    <Field label="Modes de livraison" required>
+      <Chips items={DELIVERY_MODES} selected={form.deliveryModes} onToggle={v=>toggleArr('deliveryModes',v)} />
+    </Field>
+    <Field label="Zones de livraison" required>
+      {FRN_ZONE_SECTIONS.map(sec => (
+        <div key={sec.title} style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,color:'var(--t3)',marginBottom:4,textTransform:'uppercase',letterSpacing:'.03em'}}>{sec.title}</div>
+          <Chips items={sec.zones} selected={form.zones} onToggle={v=>toggleArr('zones',v)} />
+        </div>
+      ))}
+    </Field>
+    <Field label="Délai de livraison (jours)">
+      <input className="ob-input" type="number" value={form.delaiLivraison} onChange={e=>set('delaiLivraison',e.target.value)} placeholder="2" min="0" max="365"/>
+    </Field>
+  </>
+}
+
+// ── LogoStep (INS-12 — franchissable, monogramme calculé à l'affichage) ─────
 
 function LogoStep({ form, set, handleLogoUpload }) {
   const fileRef = useRef()
-  const initials = (form.entreprise || 'M').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()
   return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Cette étape est facultative — vous pouvez la passer.</div>
+    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Facultatif. Sans logo, vos initiales vous représentent — vous pourrez en ajouter un à tout moment.</div>
     <div style={{display:'flex',gap:10,marginBottom:16}}>
       <button className={`ob-tab ${form.logoTab==='generate'?'active':''}`} onClick={()=>set('logoTab','generate')}>Générer</button>
       <button className={`ob-tab ${form.logoTab==='upload'?'active':''}`} onClick={()=>set('logoTab','upload')}>Uploader</button>
     </div>
     {form.logoTab === 'generate' ? <>
-      {/* Preview — uses CompanyLogo pattern: monogram only, NEVER stored as image */}
       <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
         <CompanyLogo
           pro={{ entreprise: form.entreprise, logoColor: form.logoColor, logoShape: form.logoShape }}
@@ -850,124 +838,12 @@ function LogoStep({ form, set, handleLogoUpload }) {
   </>
 }
 
-// ── Pro: Services ───────────────────────────────────────────────────────────
+// ── SupplierPayoutStep (MKT-06 §4 — OBLIGATOIRE) ───────────────────────────
 
-function ProServicesStep({ form, set, toggleArr }) {
-  const availableServices = form.secteurs.flatMap(s => PRO_SVC_MAP[s] || [])
+function SupplierPayoutStep({ form, set }) {
   return <>
-    {availableServices.length > 0 && (
-      <Field label="Services">
-        <Chips items={availableServices} selected={form.services} onToggle={v=>toggleArr('services',v)} />
-      </Field>
-    )}
-    <Field label="Slogan"><input className="ob-input" value={form.slogan} onChange={e=>set('slogan',e.target.value)} placeholder="Bâtir avec excellence" maxLength={200}/></Field>
-    <Field label="Bio"><textarea className="ob-input" value={form.bio} onChange={e=>set('bio',e.target.value)} placeholder="Décrivez votre activité..." rows={3} style={{resize:'vertical'}} maxLength={2000}/></Field>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Projets réalisés"><input className="ob-input" value={form.projetsN} onChange={e=>set('projetsN',e.target.value)} placeholder="15+"/></Field>
-      <Field label="Effectif"><input className="ob-input" value={form.effectif} onChange={e=>set('effectif',e.target.value)} placeholder="5-10"/></Field>
-    </div>
-  </>
-}
-
-// ── Pro: Portfolio ──────────────────────────────────────────────────────────
-
-function ProPortfolioStep({ form, set, handlePhoto }) {
-  const coverRef = useRef()
-  return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:8}}>Ajoutez une image de couverture et vos réalisations (facultatif).</div>
-    <Field label="Image de couverture">
-      <input ref={coverRef} type="file" accept="image/*" onChange={e=>handlePhoto(e,'coverUrl')} style={{display:'none'}} />
-      {form.coverUrl ? (
-        <div style={{position:'relative'}}>
-          <img src={form.coverUrl} alt="Cover" style={{width:'100%',height:120,objectFit:'cover',borderRadius:10}} />
-          <button onClick={()=>set('coverUrl',null)} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,.5)',color:'#fff',border:'none',borderRadius:'50%',width:24,height:24,cursor:'pointer',fontSize:12}}>x</button>
-        </div>
-      ) : (
-        <button className="ob-btn-out" onClick={()=>coverRef.current?.click()}>Choisir une image</button>
-      )}
-    </Field>
-  </>
-}
-
-// ── Fournisseur: Structure + Credentials ────────────────────────────────────
-
-function FrnStructureStep({ form, set }) {
-  return <>
-    <Field label="Nom de l'entreprise" required><input className="ob-input" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="MatériCI SARL"/></Field>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Ville" required>
-        <select className="ob-input" value={form.ville} onChange={e=>set('ville',e.target.value)}>
-          <option value="">— Choisir —</option>
-          {VILLES_CI.map(v=><option key={v}>{v}</option>)}
-        </select>
-      </Field>
-      <Field label="Délai de livraison"><input className="ob-input" value={form.delaiLivraison} onChange={e=>set('delaiLivraison',e.target.value)} placeholder="24-48h"/></Field>
-    </div>
-    <PhoneField form={form} set={set} />
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="RCCM"><input className="ob-input" value={form.rccm} onChange={e=>set('rccm',e.target.value)} placeholder="CI-ABJ-2024-B-12345"/></Field>
-      <Field label="NCC"><input className="ob-input" value={form.ncc} onChange={e=>set('ncc',e.target.value)} placeholder="CI0000000A"/></Field>
-    </div>
-    <CredentialsFields form={form} set={set} />
-  </>
-}
-
-// ── Fournisseur: Catalogue ──────────────────────────────────────────────────
-
-function FrnCatalogueStep({ form, toggleArr }) {
-  return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Sélectionnez vos catégories de produits.</div>
-    {FRN_CAT_SECTIONS.map(sec => (
-      <div key={sec.title} style={{marginBottom:14}}>
-        <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.03em'}}>{sec.title}</div>
-        <div style={{display:'flex',flexDirection:'column',gap:4}}>
-          {sec.cats.map(c => {
-            const active = form.categories.includes(c.label)
-            return (
-              <button key={c.label} type="button" onClick={()=>toggleArr('categories',c.label)}
-                style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderRadius:8,border:active?'1.5px solid #7C3AED':'1px solid var(--border-card)',background:active?'rgba(124,58,237,.04)':'transparent',cursor:'pointer',textAlign:'left'}}>
-                {c.em}<div><div style={{fontSize:12,fontWeight:600}}>{c.label}</div>{c.sub && <div style={{fontSize:10,color:'var(--t4)'}}>{c.sub}</div>}</div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    ))}
-  </>
-}
-
-// ── Fournisseur: Products (FACULTATIF) ──────────────────────────────────────
-
-function FrnProductsStep({ form, set }) {
-  return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>
-      Ajoutez votre premier produit (facultatif). Vous pourrez compléter votre catalogue depuis votre espace.
-    </div>
-    <Field label="Nom du produit"><input className="ob-input" value={form.firstProductName} onChange={e=>set('firstProductName',e.target.value)} placeholder="Ciment CEM II 42.5"/></Field>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Prix (FCFA)"><input className="ob-input" type="number" value={form.firstProductPrice} onChange={e=>set('firstProductPrice',e.target.value)} placeholder="5500"/></Field>
-      <Field label="Unité"><input className="ob-input" value={form.firstProductUnit} onChange={e=>set('firstProductUnit',e.target.value)} placeholder="/sac"/></Field>
-    </div>
-    <Field label="Catégorie">
-      <select className="ob-input" value={form.firstProductCategory} onChange={e=>set('firstProductCategory',e.target.value)}>
-        <option value="">— Choisir —</option>
-        {FRN_CATEGORIES.map(c=><option key={c.id} value={c.label}>{c.label}</option>)}
-      </select>
-    </Field>
-    {!form.firstProductName?.trim() && (
-      <div style={{padding:'10px 12px',borderRadius:8,background:'rgba(234,88,12,.06)',fontSize:11,color:'#B45309',marginTop:8,display:'flex',alignItems:'center',gap:8}}>
-        <Package size={14} /> Catalogue vide — vous pourrez ajouter des produits plus tard.
-      </div>
-    )}
-  </>
-}
-
-// ── Fournisseur: Payout (OBLIGATOIRE) ───────────────────────────────────────
-
-function FrnPayoutStep({ form, set }) {
-  return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Comment souhaitez-vous recevoir vos paiements ?</div>
-    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Les acheteurs vous règlent directement. Ce numéro reçoit vos paiements.</div>
+    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
       {PAYOUT_METHODS.map(m => (
         <button key={m.id} type="button" onClick={()=>set('payoutType',m.id)}
           style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:10,border:form.payoutType===m.id?'2px solid #7C3AED':'1px solid var(--border-card)',background:form.payoutType===m.id?'rgba(124,58,237,.04)':'transparent',cursor:'pointer',textAlign:'left'}}>
@@ -976,59 +852,126 @@ function FrnPayoutStep({ form, set }) {
         </button>
       ))}
     </div>
-    {form.payoutType && (form.payoutType === 'orange_money' || form.payoutType === 'mtn_momo' || form.payoutType === 'wave') && (
-      <Field label="Numéro de téléphone associé" required>
-        <input className="ob-input" value={form.payoutPhone} onChange={e=>set('payoutPhone',e.target.value)} placeholder="+225 07 00 00 00"/>
-      </Field>
+    <Field label="Numéro mobile" required hint="Un numéro mobile est requis pour le Mobile Money.">
+      <input className="ob-input" value={form.payoutPhone} onChange={e=>set('payoutPhone',e.target.value)} placeholder="+225 07 00 00 00" autoComplete="tel"/>
+    </Field>
+    <Field label="Titulaire du compte" required>
+      <input className="ob-input" value={form.payoutHolder} onChange={e=>set('payoutHolder',e.target.value)} placeholder="Nom complet du titulaire"/>
+    </Field>
+  </>
+}
+
+// ── SupplierProductStep (facultatif — arbitrage 9) ──────────────────────────
+// FIN-04 : le zéro NE signifie plus « sur devis ». pricingMode = FIXED | ON_QUOTE.
+
+function SupplierProductStep({ form, set, toggleArr }) {
+  const onQuote = form.pricingMode === 'ON_QUOTE'
+  return <>
+    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Facultatif. Vous pourrez enrichir votre catalogue depuis votre espace.</div>
+    <Field label="Nom du produit"><input className="ob-input" value={form.productName} onChange={e=>set('productName',e.target.value)} placeholder="Ciment CEM II 42.5"/></Field>
+    <Field label="Catégorie">
+      <Chips items={MARKETPLACE_CATEGORIES} selected={form.productCategory ? [form.productCategory] : []}
+        onToggle={v => set('productCategory', form.productCategory === v ? '' : v)} multi={false} />
+    </Field>
+    <Field label="Unité de vente">
+      <Chips items={SALE_UNITS} selected={form.productUnit ? [form.productUnit] : []}
+        onToggle={v => set('productUnit', form.productUnit === v ? '' : v)} multi={false} />
+    </Field>
+    <Field label="Stock disponible">
+      <input className="ob-input" type="number" value={form.productStock} onChange={e=>set('productStock',e.target.value)} placeholder="100" min="0"/>
+    </Field>
+    <Field label="Prix">
+      <div style={{display:'flex',gap:6,marginBottom:8}}>
+        <button type="button" className={`ob-chip ${!onQuote?'active':''}`}
+          onClick={()=>{set('pricingMode','FIXED');set('productPrice','')}}>Prix ferme</button>
+        <button type="button" className={`ob-chip ${onQuote?'active':''}`}
+          onClick={()=>{set('pricingMode','ON_QUOTE');set('productPrice','')}}>Sur devis</button>
+      </div>
+      {!onQuote ? (
+        <input className="ob-input" type="number" value={form.productPrice} onChange={e=>set('productPrice',e.target.value)} placeholder="5 500 FCFA" min="1"/>
+      ) : (
+        <div style={{fontSize:11,color:'var(--t3)',padding:'8px 0'}}>Les acheteurs vous adresseront une demande de devis depuis la Marketplace.</div>
+      )}
+    </Field>
+    {!form.productName?.trim() && (
+      <div style={{padding:'10px 12px',borderRadius:8,background:'rgba(234,88,12,.06)',fontSize:11,color:'#B45309',marginTop:8,display:'flex',alignItems:'center',gap:8}}>
+        <Package size={14} /> Catalogue vide — vous pourrez ajouter des produits plus tard.
+      </div>
     )}
   </>
 }
 
-// ── Fournisseur: Zones ──────────────────────────────────────────────────────
+// ── DoneStep — source: steps.parts.tsx DoneStep ─────────────────────────────
+// INS-09 : le bandeau AFFICHE L'ADRESSE pour permettre à l'utilisateur de
+// voir une éventuelle faute de frappe.
 
-function FrnZonesStep({ form, toggleArr }) {
-  return <>
-    <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Où livrez-vous ?</div>
-    {FRN_ZONE_SECTIONS.map(sec => (
-      <div key={sec.title} style={{marginBottom:14}}>
-        <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.03em'}}>{sec.title}</div>
-        <Chips items={sec.zones} selected={form.zones} onToggle={v=>toggleArr('zones',v)} />
+function DoneStep({ role, email, warnings, onNavigate }) {
+  return (
+    <div style={{textAlign:'center',padding:'24px 0'}}>
+      <div style={{width:56,height:56,borderRadius:'50%',background:'rgba(22,163,74,.08)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
+        <CheckCircle2 size={28} color="#16A34A" />
       </div>
-    ))}
-  </>
+      <div className="ob-form-title" style={{marginBottom:8}}>Votre compte est créé</div>
+
+      {/* INS-09 — bandeau de vérification d'adresse */}
+      <div style={{padding:'14px 16px',borderRadius:12,background:'rgba(37,99,235,.06)',border:'1px solid rgba(37,99,235,.15)',marginBottom:16,textAlign:'left'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+          <Mail size={14} color="#2563EB" />
+          <span style={{fontSize:12,fontWeight:600,color:'#2563EB'}}>Confirmez votre adresse</span>
+        </div>
+        <div style={{fontSize:11.5,color:'var(--t2)',lineHeight:1.5}}>
+          Un lien de vérification a été envoyé à <strong>{email}</strong>.
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:10}}>
+          <button className="ob-btn-out" style={{fontSize:11,padding:'5px 12px'}}>Renvoyer le lien</button>
+          <button className="ob-btn-out" style={{fontSize:11,padding:'5px 12px'}}>Corriger mon adresse</button>
+        </div>
+      </div>
+
+      {warnings.length > 0 && (
+        <div style={{marginBottom:16,textAlign:'left'}}>
+          {warnings.map(w => (
+            <div key={w} style={{padding:'8px 12px',borderRadius:8,background:'rgba(234,88,12,.06)',fontSize:11,color:'#B45309',marginBottom:6,lineHeight:1.5}}>
+              {w}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {role !== 'client' && (
+        <div style={{fontSize:11.5,color:'var(--t3)',lineHeight:1.5,marginBottom:16}}>
+          Votre page publique est créée en <strong>brouillon</strong>. Elle ne sera visible qu'une fois publiée depuis votre espace.
+        </div>
+      )}
+
+      <button className="ob-btn-blk" style={{width:'100%'}} onClick={onNavigate}>
+        Accéder à mon espace
+      </button>
+    </div>
+  )
 }
 
 // ─── Shared sub-components ──────────────────────────────────────────────────
 
 function PhoneField({ form, set }) {
   return (
-    <Field label="Téléphone" required>
+    <Field label="Téléphone" required hint="Ex. : +225 07 07 12 34 56">
       <div style={{display:'flex',gap:6}}>
         <select className="ob-input" value={form.telPrefix} onChange={e=>set('telPrefix',e.target.value)} style={{width:100,flexShrink:0}}>
           {PHONE_PREFIXES.map(p=><option key={p.code} value={p.code}>{p.flag} {p.code}</option>)}
         </select>
-        <input className="ob-input" value={form.tel} onChange={e=>set('tel',e.target.value)} placeholder="07 00 00 00" style={{flex:1}}/>
+        <input className="ob-input" value={form.tel} onChange={e=>set('tel',e.target.value)} placeholder="07 07 12 34 56" style={{flex:1}} autoComplete="tel"/>
       </div>
     </Field>
   )
 }
 
-function CredentialsFields({ form, set }) {
-  const [showPwd, setShowPwd] = useState(false)
-  return <>
-    <Field label="Email professionnel" required>
-      <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@monentreprise.ci"/>
-    </Field>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Mot de passe" required>
-        <div style={{position:'relative'}}>
-          <input className="ob-input" type={showPwd?'text':'password'} value={form.password} onChange={e=>set('password',e.target.value)} placeholder="8+ caractères" style={{paddingRight:40}}/>
-          <button type="button" onClick={()=>setShowPwd(!showPwd)} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:11,color:'var(--t3)'}}>{showPwd?'Masquer':'Voir'}</button>
-        </div>
-      </Field>
-      <Field label="Confirmation" required>
-        <input className="ob-input" type="password" value={form.passwordConfirm} onChange={e=>set('passwordConfirm',e.target.value)} placeholder="••••••••"/>
-      </Field>
+function PasswordInput({ value, onChange, placeholder }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div style={{position:'relative'}}>
+      <input className="ob-input" type={show?'text':'password'} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{paddingRight:40}} autoComplete="new-password"/>
+      <button type="button" onClick={()=>setShow(!show)} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:11,color:'var(--t3)'}}>{show?'Masquer':'Voir'}</button>
     </div>
-  </>
+  )
 }

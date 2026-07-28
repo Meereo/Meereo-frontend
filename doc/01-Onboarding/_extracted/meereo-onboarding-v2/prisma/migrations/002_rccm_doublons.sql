@@ -1,0 +1,61 @@
+-- ════════════════════════════════════════════════════════════════════
+-- INS-20 — TRAITEMENT DES DOUBLONS DE RCCM DÉJÀ EN PRODUCTION.
+--
+-- ⚠️ ORDRE IMPÉRATIF : exécuter CE fichier AVANT de créer la table Company et
+-- ses contraintes d'unicité. Une contrainte UNIQUE posée sur une colonne qui
+-- contient des doublons FAIT ÉCHOUER la migration.
+--
+-- Décision MEEREO du 27/07/2026 : TOUS les comptes partageant un RCCM sont
+-- suspendus, Y COMPRIS le plus ancien, jusqu'à vérification des documents.
+-- Motif : le RCCM est public. L'antériorité ne prouve rien — l'usurpateur peut
+-- avoir été le plus rapide. Épargner le premier validerait une usurpation.
+-- ════════════════════════════════════════════════════════════════════
+
+-- ── ÉTAPE 1 : AUDIT. Ne modifie rien. Transmettre le résultat à MEEREO. ──
+-- SELECT rccm, COUNT(*) AS n, array_agg(DISTINCT "accountId") AS accounts
+-- FROM (
+--   SELECT rccm, "accountId" FROM "ProProfile"
+--   UNION ALL
+--   SELECT rccm, "accountId" FROM "SupplierProfile"
+-- ) x
+-- GROUP BY rccm HAVING COUNT(*) > 1
+-- ORDER BY n DESC;
+
+-- ── ÉTAPE 2 : SUSPENSION. À exécuter après validation de la liste. ──
+-- WITH dups AS (
+--   SELECT rccm FROM (
+--     SELECT rccm FROM "ProProfile" UNION ALL SELECT rccm FROM "SupplierProfile"
+--   ) x GROUP BY rccm HAVING COUNT(*) > 1
+-- ), targets AS (
+--   SELECT p."accountId" FROM "ProProfile" p JOIN dups d ON d.rccm = p.rccm
+--   UNION
+--   SELECT s."accountId" FROM "SupplierProfile" s JOIN dups d ON d.rccm = s.rccm
+-- )
+-- UPDATE "Account" SET
+--   "suspendedAt" = now(),
+--   "suspensionReason" = 'RCCM en doublon — vérification des documents requise (INS-20)'
+-- WHERE id IN (SELECT "accountId" FROM targets) AND "suspendedAt" IS NULL;
+
+-- ── ÉTAPE 3 : MIGRATION DES DONNÉES vers Company (après suspension) ──
+-- INSERT INTO "Company" (id, "legalName", rccm, "taxId", "createdAt")
+-- SELECT gen_random_uuid(), MIN("companyName"), rccm, MIN("taxId"), MIN("createdAt")
+-- FROM (
+--   SELECT "companyName", rccm, "taxId", "createdAt" FROM "ProProfile"
+--   UNION ALL
+--   SELECT "companyName", rccm, "taxId", "createdAt" FROM "SupplierProfile"
+-- ) x GROUP BY rccm;
+--
+-- UPDATE "Account" a SET "companyId" = c.id
+-- FROM "Company" c
+-- WHERE c.rccm = COALESCE(
+--   (SELECT rccm FROM "ProProfile"      WHERE "accountId" = a.id),
+--   (SELECT rccm FROM "SupplierProfile" WHERE "accountId" = a.id)
+-- );
+--
+-- ALTER TABLE "ProProfile"      DROP COLUMN rccm, DROP COLUMN "taxId";
+-- ALTER TABLE "SupplierProfile" DROP COLUMN rccm, DROP COLUMN "taxId";
+
+-- ── ÉTAPE 4 : VÉRIFICATION. Doit renvoyer ZÉRO ligne. ──
+-- SELECT "companyId", role, COUNT(*) FROM "Account"
+-- WHERE "deletedAt" IS NULL AND "companyId" IS NOT NULL
+-- GROUP BY "companyId", role HAVING COUNT(*) > 1;

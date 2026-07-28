@@ -76,7 +76,17 @@
       "Bash(node -c server/src/adapters/index.js)",
       "Bash(wc:*)",
       "Bash(node -c web/src/hooks/useStepForm.js)",
-      "Bash(node -c server/src/__tests__/onboarding.integration.js)"
+      "Bash(node -c server/src/__tests__/onboarding.integration.js)",
+      "Bash(node --test src/__tests__/inviteCode.test.js)",
+      "Bash(node --test src/__tests__/onboarding.integration.js)",
+      "Bash(curl -s http://localhost:3001/api/onboarding/steps/client)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:3001/api/onboarding/steps/pro)",
+      "Bash(curl -s http://localhost:3001/api/onboarding/steps/fournisseur)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{:*)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"bad@test.ci\", \"name\": \"X\", \"type\": \"client\"}')",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:3001/api/onboarding/submit -H 'Content-Type: application/json' -d '{\"email\": \"frn@test.ci\", \"password\": \"SecurePass123\", \"name\": \"FRN\", \"type\": \"fournisseur\"}')",
+      "Bash(kill %1)"
     ]
   }
 }

@@ -183,14 +183,12 @@ model ClientProfile {
   pays     String  @default("Côte d'Ivoire")
   photoUrl String?
 
-  // Projet (rempli lors du wizard)
+  // Projet (rempli depuis l'espace connecté)
   projectType     String? // Villa/Maison | Immeuble R+ | Local commercial | Rénovation | Autre
   location        String?
   surface         String?
   budget          String?
   description     String?
-  situation       String? // architecte trouvé | à trouver | clé en main
-  architecteEmail String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -436,8 +436,6 @@ router.get('/me/onboarding', requireAuth, async (req, res) => {
         surface:     p.surface     || '',
         budget:      p.budget      || '',
         description: p.description || '',
-        situation:   p.situation   || '',
-        architecteEmail: p.architecteEmail || '',
         photoUrl:    p.photoUrl    || '',
       }
     }

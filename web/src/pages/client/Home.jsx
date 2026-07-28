@@ -84,39 +84,12 @@ export default function Home({ ctx }) {
           </div>
 
           {(() => {
-            const situation = ob.situation || ''
-            const hasArchi = situation.includes('déjà un architecte')
-            const cleEnMain = situation.includes('clé en main')
-            const isExploring = situation.includes('découvrir la plateforme')
-            let eyebrow = 'Demande envoyée'
-            let title = 'Votre demande a bien été envoyée'
-            let text = 'Des professionnels pourront bientôt vous répondre. Vous pourrez consulter leurs propositions et choisir avec qui avancer.'
-            let action = 'En attendant, vous pouvez aussi rechercher vous-même un architecte, un constructeur ou un autre métier adapté à votre projet.'
-            let cta = 'Rechercher un professionnel'
-            let ctaPage = 'ao'
-
-            if (isExploring) {
-              eyebrow = 'Mode découverte'
-              title = 'Bienvenue sur MEEREO'
-              text = 'Explorez librement la plateforme — bourse des appels d\'offres, marketplace, suivi de projet, messagerie. Aucun engagement, aucune demande envoyée.'
-              action = 'Quand vous êtes prêt à démarrer un projet, créez votre premier appel d\'offres pour trouver les professionnels adaptés.'
-              cta = 'Explorer la bourse'
-              ctaPage = 'ao'
-            } else if (hasArchi) {
-              eyebrow = 'Projet en préparation'
-              title = 'Votre projet se prépare'
-              text = 'Votre espace se met en place avec le professionnel associé à votre projet. Vous serez informé dès qu\'un document, une étape ou une action sera disponible.'
-              action = 'Vous pouvez aussi rechercher d\'autres métiers si vous souhaitez compléter votre équipe.'
-              cta = 'Compléter l\'équipe'
-              ctaPage = 'ao'
-            } else if (cleEnMain) {
-              eyebrow = 'Prise en charge MEEREO'
-              title = 'MEEREO organise votre projet'
-              text = 'Nous prenons en charge la mise en place de votre projet. KAi vous accompagnera et vous tiendra informé des prochaines étapes.'
-              action = 'Les professionnels adaptés seront identifiés et proposés au bon moment. Vous pouvez aussi explorer par vous-même.'
-              cta = 'Explorer la plateforme'
-              ctaPage = 'marketplace'
-            }
+            const eyebrow = 'Bienvenue'
+            const title = 'Votre espace MEEREO est prêt'
+            const text = 'Publiez un appel d\'offres pour trouver les professionnels adaptés à votre projet, ou explorez la marketplace pour vos matériaux.'
+            const action = 'Créez votre premier appel d\'offres ou parcourez la bourse pour découvrir les offres disponibles.'
+            const cta = 'Créer un appel d\'offres'
+            const ctaPage = 'ao'
 
             return (
               <div style={{ background: 'linear-gradient(150deg, #0f1011, #1a1d1e 40%, #2a2c2d)', borderRadius: 18, padding: '44px 40px', color: '#fff', marginBottom: 32, position: 'relative', overflow: 'hidden' }}>

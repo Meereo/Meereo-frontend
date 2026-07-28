@@ -1,0 +1,190 @@
+// ════════════════════════════════════════════════════════════════════
+// MEEREO — modèle d'onboarding. PostgreSQL + Prisma.
+// À FUSIONNER avec le schéma existant, pas à substituer.
+// ════════════════════════════════════════════════════════════════════
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+enum Role { CLIENT PRO FOURNISSEUR }
+enum PricingMode { FIXED ON_QUOTE }
+enum PageStatus { DRAFT PUBLISHED }
+
+/// INS-01 / INS-20 — L'IDENTITÉ LÉGALE EST PORTÉE PAR L'ENTREPRISE, PAS PAR LE COMPTE.
+/// C'est ce déplacement qui rend le cumul de rôles possible (INS-14) SANS rouvrir
+/// la faille d'usurpation. Tant que l'unicité portait sur le profil, autoriser le
+/// cumul revenait mécaniquement à autoriser les doublons.
+model Company {
+  id        String @id @default(uuid())
+  legalName String
+
+  /// NE JAMAIS retirer ces contraintes : leur absence EST le défaut INS-20.
+  rccm  String @unique
+  taxId String @unique
+
+  createdAt DateTime @default(now())
+  accounts  Account[]
+
+  @@index([legalName])
+}
+
+/// AVS-03 — l'identité repose sur l'UUID, JAMAIS sur l'e-mail.
+model Account {
+  id        String @id @default(uuid())
+  role      Role
+
+  firstName String
+  lastName  String
+  email     String   // unicité par (email, role) sur comptes actifs : migration SQL
+  phone     String   // E.164 — INS-08. Pas de vérification SMS (décision 27/07).
+  city      String?  // obligatoire PRO/FOURNISSEUR, facultatif CLIENT
+
+  passwordHash    String
+  emailVerifiedAt DateTime?   // INS-09 — null = non vérifié, compte utilisable
+
+  termsVersion    String      // INS-10 — sans version, un consentement n'est pas opposable
+  termsAcceptedAt DateTime    @default(now())
+  marketingOptIn  Boolean     @default(false)
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  /// INS-20 — suspension administrative. DISTINCT de deletedAt : un compte
+  /// suspendu existe toujours, garde ses projets, et NE LIBÈRE PAS son e-mail.
+  suspendedAt      DateTime?
+  suspensionReason String?
+
+  deletedAt DateTime?          // AVS-03 — suppression logique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  proProfile      ProProfile?
+  supplierProfile SupplierProfile?
+  linksFrom       AccountLink[] @relation("linkFrom")
+  linksTo         AccountLink[] @relation("linkTo")
+
+  @@unique([companyId, role])  // une entreprise = au plus un compte par rôle
+  @@index([email])
+  @@index([phone])
+  @@index([suspendedAt])
+}
+
+/// SYS-06 — comptes liés et sélecteur d'activité.
+/// ⚠️ SÉCURITÉ : ce lien ne se déduit JAMAIS d'une égalité de RCCM. Il n'existe
+/// que s'il a été créé depuis l'espace d'un compte déjà authentifié. Sinon,
+/// INS-20 deviendrait une prise de contrôle de compte.
+model AccountLink {
+  id         String   @id @default(uuid())
+  fromId     String
+  toId       String
+  from       Account  @relation("linkFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to         Account  @relation("linkTo",   fields: [toId],   references: [id], onDelete: Cascade)
+  createdById String  // qui a créé le lien — journalisation
+  createdAt  DateTime @default(now())
+
+  @@unique([fromId, toId])
+}
+
+model ProProfile {
+  id        String  @id @default(uuid())
+  accountId String  @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// INS-11 — LE CORRECTIF CENTRAL : les secteurs étaient saisis puis perdus
+  /// (le gestionnaire complet était `el.classList.toggle('on')`).
+  sectors ProSector[]
+
+  logoAssetId String?            // INS-12 — null autorisé, monogramme CALCULÉ (QAL-07), jamais stocké
+  presentation String?
+  pageStatus  PageStatus @default(DRAFT)   // décision 27/07 — brouillon par défaut
+  createdAt   DateTime @default(now())
+}
+
+model ProSector {
+  id           String     @id @default(uuid())
+  proProfileId String
+  proProfile   ProProfile @relation(fields: [proProfileId], references: [id], onDelete: Cascade)
+  sectorId     String
+  @@unique([proProfileId, sectorId])
+  @@index([sectorId])   // requis par le routage des appels d'offres (AOF-01)
+}
+
+model SupplierProfile {
+  id        String  @id @default(uuid())
+  accountId String  @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  servedCategories     SupplierCategory[]
+  deliveryModes        String[]
+  deliveryZones        String[]
+  deliveryLeadTimeDays Int?
+
+  logoAssetId String?
+  pageStatus  PageStatus @default(DRAFT)
+  payoutMethods PayoutMethod[]
+  products      Product[]
+  createdAt   DateTime @default(now())
+}
+
+model SupplierCategory {
+  id                String          @id @default(uuid())
+  supplierProfileId String
+  supplierProfile   SupplierProfile @relation(fields: [supplierProfileId], references: [id], onDelete: Cascade)
+  categoryId        String
+  @@unique([supplierProfileId, categoryId])
+  @@index([categoryId])
+}
+
+/// MKT-06 §4 — SANS CETTE TABLE, LE FOURNISSEUR NE PEUT PAS ÊTRE PAYÉ.
+/// MEEREO n'encaisse pas à sa place (FIN-02) : aucun rattrapage possible.
+model PayoutMethod {
+  id                String          @id @default(uuid())
+  supplierProfileId String
+  supplierProfile   SupplierProfile @relation(fields: [supplierProfileId], references: [id], onDelete: Cascade)
+  provider      String
+  phone         String   // mobile obligatoire
+  accountHolder String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  @@unique([supplierProfileId, provider, phone])
+}
+
+model Product {
+  id                String          @id @default(uuid())
+  supplierProfileId String
+  supplierProfile   SupplierProfile @relation(fields: [supplierProfileId], references: [id], onDelete: Cascade)
+
+  name       String
+  categoryId String
+  unitId     String   // sans unité, le prix est ininterprétable
+  stock      Int
+
+  /// FIN-04 / MKT-01 — le zéro NE signifie plus « sur devis ».
+  /// Cohérence garantie par une contrainte CHECK (migration SQL).
+  pricingMode PricingMode @default(FIXED)
+  priceFcfa   Int?
+
+  description String?
+  photoUrl    String?
+  visibleInMarketplace Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([supplierProfileId, visibleInMarketplace])
+}
+
+/// INS-13 — brouillon SERVEUR : le localStorage ne permet aucune reprise sur un
+/// autre appareil et n'expire jamais. RÈGLE : jamais de mot de passe dans `data`.
+model OnboardingDraft {
+  id        String   @id @default(uuid())
+  role      Role?
+  step      String
+  data      Json
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime          // 30 jours
+  @@index([email])
+  @@index([expiresAt])
+}

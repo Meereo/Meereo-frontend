@@ -680,7 +680,7 @@ export function MeereoProvider({ children }) {
     const obData = {}
     const textKeys = ['userType','prenom','nom','civilite','entreprise','metier','ville','annee','rccm','ncc',
       'email','emailPro','tel','telPro','slogan','bio','projetsN','effectif','pays',
-      'situation','projectType','location','surface','budget','description','architecteEmail',
+      'projectType','location','surface','budget','description',
       'delaiLivraison','logoColor','logoShape','logoTypo','bannerPosition','emailVerified']
     textKeys.forEach(k => { if (data[k] !== undefined && data[k] !== null) obData[k] = data[k] })
     if (Array.isArray(data.secteurs)) obData.secteurs = data.secteurs
@@ -2186,47 +2186,6 @@ export function MeereoProvider({ children }) {
     log('OFFER_ACCEPTED', { offerId, acceptedByRole: projectRole })
     emitEvent('offer_accepted', { title: ao?.title || ao?.titre || '', offerId }, { notifMsg: 'Offre acceptée — marché en cours de création', notifType: 'green' })
     showToast('Offre acceptée', 'green')
-    // ── Commission clé en main : créer introduction + commission si applicable ──
-    if (_isCEM && _isCEM(storeRef.current) && market) {
-      const offer = storeRef.current.offers?.find(o => o.id === offerId)
-      if (offer) {
-        const intro = {
-          id: 'intro_' + Date.now(),
-          projectId: market.projectId,
-          clientId: storeRef.current.user?.id,
-          structureId: offer.supplierId,
-          structureName: offer.entreprise || offer.supplierName || '',
-          metier: market.lot || '',
-          status: 'retained',
-          introDate: new Date().toISOString(),
-          retainedAt: new Date().toISOString(),
-          source: 'meereo_cle_en_main',
-        }
-        const calc = _calcComm ? _calcComm(market.amount || market.budget) : { base: 0, amount: 0, rate: 0.05 }
-        const commission = {
-          id: 'comm_' + Date.now(),
-          introductionId: intro.id,
-          structureId: offer.supplierId,
-          structureName: intro.structureName,
-          projectId: market.projectId,
-          clientId: storeRef.current.user?.id,
-          montantBase: calc.base,
-          montantCommission: calc.amount,
-          rate: calc.rate,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          paidAt: null,
-        }
-        updateStore(prev => ({
-          ...prev,
-          introductions: [...(prev.introductions || []), intro],
-          commissions: [...(prev.commissions || []), commission],
-        }))
-        sync(api.introductions.create({ projectId: intro.projectId, clientId: intro.clientId, structureId: intro.structureId, structureName: intro.structureName, metier: intro.metier, status: intro.status, source: intro.source }))
-        sync(api.commissionsTracking.create({ introductionId: intro.id, structureId: commission.structureId, structureName: commission.structureName, projectId: commission.projectId, montantBase: commission.montantBase, montantCommission: commission.montantCommission, rate: commission.rate, status: commission.status }))
-        log('COMMISSION_CLE_EN_MAIN', { structureName: intro.structureName, amount: commission.montantCommission })
-      }
-    }
     return market
   }, [store.user, store.offers, store.aos, store.projectMembers, updateStore, log, addNotif, showToast])
 
@@ -2865,95 +2824,6 @@ export function MeereoProvider({ children }) {
     showToast('KAi Pro activé', 'green')
   }, [store.user, updateStore, addNotif, showToast])
 
-  // ═══ COMMISSION WORKFLOW (clé en main uniquement) ═══
-  const { isCleEnMain: _isCEM, calculateCommission: _calcComm, INTRO_STATUS: _IS, COMMISSION_STATUS: _CS } = (() => {
-    try { return require('../domain/commission') } catch { return {} }
-  })()
-
-  // Créer une introduction (mise en relation MEEREO → structure)
-  const createIntroduction = useCallback((data) => {
-    // Guard: uniquement en mode clé en main
-    if (!_isCEM || !_isCEM(storeRef.current)) return null
-    const intro = {
-      id: 'intro_' + Date.now(),
-      projectId: data.projectId || null,
-      clientId: data.clientId || storeRef.current.user?.id || null,
-      structureId: data.structureId || null,
-      structureName: data.structureName || '',
-      metier: data.metier || '',
-      status: _IS?.INTRODUCED || 'introduced',
-      introDate: new Date().toISOString(),
-      retainedAt: null,
-      source: 'meereo_cle_en_main',
-    }
-    updateStore(prev => ({ ...prev, introductions: [...(prev.introductions || []), intro] }))
-    log('INTRO_CREATED', { structureName: intro.structureName, projectId: intro.projectId })
-    return intro
-  }, [updateStore, log])
-
-  // Retenir une structure → déclenche la commission
-  const retainStructure = useCallback((introductionId, montantBase) => {
-    if (!_isCEM || !_isCEM(storeRef.current)) return null
-    let commission = null
-    updateStore(prev => {
-      const intro = (prev.introductions || []).find(i => i.id === introductionId)
-      if (!intro) return prev
-      const calc = _calcComm ? _calcComm(montantBase) : { base: montantBase || 0, rate: 0.05, amount: Math.round((montantBase || 0) * 0.05) }
-      commission = {
-        id: 'comm_' + Date.now(),
-        introductionId,
-        structureId: intro.structureId,
-        structureName: intro.structureName,
-        projectId: intro.projectId,
-        clientId: intro.clientId,
-        montantBase: calc.base,
-        montantCommission: calc.amount,
-        rate: calc.rate,
-        status: _CS?.DUE || 'due',
-        createdAt: new Date().toISOString(),
-        paidAt: null,
-      }
-      return {
-        ...prev,
-        introductions: (prev.introductions || []).map(i => i.id === introductionId ? { ...i, status: _IS?.RETAINED || 'retained', retainedAt: new Date().toISOString() } : i),
-        commissions: [...(prev.commissions || []), commission],
-      }
-    })
-    if (commission) {
-      log('COMMISSION_CREATED', { structureName: commission.structureName, amount: commission.montantCommission })
-      addNotif('Commission MEEREO : ' + (commission.montantCommission || 0).toLocaleString('fr-FR') + ' FCFA', 'blue', null, 'parametres')
-    }
-    return commission
-  }, [updateStore, log, addNotif])
-
-  // Mettre à jour le statut d'une commission
-  const updateCommissionStatus = useCallback((commissionId, newStatus) => {
-    updateStore(prev => ({
-      ...prev,
-      commissions: (prev.commissions || []).map(c => c.id === commissionId ? { ...c, status: newStatus, ...(newStatus === 'paid' ? { paidAt: new Date().toISOString() } : {}) } : c),
-    }))
-    log('COMMISSION_STATUS_CHANGED', { commissionId, newStatus })
-  }, [updateStore, log])
-
-  // Accepter les CGV commission (côté pro)
-  const acceptCommissionTerms = useCallback(() => {
-    const userId = storeRef.current.user?.id
-    if (!userId) return
-    const updated = [...(storeRef.current.commissionAcceptances || []), { userId, acceptedAt: new Date().toISOString() }]
-    updateStore(prev => ({
-      ...prev,
-      commissionAcceptances: updated,
-    }))
-    // Persister en DB dans les préférences utilisateur
-    api.usersApi.updatePrefs({ commissionAcceptances: updated }).catch(() => {})
-    log('COMMISSION_TERMS_ACCEPTED', { userId })
-    showToast('Conditions de mise en relation acceptées', 'green')
-  }, [updateStore, log, showToast])
-
-  // Vérifier si un pro a accepté les CGV
-  const hasAcceptedCommissionTerms = useCallback((userId) => {
-    return (storeRef.current.commissionAcceptances || []).some(a => a.userId === (userId || storeRef.current.user?.id))
-  }, [])
 
   const value = {
     store,
@@ -3027,12 +2897,6 @@ export function MeereoProvider({ children }) {
     removeProjectMember,
     getProjectMembers,
     validateTask,
-    // Commission workflow (clé en main)
-    createIntroduction,
-    retainStructure,
-    updateCommissionStatus,
-    acceptCommissionTerms,
-    hasAcceptedCommissionTerms,
     logoutUser,
   }
 

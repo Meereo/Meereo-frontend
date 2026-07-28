@@ -99,27 +99,27 @@ const passwordSchema = z.string().min(8).max(128)
 
 // ─── Référentiel des étapes ─────────────────────────────────────────────────
 
+// ─── Parcours par rôle — INS-15 (le fil est DÉRIVÉ du rôle, jamais en dur) ──
+// Comptage officiel (étapes de saisie hors Rôle et écran terminal) :
+//   CLIENT       : 1  (compte)
+//   PRO          : 3  (compte, entreprise, logo)
+//   FOURNISSEUR  : 5  (compte, entreprise, logo, encaissement, produit)
+// Source : steps.ts / PATHS du paquet de référence.
 const STEPS = {
-  // Arbitrage 11 : client = 2 étapes (pas d'étape projet, pas de KAi)
   client: [
-    { key: 'identity',  label: 'Mon compte' },
-    { key: 'situation',  label: 'Ma situation' },
+    { key: 'account', label: 'Mon compte' },
   ],
-  // Pro = 4 étapes (ville obligatoire, logo franchissable)
   pro: [
-    { key: 'structure',  label: 'Ma structure' },
-    { key: 'logo',       label: 'Identité visuelle' },
-    { key: 'services',   label: 'Mes services' },
-    { key: 'portfolio',  label: 'Mon portfolio' },
+    { key: 'account',   label: 'Mon compte' },
+    { key: 'structure', label: 'Mon entreprise' },
+    { key: 'logo',      label: 'Identité visuelle' },
   ],
-  // Fournisseur = 6 étapes (encaissement obligatoire, produit facultatif)
   fournisseur: [
-    { key: 'structure',  label: 'Ma structure' },
-    { key: 'logo',       label: 'Identité visuelle' },
-    { key: 'catalogue',  label: 'Mon catalogue' },
-    { key: 'products',   label: 'Mes produits' },
-    { key: 'payout',     label: 'Encaissement' },
-    { key: 'zones',      label: 'Mes zones' },
+    { key: 'account',   label: 'Mon compte' },
+    { key: 'structure', label: 'Mon entreprise' },
+    { key: 'logo',      label: 'Identité visuelle' },
+    { key: 'payout',    label: 'Encaissement' },
+    { key: 'product',   label: 'Premier produit' },
   ],
 }
 
@@ -258,13 +258,6 @@ const stepValidators = {
     email: emailSchema,
     password: passwordSchema,
   }),
-
-  // Projet client
-  project: z.object({
-    projectType: z.string().max(80).optional(),
-    location: z.string().max(200).optional(),
-    budget: z.string().max(100).optional(),
-  }).passthrough(),
 
   // Payout fournisseur
   payout: z.object({

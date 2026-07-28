@@ -163,8 +163,6 @@ const onboardingTxAdapter = {
               surface: profile.surface || null,
               budget: profile.budget || null,
               description: profile.description || null,
-              situation: profile.situation || null,
-              architecteEmail: profile.architecteEmail || null,
             },
           })
         } else if (type === 'fournisseur') {

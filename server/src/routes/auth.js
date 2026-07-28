@@ -159,8 +159,6 @@ router.post('/register', async (req, res, next) => {
             surface: profile.surface || null,
             budget: profile.budget || null,
             description: profile.description || null,
-            situation: profile.situation || null,
-            architecteEmail: profile.architecteEmail || null,
           },
         })
       } else if (base.type === 'pro') {
@@ -262,8 +260,7 @@ router.post('/register', async (req, res, next) => {
       'name','type','company','phone','metier','ville','pays','annee',
       'rccm','ncc','tel','telPro','slogan','bio','projetsN','effectif',
       'logoColor','logoShape','logoTypo','prenom','nom','civilite',
-      'projectType','location','surface','budget','description','situation',
-      'architecteEmail','delaiLivraison','secteurs','services','categories',
+      'delaiLivraison','secteurs','services','categories',
       'zones','cockpitTeam','logoFileUrl','photoUrl','coverUrl','entreprise',
       'activeLogoType','paymentMethods',
     ])
