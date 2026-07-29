@@ -30,7 +30,7 @@ function resolveEditor(type) {
   return null;
 }
 
-export default function RightSidebar({ section, onChange }) {
+export default function RightSidebar({ section, onChange, existingTeam }) {
   if (!section) return (
     <aside className="w-72 bg-white border-l border-gray-100 flex flex-col min-h-0 shrink-0">
       <div className="px-4 pt-4 pb-3 border-b border-gray-100"><h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Editeur</h2></div>
@@ -48,7 +48,7 @@ export default function RightSidebar({ section, onChange }) {
         <p className="text-sm font-semibold text-gray-900 capitalize">{section.type.replace(/-/g, " ")}</p>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {Editor ? <Editor data={section.data} sectionType={section.type} onChange={(newData) => onChange(section.id, newData)} /> : <div className="text-center py-8 text-gray-400 text-sm">Pas d'editeur pour <code className="text-xs">{section.type}</code>.</div>}
+        {Editor ? <Editor data={section.data} sectionType={section.type} onChange={(newData) => onChange(section.id, newData)} existingTeam={existingTeam} /> : <div className="text-center py-8 text-gray-400 text-sm">Pas d'editeur pour <code className="text-xs">{section.type}</code>.</div>}
       </div>
     </aside>
   );

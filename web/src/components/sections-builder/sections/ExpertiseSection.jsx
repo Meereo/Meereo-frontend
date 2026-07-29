@@ -67,10 +67,10 @@ export function ExpertiseBars({ data }) {
             key={d.id || i}
           >
             <b className="text-[14px] font-semibold text-mo-text">{d.name}</b>
-            <span className="h-2 bg-mo-surface max-[640px]:col-span-2">
+            <span className="h-3 rounded-full bg-mo-surface max-[640px]:col-span-2" style={{ display: 'block', overflow: 'hidden' }}>
               <i
-                className="pp-dom-bar-fill not-italic"
-                style={{ width: `${d.percent || 0}%` }}
+                className="pp-dom-bar-fill not-italic rounded-full"
+                style={{ width: `${d.percent || 0}%`, minWidth: d.percent > 0 ? 8 : 0 }}
               />
             </span>
             <span className="text-right text-[13px] text-mo-hint">

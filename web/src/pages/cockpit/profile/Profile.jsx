@@ -6,6 +6,7 @@ import MeereoLogo from '../../../components/shared/MeereoLogo'
 import CompanyLogo from '../../../components/shared/CompanyLogo'
 import { api } from '../../../services/api/client'
 import SectionRenderer from '../../../components/sections-builder/SectionRenderer'
+import '../../../components/sections-builder/pp-foundations.css'
 import { Star } from 'lucide-react'
 import ShareMenu from '../../../components/shared/ShareMenu'
 import VerifiedBadge from '../../../components/shared/VerifiedBadge'
@@ -271,7 +272,7 @@ export default function Profile() {
       {pageSections.length > 0 ? (
         <div className="pp-builder-sections">
           {pageSections.map((section) => (
-            <SectionRenderer key={section.id} section={section} />
+            <SectionRenderer key={section.id} section={section} profileOverrides={{ companyName: proName, category: ob.secteurs?.[0] || ob.metier || '', location: ob.ville || '', verified: !!store.user?.verified }} />
           ))}
           {/* Visitor actions bar */}
           {!isOwner && !isVisitor && (

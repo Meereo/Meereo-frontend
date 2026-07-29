@@ -26,6 +26,21 @@ export function getMetierColor(metier) {
 }
 
 /**
+ * Distinct color palette for individual AO items.
+ * Each AO gets a unique color based on its index to improve visual distinction.
+ */
+const AO_DISTINCT_COLORS = [
+  '#2563EB', '#DC2626', '#16A34A', '#7C3AED', '#EA580C',
+  '#0891B2', '#BE185D', '#4338CA', '#92400E', '#0F766E',
+  '#6366F1', '#F59E0B', '#64748B', '#059669', '#E11D48',
+  '#8B5CF6', '#D97706', '#0284C7', '#9333EA', '#15803D',
+]
+
+export function getAoColor(index) {
+  return AO_DISTINCT_COLORS[index % AO_DISTINCT_COLORS.length]
+}
+
+/**
  * AoGear — Small rotating cog icon for AO items.
  * @param {number} size - Icon size (default 13)
  * @param {string} color - Stroke color (default var(--tx))

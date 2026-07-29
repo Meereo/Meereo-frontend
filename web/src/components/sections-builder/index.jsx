@@ -28,7 +28,7 @@ function PreviewModal({ sections, onClose, profileOverrides }) {
 // onSave(sections): called when user saves
 // onPublish(sections): called when user publishes
 // onClose: called when user closes the builder
-export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle, publicUrl, profileOverrides }) {
+export default function SectionsBuilder({ initialSections, onSave: onSaveProp, onPublish: onPublishProp, onClose, pageTitle: initialTitle, publicUrl, profileOverrides, existingTeam }) {
   const [sections, setSections] = useState(() => initialSections?.length ? deepClone(initialSections) : deepClone(DEFAULT_PAGE));
   const [selectedId, setSelectedId] = useState(null);
   const [pageTitle, setPageTitle] = useState(initialTitle || "Ma page pro");
@@ -84,7 +84,7 @@ export default function SectionsBuilder({ initialSections, onSave: onSaveProp, o
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <LeftSidebar onAdd={addSection} onDragStart={setDraggedTemplate} />
         <Canvas sections={sections} selectedId={selectedId} onSelect={setSelectedId} onUpdate={handleUpdate} onMove={handleMove} onDuplicate={handleDuplicate} onDelete={handleDelete} onDropFromLibrary={handleDropFromLibrary} device={device} profileOverrides={profileOverrides} />
-        <RightSidebar section={selectedSection} onChange={handleUpdate} />
+        <RightSidebar section={selectedSection} onChange={handleUpdate} existingTeam={existingTeam} />
       </div>
       {showPreview && <PreviewModal sections={sections} onClose={() => setShowPreview(false)} profileOverrides={profileOverrides} />}
       <Toast show={toast.show} message={toast.message} />

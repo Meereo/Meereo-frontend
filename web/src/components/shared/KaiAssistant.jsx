@@ -115,9 +115,9 @@ const KAI_ONBOARDING = {
     title: 'Bienvenue sur votre espace professionnel',
     intro: 'Je suis KAi, votre assistant personnel. Je vais vous guider dans votre espace MEEREO.',
     sections: [
-      { icon: <BarChart2 size={14}/>, label: 'Tableau de bord', desc: 'Vue d’ensemble de vos projets, vos actions urgentes et votre activité.' },
+      { icon: <BarChart2 size={14}/>, label: 'Tableau de bord', desc: "Vue d'ensemble de vos projets, vos actions urgentes et votre activité." },
       { icon: <Folder size={14}/>, label: 'Projets', desc: 'Créez et pilotez vos projets de A à Z : phases, budget, intervenants.' },
-      { icon: <ClipboardList size={14}/>, label: 'Appels d’offres', desc: 'Publiez des AO, recevez des offres et sélectionnez vos professionnels.' },
+      { icon: <ClipboardList size={14}/>, label: "Appels d'offres", desc: 'Publiez des AO, recevez des offres et sélectionnez vos professionnels.' },
       { icon: <Package size={14}/>, label: 'Marketplace', desc: 'Commandez des matériaux et suivez vos livraisons en temps réel.' },
       { icon: <MessageSquare size={14}/>, label: 'Messages', desc: 'Échangez avec vos clients, intervenants et partenaires.' },
     ],
@@ -127,9 +127,9 @@ const KAI_ONBOARDING = {
     title: 'Bienvenue sur votre espace client',
     intro: 'Je suis KAi, votre assistant personnel. Je suis là pour vous aider à suivre votre projet simplement.',
     sections: [
-      { icon: <Home size={14}/>, label: 'Suivi du projet', desc: 'Suivez l’avancement de votre projet, phase par phase, en toute transparence.' },
+      { icon: <Home size={14}/>, label: 'Suivi du projet', desc: "Suivez l'avancement de votre projet, phase par phase, en toute transparence." },
       { icon: <CheckCircle2 size={14}/>, label: 'Choix & validations', desc: 'Retrouvez les décisions qui vous sont soumises et validez en un clic.' },
-      { icon: <ClipboardList size={14}/>, label: 'Mes demandes', desc: 'Consultez vos demandes envoyées et les offres reçues des professionnels.' },
+      { icon: <ClipboardList size={14}/>, label: "Appels d'offres", desc: 'Consultez vos demandes envoyées et les offres reçues des professionnels.' },
       { icon: <FileText size={14}/>, label: 'Documents', desc: 'Tous les documents de votre projet, centralisés et accessibles.' },
       { icon: <MessageSquare size={14}/>, label: 'Messages', desc: 'Échangez directement avec votre architecte et les intervenants.' },
     ],
@@ -141,8 +141,8 @@ const KAI_ONBOARDING = {
     sections: [
       { icon: <Package size={14}/>, label: 'Mon catalogue', desc: 'Ajoutez vos produits et rendez-les visibles sur le marketplace MEEREO.' },
       { icon: <ShoppingCart size={14}/>, label: 'Commandes', desc: 'Recevez et traitez les commandes des professionnels et des projets.' },
-      { icon: <BarChart2 size={14}/>, label: 'Performance', desc: 'Suivez vos ventes, votre chiffre d’affaires et vos statistiques.' },
-      { icon: <ClipboardList size={14}/>, label: 'Bourse des AO', desc: 'Répondez aux appels d’offres et décrochez de nouveaux marchés.' },
+      { icon: <BarChart2 size={14}/>, label: 'Performance', desc: "Suivez vos ventes, votre chiffre d'affaires et vos statistiques." },
+      { icon: <ClipboardList size={14}/>, label: 'Bourse des AO', desc: "Répondez aux appels d'offres et décrochez de nouveaux marchés." },
       { icon: <Wallet size={14}/>, label: 'Paiements', desc: 'Suivez vos encaissements et vos virements en toute transparence.' },
     ],
     cta: 'Commencez par ajouter votre premier produit au catalogue pour être visible immédiatement.',
@@ -420,10 +420,16 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
 
     // Trigger 2: AO without any response
     if (aoWithoutOffers.length > 0 && context === 'client') {
+      const aoNames = aoWithoutOffers.slice(0, 3).map(ao => ao.title || ao.titre || "Appel d'offres").join(', ')
       const timer = setTimeout(() => {
         setProactiveSuggestion({
-          message: `Votre appel d'offres "${aoWithoutOffers[0]?.title || ''}" n'a reçu aucune réponse. Je peux vous aider à inviter des professionnels.`,
-          actions: [{ label: 'Mes demandes', page: 'ao' }, { label: 'Créer un AO', page: 'creerAO' }],
+          message: aoWithoutOffers.length === 1
+            ? `Votre appel d'offres "${aoNames}" n'a reçu aucune réponse. Je peux vous aider à inviter des professionnels.`
+            : `${aoWithoutOffers.length} appels d'offres sans réponse : ${aoNames}. Je peux vous aider à inviter des professionnels.`,
+          actions: [
+            { label: "Appels d'offres", page: 'ao', action: () => { if (onNavigate) onNavigate('ao') } },
+            { label: 'Créer un AO', page: 'creerAO' },
+          ],
         })
         setKaiState('suggesting')
         proactiveShown.current = true
@@ -507,12 +513,35 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const onMove = (ev) => {
       const d = kaiDrag.current; const dx = ev.clientX - d.startX; const dy = ev.clientY - d.startY
       if (Math.abs(dx) > 4 || Math.abs(dy) > 4) d.moved = true
-      if (d.moved) setKaiPos({ x: Math.max(0, Math.min(window.innerWidth - 100, d.startPosX + dx)), y: Math.max(0, Math.min(window.innerHeight - 60, d.startPosY + dy)) })
+      if (d.moved) {
+        const panelW = kaiOpen ? 420 : 200
+        const panelH = kaiOpen ? 500 : 60
+        setKaiPos({
+          x: Math.max(0, Math.min(window.innerWidth - panelW, d.startPosX + dx)),
+          y: Math.max(0, Math.min(window.innerHeight - panelH, d.startPosY + dy))
+        })
+      }
     }
     const onUp = () => { kaiDrag.current.dragging = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
     window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
   }
-  const onBarClick = () => { if (!kaiDrag.current.moved) { setKaiOpen(o => !o); if (!kaiOpen) setKaiView('idle') } }
+  const onBarClick = () => {
+    if (!kaiDrag.current.moved) {
+      const opening = !kaiOpen
+      setKaiOpen(o => !o)
+      if (opening) {
+        setKaiView('idle')
+        // Clamp position to keep panel within viewport when opening
+        if (kaiPos.x != null) {
+          const maxX = window.innerWidth - 420
+          const maxY = window.innerHeight - 500
+          if (kaiPos.x > maxX || kaiPos.y > maxY) {
+            setKaiPos({ x: Math.max(0, Math.min(maxX, kaiPos.x)), y: Math.max(0, Math.min(maxY, kaiPos.y)) })
+          }
+        }
+      }
+    }
+  }
 
   // Save conversation to store + API
   const saveConversation = useCallback((msgs, convId) => {

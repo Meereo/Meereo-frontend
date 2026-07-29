@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Modal from '../../components/shared/Modal'
 import MoneyInput from '../../components/shared/MoneyInput'
-import AoGear, { getMetierColor } from '../../components/shared/AoGear'
+import AoGear, { getMetierColor, getAoColor } from '../../components/shared/AoGear'
 import ShareMenu from '../../components/shared/ShareMenu'
 import { METIERS_AO, CLIENT_METIERS_AO } from '../../data/ao'
 import { useMeereo } from '../../hooks/useMeereoStore'
@@ -569,8 +569,8 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Les appels d'offres publiés sur la plateforme apparaîtront ici.</div>
                 </div>
               )}
-              {tab === 'marche' && marcheFiltered.map(ao => {
-                const mc = getMetierColor(ao.metier)
+              {tab === 'marche' && marcheFiltered.map((ao, idx) => {
+                const mc = getAoColor(idx)
                 const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
                 // ANN-03: Badge "Nouveau" pour les AO de moins de 48h
                 const isNew = ao.id && (store.aos || []).find(a => a.id === ao.id)?.createdAt && (Date.now() - new Date((store.aos || []).find(a => a.id === ao.id).createdAt).getTime()) < 48 * 3600 * 1000
@@ -606,8 +606,8 @@ export default function Exchange({ showToast, onNavigate }) {
                   <div style={{ fontSize: 12, color: 'var(--t3)' }}>Publiez un AO pour recevoir des propositions.</div>
                 </div>
               )}
-              {tab === 'mesao' && allMesAO.map(ao => {
-                const mc = getMetierColor(ao.metier)
+              {tab === 'mesao' && allMesAO.map((ao, idx) => {
+                const mc = getAoColor(idx)
                 const isClosed = ao.rawStatus === 'attributed' || ao.rawStatus === 'closed'
                 return (
                 <div key={ao.id} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: selectedMesAO?.id === ao.id ? 'var(--s2)' : 'transparent', opacity: isClosed ? .45 : 1, transition: 'background .12s' }} onClick={() => setSelectedId(ao.id)}>
@@ -681,7 +681,7 @@ export default function Exchange({ showToast, onNavigate }) {
                     </div>
                   </div>
                   <div className="rg-3" style={{ gap: 12, marginBottom: 20 }}>
-                    {[['Budget', selectedMarche.budget], ['Cloture', selectedMarche.deadline], ['Categorie', selectedMarche.categorie]].map(([l, v]) => (
+                    {[['Budget', formatBudgetDisplay(selectedMarche.budget)], ['Cloture', selectedMarche.deadline], ['Categorie', selectedMarche.categorie]].map(([l, v]) => (
                       <div key={l} className="card" style={{ padding: '16px 18px' }}><div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', marginBottom: 5 }}>{l}</div><div style={{ fontSize: 15, fontWeight: 600 }}>{v}</div></div>
                     ))}
                   </div>
@@ -709,7 +709,7 @@ export default function Exchange({ showToast, onNavigate }) {
                       <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => setShowInviteModal(selectedMarche)}>Inviter un professionnel →</button>
                     ) : alreadyApplied(selectedMarche.id) ? (
                       <div style={{ flex: 2, padding: 11, borderRadius: 9, background: 'rgba(52,199,89,.08)', border: '1px solid rgba(52,199,89,.3)', fontSize: 12.5, fontWeight: 600, color: '#16a34a', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                        <Check size={14}/> Offre soumise — {Number(String(myOfferForAO(selectedMarche.id)?.montant || 0).replace(/\D/g, '')).toLocaleString('fr-FR')} FCFA
+                        <Check size={14}/> Offre soumise — {formatBudgetDisplay(myOfferForAO(selectedMarche.id)?.montant || 0)} FCFA
                       </div>
                     ) : (
                       <button className="btn btn-primary" style={{ flex: 2, padding: 11, borderRadius: 9, fontSize: 12.5, fontWeight: 600 }} onClick={() => { setShowRepondre(selectedMarche); setReponse({ montant: '', delai: '', message: '', technique: '', docsJoints: [], docsEntreprise: availableDocs.map(d => d.id) }) }}>Répondre à l'appel d'offres →</button>

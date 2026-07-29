@@ -398,7 +398,10 @@ export function MeereoProvider({ children }) {
       const normalized = notif.msg ? notif : { ...notif, msg: notif.text || '' }
       setStore(prev => {
         const existing = prev.notifications || []
+        // Deduplicate by ID or by matching message within the last 5 seconds
         if (existing.some(n => n.id === normalized.id)) return prev
+        const now = Date.now()
+        if (existing.some(n => n.msg === normalized.msg && (now - new Date(n.ts).getTime()) < 5000)) return prev
         const next = { ...prev, notifications: [normalized, ...existing] }
         saveToStorage(next)
         return next

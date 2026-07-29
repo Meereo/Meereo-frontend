@@ -718,15 +718,22 @@ router.delete('/account', requireAuth, async (req, res, next) => {
         passwordHash: 'DELETED',
         name: 'Compte supprimé',
         deletedAt: new Date(),
-        // Anonymiser les données sensibles du profil
-        ...(user.type === 'pro' ? {
-          proProfile: { update: { rccm: null, ncc: null, telephone: null } },
-        } : {}),
-        ...(user.type === 'fournisseur' ? {
-          fournisseurProfile: { update: { rccm: null, ncc: null, telephone: null } },
-        } : {}),
       },
     })
+
+    // Anonymiser les données sensibles du profil (séparé pour éviter l'erreur si la relation n'existe pas)
+    if (user.type === 'pro') {
+      await prisma.proProfile.updateMany({
+        where: { userId },
+        data: { rccm: null, ncc: null, telephone: null },
+      }).catch(() => {})
+    }
+    if (user.type === 'fournisseur') {
+      await prisma.fournisseurProfile.updateMany({
+        where: { userId },
+        data: { rccm: null, ncc: null, telephone: null },
+      }).catch(() => {})
+    }
 
     // Retirer les produits de la Marketplace (fournisseur)
     if (user.type === 'fournisseur') {

@@ -22,7 +22,27 @@ export default function PageBuilder() {
 
   useEffect(() => {
     api.usersApi.getPageSections()
-      .then(res => setSections(res.sections || []))
+      .then(res => {
+        const loaded = res.sections || []
+        // Sync cockpitTeam members into team sections
+        const team = od.cockpitTeam || []
+        if (team.length > 0) {
+          loaded.forEach(s => {
+            if (s.type?.startsWith('team') && s.data) {
+              const existing = s.data.members || []
+              const existingNames = new Set(existing.map(m => m.name || m.nom))
+              const toAdd = team.filter(t => !existingNames.has(t.name || t.nom)).map(t => ({
+                id: 'tm-' + Date.now() + Math.random().toString(36).slice(2, 6),
+                nom: t.nom || t.name || '', name: t.name || t.nom || '',
+                role: t.role || t.poste || '', bio: '', specialties: '',
+                photoSrc: t.photoUrl || t.photo || '', isPublic: true,
+              }))
+              if (toAdd.length > 0) s.data.members = [...existing, ...toAdd]
+            }
+          })
+        }
+        setSections(loaded)
+      })
       .catch(() => setSections([]))
       .finally(() => setLoading(false))
   }, [])
@@ -52,6 +72,7 @@ export default function PageBuilder() {
         onClose={() => window.history.back()}
         publicUrl={publicUrl}
         profileOverrides={profileOverrides}
+        existingTeam={od.cockpitTeam || []}
       />
     </div>
   )

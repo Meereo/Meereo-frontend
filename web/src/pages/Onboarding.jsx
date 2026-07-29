@@ -9,6 +9,7 @@ import compressImage from '../utils/compressImage'
 import { api, setSuppressSessionExpired, setInMemoryToken } from '../services/api/client'
 import { useMeereo } from '../hooks/useMeereoStore'
 import CompanyLogo from '../components/shared/CompanyLogo'
+import MeereoLogo from '../components/shared/MeereoLogo'
 import useStepForm from '../hooks/useStepForm'
 import '../styles/onboarding.css'
 
@@ -340,13 +341,7 @@ const TAX_RE = /^CI-\d{7}-[A-Z]$/
 
 // ─── SVG Components ─────────────────────────────────────────────────────────
 
-const LogoSVG = () => (
-  <svg width="36" height="36" viewBox="0 0 44 44" fill="none" style={{borderRadius:10,flexShrink:0}}>
-    <rect width="44" height="44" fill="#1D1D1F"/><rect x="2" y="2" width="40" height="40" stroke="#FFFFFF" strokeWidth="2"/>
-    <text x="7" y="19" fontFamily="'Inter',-apple-system,sans-serif" fontSize="11.5" fontWeight="300" letterSpacing="2.5" fill="#FFFFFF">MEE</text>
-    <text x="7" y="34" fontFamily="'Inter',-apple-system,sans-serif" fontSize="11.5" fontWeight="300" letterSpacing="2.5" fill="#FFFFFF">REO</text>
-  </svg>
-)
+const LogoSVG = () => <MeereoLogo size={36} />
 const CheckSVG = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
 const ArrowSVG = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
 
@@ -421,7 +416,8 @@ const validEmail = (v) => (!v || !v.includes('@') || !v.includes('.')) ? 'Email 
 const validPhone = (v) => {
   if (!v?.trim()) return 'Téléphone requis'
   const digits = v.replace(/\D/g, '')
-  if (digits.length < 8) return 'Au moins 8 chiffres'
+  if (digits.length < 6) return 'Au moins 6 chiffres'
+  if (digits.length > 15) return '15 chiffres maximum'
   return null
 }
 const validPassword = (v) => {
@@ -449,12 +445,12 @@ const SCHEMAS = {
     cgu: requireCgu,
   },
   pro_account: {
-    prenom: required, nom: required, tel: validPhone, ville: required,
+    entreprise: required, tel: validPhone, ville: required,
     email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
     cgu: requireCgu,
   },
   fournisseur_account: {
-    prenom: required, nom: required, tel: validPhone, ville: required,
+    entreprise: required, tel: validPhone, ville: required,
     email: validEmail, password: validPassword, passwordConfirm: passwordsMatch,
     cgu: requireCgu,
   },
@@ -550,7 +546,7 @@ export default function Onboarding() {
   // ─── Step validation ──────────────────────────────────────────────────
   const currentStepKey = steps[wizStep - 1]?.key
   const schemaKey = userType && currentStepKey ? `${userType}_${currentStepKey}` : null
-  const schema = schemaKey ? SCHEMAS[schemaKey] || {} : {}
+  const schema = useMemo(() => (schemaKey ? SCHEMAS[schemaKey] || null : null), [schemaKey])
   const { isValid } = useStepForm(form, schema)
 
   // ─── Role metadata ───────────────────────────────────────────────────
@@ -1048,10 +1044,14 @@ function AccountStep({ role, form, set, handlePhotoUpload }) {
   return <>
     <p className="ob-lede-v5" style={{marginTop:-10}}>Ces informations sont obligatoires pour créer votre espace.</p>
     {isClient && <ProfilePhotoField form={form} handlePhotoUpload={handlePhotoUpload} set={set} />}
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-      <Field label="Prénom" required><input className="ob-input" name="ob-prenom" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Prénom" autoComplete="off"/></Field>
-      <Field label="Nom" required><input className="ob-input" name="ob-nom" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Nom" autoComplete="off"/></Field>
-    </div>
+    {isClient ? (
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <Field label="Prénom" required><input className="ob-input" name="ob-prenom" value={form.prenom} onChange={e=>set('prenom',e.target.value)} placeholder="Prénom" autoComplete="off"/></Field>
+        <Field label="Nom" required><input className="ob-input" name="ob-nom" value={form.nom} onChange={e=>set('nom',e.target.value)} placeholder="Nom" autoComplete="off"/></Field>
+      </div>
+    ) : (
+      <Field label="Nom de l'entreprise" required><input className="ob-input" name="ob-entreprise" value={form.entreprise} onChange={e=>set('entreprise',e.target.value)} placeholder="Nom de votre entreprise" autoComplete="off"/></Field>
+    )}
     <Field label="Adresse e-mail" required>
       <input className="ob-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="contact@entreprise.com" autoComplete="email"/>
     </Field>

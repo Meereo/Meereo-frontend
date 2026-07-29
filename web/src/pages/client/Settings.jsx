@@ -11,10 +11,30 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
   const [email, setEmail] = useState(ob.email || store.user?.email || '')
   const [tel, setTel] = useState(ob.tel || store.user?.phone || '')
   const [ville, setVille] = useState(ob.ville || 'Abidjan')
+  const [photoUrl, setPhotoUrl] = useState(ob.photoUrl || '')
   const [saved, setSaved] = useState(false)
 
+  const handlePhotoChange = async () => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'
+    inp.onchange = async (e) => {
+      const file = e.target.files?.[0]; if (!file) return
+      try {
+        let url = null
+        try {
+          const { uploadFile } = await import('../../utils/upload')
+          url = await uploadFile(file, 'photos', 'photo')
+        } catch {
+          const { default: compress } = await import('../../utils/compressImage')
+          url = await compress(file, 200, 0.7)
+        }
+        setPhotoUrl(url)
+      } catch {}
+    }
+    inp.click()
+  }
+
   const handleSave = () => {
-    const patch = { prenom, nom, email, tel, ville }
+    const patch = { prenom, nom, email, tel, ville, photoUrl }
     updateStore(prev => ({
       ...prev,
       onboardingData: { ...(prev.onboardingData || {}), ...patch },
@@ -28,15 +48,23 @@ function ClientProfileForm({ ob, store, updateStore, showToast }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {ob.photoUrl && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
-          <img src={ob.photoUrl} alt="" style={{ width: 52, height: 52, borderRadius: 12, objectFit: 'cover' }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{prenom} {nom}</div>
-            <div style={{ fontSize: 10, color: 'var(--t3)' }}>{store.user?.type === 'client' ? 'Client' : ''}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 4 }}>
+        {photoUrl ? (
+          <img src={photoUrl} alt="" style={{ width: 52, height: 52, borderRadius: 12, objectFit: 'cover' }} />
+        ) : (
+          <div style={{ width: 52, height: 52, borderRadius: 12, background: 'var(--s3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--t3)', fontSize: 16, fontWeight: 600 }}>
+            {(prenom?.[0] || '').toUpperCase()}{(nom?.[0] || '').toUpperCase()}
+          </div>
+        )}
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{prenom} {nom}</div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 6 }}>{store.user?.type === 'client' ? 'Client' : ''}</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '4px 10px' }} onClick={handlePhotoChange}>{photoUrl ? 'Changer la photo' : 'Ajouter une photo'}</button>
+            {photoUrl && <button className="btn btn-sm" style={{ fontSize: 10.5, padding: '4px 10px', color: 'var(--err)' }} onClick={() => setPhotoUrl('')}>Supprimer</button>}
           </div>
         </div>
-      )}
+      </div>
       <div className="modal-row" style={{ gap: 12 }}>
         <div><label className="form-label">Prenom</label><input className="form-input" value={prenom} onChange={e => setPrenom(e.target.value)} /></div>
         <div><label className="form-label">Nom</label><input className="form-input" value={nom} onChange={e => setNom(e.target.value)} /></div>

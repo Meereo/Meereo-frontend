@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import Modal from '../../components/shared/Modal'
 import { Radio } from 'lucide-react'
-import AoGear, { getMetierColor } from '../../components/shared/AoGear'
+import AoGear, { getMetierColor, getAoColor } from '../../components/shared/AoGear'
 import MoneyInput from '../../components/shared/MoneyInput'
 import { formatBudgetDisplay } from '../../utils/helpers'
 import { METIERS_AO } from '../../data/ao'
@@ -112,7 +112,7 @@ export default function Tenders({ ctx }) {
         </div>
       )}
 
-      {displayedAOs.map(ao => {
+      {displayedAOs.map((ao, idx) => {
         const storeOffers = (store.offers || []).filter(o => o.aoId === ao.id)
         const nbRep = storeOffers.length || ao.reponses || 0
         const hasRep = nbRep > 0
@@ -130,12 +130,12 @@ export default function Tenders({ ctx }) {
                 </span>
               </div>
               <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-.3px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7, lineHeight: 1.25 }}>
-                <AoGear size={14} color={getMetierColor(ao.metier || ao.lot)} />
+                <AoGear size={14} color={getAoColor(idx)} />
                 {ao.titre || ao.title}
               </div>
               {ao.desc && <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.4)', lineHeight: 1.5, marginBottom: 10, maxHeight: 36, overflow: 'hidden' }}>{ao.desc}</div>}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: getMetierColor(ao.metier || ao.lot) + '22', color: getMetierColor(ao.metier || ao.lot) }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 100, background: getAoColor(idx) + '22', color: getAoColor(idx) }}>
                   {ao.metier || ao.lot}
                 </span>
                 {(ao.budget && ao.budget !== '—') && (
