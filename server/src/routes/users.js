@@ -255,14 +255,26 @@ router.get('/registered', requireAuth, async (req, res, next) => {
       select: {
         id: true,
         name: true,
+        email: true,
         type: true,
         company: true,
         publicId: true,
         avatar: true,
+        clientProfile: { select: { photoUrl: true } },
+        proProfile: { select: { logoFileUrl: true } },
+        fournisseurProfile: { select: { logoFileUrl: true } },
       },
       orderBy: { name: 'asc' },
     })
-    res.json(users)
+    // Résoudre l'avatar : user.avatar > clientProfile.photoUrl > proProfile.logoFileUrl
+    const resolved = users.map(u => ({
+      ...u,
+      avatar: u.avatar || u.clientProfile?.photoUrl || u.proProfile?.logoFileUrl || u.fournisseurProfile?.logoFileUrl || null,
+      clientProfile: undefined,
+      proProfile: undefined,
+      fournisseurProfile: undefined,
+    }))
+    res.json(resolved)
   } catch (e) {
     next(e)
   }
