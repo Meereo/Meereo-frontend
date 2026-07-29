@@ -1404,17 +1404,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                 </div>
               )}
 
-              {/* Tab: Nouveau membre interne */}
+              {/* Tab: Nouveau membre — redirection vers Paramètres > Équipe */}
               {memberTab === 'nouveau' && (
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, lineHeight: 1.5 }}>Ce membre sera ajouté à votre équipe interne et affecté à ce projet.</div>
-                  <div><label className="form-label">Nom complet *</label><input className="form-input" value={newMember.nom} onChange={e => setNewMember(p => ({ ...p, nom: e.target.value }))} placeholder="Prénom Nom" /></div>
-                  <div><label className="form-label">Poste / Rôle</label><input className="form-input" value={newMember.role} onChange={e => setNewMember(p => ({ ...p, role: e.target.value }))} placeholder="Chef de projet, Architecte..." /></div>
-                  <div className="modal-row">
-                    <div><label className="form-label">Email</label><input className="form-input" type="email" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} /></div>
-                    <div><label className="form-label">Téléphone</label><input className="form-input" value={newMember.tel} onChange={e => setNewMember(p => ({ ...p, tel: e.target.value }))} /></div>
-                  </div>
-                  <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-end', marginTop: 4 }} disabled={!newMember.nom?.trim()} onClick={addNewMember}>Ajouter à l'équipe</button>
+                <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6 }}>Pour créer un nouveau membre, rendez-vous dans <b>Paramètres &gt; Équipe</b>. Il sera ensuite disponible ici dans l'onglet "Mon équipe".</div>
+                  <button className="btn btn-primary btn-sm" onClick={() => { setAddMemberModal(false); onNavigate('parametres') }}>Aller dans Paramètres → Équipe</button>
                 </div>
               )}
 
