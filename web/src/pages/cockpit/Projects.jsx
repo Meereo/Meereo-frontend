@@ -64,24 +64,31 @@ const getMemberPhoto = (nom, store) => {
   if (!nom) return null
   const q = nom.toLowerCase()
 
-  // 1. Chercher dans store.users (registered users — avatar résolu par l'API)
+  // 1. Chercher via les marchés — résoudre le userId du supplier/client, puis sa photo
+  for (const m of (store?.markets || [])) {
+    // Match par nom d'entreprise ou nom du supplier/client
+    const isSupplier = m.entreprise?.toLowerCase() === q || m.supplier?.company?.toLowerCase() === q || m.supplier?.name?.toLowerCase() === q
+    const isClient = m.client?.company?.toLowerCase() === q || m.client?.name?.toLowerCase() === q || m.clientName?.toLowerCase() === q
+    if (isSupplier) {
+      const photo = m.supplier?.proProfile?.logoFileUrl || m.supplier?.avatar || m.supplier?.onboardingData?.logoFileUrl || m.supplier?.onboardingData?.photoUrl
+      if (photo) return photo
+      // Fallback: chercher le userId dans store.users
+      const uid = m.supplierId || m.supplier?.id
+      if (uid) { const u = (store?.users || []).find(x => x.id === uid); if (u?.avatar) return u.avatar }
+    }
+    if (isClient) {
+      const photo = m.client?.clientProfile?.photoUrl || m.client?.avatar || m.client?.onboardingData?.photoUrl || m.client?.onboardingData?.logoFileUrl
+      if (photo) return photo
+      const uid = m.clientId || m.client?.id
+      if (uid) { const u = (store?.users || []).find(x => x.id === uid); if (u?.avatar) return u.avatar }
+    }
+  }
+
+  // 2. Chercher dans store.users par nom/company
   const regUser = (store?.users || []).find(u =>
     u.name?.toLowerCase() === q || u.company?.toLowerCase() === q
   )
   if (regUser?.avatar) return regUser.avatar
-
-  // 2. Chercher via les marchés (supplier/client avec onboardingData)
-  const market = (store?.markets || []).find(m =>
-    m.supplier?.company?.toLowerCase() === q || m.supplier?.name?.toLowerCase() === q ||
-    m.client?.company?.toLowerCase() === q || m.client?.name?.toLowerCase() === q ||
-    m.entreprise?.toLowerCase() === q
-  )
-  if (market) {
-    const actor = (market.supplier?.company?.toLowerCase() === q || market.supplier?.name?.toLowerCase() === q || market.entreprise?.toLowerCase() === q)
-      ? market.supplier : market.client
-    const photo = actor?.proProfile?.logoFileUrl || actor?.clientProfile?.photoUrl || actor?.avatar || actor?.onboardingData?.photoUrl || actor?.onboardingData?.logoFileUrl || null
-    if (photo) return photo
-  }
 
   // 3. Intervenants statiques
   const inter = INTERVENANTS_DATA.find(i => i.nom === nom || i.nom.includes(nom.split(' ').pop()))
