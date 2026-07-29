@@ -393,19 +393,27 @@ export default function Projects({ onNavigate, openModal, showToast }) {
   const addNewMember = () => {
     if (!newMember.nom.trim()) return
     const newId = 'eq_' + Date.now()
+    const memberEntry = { id: newId, nom: newMember.nom, role: newMember.role || 'Intervenant', email: newMember.email || '', tel: newMember.tel || '', access: 'lecture', statut: 'actif' }
+    const updatedEquipe = [...(editModal?.equipe || []), memberEntry]
     setEditModal(prev => ({
       ...prev,
-      equipe: [...prev.equipe, { id: newId, nom: newMember.nom, role: newMember.role || 'Intervenant', access: 'lecture', statut: 'actif' }]
+      equipe: updatedEquipe
     }))
-    // Persister dans le store
+    // Persister dans le store + sync DB immédiatement (ne pas attendre "Enregistrer")
     updateStore(prev => {
       const exists = (prev.intervenants || []).some(i => i.nom === newMember.nom)
-      if (exists) return prev
-      return { ...prev, intervenants: [...(prev.intervenants || []), { id: 'i_' + Date.now(), nom: newMember.nom, role: newMember.role || 'Intervenant', email: newMember.email || '', tel: newMember.tel || '', photo: '', statut: 'actif', projectId: editModal?.id || null, phase: editModal?.phase || null, mission: newMember.role || '' }] }
+      return {
+        ...prev,
+        intervenants: exists ? prev.intervenants : [...(prev.intervenants || []), { id: 'i_' + Date.now(), nom: newMember.nom, role: newMember.role || 'Intervenant', email: newMember.email || '', tel: newMember.tel || '', photo: '', statut: 'actif', projectId: editModal?.id || null, phase: editModal?.phase || null, mission: newMember.role || '' }],
+      }
     })
+    // Sauvegarder l'équipe en DB immédiatement
+    if (editModal?.id) {
+      updateProject(editModal.id, { equipe: updatedEquipe })
+    }
     setNewMember({ nom: '', role: '', email: '', tel: '' })
     setAddMemberModal(false)
-    showToast && showToast('Nouveau membre ajoute')
+    showToast && showToast('Membre ajouté')
   }
   const removeMember = (idx) => {
     setEditModal(prev => ({ ...prev, equipe: prev.equipe.filter((_, i) => i !== idx) }))

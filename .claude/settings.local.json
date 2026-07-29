@@ -97,7 +97,8 @@
       "Bash(npm list:*)",
       "Bash(npm ls:*)",
       "Bash(git stash *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(python3)"
     ]
   }
 }

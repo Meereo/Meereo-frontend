@@ -87,7 +87,7 @@ export default function Client() {
   const { format: fmtDevise, formatShort, parseBudget } = useDevise()
 
   // URL-based page routing: /client/messages → 'messages', /client → 'home'
-  const CLIENT_PAGES_SET = useMemo(() => new Set(['home','projets','avancement','budget','messages','decisions','documents','galerie','ao','offres','marches','marketplace','fournisseurs','commandes','passport','parametres','recherche','creerAO']), [])
+  const CLIENT_PAGES_SET = useMemo(() => new Set(['home','projets','avancement','budget','finance','messages','decisions','documents','galerie','ao','offres','marches','marketplace','fournisseurs','commandes','passport','parametres','recherche','creerAO']), [])
   const page = useMemo(() => {
     const seg = location.pathname.replace(/^\/client\/?/, '').split('/')[0]
     return (seg && CLIENT_PAGES_SET.has(seg)) ? seg : 'home'
@@ -255,6 +255,7 @@ export default function Client() {
     projets: { label: 'Mes projets', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>, group: 'Mon projet' },
     avancement: { label: 'Suivi du projet', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 18h20M4 18v-4a8 8 0 0116 0v4M12 2v4"/></svg>, group: 'Mon projet' },
     budget: { label: 'Budget', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>, group: 'Mon projet' },
+    finance: { label: 'Centre financier', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>, group: 'Mon projet' },
     messages: { label: 'Messages', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>, group: 'Échanges', badge: nonLus > 0 ? nonLus : null, badgeColor: 'var(--err)' },
     decisions: { label: 'Choix & validations', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, group: 'Échanges', badge: totalPendingActions > 0 ? totalPendingActions : null, badgeColor: 'var(--wrn)' },
     documents: { label: 'Documents', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>, group: 'Échanges' },
@@ -398,6 +399,7 @@ export default function Client() {
           {page === 'avancement' && <Progress ctx={{ proj, clientProjects: activeClientProjects, stoppedProjects: stoppedClientProjects, projProgress, setSelProjId, setPage, onStopProject: () => setStopConfirm(true), store, respondCloture, showToast, updateStore }} />}
           {/* BUDGET */}
           {page === 'budget' && <Budget showToast={showToast} onNavigate={p => setPage(p)} />}
+          {page === 'finance' && <Budget showToast={showToast} onNavigate={p => setPage(p)} />}
 
           {/* MARKETPLACE */}
           {page === 'marketplace' && <Marketplace showToast={showToast} commerceScope="private" />}
