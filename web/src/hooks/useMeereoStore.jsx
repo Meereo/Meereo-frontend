@@ -2124,6 +2124,15 @@ export function MeereoProvider({ children }) {
         console.warn('[acceptOffer] Market sync failed:', e.message)
         showToast('Erreur création marché: ' + e.message, 'red')
       }
+      // FIN-04: auto-créer un budget dans le module Finance pour que le marché y figure
+      const budgetMontant = String(market?.amount || market?.montant || market?.budget || '')
+      if (budgetMontant && parseFloat(budgetMontant) > 0) {
+        sync(api.finance?.createBudget?.({
+          label: 'Budget ' + (market?.titre || market?.lot || 'projet'),
+          montant: budgetMontant,
+          projectId: backendProjectId || market?.projectId || null,
+        }).catch(e => console.warn('[acceptOffer] Finance budget sync failed:', e.message)))
+      }
       // Sync remaining entities (fire-and-forget)
       sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
       if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
