@@ -84,17 +84,27 @@ const getMemberPhoto = (nom, store) => {
     }
   }
 
-  // 2. Chercher dans store.users par nom/company
+  // 2. Chercher dans store.users par nom/company (matching souple)
   const regUser = (store?.users || []).find(u =>
-    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q
+    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q ||
+    u.name?.toLowerCase().includes(q) || q.includes(u.name?.toLowerCase())
   )
   if (regUser?.avatar) return regUser.avatar
 
-  // 3. Intervenants statiques
+  // 3. Chercher via projectMembers (ont un userId) → résoudre dans store.users
+  const pm = (store?.projectMembers || []).find(m =>
+    m.userName?.toLowerCase() === q || m.userName?.toLowerCase().includes(q)
+  )
+  if (pm?.userId) {
+    const pmUser = (store?.users || []).find(u => u.id === pm.userId)
+    if (pmUser?.avatar) return pmUser.avatar
+  }
+
+  // 4. Intervenants statiques
   const inter = INTERVENANTS_DATA.find(i => i.nom === nom || i.nom.includes(nom.split(' ').pop()))
   if (inter?.photo) return inter.photo
 
-  // 4. Equipe onboarding
+  // 5. Equipe onboarding
   const obTeam = store?.onboardingData?.team || []
   const obMatch = obTeam.find(t => t.name === nom || t.name?.includes(nom.split(' ').pop()))
   if (obMatch?.photoUrl) return obMatch.photoUrl
