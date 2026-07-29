@@ -260,20 +260,25 @@ router.get('/registered', requireAuth, async (req, res, next) => {
         company: true,
         publicId: true,
         avatar: true,
+        onboardingData: true,
         clientProfile: { select: { photoUrl: true } },
         proProfile: { select: { logoFileUrl: true } },
         fournisseurProfile: { select: { logoFileUrl: true } },
       },
       orderBy: { name: 'asc' },
     })
-    // Résoudre l'avatar : user.avatar > clientProfile.photoUrl > proProfile.logoFileUrl
-    const resolved = users.map(u => ({
-      ...u,
-      avatar: u.avatar || u.clientProfile?.photoUrl || u.proProfile?.logoFileUrl || u.fournisseurProfile?.logoFileUrl || null,
-      clientProfile: undefined,
-      proProfile: undefined,
-      fournisseurProfile: undefined,
-    }))
+    // Résoudre l'avatar depuis toutes les sources possibles
+    const resolved = users.map(u => {
+      const ob = (typeof u.onboardingData === 'object' && u.onboardingData) || {}
+      return {
+        ...u,
+        avatar: u.avatar || u.clientProfile?.photoUrl || u.proProfile?.logoFileUrl || u.fournisseurProfile?.logoFileUrl || ob.photoUrl || ob.logoFileUrl || null,
+        onboardingData: undefined,
+        clientProfile: undefined,
+        proProfile: undefined,
+        fournisseurProfile: undefined,
+      }
+    })
     res.json(resolved)
   } catch (e) {
     next(e)

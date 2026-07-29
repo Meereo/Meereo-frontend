@@ -60,53 +60,72 @@ const accessColor = a => a === 'admin' ? 'var(--tx)' : a === 'edition' ? 'var(--
 const statusColor = s => s === 'actif' ? 'var(--ok)' : s === 'suspendu' ? 'var(--err)' : 'var(--wrn)'
 
 // Find photo for a team member by matching name against INTERVENANTS_DATA or onboarding team
-const getMemberPhoto = (nom, store) => {
+// Résoudre la photo d'un membre depuis toutes les sources disponibles
+// member = objet { nom, email?, userId?, ... } ou juste un nom string
+const getMemberPhoto = (nomOrMember, store) => {
+  if (!nomOrMember) return null
+  const nom = typeof nomOrMember === 'string' ? nomOrMember : nomOrMember.nom
+  const email = typeof nomOrMember === 'object' ? nomOrMember.email : null
+  const userId = typeof nomOrMember === 'object' ? nomOrMember.userId : null
   if (!nom) return null
   const q = nom.toLowerCase()
 
-  // 1. Chercher via les marchés — résoudre le userId du supplier/client, puis sa photo
+  // Helper: extraire la photo depuis un objet user (API)
+  const extractPhoto = (u) => {
+    if (!u) return null
+    return u.proProfile?.logoFileUrl || u.clientProfile?.photoUrl || u.avatar ||
+           u.onboardingData?.logoFileUrl || u.onboardingData?.photoUrl || null
+  }
+
+  // 0. Si on a un userId direct, aller le chercher
+  if (userId) {
+    const directUser = (store?.users || []).find(u => u.id === userId)
+    const p = extractPhoto(directUser)
+    if (p) return p
+  }
+
+  // 1. Chercher dans store.users par email (le plus fiable)
+  if (email) {
+    const byEmail = (store?.users || []).find(u => u.email === email)
+    const p = extractPhoto(byEmail)
+    if (p) return p
+  }
+
+  // 2. Chercher dans store.users par nom/company
+  for (const u of (store?.users || [])) {
+    if (u.name?.toLowerCase() === q || u.company?.toLowerCase() === q) {
+      const p = extractPhoto(u)
+      if (p) return p
+    }
+  }
+
+  // 3. Chercher via les marchés (supplier/client inclus avec profils)
   for (const m of (store?.markets || [])) {
-    // Match par nom d'entreprise ou nom du supplier/client
-    const isSupplier = m.entreprise?.toLowerCase() === q || m.supplier?.company?.toLowerCase() === q || m.supplier?.name?.toLowerCase() === q
-    const isClient = m.client?.company?.toLowerCase() === q || m.client?.name?.toLowerCase() === q || m.clientName?.toLowerCase() === q
-    if (isSupplier) {
-      const photo = m.supplier?.proProfile?.logoFileUrl || m.supplier?.avatar || m.supplier?.onboardingData?.logoFileUrl || m.supplier?.onboardingData?.photoUrl
-      if (photo) return photo
-      // Fallback: chercher le userId dans store.users
-      const uid = m.supplierId || m.supplier?.id
-      if (uid) { const u = (store?.users || []).find(x => x.id === uid); if (u?.avatar) return u.avatar }
+    if (m.entreprise?.toLowerCase() === q || m.supplier?.company?.toLowerCase() === q || m.supplier?.name?.toLowerCase() === q) {
+      const p = extractPhoto(m.supplier)
+      if (p) return p
     }
-    if (isClient) {
-      const photo = m.client?.clientProfile?.photoUrl || m.client?.avatar || m.client?.onboardingData?.photoUrl || m.client?.onboardingData?.logoFileUrl
-      if (photo) return photo
-      const uid = m.clientId || m.client?.id
-      if (uid) { const u = (store?.users || []).find(x => x.id === uid); if (u?.avatar) return u.avatar }
+    if (m.client?.company?.toLowerCase() === q || m.client?.name?.toLowerCase() === q || m.clientName?.toLowerCase() === q) {
+      const p = extractPhoto(m.client)
+      if (p) return p
     }
   }
 
-  // 2. Chercher dans store.users par nom/company (matching souple)
-  const regUser = (store?.users || []).find(u =>
-    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q ||
-    u.name?.toLowerCase().includes(q) || q.includes(u.name?.toLowerCase())
-  )
-  if (regUser?.avatar) return regUser.avatar
-
-  // 3. Chercher via projectMembers (ont un userId) → résoudre dans store.users
-  const pm = (store?.projectMembers || []).find(m =>
-    m.userName?.toLowerCase() === q || m.userName?.toLowerCase().includes(q)
-  )
-  if (pm?.userId) {
-    const pmUser = (store?.users || []).find(u => u.id === pm.userId)
-    if (pmUser?.avatar) return pmUser.avatar
+  // 4. Chercher via projectMembers (ont un userId) → résoudre dans store.users
+  for (const pm of (store?.projectMembers || [])) {
+    if (pm.userName?.toLowerCase() === q && pm.userId) {
+      const pmUser = (store?.users || []).find(u => u.id === pm.userId)
+      const p = extractPhoto(pmUser)
+      if (p) return p
+    }
   }
 
-  // 4. Intervenants statiques
-  const inter = INTERVENANTS_DATA.find(i => i.nom === nom || i.nom.includes(nom.split(' ').pop()))
+  // 5. Intervenants statiques
+  const inter = INTERVENANTS_DATA.find(i => i.nom === nom)
   if (inter?.photo) return inter.photo
 
-  // 5. Equipe onboarding
-  const obTeam = store?.onboardingData?.team || []
-  const obMatch = obTeam.find(t => t.name === nom || t.name?.includes(nom.split(' ').pop()))
+  // 6. Equipe onboarding
+  const obMatch = (store?.onboardingData?.team || []).find(t => t.name === nom)
   if (obMatch?.photoUrl) return obMatch.photoUrl
 
   return null
@@ -388,6 +407,36 @@ export default function Projects({ onNavigate, openModal, showToast }) {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Réconcilier les membres d'équipe avec les vrais userId (pour les entrées existantes sans userId)
+  useEffect(() => {
+    const users = store.users || []
+    const markets = store.markets || []
+    if (!users.length && !markets.length) return
+    let changed = false
+    const enrichedProjects = (store.projects || []).map(p => {
+      if (!p.equipe?.length) return p
+      const enrichedEquipe = p.equipe.map(m => {
+        if (m.userId) return m // déjà réconcilié
+        const q = (m.nom || '').toLowerCase()
+        // Chercher par nom dans users
+        const u = users.find(x => x.name?.toLowerCase() === q || x.company?.toLowerCase() === q)
+        // Chercher par nom dans markets (supplier)
+        const mkt = !u && markets.find(x => x.entreprise?.toLowerCase() === q)
+        const resolvedId = u?.id || (mkt?.supplierId) || null
+        const resolvedEmail = u?.email || m.email || null
+        if (resolvedId || resolvedEmail) {
+          changed = true
+          return { ...m, userId: resolvedId, email: resolvedEmail || m.email }
+        }
+        return m
+      })
+      return { ...p, equipe: enrichedEquipe }
+    })
+    if (changed) {
+      updateStore(prev => ({ ...prev, projects: enrichedProjects }))
+    }
+  }, [store.users?.length, store.markets?.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const userId = store.user?.id
   const allProjetsRaw = useMemo(() => getUserProjects(store, userId, store.user?.email), [store.projects, userId, store.projectMembers, store.user])
   // Enrich with computed avancement (phase + étapes + stored)
@@ -434,12 +483,15 @@ export default function Projects({ onNavigate, openModal, showToast }) {
     if (!editModal) return
     const already = editModal.equipe.some(e => e.nom === inter.nom)
     if (already) { showToast && showToast('Deja dans l\'equipe'); return }
-    setEditModal(prev => ({
-      ...prev,
-      equipe: [...prev.equipe, { id: 'eq_' + Date.now(), nom: inter.nom, role: inter.role, access: 'lecture', statut: 'actif' }]
-    }))
+    // Résoudre le userId depuis store.users pour pouvoir retrouver la photo plus tard
+    const q = (inter.nom || '').toLowerCase()
+    const matchedUser = (store.users || []).find(u => u.name?.toLowerCase() === q || u.company?.toLowerCase() === q)
+    const entry = { id: 'eq_' + Date.now(), nom: inter.nom, role: inter.role, email: inter.email || matchedUser?.email || '', userId: matchedUser?.id || null, access: 'lecture', statut: 'actif' }
+    const updatedEquipe = [...editModal.equipe, entry]
+    setEditModal(prev => ({ ...prev, equipe: updatedEquipe }))
+    if (editModal?.id) updateProject(editModal.id, { equipe: updatedEquipe })
     setAddMemberModal(false)
-    showToast && showToast(inter.nom + ' ajoute')
+    showToast && showToast(inter.nom + ' ajouté')
   }
   const addNewMember = () => {
     if (!newMember.nom.trim()) return
@@ -994,7 +1046,7 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     )}
                     {(selected.equipe || []).map((m, i) => {
                       const initials = (m.nom || "").split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-                      const photo = getMemberPhoto(m.nom, store)
+                      const photo = getMemberPhoto(m, store)
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 18px', borderBottom: '1px solid var(--border)', transition: 'background .1s' }}>
                           {photo ? (
