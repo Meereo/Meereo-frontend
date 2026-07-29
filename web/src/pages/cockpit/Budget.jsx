@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react'
+﻿import { useState, useMemo, useEffect, useCallback } from 'react'
 import { TrendingUp, CheckCircle, Clock, AlertTriangle, ChevronRight, Wallet } from 'lucide-react'
 import { useMeereo } from '../../hooks/useMeereoStore'
 import { useDevise } from '../../hooks/useDevise'
@@ -79,6 +79,21 @@ export default function Budget({ showToast, onNavigate }) {
 
   const [tab, setTab] = useState('vue')
   const [projFilter, setProjFilter] = useState('') // '' = all
+  // FIN-01: charger les factures depuis l'API (store.invoices n'est pas peuplé par le store global)
+  const [loadedInvoices, setLoadedInvoices] = useState([])
+  const fetchInvoices = useCallback(async () => {
+    try {
+      const data = await api.finance?.getInvoices?.()
+      if (Array.isArray(data)) setLoadedInvoices(data)
+    } catch (_) {}
+  }, [])
+  useEffect(() => { fetchInvoices() }, [fetchInvoices])
+  // Fusionner store.invoices (local/optimiste) + API
+  const allInvoices = useMemo(() => {
+    const fromStore = store.invoices || []
+    const ids = new Set(fromStore.map(i => i.id))
+    return [...fromStore, ...loadedInvoices.filter(i => !ids.has(i.id))]
+  }, [store.invoices, loadedInvoices])
 
   // â”€â”€ Data derivations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allProjects = useMemo(() => {
@@ -274,7 +289,7 @@ export default function Budget({ showToast, onNavigate }) {
           {filteredMarkets.length > 0 && (() => {
             const PH_LABELS = { CONCEPTION: 'Conception', PREPARATION: 'Préparation', GROS_OEUVRE: 'Gros Œuvre', SECOND_OEUVRE: 'Second Œuvre', MATERIAUX: 'Matériaux', MOBILIER: 'Mobilier', RECEPTION: 'Réception' }
             const invoicesByPhase = {}
-            ;(store.invoices || []).forEach(inv => {
+            ;(allInvoices).forEach(inv => {
               if (projFilter && inv.projectId !== projFilter) return
               const ph = inv.phase || 'NON_AFFECTE'
               if (!invoicesByPhase[ph]) invoicesByPhase[ph] = { count: 0, total: 0 }
@@ -366,7 +381,7 @@ export default function Budget({ showToast, onNavigate }) {
       {/* â•â• TAB: Paiements â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {/* ══ TAB: Factures (FIN-01 circuit) ══ */}
       {tab === 'factures' && (() => {
-        const invoices = (store.invoices || [])
+        const invoices = (allInvoices)
           .filter(inv => {
             if (projFilter && inv.projectId !== projFilter) return false
             if (isClient) return inv.statut && inv.statut !== 'brouillon'
