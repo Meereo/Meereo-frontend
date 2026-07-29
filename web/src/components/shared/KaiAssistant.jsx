@@ -653,11 +653,16 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const userId = store.user?.id || 'anonymous'
 
     try {
-      // Call KAi backend (Ollama LLM)
-      const result = await api.kai.engineChat(
-        q, userId, actorType,
-        pendingConfirmRef.current || undefined
-      )
+      // Call KAi backend (Ollama LLM) with 15s timeout
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const result = await fetch('/api/kai-engine/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId, 'X-User-Type': actorType },
+        body: JSON.stringify({ message: q, confirmationId: pendingConfirmRef.current || undefined }),
+        signal: controller.signal,
+      }).then(r => r.json())
+      clearTimeout(timeout)
       pendingConfirmRef.current = null
 
       setKaiState('responding')
