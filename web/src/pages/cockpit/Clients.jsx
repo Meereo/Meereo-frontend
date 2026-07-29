@@ -184,11 +184,15 @@ export default function Clients({ openModal, showToast }) {
         {filtered.map(c => {
           const initials = (c.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
           const projCount = (store.projects || []).filter(p => p.client === c.nom || p.clientId === c.id).length
-          // Récupérer la photo réelle via les marchés (le marché contient maintenant avatar+onboardingData)
+          // Récupérer la photo réelle via store.users (registered users) ou les marchés
+          const registeredUser = (store.users || []).find(u =>
+            (c.email && u.email === c.email) || u.name === c.nom || u.company === c.nom
+          )
           const matchingMarket = (store.markets || []).find(m =>
             c.email ? (m.client?.email === c.email) : (m.client?.company === c.nom || m.client?.name === c.nom)
           )
-          const clientPhoto = matchingMarket?.client?.onboardingData?.photoUrl ||
+          const clientPhoto = registeredUser?.avatar ||
+                              matchingMarket?.client?.onboardingData?.photoUrl ||
                               matchingMarket?.client?.onboardingData?.logoFileUrl ||
                               matchingMarket?.client?.avatar || null
           return (

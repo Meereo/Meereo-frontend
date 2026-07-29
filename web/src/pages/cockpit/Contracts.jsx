@@ -130,6 +130,9 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
     const inter = INTERVENANTS_DATA.find(i => i.nom === entreprise)
     const moaName = getClientName(m)
     const projName = getProjectName(m)
+    // Photo de profil du pro via store.users
+    const proUser = (store.users || []).find(u => u.company === entreprise || u.name === entreprise)
+    const proPhoto = proUser?.avatar || m.supplier?.avatar || null
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setDetail(m)}>
         {getProjetImg(projName, store) && (
@@ -144,9 +147,11 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
         )}
         <div style={{ padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            {(() => { const av = getEntrepriseAvatar(entreprise); return (
+            {proPhoto ? (
+              <img src={proPhoto} alt="" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex') }} />
+            ) : (() => { const av = getEntrepriseAvatar(entreprise); return (
               <div style={{ width: 36, height: 36, borderRadius: 9, background: av?.type === 'color' ? av.value : av?.type === 'img' ? 'var(--s2)' : 'var(--tx)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
-                {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CompanyLogo name={typeof entrepriseName !== 'undefined' ? entrepriseName : entreprise} size={44} style={{ width: '100%', height: '100%' }} />}
+                {av?.type === 'img' ? <img src={av.value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CompanyLogo name={entreprise} size={44} style={{ width: '100%', height: '100%' }} />}
               </div>
             )})()}
             <div style={{ flex: 1, minWidth: 0 }}>

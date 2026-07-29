@@ -24,3 +24,14 @@ export function getEntrepriseAvatar(nom) {
 
   return { type: null, initials }
 }
+
+// Resolve avatar from store.users (registered users with real profile photos)
+export function getUserAvatar(nom, storeUsers) {
+  if (!nom || !storeUsers) return null
+  const q = nom.toLowerCase()
+  const match = storeUsers.find(u =>
+    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q ||
+    u.name?.toLowerCase().includes(q) || u.company?.toLowerCase().includes(q)
+  )
+  return match?.avatar || null
+}

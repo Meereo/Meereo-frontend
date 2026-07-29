@@ -67,6 +67,13 @@ const getMemberPhoto = (nom, store) => {
   const obTeam = store?.onboardingData?.team || []
   const obMatch = obTeam.find(t => t.name === nom || t.name?.includes(nom.split(' ').pop()))
   if (obMatch?.photoUrl) return obMatch.photoUrl
+  // Chercher dans les utilisateurs enregistrés (store.users) — photo de profil réelle
+  const q = nom.toLowerCase()
+  const regUser = (store?.users || []).find(u =>
+    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q ||
+    u.name?.toLowerCase().includes(nom.split(' ').pop()?.toLowerCase())
+  )
+  if (regUser?.avatar) return regUser.avatar
   return null
 }
 
@@ -1290,9 +1297,14 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                     )
                     return filtered.map((m, i) => {
                       const initials = (m.nom || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+                      const mPhoto = m.photo || m.photoUrl || getMemberPhoto(m.nom, store)
                       return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background .1s' }} onClick={() => addExistingMember(m)} onMouseOver={e => e.currentTarget.style.background = 'var(--s2)'} onMouseOut={e => e.currentTarget.style.background = ''}>
-                          <div style={{ width: 36, height: 36, borderRadius: 9, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: m.source === 'equipe' ? '#7C3AED' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                          {mPhoto ? (
+                            <img src={mPhoto} alt={m.nom} style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: 36, height: 36, borderRadius: 9, background: m.source === 'equipe' ? 'rgba(124,58,237,.06)' : 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: m.source === 'equipe' ? '#7C3AED' : 'var(--t2)', flexShrink: 0 }}>{initials}</div>
+                          )}
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: 600 }}>{m.nom}</div>
                             <div style={{ fontSize: 11, color: 'var(--t3)' }}>{m.role || m.poste || ''}</div>
