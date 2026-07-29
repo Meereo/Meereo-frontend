@@ -80,8 +80,21 @@ router.delete('/budgets/:id', requireAuth, async (req, res, next) => {
 router.get('/expenses', requireAuth, async (req, res, next) => {
   try {
     const prisma = getPrisma()
-    const where = { ownerId: req.user.id }
-    if (req.query.projectId) where.projectId = req.query.projectId
+    // FIN-01: le client doit voir les dépenses liées à ses projets
+    const userProjects = await prisma.project.findMany({
+      where: { OR: [{ ownerId: req.user.id }, { clientId: req.user.id }] },
+      select: { id: true },
+    })
+    const projectIds = userProjects.map(p => p.id)
+    const where = {
+      OR: [
+        { ownerId: req.user.id },
+        ...(projectIds.length > 0 ? [{ projectId: { in: projectIds } }] : []),
+      ],
+    }
+    if (req.query.projectId) {
+      where.AND = [{ projectId: req.query.projectId }]
+    }
     res.json(await prisma.expense.findMany({ where, orderBy: { createdAt: 'desc' } }))
   } catch (e) { next(e) }
 })
