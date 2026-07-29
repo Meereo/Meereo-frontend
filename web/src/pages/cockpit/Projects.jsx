@@ -690,15 +690,36 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   </div>
                 )
               })()}
-              {/* Timeline financiére */}
+              {/* Timeline financière — centre de notification financier */}
               {(() => {
-                const projectOrders = (store.paymentOrders || []).filter(o => o.projectId === selected.id)
-                const proofs = (store.proofDocuments || []).filter(d => projectOrders.some(o => o.id === d.payoutRequestId))
                 const projectBudget = selected.budget ? parseBgt(selected.budget) : 0
-                const totalPaid = projectOrders.filter(o => o.status === 'paid').reduce((s, o) => s + (o.amountGross || 0), 0)
-                if (projectOrders.length === 0) return (
+                // Collecter TOUS les flux financiers du projet : marchés, factures, dépenses, paiements
+                const projMarkets = (store.markets || []).filter(m => m.projectId === selected.id)
+                const projInvoices = (store.invoices || []).filter(inv => inv.projectId === selected.id)
+                const projOrders = (store.paymentOrders || []).filter(o => o.projectId === selected.id)
+                const projTransactions = (store.transactions || []).filter(t => t.projectId === selected.id)
+
+                const totalEngaged = projMarkets.reduce((s, m) => s + (parseFloat(m.montant) || parseFloat(m.amount) || 0), 0)
+                const totalInvoiced = projInvoices.reduce((s, inv) => s + (parseFloat(inv.montant) || 0), 0)
+                const totalPaid = projOrders.filter(o => o.status === 'paid').reduce((s, o) => s + (o.amountGross || 0), 0)
+                  + projTransactions.filter(t => t.statut === 'confirmed' || t.status === 'confirmed').reduce((s, t) => s + (parseFloat(t.montant || t.amount) || 0), 0)
+
+                // Construire la timeline chronologique
+                const events = [
+                  ...projMarkets.map(m => ({ id: m.id, date: m.createdAt, type: 'marche', label: 'Marché signé — ' + (m.lot || m.titre || 'Marché'), amount: parseFloat(m.montant) || parseFloat(m.amount) || 0, status: m.statut, color: '#2563EB', icon: '📋' })),
+                  ...projInvoices.map(inv => ({ id: inv.id, date: inv.dateFacture || inv.createdAt, type: 'facture', label: inv.label || 'Facture', amount: parseFloat(inv.montant) || 0, status: inv.statut, color: inv.statut === 'reglee' ? '#16A34A' : inv.statut === 'paiement_declare' ? '#16A34A' : '#F59E0B', icon: '🧾' })),
+                  ...projOrders.map(o => ({ id: o.id, date: o.createdAt, type: 'paiement', label: (o.type === 'marche' ? 'Paiement marché' : o.type === 'milestone' ? 'Milestone' : 'Paiement'), amount: o.amountGross || 0, status: o.status, color: o.status === 'paid' ? '#16A34A' : '#F59E0B', icon: '💰' })),
+                  ...projTransactions.map(t => ({ id: t.id, date: t.createdAt, type: 'transaction', label: t.label || t.paymentType || 'Transaction', amount: parseFloat(t.montant || t.amount) || 0, status: t.statut || t.status, color: (t.statut === 'confirmed' || t.status === 'confirmed') ? '#16A34A' : '#F59E0B', icon: '💳' })),
+                ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+
+                const hasFlux = events.length > 0
+                const spent = totalPaid || totalInvoiced
+
+                return (
                   <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financiére</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 14 }}>Timeline financière</div>
+
+                    {/* En-tête budget */}
                     {projectBudget > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', marginBottom: 16 }}>
                         <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Wallet size={18} color="#F59E0B"/></div>
@@ -707,58 +728,69 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                           <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(projectBudget)}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Dépensé</div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>{fmtMoney(0)}</div>
-                        </div>
-                      </div>
-                    )}
-                    <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Wallet size={18} color="var(--t3)"/></div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun flux financier</div>
-                      <div style={{ fontSize: 11, color: 'var(--t4)', lineHeight: 1.5, maxWidth: 320, margin: '0 auto 14px' }}>La timeline se remplit automatiquement à partir de vos marchés et paiements. Créez un marché pour lancer le suivi financier.</div>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <button className="btn btn-sm" style={{ fontSize: 11 }} onClick={() => onNavigate && onNavigate('finance')}>Voir la finance</button>
-                      </div>
-                    </div>
-                    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 12, marginTop: 4 }}>
-                      <div style={{ fontSize: 10, color: 'var(--t4)', lineHeight: 1.6 }}>
-                        <strong>Comment ça marche :</strong> Acceptez une offre → un marché est créé → les paiements et échéances alimentent cette timeline.
-                      </div>
-                    </div>
-                  </div>
-                )
-                return (
-                  <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginBottom: 12 }}>Timeline financiére</div>
-                    {projectBudget > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'var(--surface-1)', borderRadius: 12, border: '1px solid var(--border-card)', marginBottom: 14 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Wallet size={18} color="#F59E0B"/></div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t4)', marginBottom: 2 }}>Budget du projet</div>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--tx)' }}>{fmtMoney(projectBudget)}</div>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Engagé</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: totalEngaged > 0 ? '#2563EB' : 'var(--t3)' }}>{fmtMoney(totalEngaged)}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: 10, color: 'var(--t4)' }}>Dépensé</div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: totalPaid > 0 ? '#F59E0B' : 'var(--ok)' }}>{fmtMoney(totalPaid)}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: spent > 0 ? '#F59E0B' : 'var(--ok)' }}>{fmtMoney(spent)}</div>
                         </div>
-                        {projectBudget > 0 && (
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 10, color: 'var(--t4)' }}>Reste</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ok)' }}>{fmtMoney(projectBudget - totalPaid)}</div>
-                          </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 10, color: 'var(--t4)' }}>Reste</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: (projectBudget - totalEngaged) < 0 ? 'var(--err)' : 'var(--ok)' }}>{fmtMoney(Math.max(0, projectBudget - totalEngaged))}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Alerte dépassement */}
+                    {projectBudget > 0 && totalEngaged > projectBudget && (
+                      <div style={{ padding: '10px 14px', background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 10, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 14 }}>⚠️</span>
+                        <div style={{ fontSize: 11, color: 'var(--err)', fontWeight: 600 }}>Dépassement budget : +{fmtMoney(totalEngaged - projectBudget)}</div>
+                      </div>
+                    )}
+
+                    {/* Timeline des flux */}
+                    {!hasFlux ? (
+                      <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--s2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Wallet size={18} color="var(--t3)"/></div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--tx)', marginBottom: 4 }}>Aucun flux financier</div>
+                        <div style={{ fontSize: 11, color: 'var(--t4)', lineHeight: 1.5, maxWidth: 320, margin: '0 auto 14px' }}>La timeline se remplit automatiquement à partir de vos marchés, factures et paiements.</div>
+                        <button className="btn btn-sm" style={{ fontSize: 11 }} onClick={() => onNavigate && onNavigate('finance')}>Voir la finance</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        {events.slice(0, 10).map((evt, i) => {
+                          const d = evt.date ? new Date(evt.date) : null
+                          const statusLabels = { signed: 'Signé', in_progress: 'En cours', completed: 'Livré', brouillon: 'Brouillon', emise: 'Émise', recue: 'Reçue', paiement_declare: 'Paiement déclaré', reglee: 'Réglée', paid: 'Payé', pending: 'En attente', confirmed: 'Confirmé' }
+                          return (
+                            <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px', borderBottom: i < events.slice(0, 10).length - 1 ? '1px solid var(--border)' : 'none' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 10, background: evt.color + '12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{evt.icon}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.label}</div>
+                                <div style={{ fontSize: 10, color: 'var(--t4)' }}>
+                                  {d ? d.toLocaleDateString('fr-FR') : '—'}
+                                  {evt.status ? ' · ' + (statusLabels[evt.status] || evt.status) : ''}
+                                </div>
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: evt.color, flexShrink: 0 }}>{fmtMoney(evt.amount)}</div>
+                            </div>
+                          )
+                        })}
+                        {events.length > 10 && (
+                          <button className="btn btn-sm" style={{ marginTop: 8, width: '100%', fontSize: 11 }} onClick={() => onNavigate && onNavigate('budget')}>
+                            Voir les {events.length - 10} autres flux →
+                          </button>
                         )}
                       </div>
                     )}
-                    {projectOrders.map(o => (
-                      <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                        <PaymentBadge status={o.status} size="small" />
-                        <div style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{o.type === 'marche' ? 'Marché' : o.type === 'milestone' ? 'Milestone' : 'Paiement'}</div>
-                        <div style={{ fontSize: 12, fontWeight: 600 }}>{fmtMoney(o.amountGross || 0)}</div>
+
+                    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 12, marginTop: hasFlux ? 12 : 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>{events.length} flux · {projMarkets.length} marché(s) · {projInvoices.length} facture(s)</div>
+                        <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 10px' }} onClick={() => onNavigate && onNavigate('budget')}>Budget détaillé →</button>
                       </div>
-                    ))}
-                    {proofs.length > 0 && (
-                      <div style={{ marginTop: 10, fontSize: 10, color: 'var(--t4)' }}>{proofs.length} preuve(s) déposée(s)</div>
-                    )}
+                    </div>
                   </div>
                 )
               })()}
