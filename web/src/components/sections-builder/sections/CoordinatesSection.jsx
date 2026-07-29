@@ -1,4 +1,41 @@
 // sections/CoordinatesSection.jsx — PP-10 Coordonnées (3 variantes)
+import { useEffect, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
+
+function LeafletMap({ lat, lng }) {
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstance.current) return;
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+    if (isNaN(parsedLat) || isNaN(parsedLng)) return;
+
+    import('leaflet').then((L) => {
+      const map = L.map(mapRef.current, { scrollWheelZoom: false, attributionControl: false }).setView([parsedLat, parsedLng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      const icon = L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+      L.marker([parsedLat, parsedLng], { icon }).addTo(map);
+      mapInstance.current = map;
+    });
+
+    return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; } };
+  }, [lat, lng]);
+
+  const hasCoords = !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+  if (!hasCoords) {
+    return (
+      <div className="pp-ph aspect-[16/10] relative rounded-mo" role="img" aria-label="Plan de situation">
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 12 }}>
+          Renseignez les coordonnées GPS dans l'éditeur
+        </div>
+      </div>
+    );
+  }
+
+  return <div ref={mapRef} style={{ width: '100%', aspectRatio: '16/10', borderRadius: 12, overflow: 'hidden' }} />;
+}
 
 export function CoordMap({ data }) {
   return (
@@ -44,13 +81,7 @@ export function CoordMap({ data }) {
               )}
             </dl>
           </div>
-          <div
-            className="pp-ph aspect-[16/10] relative rounded-mo"
-            role="img"
-            aria-label="Plan de situation"
-          >
-            <span className="pp-coord-a-pin" aria-hidden="true" />
-          </div>
+          <LeafletMap lat={data.lat} lng={data.lng} />
         </div>
       </div>
     </section>

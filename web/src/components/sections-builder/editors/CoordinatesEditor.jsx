@@ -20,6 +20,16 @@ export default function CoordinatesEditor({ data, sectionType, onChange }) {
       {(sectionType === "coord-footer" || sectionType === "coord-map") && (
         <TextField label="URL MEEREO" value={data.url || ""} onChange={(v) => set("url", v)} />
       )}
+      {sectionType === "coord-map" && (
+        <>
+          <Divider />
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>Position GPS (carte)</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <TextField label="Latitude" value={data.lat || ""} onChange={(v) => set("lat", v)} />
+            <TextField label="Longitude" value={data.lng || ""} onChange={(v) => set("lng", v)} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
