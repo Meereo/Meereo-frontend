@@ -45,3 +45,5 @@ docker-compose.override.yml
 
 # Prisma migrations lock
 prisma/migrations/migration_lock.toml
+.claude/worktrees/agent-a1765b00/
+.claude/worktrees/agent-ab9e56f2/
