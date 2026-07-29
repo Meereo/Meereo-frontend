@@ -4,25 +4,28 @@ export async function dispatch(name, args, ctx) {
   const data = getData();
 
   switch (name) {
-    case "get_delays":
-      return data.getProjects()
+    case "get_delays": {
+      const projects = await data.getProjects();
+      return projects
         .filter(p => p.retard > 0)
         .map(p => ({ nom: p.nom, retard_jours: p.retard, avance: p.avance }));
+    }
 
     case "get_budget_status": {
       const t = args.threshold ?? 80;
-      return data.getProjects()
+      const projects = await data.getProjects();
+      return projects
         .map(p => ({ nom: p.nom, budget: p.budget, au_dessus_seuil: p.budget >= t }));
     }
 
     case "get_pending_invoices":
-      return data.getInvoices();
+      return await data.getInvoices();
 
     case "generate_report":
-      return data.getGlobalActivity();
+      return await data.getGlobalActivity();
 
     case "get_marketplace":
-      return data.getMarketplace();
+      return await data.getMarketplace();
 
     case "send_notification":
       if (!ctx.allowSend) {

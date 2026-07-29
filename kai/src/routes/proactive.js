@@ -69,10 +69,10 @@ let monitorInterval = null;
 export function startMonitor(intervalMs = 60000) {
   if (monitorInterval) return;
 
-  monitorInterval = setInterval(() => {
+  monitorInterval = setInterval(async () => {
     try {
       const data = getData();
-      const projects = data.getProjects();
+      const projects = await data.getProjects();
 
       // Detecter les projets en retard critique (> 5 jours)
       for (const p of projects) {
