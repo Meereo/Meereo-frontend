@@ -47,6 +47,35 @@ services:
     depends_on:
       - api
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: meereo-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    # Décommentez pour GPU NVIDIA :
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
+  kai:
+    build:
+      context: ./kai
+      dockerfile: Dockerfile
+    container_name: meereo-kai
+    restart: unless-stopped
+    environment:
+      PORT: 3002
+      KAI_MODEL: qwen2.5:3b
+      KAI_HOST: http://ollama:11434
+      QUOREX_API_KEY: ${QUOREX_API_KEY:-}
+      MEEREO_API_URL: http://api:3001
+    depends_on:
+      - ollama
+      - api
+
   nginx:
     image: nginx:alpine
     container_name: meereo-nginx
@@ -62,6 +91,7 @@ services:
     depends_on:
       - web
       - api
+      - kai
 
   certbot:
     image: certbot/certbot
@@ -78,6 +108,7 @@ networks:
 volumes:
   pgdata:
   uploads:
+  ollama-data:
   certbot-etc:
   certbot-var:
   certbot-webroot:

@@ -448,6 +448,27 @@ const kai = {
     apiFetch('/kai/memory', 'GET', null, true),
   saveMemory: (topic, context) =>
     apiFetch('/kai/memory', 'PUT', { topic, context }, true),
+
+  // ── KAi Engine (backend LLM via Ollama) ──
+  engineChat: (message, userId, userType, confirmationId) =>
+    fetch('/api/kai-engine/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId, 'X-User-Type': userType },
+      body: JSON.stringify({ message, confirmationId }),
+    }).then(r => r.json()),
+
+  engineHealth: () =>
+    fetch('/api/kai-engine/health').then(r => r.json()).catch(() => ({ status: 'offline' })),
+
+  engineFacts: (userId, userType) =>
+    fetch('/api/kai-engine/facts', {
+      headers: { 'X-User-Id': userId, 'X-User-Type': userType },
+    }).then(r => r.json()).catch(() => ({ facts: {} })),
+
+  engineAlerts: (userId, userType) =>
+    fetch('/api/kai-engine/proactive/alerts', {
+      headers: { 'X-User-Id': userId, 'X-User-Type': userType },
+    }).then(r => r.json()).catch(() => ({ alerts: [] })),
 }
 
 // ─── Tasks API (real HTTP → PostgreSQL) ──────────────────────────────────────

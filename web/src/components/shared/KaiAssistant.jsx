@@ -484,6 +484,31 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     }
   }, [store.user, store.kaiOnboardingDone, kaiOpen, context])
 
+  // ── KAi Engine SSE — real-time proactive alerts from backend ──
+  useEffect(() => {
+    if (!store.user?.id) return
+    const actorType = context === 'fournisseur' ? 'supplier' : context === 'client' ? 'client' : 'architect'
+    let es
+    try {
+      es = new EventSource(`/api/kai-engine/proactive/stream?userId=${store.user.id}&userType=${actorType}`)
+      es.onmessage = (e) => {
+        try {
+          const alert = JSON.parse(e.data)
+          if (alert.message && !proactiveShown.current) {
+            setProactiveSuggestion({
+              message: alert.message,
+              actions: [{ label: 'Voir', page: alert.data?.page || 'dashboard' }],
+            })
+            setKaiState('suggesting')
+            proactiveShown.current = true
+          }
+        } catch {}
+      }
+      es.onerror = () => { es?.close() }
+    } catch {}
+    return () => { es?.close() }
+  }, [store.user?.id, context])
+
   // Dismiss proactive suggestion
   const dismissSuggestion = () => { setProactiveSuggestion(null); setKaiState('idle') }
   const handleSuggestionAction = (act) => {
@@ -604,8 +629,9 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     }
   }, [store, context, displayName])
 
-  // Send — tries Claude API first, falls back to local engine
-  const kaiSend = (text) => {
+  // Send — calls KAi backend (Ollama LLM), falls back to local keyword engine
+  const pendingConfirmRef = useRef(null)
+  const kaiSend = async (text) => {
     const q = (text || kaiInput).trim()
     if (!q) return
     // ── Quota guard — block if exhausted and not Gold ──
@@ -622,27 +648,51 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     setKaiView('conv')
     setKaiState('thinking')
 
-    // Local keyword engine (mock mode — no backend)
-    setTimeout(() => {
+    // Map context to KAi actor type
+    const actorType = context === 'fournisseur' ? 'supplier' : context === 'client' ? 'client' : 'architect'
+    const userId = store.user?.id || 'anonymous'
+
+    try {
+      // Call KAi backend (Ollama LLM)
+      const result = await api.kai.engineChat(
+        q, userId, actorType,
+        pendingConfirmRef.current || undefined
+      )
+      pendingConfirmRef.current = null
+
       setKaiState('responding')
-      setTimeout(() => {
-        const response = getKaiResponse(q, context, store, memory)
-        const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
-        setKaiMessages(finalMsgs)
-        setKaiState('idle')
-        saveConversation(finalMsgs, convId)
-        // Incrémenter le quota côté serveur (atomique — évite les race conditions)
-        api.kai.incrementQuota(context).then(updated => {
-          if (updated?.quotaUsed !== undefined) {
-            updateStore(prev => {
-              const ent = { ...(prev.kaiEntitlement || {}) }
-              ent[context] = { ...(ent[context] || {}), quotaUsed: updated.quotaUsed }
-              return { ...prev, kaiEntitlement: ent }
-            })
-          }
-        }).catch(() => {})
-      }, 400 + Math.random() * 400)
-    }, 300)
+      const response = result.reply || result.text || 'Je suis temporairement indisponible.'
+      const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
+
+      // Handle confirmation mode (mode décisionnel)
+      if (result.needs_confirmation && result.confirmation_id) {
+        pendingConfirmRef.current = result.confirmation_id
+        finalMsgs.push({ side: 'kai', text: '⚠ Action engageante détectée. Répondez "oui" pour confirmer ou "non" pour annuler.' })
+      }
+
+      setKaiMessages(finalMsgs)
+      setKaiState('idle')
+      saveConversation(finalMsgs, convId)
+    } catch {
+      // Fallback to local keyword engine if backend unavailable
+      setKaiState('responding')
+      const response = getKaiResponse(q, context, store, memory)
+      const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
+      setKaiMessages(finalMsgs)
+      setKaiState('idle')
+      saveConversation(finalMsgs, convId)
+    }
+
+    // Incrémenter le quota côté serveur
+    api.kai.incrementQuota(context).then(updated => {
+      if (updated?.quotaUsed !== undefined) {
+        updateStore(prev => {
+          const ent = { ...(prev.kaiEntitlement || {}) }
+          ent[context] = { ...(ent[context] || {}), quotaUsed: updated.quotaUsed }
+          return { ...prev, kaiEntitlement: ent }
+        })
+      }
+    }).catch(() => {})
   }
 
   // Open a past conversation

@@ -100,7 +100,11 @@
       "Bash(npx eslint *)",
       "Bash(python3)",
       "Bash(curl -s https://dev.meereo.com/api/users/registered -H \"Authorization: Bearer test\")",
-      "Bash(npx --prefix web vite build --mode development)"
+      "Bash(npx --prefix web vite build --mode development)",
+      "Bash(git clone:*)",
+      "Bash(cp -r /tmp/KAI /c/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/kai)",
+      "Bash(rm -rf /c/Users/xiaot/Desktop/GetFlowKit/Website/Meereo-frontend/kai/.git)",
+      "Bash(docker compose:*)"
     ]
   }
 }
