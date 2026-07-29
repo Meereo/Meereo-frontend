@@ -184,7 +184,7 @@ export default function Clients({ openModal, showToast }) {
         {filtered.map(c => {
           const initials = (c.nom || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
           const projCount = (store.projects || []).filter(p => p.client === c.nom || p.clientId === c.id).length
-          // Récupérer la photo réelle via store.users (registered users) ou les marchés
+          // Récupérer la photo réelle via store.users, marchés ou onboardingData
           const registeredUser = (store.users || []).find(u =>
             (c.email && u.email === c.email) || u.name === c.nom || u.company === c.nom
           )
@@ -192,9 +192,11 @@ export default function Clients({ openModal, showToast }) {
             c.email ? (m.client?.email === c.email) : (m.client?.company === c.nom || m.client?.name === c.nom)
           )
           const clientPhoto = registeredUser?.avatar ||
+                              matchingMarket?.client?.clientProfile?.photoUrl ||
+                              matchingMarket?.client?.avatar ||
                               matchingMarket?.client?.onboardingData?.photoUrl ||
                               matchingMarket?.client?.onboardingData?.logoFileUrl ||
-                              matchingMarket?.client?.avatar || null
+                              c.photoUrl || c.avatar || null
           return (
             <div key={c.id} className="card" style={{ overflow: 'hidden' }}>
               <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>

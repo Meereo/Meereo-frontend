@@ -130,9 +130,13 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
     const inter = INTERVENANTS_DATA.find(i => i.nom === entreprise)
     const moaName = getClientName(m)
     const projName = getProjectName(m)
-    // Photo de profil du pro via store.users
-    const proUser = (store.users || []).find(u => u.company === entreprise || u.name === entreprise)
-    const proPhoto = proUser?.avatar || m.supplier?.avatar || null
+    // Photo de profil du pro via supplier (inclus dans le marché) ou store.users
+    const proPhoto = m.supplier?.proProfile?.logoFileUrl ||
+      m.supplier?.avatar ||
+      m.supplier?.onboardingData?.logoFileUrl ||
+      m.supplier?.onboardingData?.photoUrl ||
+      (store.users || []).find(u => u.company === entreprise || u.name === entreprise)?.avatar ||
+      null
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setDetail(m)}>
         {getProjetImg(projName, store) && (

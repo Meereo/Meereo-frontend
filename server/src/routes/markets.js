@@ -31,8 +31,8 @@ router.get('/', requireAuth, async (req, res, next) => {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        client: { select: { id: true, name: true, company: true, email: true, phone: true, avatar: true, onboardingData: true } },
-        supplier: { select: { id: true, name: true, company: true, phone: true, avatar: true, onboardingData: true } },
+        client: { select: { id: true, name: true, company: true, email: true, phone: true, avatar: true, onboardingData: true, clientProfile: { select: { photoUrl: true } } } },
+        supplier: { select: { id: true, name: true, company: true, phone: true, avatar: true, onboardingData: true, proProfile: { select: { logoFileUrl: true } } } },
         project: { select: { id: true, nom: true, phase: true, budget: true, adresse: true, status: true, img: true } },
       },
     })

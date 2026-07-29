@@ -62,18 +62,36 @@ const statusColor = s => s === 'actif' ? 'var(--ok)' : s === 'suspendu' ? 'var(-
 // Find photo for a team member by matching name against INTERVENANTS_DATA or onboarding team
 const getMemberPhoto = (nom, store) => {
   if (!nom) return null
+  const q = nom.toLowerCase()
+
+  // 1. Chercher dans store.users (registered users — avatar résolu par l'API)
+  const regUser = (store?.users || []).find(u =>
+    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q
+  )
+  if (regUser?.avatar) return regUser.avatar
+
+  // 2. Chercher via les marchés (supplier/client avec onboardingData)
+  const market = (store?.markets || []).find(m =>
+    m.supplier?.company?.toLowerCase() === q || m.supplier?.name?.toLowerCase() === q ||
+    m.client?.company?.toLowerCase() === q || m.client?.name?.toLowerCase() === q ||
+    m.entreprise?.toLowerCase() === q
+  )
+  if (market) {
+    const actor = (market.supplier?.company?.toLowerCase() === q || market.supplier?.name?.toLowerCase() === q || market.entreprise?.toLowerCase() === q)
+      ? market.supplier : market.client
+    const photo = actor?.proProfile?.logoFileUrl || actor?.clientProfile?.photoUrl || actor?.avatar || actor?.onboardingData?.photoUrl || actor?.onboardingData?.logoFileUrl || null
+    if (photo) return photo
+  }
+
+  // 3. Intervenants statiques
   const inter = INTERVENANTS_DATA.find(i => i.nom === nom || i.nom.includes(nom.split(' ').pop()))
   if (inter?.photo) return inter.photo
+
+  // 4. Equipe onboarding
   const obTeam = store?.onboardingData?.team || []
   const obMatch = obTeam.find(t => t.name === nom || t.name?.includes(nom.split(' ').pop()))
   if (obMatch?.photoUrl) return obMatch.photoUrl
-  // Chercher dans les utilisateurs enregistrés (store.users) — photo de profil réelle
-  const q = nom.toLowerCase()
-  const regUser = (store?.users || []).find(u =>
-    u.name?.toLowerCase() === q || u.company?.toLowerCase() === q ||
-    u.name?.toLowerCase().includes(nom.split(' ').pop()?.toLowerCase())
-  )
-  if (regUser?.avatar) return regUser.avatar
+
   return null
 }
 
