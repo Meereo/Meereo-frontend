@@ -52,7 +52,8 @@ function OfferModal({ isOpen, onClose, showToast }) {
   const [saving, setSaving] = useState(false)
   const submit = async () => {
     setSubmitted(true)
-    if (!f.titre.trim()) return
+    const _montantVal = typeof f.montant === 'string' ? Number(f.montant.replace(/\s/g, '')) : Number(f.montant)
+    if (!f.titre.trim() || !_montantVal || _montantVal <= 0) return
     setSaving(true)
     try {
       const created = await api.offers.create({ ...f, statut: 'en_attente' })
@@ -72,7 +73,7 @@ function OfferModal({ isOpen, onClose, showToast }) {
           <div><label className="form-label">Projet</label><select className="form-input" value={f.projet} onChange={e => setF(p => ({ ...p, projet: e.target.value }))}>{(store.projects || []).map(p => <option key={p.id}>{p.nom}</option>)}</select></div>
         </div>
         <div className="form-row">
-          <div><label className="form-label">Montant (FCFA)</label><MoneyInput value={f.montant} onChange={v => setF(p => ({ ...p, montant: v }))} placeholder="45 000 000" /></div>
+          <div><label className="form-label">Montant (FCFA) *</label><MoneyInput value={f.montant} onChange={v => setF(p => ({ ...p, montant: v }))} placeholder="45 000 000" /><ErrMsg show={submitted && (!f.montant || Number(String(f.montant).replace(/\s/g, '')) <= 0)} /></div>
           <div><label className="form-label">Délai</label><input className="form-input" placeholder="4 mois" value={f.delai} onChange={e => setF(p => ({ ...p, delai: e.target.value }))} /></div>
         </div>
         <div><label className="form-label">Note d'analyse</label><textarea className="form-input" rows="3" placeholder="Observations..." value={f.note} onChange={e => setF(p => ({ ...p, note: e.target.value }))} /></div>

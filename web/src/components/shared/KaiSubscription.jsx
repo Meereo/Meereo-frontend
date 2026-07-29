@@ -38,6 +38,14 @@ const KAI_PRO_PRICES = {
   pro: '19 900 FCFA',
   fournisseur: '39 000 FCFA',
 }
+const KAI_PRO_VALUES = { client: 9900, pro: 19900, fournisseur: 39000 }
+// FIN-02: entreprise cumulant deux rôles → tarif le plus élevé
+export function resolveKaiProPrice(roles) {
+  if (!roles || !Array.isArray(roles) || roles.length === 0) return KAI_PRO_PRICES.client
+  const maxVal = Math.max(...roles.map(r => KAI_PRO_VALUES[r] || 0))
+  const best = Object.entries(KAI_PRO_VALUES).find(([, v]) => v === maxVal)
+  return best ? KAI_PRO_PRICES[best[0]] : KAI_PRO_PRICES.client
+}
 const getKaiProPrice = (role) => KAI_PRO_PRICES[role] || KAI_PRO_PRICES.pro
 
 const MOCK_HISTORY = [
@@ -154,6 +162,11 @@ export default function KaiSubscription({ role = 'pro' }) {
           {status === 'past_due' && (
             <button onClick={() => setShowPayMethod(true)} style={{ padding: '10px 20px', borderRadius: 10, background: '#FF3B30', color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap' }}>
               Régulariser
+            </button>
+          )}
+          {isGold && status === 'active' && (
+            <button onClick={() => { if (window.confirm('Êtes-vous sûr de vouloir résilier votre abonnement KAi Pro ? Vous conserverez l\'accès jusqu\'à la fin de la période en cours.')) { showToast && showToast('Demande de résiliation envoyée — accès conservé jusqu\'au ' + (ent.goldEndDate ? new Date(ent.goldEndDate).toLocaleDateString('fr-FR') : 'fin de période')) } }} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--s2)', color: 'var(--err)', border: '1px solid rgba(220,38,38,.2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--f)', whiteSpace: 'nowrap', marginTop: 8 }}>
+              Résilier l'abonnement
             </button>
           )}
         </div>

@@ -177,7 +177,7 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
   return (
     <div>
-      <DSPageHeader title="Marchés" subtitle={`${total} contrats à Pipeline des missions`}>
+      <DSPageHeader title="Marchés" subtitle={`${total} marchés · Pipeline des marchés`}>
         <DSFilterBar filters={FILTERS} active={filter} onChange={setFilter} />
         <button className="btn btn-sm" onClick={() => { exportCSV(allMarches.map(m => ({ entreprise: m.entreprise, lot: m.lot, montant: m.montant, statut: m.statut, delai: m.delai, avancement: m.avancement })), 'marches_meereo'); showToast && showToast('Export téléchargé') }}>Exporter</button>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreateContract(true)}>+ Nouveau marché</button>
@@ -185,9 +185,9 @@ export default function Contracts({ showToast, onNavigate, openModal }) {
 
       {/* Pipeline KPI */}
       <DSKpiStrip hero items={[
-        { value: total, label: 'Total', sub: 'contrats' },
+        { value: total, label: 'Total', sub: 'marchés' },
         { value: signes, label: 'Signés', sub: 'à démarrer' },
-        { value: enCours, label: 'En cours', sub: 'Missions actives', color: '#F59E0B' },
+        { value: enCours, label: 'En cours', sub: 'Marchés actifs', color: '#F59E0B' },
         { value: livres, label: 'Livrés', sub: 'Terminés', color: 'var(--ok)' },
       ]} />
 

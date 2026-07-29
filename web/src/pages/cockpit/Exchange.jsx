@@ -231,7 +231,8 @@ export default function Exchange({ showToast, onNavigate }) {
 
   const createAO = () => {
     setAoSubmitted(true)
-    if (!newAO.titre.trim() || !newAO.metier) return
+    const _budgetVal = typeof newAO.budget === 'string' ? Number(newAO.budget.replace(/\s/g, '')) : Number(newAO.budget)
+    if (!newAO.titre.trim() || !newAO.metier || !_budgetVal || _budgetVal <= 0 || !newAO.deadline) return
     storeCreateAO({ title: newAO.titre, description: newAO.desc, budget: newAO.budget, lot: newAO.metier, projectId: newAO.projet || null, deadline: newAO.deadline || '', prive: newAO.prive || false, listeRestreinte: newAO.listeRestreinte || [], visibilityScope: newAO.prive ? 'private' : 'public' })
     setShowCreateAO(false)
     setAoSubmitted(false)
@@ -243,6 +244,9 @@ export default function Exchange({ showToast, onNavigate }) {
 
   const submitReponse = async () => {
     setReponseSubmitted(true)
+    const _montantVal = typeof reponse.montant === 'string' ? Number(reponse.montant.replace(/\s/g, '')) : Number(reponse.montant)
+    if (!_montantVal || _montantVal <= 0) { showToast && showToast('Le montant proposé doit être supérieur à 0 FCFA', 'red'); return }
+    if (!reponse.delai || !reponse.delai.trim()) { showToast && showToast("Le délai d'exécution est obligatoire", 'red'); return }
     const ao = showRepondre
 
     // Upload each attached file to MinIO — capture the persistent URL
@@ -887,8 +891,12 @@ export default function Exchange({ showToast, onNavigate }) {
                 </select>
               </div>
               <div className="modal-row">
-                <div><label className="form-label">Budget (FCFA)</label><MoneyInput value={newAO.budget} onChange={v => setNewAO(p => ({ ...p, budget: v }))} placeholder="180 000 000" /></div>
-                <div><label className="form-label">Cloture</label><input className="form-input" type="date" value={newAO.deadline} onChange={e => setNewAO(p => ({ ...p, deadline: e.target.value }))} /></div>
+                <div><label className="form-label">Budget (FCFA) *</label><MoneyInput value={newAO.budget} onChange={v => setNewAO(p => ({ ...p, budget: v }))} placeholder="180 000 000" />
+                {aoSubmitted && (!newAO.budget || Number(String(newAO.budget).replace(/\s/g, '')) <= 0) && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Un budget strictement positif est requis</p>}
+                </div>
+                <div><label className="form-label">Date de clôture *</label><input className="form-input" type="date" value={newAO.deadline} onChange={e => setNewAO(p => ({ ...p, deadline: e.target.value }))} />
+                {aoSubmitted && !newAO.deadline && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Date de clôture obligatoire</p>}
+                </div>
               </div>
               <div><label className="form-label">Description</label><textarea className="form-input" rows="3" value={newAO.desc} onChange={e => setNewAO(p => ({ ...p, desc: e.target.value }))} placeholder="Lot, exigences, conditions..." /></div>
 
@@ -1008,12 +1016,14 @@ export default function Exchange({ showToast, onNavigate }) {
               <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--t4)', marginTop: 4 }}>Offre financière</div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <label className="form-label">Montant proposé (FCFA)</label>
-                  <input className="form-input" type="text" inputMode="numeric" value={reponse.montant} onChange={e => setReponse(p => ({ ...p, montant: e.target.value.replace(/[^0-9\s.]/g, '') }))} placeholder="Ex: 5 000 000" />
+                  <label className="form-label">Montant proposé (FCFA) *</label>
+                  <input className="form-input" type="text" inputMode="numeric" value={reponse.montant} onChange={e => setReponse(p => ({ ...p, montant: e.target.value.replace(/[^0-9\s.]/g, '') }))} placeholder="Ex: 5 000 000" style={reponseSubmitted && (!reponse.montant || Number(String(reponse.montant).replace(/\s/g, '')) <= 0) ? { borderColor: 'var(--err)' } : {}} />
+                  {reponseSubmitted && (!reponse.montant || Number(String(reponse.montant).replace(/\s/g, '')) <= 0) && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Montant strictement positif requis</p>}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="form-label">Délai d'exécution</label>
-                  <input className="form-input" type="text" value={reponse.delai} onChange={e => setReponse(p => ({ ...p, delai: e.target.value }))} placeholder="Ex: 3 mois" />
+                  <label className="form-label">Délai d'exécution *</label>
+                  <input className="form-input" type="text" value={reponse.delai} onChange={e => setReponse(p => ({ ...p, delai: e.target.value }))} placeholder="Ex: 3 mois" style={reponseSubmitted && (!reponse.delai || !reponse.delai.trim()) ? { borderColor: 'var(--err)' } : {}} />
+                  {reponseSubmitted && (!reponse.delai || !reponse.delai.trim()) && <p style={{ color:'var(--err)', fontSize:11, marginTop:4, fontWeight:500 }}>Délai obligatoire</p>}
                 </div>
               </div>
 

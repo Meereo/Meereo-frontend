@@ -248,21 +248,25 @@ export default function Supplier() {
 
   const handleSponsor = () => {
     if (!showSponsorModal) return
+    const tarif = sponsorDuration === '24h' ? '15 000' : sponsorDuration === '72h' ? '25 000' : '40 000'
+    if (!window.confirm(`Confirmer le sponsoring pour ${tarif} FCFA ? Ce montant sera prélevé sur votre moyen de paiement.`)) return
     updateStore(prev => ({
       ...prev,
-      products: (prev.products || []).map(p => p.id === showSponsorModal ? { ...p, sponsored: true, sponsorDuration: sponsorDuration, sponsoredAt: new Date().toISOString() } : p)
+      products: (prev.products || []).map(p => p.id === showSponsorModal ? { ...p, sponsored: true, sponsorDuration: sponsorDuration, sponsoredAt: new Date().toISOString(), sponsorTarif: tarif } : p)
     }))
-    showToast('Produit sponsorise — visibilite boostee', 'green')
+    showToast(`Sponsoring activé — ${tarif} FCFA`, 'green')
     setShowSponsorModal(null)
   }
 
   const handleFlash = () => {
     if (!showFlashModal) return
+    const tarif = flashDuration === '24h' ? '10 000' : flashDuration === '48h' ? '15 000' : flashDuration === '72h' ? '20 000' : '25 000'
+    if (!window.confirm(`Confirmer l'offre flash pour ${tarif} FCFA ? Ce montant sera prélevé sur votre moyen de paiement.`)) return
     updateStore(prev => ({
       ...prev,
-      products: (prev.products || []).map(p => p.id === showFlashModal ? { ...p, flash: true, flashPrice: parseFloat(flashPrice) || p.price, flashDuration, flashStock: parseInt(flashStock) || 0, flashAt: new Date().toISOString() } : p)
+      products: (prev.products || []).map(p => p.id === showFlashModal ? { ...p, flash: true, flashPrice: parseFloat(flashPrice) || p.price, flashDuration, flashStock: parseInt(flashStock) || 0, flashAt: new Date().toISOString(), flashTarif: tarif } : p)
     }))
-    showToast('Offre flash activee', 'green')
+    showToast(`Offre flash activée — ${tarif} FCFA`, 'green')
     setShowFlashModal(null)
     setFlashPrice(''); setFlashDuration('24h'); setFlashStock('')
   }
@@ -530,6 +534,12 @@ export default function Supplier() {
             <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>Estimation visibilite</div>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{sponsorDuration === '24h' ? '~200' : sponsorDuration === '72h' ? '~600' : '~2 000'} vues estimees</div>
           </div>
+          {/* FIN-03: Tarification sponsoring */}
+          <div style={{ padding: '14px', background: 'rgba(124,58,237,.05)', border: '1px solid rgba(124,58,237,.15)', borderRadius: 10 }}>
+            <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>Tarif sponsoring</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#7C3AED' }}>{sponsorDuration === '24h' ? '15 000' : sponsorDuration === '72h' ? '25 000' : '40 000'} FCFA</div>
+            <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 4 }}>Facturation : {sponsorDuration === '7j' ? 'par mois' : 'par opération'} · Prélevé sur votre moyen de paiement</div>
+          </div>
         </div>
       </Modal>
 
@@ -545,6 +555,12 @@ export default function Supplier() {
           <div className="modal-row" style={{ gap: 12 }}>
             <div><label className="form-label">Durée</label><select className="form-input" value={flashDuration} onChange={e => setFlashDuration(e.target.value)}><option value="24h">24 heures</option><option value="48h">48 heures</option><option value="72h">72 heures</option><option value="7j">7 jours</option></select></div>
             <div><label className="form-label">Stock limite (optionnel)</label><input className="form-input" type="number" value={flashStock} onChange={e => setFlashStock(e.target.value)} placeholder="Illimité" /></div>
+          </div>
+          {/* FIN-03: Tarification vente flash */}
+          <div style={{ padding: '14px', background: 'rgba(245,158,11,.05)', border: '1px solid rgba(245,158,11,.15)', borderRadius: 10 }}>
+            <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>Tarif vente flash</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#F59E0B' }}>{flashDuration === '24h' ? '10 000' : flashDuration === '48h' ? '15 000' : flashDuration === '72h' ? '20 000' : '25 000'} FCFA</div>
+            <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 4 }}>Par opération · Prélevé sur votre moyen de paiement</div>
           </div>
         </div>
       </Modal>

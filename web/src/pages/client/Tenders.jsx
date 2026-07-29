@@ -10,18 +10,18 @@ import { checkReplacementPreconditions } from '../../domain/replacementWorkflow'
 
 // Modal to create a new AO — rendered as portal
 function CreateAOModal({ open, onClose, proj, createAO, showToast }) {
-  const [ao, setAo] = useState({ titre: '', metier: '', desc: '', budget: '' })
+  const [ao, setAo] = useState({ titre: '', metier: '', desc: '', budget: '', deadline: '' })
 
   const precondCheck = ao.metier
     ? checkReplacementPreconditions(ao.metier, proj?.id, [])
     : { allowed: true, message: null }
-  const canPublish = ao.titre.trim() && ao.metier && precondCheck.allowed
+  const canPublish = ao.titre.trim() && ao.metier && precondCheck.allowed && ao.budget && Number(String(ao.budget).replace(/\s/g, '')) > 0 && ao.deadline
 
   const publish = async () => {
     if (!canPublish) return
-    await createAO({ title: ao.titre, description: ao.desc, budget: ao.budget, lot: ao.metier, projectId: proj?.id, needType: precondCheck.needType, createdByClient: true })
+    await createAO({ title: ao.titre, description: ao.desc, budget: ao.budget, lot: ao.metier, projectId: proj?.id, needType: precondCheck.needType, createdByClient: true, deadline: ao.deadline })
     showToast("Appel d'offres publié — les " + ao.metier + 's seront notifiés')
-    setAo({ titre: '', metier: '', desc: '', budget: '' })
+    setAo({ titre: '', metier: '', desc: '', budget: '', deadline: '' })
     onClose()
   }
 
@@ -67,8 +67,12 @@ function CreateAOModal({ open, onClose, proj, createAO, showToast }) {
             <textarea className="form-input" value={ao.desc} onChange={e => setAo(p => ({ ...p, desc: e.target.value }))} placeholder="Surface, type de travaux, contraintes, délai souhaité..." />
           </div>
           <div>
-            <label className="form-label">Budget estimatif (FCFA)</label>
+            <label className="form-label">Budget estimatif (FCFA) *</label>
             <MoneyInput value={ao.budget} onChange={v => setAo(p => ({ ...p, budget: v }))} placeholder="5 000 000" />
+          </div>
+          <div>
+            <label className="form-label">Date de clôture *</label>
+            <input className="form-input" type="date" value={ao.deadline} onChange={e => setAo(p => ({ ...p, deadline: e.target.value }))} />
           </div>
         </div>
         <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

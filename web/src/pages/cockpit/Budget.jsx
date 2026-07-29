@@ -5,6 +5,7 @@ import { useDevise } from '../../hooks/useDevise'
 import { DSPageHeader, DSKpiStrip, DSFilterBar, DSEmptyState } from '../../design/components'
 import { MARKET_STATUS } from '../../domain/status'
 import { formatDateFR } from '../../utils/helpers'
+import { api } from '../../services/api/client'
 
 // â”€â”€ Status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PayBadge({ status }) {
@@ -47,13 +48,25 @@ function ProgBar({ value, max, color }) {
 
 const TABS_CLIENT = [
   { key: 'vue', label: 'Vue d\'ensemble' },
-  { key: 'marches', label: 'Contrats' },
+  { key: 'marches', label: 'Marchés' },
+  { key: 'factures', label: 'Factures' },
   { key: 'paiements', label: 'Paiements' },
 ]
+
+// FIN-01: circuit facture — badges pour la vue client
+const INV_BADGE = {
+  brouillon:        { label: 'Brouillon',           color: 'var(--t4)',  bg: 'var(--s2)' },
+  emise:            { label: 'À réceptionner',      color: '#007AFF',    bg: 'rgba(0,122,255,.07)' },
+  recue:            { label: 'Reçue',                color: '#E07B00',    bg: 'rgba(245,158,11,.07)' },
+  paiement_declare: { label: 'Paiement déclaré',     color: '#16A34A',    bg: 'rgba(22,163,74,.07)' },
+  reglee:           { label: 'Réglée',               color: '#7C3AED',    bg: 'rgba(124,58,237,.07)' },
+}
 const TABS_PRO = [
   { key: 'vue', label: 'Vue d\'ensemble' },
-  { key: 'marches', label: 'Mes contrats' },
+  { key: 'marches', label: 'Mes marchés' },
+  { key: 'factures', label: 'Factures' },
   { key: 'paiements', label: 'Mes paiements' },
+  { key: 'rapports', label: 'Rapports' },
 ]
 
 export default function Budget({ showToast, onNavigate }) {
@@ -121,7 +134,7 @@ export default function Budget({ showToast, onNavigate }) {
     <div>
       <DSPageHeader
         title="Budget"
-        subtitle={isClient ? 'Suivi financier de vos projets' : 'Vos contrats et paiements'}
+        subtitle={isClient ? 'Suivi financier de vos projets' : 'Vos marchés et paiements'}
       >
         <DSFilterBar filters={TABS} active={tab} onChange={setTab} />
         {projOptions.length > 1 && (
@@ -139,7 +152,7 @@ export default function Budget({ showToast, onNavigate }) {
       {/* â•â• KPIs â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <DSKpiStrip hero items={isClient ? [
         { value: formatShort(stats.totalBudgetProjets || stats.totalContrats), label: 'Budget total', sub: 'Enveloppe allouée' },
-        { value: formatShort(stats.totalContrats), label: 'Engagé', sub: 'Contrats signés', color: '#2563EB' },
+        { value: formatShort(stats.totalContrats), label: 'Engagé', sub: 'Marchés signés', color: '#2563EB' },
         { value: formatShort(stats.paye), label: 'Payé', sub: 'Versements effectués', color: 'var(--ok)' },
         { value: formatShort(stats.enAttente), label: 'En cours', sub: 'Paiements en transit', color: 'var(--wrn)' },
         ...(stats.litiges > 0 ? [{ value: stats.litiges, label: 'Litige(s)', sub: 'À résoudre', color: 'var(--err)' }] : []),
@@ -147,7 +160,7 @@ export default function Budget({ showToast, onNavigate }) {
         { value: formatShort(stats.totalContrats), label: 'Montant contractuel', sub: 'Total signé' },
         { value: formatShort(stats.paye), label: 'Reçu', sub: 'Versements confirmés', color: 'var(--ok)' },
         { value: formatShort(stats.enAttente), label: 'En cours', sub: 'En attente de versement', color: 'var(--wrn)' },
-        { value: filteredMarkets.filter(m => m.statut === MARKET_STATUS.IN_PROGRESS).length, label: 'Missions actives', sub: 'En cours d\'exécution', color: '#2563EB' },
+        { value: filteredMarkets.filter(m => m.statut === MARKET_STATUS.IN_PROGRESS).length, label: 'Marchés actifs', sub: 'En cours d\'exécution', color: '#2563EB' },
         ...(stats.litiges > 0 ? [{ value: stats.litiges, label: 'Litige(s)', sub: 'À résoudre', color: 'var(--err)' }] : []),
       ]} />
 
@@ -174,12 +187,23 @@ export default function Budget({ showToast, onNavigate }) {
             </div>
           )}
 
-          {/* Contrats par statut */}
+          {/* FIN-01 D7: Alerte dépassement budget (non bloquante) — visible client ET pro */}
+          {stats.totalBudgetProjets > 0 && stats.totalContrats > stats.totalBudgetProjets && (
+            <div style={{ padding: '14px 20px', background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={16} color="var(--err)" style={{ flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--err)' }}>Dépassement de budget</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Le montant engagé ({formatShort(stats.totalContrats)}) dépasse le budget alloué ({formatShort(stats.totalBudgetProjets)}). Écart : +{formatShort(stats.totalContrats - stats.totalBudgetProjets)}.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Marchés par statut */}
           {filteredMarkets.length > 0 ? (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                  {isClient ? 'Contrats validés' : 'Mes contrats'} · {filteredMarkets.length}
+                  {isClient ? 'Marchés validés' : 'Mes marchés'} · {filteredMarkets.length}
                 </div>
               </div>
               {filteredMarkets.slice(0, 5).map((m, i) => {
@@ -216,7 +240,7 @@ export default function Budget({ showToast, onNavigate }) {
             <DSEmptyState
               icon={<Wallet size={28} />}
               title="Aucun contrat"
-              desc={isClient ? "Vos contrats signés apparaîtront ici après acceptation d'une offre." : "Vos marchés apparaîtront ici après qu'un client accepte votre offre."}
+              desc={isClient ? "Vos marchés signés apparaîtront ici après acceptation d'une offre." : "Vos marchés apparaîtront ici après qu'un client accepte votre offre."}
             />
           )}
 
@@ -245,6 +269,47 @@ export default function Budget({ showToast, onNavigate }) {
               })}
             </div>
           )}
+
+          {/* FIN-01: Répartition par phase — relevé financier */}
+          {filteredMarkets.length > 0 && (() => {
+            const PH_LABELS = { CONCEPTION: 'Conception', PREPARATION: 'Préparation', GROS_OEUVRE: 'Gros Œuvre', SECOND_OEUVRE: 'Second Œuvre', MATERIAUX: 'Matériaux', MOBILIER: 'Mobilier', RECEPTION: 'Réception' }
+            const invoicesByPhase = {}
+            ;(store.invoices || []).forEach(inv => {
+              if (projFilter && inv.projectId !== projFilter) return
+              const ph = inv.phase || 'NON_AFFECTE'
+              if (!invoicesByPhase[ph]) invoicesByPhase[ph] = { count: 0, total: 0 }
+              invoicesByPhase[ph].count++
+              invoicesByPhase[ph].total += parseFloat(inv.montant) || 0
+            })
+            const marketsByPhase = {}
+            filteredMarkets.forEach(m => {
+              const ph = m.phase || 'NON_AFFECTE'
+              if (!marketsByPhase[ph]) marketsByPhase[ph] = { count: 0, total: 0 }
+              marketsByPhase[ph].count++
+              marketsByPhase[ph].total += parseFloat(m.montant) || parseFloat(m.amount) || 0
+            })
+            const allPhases = [...new Set([...Object.keys(invoicesByPhase), ...Object.keys(marketsByPhase)])]
+            if (allPhases.length === 0) return null
+            return (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Répartition par phase</div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px', gap: 8, padding: '8px 20px', background: 'var(--s2)', borderBottom: '1px solid var(--border)', fontSize: 10, fontWeight: 600, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                  <span>Phase</span>
+                  <span style={{ textAlign: 'right' }}>Engagé</span>
+                  <span style={{ textAlign: 'right' }}>Facturé</span>
+                </div>
+                {allPhases.map((ph, i) => (
+                  <div key={ph} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px', gap: 8, padding: '12px 20px', borderBottom: i < allPhases.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{PH_LABELS[ph] || ph.replace(/_/g, ' ')}</span>
+                    <span style={{ textAlign: 'right', fontSize: 12, fontWeight: 600 }}>{formatShort(marketsByPhase[ph]?.total || 0)}</span>
+                    <span style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: 'var(--ok)' }}>{formatShort(invoicesByPhase[ph]?.total || 0)}</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
 
@@ -299,6 +364,75 @@ export default function Budget({ showToast, onNavigate }) {
       )}
 
       {/* â•â• TAB: Paiements â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ══ TAB: Factures (FIN-01 circuit) ══ */}
+      {tab === 'factures' && (() => {
+        const invoices = (store.invoices || [])
+          .filter(inv => {
+            if (projFilter && inv.projectId !== projFilter) return false
+            if (isClient) return inv.statut && inv.statut !== 'brouillon'
+            return true
+          })
+          .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+
+        const handleInvoiceAction = (inv, nextStatus) => {
+          const updated = { ...inv, statut: nextStatus, updatedAt: new Date().toISOString() }
+          if (nextStatus === 'recue') updated.recueLe = new Date().toISOString()
+          if (nextStatus === 'paiement_declare') {
+            updated.paiementDeclareLe = new Date().toISOString()
+            updated.paiementDeclareParClient = true
+          }
+          if (nextStatus === 'reglee') updated.regleeLe = new Date().toISOString()
+          try { api?.finance?.updateInvoice?.(inv.id, { statut: nextStatus, ...updated }) } catch (_) {}
+          showToast && showToast(`Facture ${INV_BADGE[nextStatus]?.label || nextStatus}`)
+        }
+
+        return (
+          <div style={{ marginTop: 8 }}>
+            {invoices.length === 0 ? (
+              <DSEmptyState icon={<Wallet size={28} />} title="Aucune facture" desc={isClient ? "Les factures émises par vos professionnels apparaîtront ici." : "Vos factures émises apparaîtront ici."} />
+            ) : (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Factures · {invoices.length}</span>
+                </div>
+                {invoices.map((inv, i) => {
+                  const badge = INV_BADGE[inv.statut] || INV_BADGE.brouillon
+                  const amount = parseFloat(inv.montant) || 0
+                  let action = null
+                  if (isClient && inv.statut === 'emise') action = { label: 'Marquer comme reçue', next: 'recue' }
+                  if (isClient && inv.statut === 'recue') action = { label: 'Déclarer le paiement', next: 'paiement_declare' }
+                  if (!isClient && inv.statut === 'paiement_declare') action = { label: 'Confirmer la réception', next: 'reglee' }
+                  return (
+                    <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < invoices.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.label || 'Facture'}</div>
+                        <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>
+                          {inv.phase ? inv.phase.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase()) + ' · ' : ''}
+                          {inv.dateFacture ? formatDateFR(inv.dateFacture) : formatDateFR(inv.createdAt)}
+                          {inv.modePaiement ? ' · ' + inv.modePaiement : ''}
+                          {inv.paiementDeclareLe ? ' · Paiement déclaré le ' + new Date(inv.paiementDeclareLe).toLocaleDateString('fr-FR') : ''}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{formatShort(amount)}</div>
+                          <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 100, background: badge.bg, color: badge.color }}>{badge.label}</span>
+                        </div>
+                        {action && (
+                          <button className="btn btn-primary btn-sm" style={{ fontSize: 10, whiteSpace: 'nowrap' }} onClick={() => handleInvoiceAction(inv, action.next)}>
+                            {action.label}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {tab === 'paiements' && (() => {
         const allTx = (store.transactions || [])
           .filter(t => {
@@ -395,6 +529,84 @@ export default function Budget({ showToast, onNavigate }) {
             </div>
           )}
         </div>
+        )
+      })()}
+
+      {/* ══ TAB: Rapports (pro) — relevé financier consolidé ══ */}
+      {tab === 'rapports' && !isClient && (() => {
+        const totalBudget = isClient ? stats.totalBudgetProjets : stats.totalContrats
+        const totalPaye = stats.paye
+        const restant = Math.max(0, totalBudget - totalPaye)
+        const burnPct = totalBudget > 0 ? Math.round(totalPaye / totalBudget * 100) : 0
+        const budgetAlert = stats.totalContrats > (stats.totalBudgetProjets || stats.totalContrats)
+
+        return (
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* KPIs consolidés */}
+            <div className="card" style={{ padding: '20px 24px' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16 }}>Relevé financier</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 4 }}>Budget (plafond)</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{formatShort(totalBudget)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 4 }}>Engagé (marchés)</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#2563EB' }}>{formatShort(stats.totalContrats)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 4 }}>Payé</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ok)' }}>{formatShort(totalPaye)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 4 }}>Restant</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: restant <= 0 ? 'var(--err)' : 'var(--t2)' }}>{formatShort(restant)}</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <ProgBar value={totalPaye} max={totalBudget} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--t4)', marginTop: 6 }}>
+                  <span>Consommation : {burnPct}%</span>
+                  <span>Reste : {formatShort(restant)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Alerte dépassement */}
+            {budgetAlert && (
+              <div style={{ padding: '14px 20px', background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <AlertTriangle size={16} color="var(--err)" style={{ flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--err)' }}>Alerte : montant engagé dépasse le budget</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>Engagé : {formatShort(stats.totalContrats)} — Budget : {formatShort(stats.totalBudgetProjets || stats.totalContrats)}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Historique horodaté des marchés */}
+            {filteredMarkets.length > 0 && (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Historique des marchés</span>
+                </div>
+                {filteredMarkets.map((m, i) => {
+                  const amount = parseFloat(m.montant) || parseFloat(m.amount) || 0
+                  return (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < filteredMarkets.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{m.titre || m.lot || 'Marché'}</div>
+                        <div style={{ fontSize: 10, color: 'var(--t4)' }}>{m.entreprise || '—'} · {formatDateFR(m.createdAt)}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{formatShort(amount)}</div>
+                        <MarketBadge statut={m.statut} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )
       })()}
     </div>

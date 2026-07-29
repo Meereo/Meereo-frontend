@@ -185,7 +185,8 @@ function ProjetModal({ isOpen, onClose, showToast }) {
         )}
 
         <div className="form-row">
-          <div><label className="form-label">Budget estimé (FCFA)</label><MoneyInput value={f.budget} onChange={v => setF(p => ({ ...p, budget: v }))} placeholder="4 800 000" /></div>
+          <div><label className="form-label">Enveloppe client (FCFA)</label><MoneyInput value={f.budget} onChange={v => setF(p => ({ ...p, budget: v }))} placeholder="4 800 000" />
+          <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4 }}>Enveloppe indicative — le montant contractuel sera issu du marché signé</div></div>
           <div><label className="form-label">Livraison prévue</label><input className="form-input" type="date" value={f.livraison} onChange={e => setF(p => ({ ...p, livraison: e.target.value }))} /></div>
         </div>
         <div className="form-row">
@@ -1013,7 +1014,11 @@ export default function Projects({ onNavigate, openModal, showToast }) {
                   </div>
                 </div>
                 <div className="modal-row">
-                  <div><label className="form-label">Budget (FCFA)</label><MoneyInput value={editModal.budget} onChange={v => setEditModal(p => ({ ...p, budget: v }))} placeholder="100 000 000" /></div>
+                  <div>
+                    <label className="form-label">Enveloppe client (FCFA)</label>
+                    <MoneyInput value={editModal.budget} onChange={v => setEditModal(p => ({ ...p, budget: v }))} placeholder="100 000 000" />
+                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4, lineHeight: 1.4 }}>Enveloppe indicative du client. Le montant contractuel provient du marché signé et n'est pas modifiable ici.</div>
+                  </div>
                   <div><label className="form-label">Livraison</label><input className="form-input" type="date" value={editModal.livraison || ''} onChange={e => setEditModal(p => ({ ...p, livraison: e.target.value }))} /></div>
                 </div>
               </>)}

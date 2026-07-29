@@ -25,7 +25,8 @@ const NAV_GROUPS = [
     items: [
       { id: 'chantier',      i18nKey: 'nav.progress',       icon: 'hardhat' },
       { id: 'taches-board',  i18nKey: 'nav.tasks',            icon: 'kanban' },
-      { id: 'budget',        i18nKey: 'nav.budget',            icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
+      // FIN-04: Budget déplacé dans Business (fusion Budget+Finance) — garder ici pour rétrocompat
+
     ]
   },
   {
@@ -43,6 +44,7 @@ const NAV_GROUPS = [
       { id: 'bourse', i18nKey: 'nav.tenders', icon: 'briefcase', flag: FLAG_SHOW_AO, countKey: 'newAos', badgeColor: 'blue' },
       { id: 'offres', i18nKey: 'nav.offers', icon: 'inbox', countKey: 'offers', badgeColor: 'orange', flag: FLAG_SHOW_AO },
       { id: 'marches', i18nKey: 'nav.markets', icon: 'handshake', flag: FLAG_SHOW_AO },
+      { id: 'budget',  i18nKey: 'nav.budget',  icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
     ]
   },
   {

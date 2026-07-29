@@ -8,6 +8,7 @@ export const PAY_STATUS = {
   INIT: 'PAY_INIT',
   PENDING: 'PAY_PENDING',
   CONFIRMED: 'FUNDS_CONFIRMED',
+  FAILED: 'PAY_FAILED',
   HELD: 'HELD_FOR_MILESTONE',
   PAYOUT_REQ: 'PAYOUT_REQUESTED',
   PAYOUT_DONE: 'PAYOUT_DONE',
@@ -18,6 +19,7 @@ export const PAY_STATUS = {
 export const PAY_STATUS_META = {
   [PAY_STATUS.INIT]:        { label: 'Paiement initié',       color: 'var(--t4)',  bg: 'var(--s2)',                icon: '○', micro: 'En attente de traitement' },
   [PAY_STATUS.PENDING]:     { label: 'Paiement en cours',     color: 'var(--wrn)', bg: 'rgba(245,158,11,.06)',     icon: '◐', micro: 'Confirmation attendue du partenaire' },
+  [PAY_STATUS.FAILED]:      { label: 'Paiement échoué',       color: 'var(--err)', bg: 'rgba(220,38,38,.06)',      icon: '✗', micro: 'Le paiement a échoué — réessayer ou changer de moyen' },
   [PAY_STATUS.CONFIRMED]:   { label: 'Fonds confirmés',       color: 'var(--ok)',  bg: 'rgba(52,199,89,.06)',      icon: '●', micro: 'Le marché peut démarrer' },
   [PAY_STATUS.HELD]:        { label: 'Fonds sécurisés',       color: 'var(--inf)', bg: 'rgba(0,122,255,.06)',      icon: '◉', micro: 'Cantonnés jusqu\'à validation de l\'étape' },
   [PAY_STATUS.PAYOUT_REQ]:  { label: 'Libération demandée',   color: 'var(--wrn)', bg: 'rgba(245,158,11,.06)',     icon: '⊕', micro: 'En attente d\'exécution par le partenaire' },
@@ -29,12 +31,13 @@ export const PAY_STATUS_META = {
 // ── Valid transitions ──
 export const PAY_TRANSITIONS = {
   [PAY_STATUS.INIT]:       [PAY_STATUS.PENDING],
-  [PAY_STATUS.PENDING]:    [PAY_STATUS.CONFIRMED, PAY_STATUS.REVERSED],
+  [PAY_STATUS.PENDING]:    [PAY_STATUS.CONFIRMED, PAY_STATUS.FAILED, PAY_STATUS.REVERSED],
   [PAY_STATUS.CONFIRMED]:  [PAY_STATUS.HELD],
   [PAY_STATUS.HELD]:       [PAY_STATUS.PAYOUT_REQ],
   [PAY_STATUS.PAYOUT_REQ]: [PAY_STATUS.PAYOUT_DONE, PAY_STATUS.DISPUTE],
   [PAY_STATUS.DISPUTE]:    [PAY_STATUS.REVERSED, PAY_STATUS.PAYOUT_DONE],
   [PAY_STATUS.PAYOUT_DONE]: [],
+  [PAY_STATUS.FAILED]:     [PAY_STATUS.INIT],
   [PAY_STATUS.REVERSED]:   [],
 }
 
