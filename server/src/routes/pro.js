@@ -289,7 +289,7 @@ router.post('/request-verification', requireAuth, async (req, res, next) => {
       })
       // Notify the pro about successful verification
       await prisma.notification.create({
-        data: { userId, type: 'green', message: 'Votre entreprise est désormais vérifiée par MEEREO. Le badge est actif sur toutes les interfaces.', link: '/pro', read: false },
+        data: { userId, type: 'green', msg: 'Votre entreprise est désormais vérifiée par MEEREO. Le badge est actif sur toutes les interfaces.', link: '/pro', read: false },
       }).catch(() => {})
 
       return res.json({ success: true, verified: true, message: 'RCCM vérifié avec succès. Badge « Vérifié par MEEREO » activé.' })
@@ -299,7 +299,7 @@ router.post('/request-verification', requireAuth, async (req, res, next) => {
     const admins = await prisma.user.findMany({ where: { role: 'admin' }, select: { id: true } })
     for (const admin of admins) {
       await prisma.notification.create({
-        data: { userId: admin.id, type: 'verification_request', message: `Demande de vérification : ${od.entreprise || 'Professionnel'} — RCCM: ${rccm}${registeredRccm !== submittedRccm ? ' (écart avec inscription: ' + registeredRccm + ')' : ''}`, link: '/admin', read: false },
+        data: { userId: admin.id, type: 'verification_request', msg: `Demande de vérification : ${od.entreprise || 'Professionnel'} — RCCM: ${rccm}${registeredRccm !== submittedRccm ? ' (écart avec inscription: ' + registeredRccm + ')' : ''}`, link: '/admin', read: false },
       }).catch(() => {})
     }
 

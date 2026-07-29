@@ -156,7 +156,7 @@ router.post('/', requireAuth, async (req, res, next) => {
           data: {
             userId: supplierId,
             type: 'market_signed',
-            message: `Nouveau marché signé : ${titre || lot || 'Mission'} — consultez vos marchés`,
+            msg: `Nouveau marché signé : ${titre || lot || 'Mission'} — consultez vos marchés`,
             link: '/marches',
             read: false,
           },
@@ -164,7 +164,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         const io = getIo()
         if (io) {
           io.to(`user:${supplierId}`).emit('notification:new', {
-            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+            id: notif.id, type: notif.type, msg: notif.msg, link: notif.link, read: false, createdAt: notif.createdAt,
           })
         }
       } catch (_) { /* non bloquant */ }

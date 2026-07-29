@@ -218,7 +218,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
               data: {
                 userId: other.supplierId,
                 type: 'offer_rejected',
-                message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
+                msg: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
                 link: '/bourse',
                 read: false,
               },
@@ -226,7 +226,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
             const io = getIo()
             if (io) {
               io.to(`user:${other.supplierId}`).emit('notification:new', {
-                id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+                id: notif.id, type: notif.type, msg: notif.msg, link: notif.link, read: false, createdAt: notif.createdAt,
               })
             }
           } catch (_) {}
@@ -269,7 +269,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
           data: {
             userId: existing.supplierId,
             type: 'offer_accepted',
-            message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » a été acceptée — un marché va être créé`,
+            msg: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » a été acceptée — un marché va être créé`,
             link: '/marches',
             read: false,
           },
@@ -277,7 +277,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         const io = getIo()
         if (io) {
           io.to(`user:${existing.supplierId}`).emit('notification:new', {
-            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+            id: notif.id, type: notif.type, msg: notif.msg, link: notif.link, read: false, createdAt: notif.createdAt,
           })
         }
       } catch (_) { /* non bloquant */ }
@@ -288,7 +288,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
           data: {
             userId: existing.supplierId,
             type: 'offer_rejected',
-            message: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
+            msg: `Votre offre pour « ${existing.ao?.title || 'Appel d\'offres'} » n'a pas été retenue`,
             link: '/bourse',
             read: false,
           },
@@ -296,7 +296,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         const io = getIo()
         if (io) {
           io.to(`user:${existing.supplierId}`).emit('notification:new', {
-            id: notif.id, type: notif.type, msg: notif.message, link: notif.link, read: false, createdAt: notif.createdAt,
+            id: notif.id, type: notif.type, msg: notif.msg, link: notif.link, read: false, createdAt: notif.createdAt,
           })
         }
       } catch (_) { /* non bloquant */ }

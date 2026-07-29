@@ -93,7 +93,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         data: {
           userId,
           type: 'project_invitation',
-          message: `${inviterName} vous invite à rejoindre le projet "${project?.nom || 'Projet'}"`,
+          msg: `${inviterName} vous invite à rejoindre le projet "${project?.nom || 'Projet'}"`,
           link: '/cockpit',
           read: false,
         },
@@ -162,7 +162,7 @@ router.patch('/:id/respond', requireAuth, async (req, res, next) => {
           data: {
             userId: membership.project.ownerId,
             type: 'invitation_accepted',
-            message: `${req.user.name || 'Un professionnel'} a accepté de rejoindre "${membership.project.nom || 'votre projet'}"`,
+            msg: `${req.user.name || 'Un professionnel'} a accepté de rejoindre "${membership.project.nom || 'votre projet'}"`,
             link: '/cockpit',
             read: false,
           },
