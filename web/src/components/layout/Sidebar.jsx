@@ -44,7 +44,7 @@ const NAV_GROUPS = [
       { id: 'bourse', i18nKey: 'nav.tenders', icon: 'briefcase', flag: FLAG_SHOW_AO, countKey: 'newAos', badgeColor: 'blue' },
       { id: 'offres', i18nKey: 'nav.offers', icon: 'inbox', countKey: 'offers', badgeColor: 'orange', flag: FLAG_SHOW_AO },
       { id: 'marches', i18nKey: 'nav.markets', icon: 'handshake', flag: FLAG_SHOW_AO },
-      { id: 'budget',  i18nKey: 'nav.budget',  icon: 'trending-up', flag: FLAG_SHOW_FINANCE },
+      { id: 'budget',  i18nKey: 'nav.budget',  icon: 'trending-up', flag: FLAG_SHOW_FINANCE, hideFor: ['client'] },
     ]
   },
   {
@@ -187,7 +187,7 @@ export default function Sidebar({ activePage, onNavigate, identity, isOpen, onCl
       {/* Navigation */}
       <nav className="sidebar-nav">
         {NAV_GROUPS.map(group => {
-          const visibleItems = group.items.filter(item => item.flag !== false)
+          const visibleItems = group.items.filter(item => item.flag !== false && !(item.hideFor && item.hideFor.includes(store.user?.type)))
           if (visibleItems.length === 0) return null
           return (
           <div key={group.label} className="sidebar-group">
