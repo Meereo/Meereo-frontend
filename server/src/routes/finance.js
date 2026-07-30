@@ -45,8 +45,13 @@ router.post('/budgets', requireAuth, async (req, res, next) => {
     const prisma = getPrisma()
     const { label, montant, projectId } = req.body
     if (!label?.trim()) throw createError('label requis', 400)
+    const pid = projectId?.trim() || null
+    if (pid) {
+      const project = await prisma.project.findUnique({ where: { id: pid }, select: { id: true } })
+      if (!project) throw createError('Projet introuvable', 404)
+    }
     const item = await prisma.budget.create({
-      data: { label: label.trim(), montant: parseNum(montant), projectId: projectId || null, ownerId: req.user.id },
+      data: { label: label.trim(), montant: parseNum(montant), projectId: pid, ownerId: req.user.id },
     })
     res.status(201).json(item)
   } catch (e) { next(e) }

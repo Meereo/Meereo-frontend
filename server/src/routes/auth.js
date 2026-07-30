@@ -725,13 +725,13 @@ router.delete('/account', requireAuth, async (req, res, next) => {
     if (user.type === 'pro') {
       await prisma.proProfile.updateMany({
         where: { userId },
-        data: { rccm: null, ncc: null, telephone: null },
+        data: { rccm: null, ncc: null, tel: null },
       }).catch(() => {})
     }
     if (user.type === 'fournisseur') {
       await prisma.fournisseurProfile.updateMany({
         where: { userId },
-        data: { rccm: null, ncc: null, telephone: null },
+        data: { rccm: null, ncc: null, tel: null },
       }).catch(() => {})
     }
 
