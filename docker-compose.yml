@@ -68,9 +68,9 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3002
-      KAI_MODEL: qwen2.5:3b
+      KAI_MODEL: kai
       KAI_HOST: http://ollama:11434
-      QUOREX_API_KEY: ${QUOREX_API_KEY:-}
+      QUOREX_API_KEY: qx_live_22d81d57db611d0fe29edb7c86201cef
       MEEREO_API_URL: http://api:3001
     depends_on:
       - ollama
