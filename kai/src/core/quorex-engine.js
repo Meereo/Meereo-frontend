@@ -16,7 +16,7 @@ const loadedUsers = new Set();
  * 3. CHERCHER (memoire + outils)
  * 4. AGIR (repondre / recommander / demander confirmation)
  */
-export async function orchestrate({ userId, userType, actor, message, confirmationId }) {
+export async function orchestrate({ userId, userType, actor, message, confirmationId, onToken }) {
   // ── Etape 1 : IDENTIFIER (deja fait par middleware) ──
   // Charger les faits au premier contact
   if (!loadedUsers.has(userId)) {
@@ -52,6 +52,7 @@ export async function orchestrate({ userId, userType, actor, message, confirmati
     userText: message,
     allowSend: !isEngaging, // Si action engageante, on retient l'envoi
     tools,
+    onToken,
   });
 
   const result = {

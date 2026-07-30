@@ -13,9 +13,10 @@ const MAX_TOOL_ROUNDS = 6;
  * @param {string} opts.userText     - Message utilisateur
  * @param {boolean} opts.allowSend   - Autoriser l'envoi direct de notifications
  * @param {Array}  [opts.tools]      - Outils disponibles (defaut: tous)
+ * @param {function} [opts.onToken]  - Callback streaming (recoit chaque token)
  * @returns {{ text: string, ctx: { allowSend, pending, sent } }}
  */
-export async function runAgent({ system, userText, allowSend, tools }) {
+export async function runAgent({ system, userText, allowSend, tools, onToken }) {
   const ctx = { allowSend, pending: [], sent: [] };
   const messages = [
     { role: "system", content: system },
@@ -23,12 +24,12 @@ export async function runAgent({ system, userText, allowSend, tools }) {
   ];
 
   for (let step = 0; step < MAX_TOOL_ROUNDS; step++) {
+    // Tool-call rounds : toujours sans streaming
     const resp = await ai.chat({
       model: KAI_MODEL,
       messages,
       tools: tools || [],
       stream: false,
-      options: { temperature: 0.3 },
     });
 
     if (!resp?.message) {
@@ -44,6 +45,27 @@ export async function runAgent({ system, userText, allowSend, tools }) {
         messages.push({ role: "tool", tool_name: tc.function.name, content: JSON.stringify(result) });
       }
       continue;
+    }
+
+    // Reponse finale sans tool calls — streamer si onToken fourni
+    if (onToken) {
+      // Relancer le dernier round en streaming (sans outils)
+      messages.pop(); // retirer la reponse non-streamee
+      const stream = await ai.chat({
+        model: KAI_MODEL,
+        messages,
+        tools: [],
+        stream: true,
+      });
+      let text = "";
+      for await (const chunk of stream) {
+        const token = chunk.message?.content || "";
+        if (token) {
+          text += token;
+          onToken(token);
+        }
+      }
+      return { text, ctx };
     }
 
     return { text: msg.content || "", ctx };
