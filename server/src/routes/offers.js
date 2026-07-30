@@ -243,20 +243,62 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
         // Idempotence : un seul marché par offre, quel que soit le nombre de fois où
         // l'événement d'acceptation est déclenché (même principe que MSG-04/pairHash).
         const alreadyCreated = await prisma.market.findFirst({ where: { offerId: existing.id } })
-        if (!alreadyCreated) await prisma.market.create({
-          data: {
-            title: existing.ao?.title || 'Marché',
-            supplierId: existing.supplierId,
-            clientId: existing.ao?.ownerUserId,
-            aoId: existing.aoId,
-            projectId: existing.ao?.projectId || null,
-            offerId: existing.id,
-            montant: String(offerMontant),
-            delai: existing.delai || '',
-            statut: 'signed',
-            signedAt: new Date(),
-          },
-        })
+        if (!alreadyCreated) {
+          // Si l'AO n'a pas encore de projet, en créer un automatiquement
+          let projectId = existing.ao?.projectId || null
+          if (!projectId) {
+            try {
+              const cleanTitle = (existing.ao?.title || '').replace(/^(Recherche\s+\w+\s*[·•]\s*|Mission\s+compl[eè]te\s*[·•]\s*)/i, '').trim()
+              const autoProject = await prisma.project.create({
+                data: {
+                  nom: cleanTitle || existing.ao?.lot || 'Nouveau projet',
+                  type: existing.ao?.lot || 'Mission',
+                  description: existing.ao?.description || '',
+                  budget: String(offerMontant),
+                  status: 'active',
+                  phase: 'ATTRIBUTION_MARCHES',
+                  ownerId: existing.ao?.ownerUserId || user.id,
+                  clientId: existing.ao?.ownerUserId || null,
+                  clientEmail: '',
+                  sourceAoId: existing.aoId || null,
+                },
+              })
+              projectId = autoProject.id
+              // Lier l'AO au nouveau projet
+              await prisma.aO.update({ where: { id: existing.aoId }, data: { projectId } }).catch(() => {})
+              // Ajouter le prestataire comme membre du projet
+              if (existing.supplierId) {
+                const supplierUser = await prisma.user.findUnique({ where: { id: existing.supplierId }, select: { name: true, email: true } }).catch(() => null)
+                await prisma.projectMember.create({
+                  data: {
+                    projectId,
+                    userId: existing.supplierId,
+                    role: 'SUPPLIER',
+                    userName: supplierUser?.name || '',
+                    userEmail: supplierUser?.email || '',
+                  },
+                }).catch(() => {})
+              }
+              console.log('[AOF-01] Auto-created project:', projectId)
+            } catch (projErr) {
+              console.warn('[AOF-01] Auto-create project failed:', projErr.message)
+            }
+          }
+          await prisma.market.create({
+            data: {
+              title: existing.ao?.title || 'Marché',
+              supplierId: existing.supplierId,
+              clientId: existing.ao?.ownerUserId,
+              aoId: existing.aoId,
+              projectId,
+              offerId: existing.id,
+              montant: String(offerMontant),
+              delai: existing.delai || '',
+              statut: 'signed',
+              signedAt: new Date(),
+            },
+          })
+        }
       } catch (marketErr) {
         console.warn('[AOF-01] Auto-create market failed:', marketErr.message)
       }

@@ -2037,107 +2037,49 @@ export function MeereoProvider({ children }) {
       }
       return { ...prev, offers, aos: closedAos, projects: nextProjects, markets: [...prev.markets, market], tasks: [...prev.tasks, ...tasks], events: [...(prev.events || []), mktEvt], projectMembers: newMembers, conversations: [...(prev.conversations || []), autoConv] }
     })
-    // Sync to PostgreSQL — project, market, offer, AO, event (all in async block)
+    // Sync to PostgreSQL — le backend PATCH /api/offers/:id gère tout :
+    // rejet des autres offres, fermeture AO, auto-création projet + marché.
+    // Le frontend n'a qu'à déclencher le PATCH puis rafraîchir les données.
     const closedAoId = (store.offers || []).find(o => o.id === offerId)?.aoId
-    const isLocalId = (id) => typeof id === 'string' && id.startsWith('proj_')
     ;(async () => {
-      let backendProjectId = market?.projectId
+      let backendProjectId = market?.projectId || null
       try {
-        if (market?.projectId && !ao?.projectId) {
-          try {
-            const autoProj = storeRef.current.projects?.find(p => p.id === market.projectId)
-            const backendProject = await api.projects.create({
-              nom: autoProj?.nom || market.titre || 'Projet', type: market.lot || 'Mission',
-              phase: 'ATTRIBUTION_MARCHES', budget: String(market.amount || market.budget || ''),
-              description: market.description || '', status: 'active',
-              ownerId: store.user?.id || null, clientId: market?.clientId || null,
-              clientEmail: market?.clientEmail || '', client: market?.clientName || '',
-              sourceAoId: market.aoId || null,
-              etapes: autoProj?.etapes || null, equipe: autoProj?.equipe || null,
-            })
-            if (backendProject?.id) {
-              backendProjectId = backendProject.id
-              // Replace local proj_ ID with backend cuid
-              updateStore(prev => ({
-                ...prev,
-                projects: (prev.projects || []).map(p => p.id === market.projectId ? { ...p, id: backendProject.id } : p)
-              }))
-              console.log('[acceptOffer] Auto-project synced:', backendProject.id)
-            }
-          } catch (e) {
-            console.warn('[acceptOffer] Project sync failed:', e.message)
-            showToast('Erreur création projet: ' + e.message, 'red')
-          }
-        }
-        // Si le projet n'a pas pu être créé en backend, retenter une fois
-        if (isLocalId(backendProjectId)) {
-          console.warn('[acceptOffer] Project ID is local-only, retrying...')
-          try {
-            const autoProj = storeRef.current.projects?.find(p => p.id === backendProjectId)
-            const retryProject = await api.projects.create({
-              nom: autoProj?.nom || market?.titre || 'Projet', type: market?.lot || 'Mission',
-              phase: 'ATTRIBUTION_MARCHES', budget: String(market?.amount || market?.budget || ''),
-              description: market?.description || '', status: 'active',
-              ownerId: store.user?.id || null, clientId: market?.clientId || null,
-              clientEmail: market?.clientEmail || '', client: market?.clientName || '',
-              sourceAoId: market?.aoId || null,
-            })
-            if (retryProject?.id) {
-              backendProjectId = retryProject.id
-              updateStore(prev => ({
-                ...prev,
-                projects: (prev.projects || []).map(p => p.id === market?.projectId ? { ...p, id: retryProject.id } : p)
-              }))
-            }
-          } catch (_) { /* retry failed */ }
-        }
-        // Si toujours local après retry, sync uniquement offre/AO
-        if (isLocalId(backendProjectId)) {
-          console.warn('[acceptOffer] Skipping market/project sync — project ID is local-only:', backendProjectId)
-          sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
-          if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
-          return
-        }
-        // 2. Create market on backend with real projectId
-        const backendMarket = await api.markets.create({ titre: market?.titre, entreprise: market?.entreprise, lot: market?.lot, montant: String(market?.amount || market?.montant || market?.budget || ''), statut: 'signed', avancement: 0, projectId: backendProjectId, offerId, aoId: market?.aoId || null, clientId: market?.clientId || null, supplierId: market?.supplierId || null, delai: market?.delai || null, description: market?.description || null })
-        // Replace local mkt_ ID with backend cuid
-        if (backendMarket?.id && market) {
-          updateStore(prev => ({
-            ...prev,
-            markets: (prev.markets || []).map(m => m.id === market.id ? { ...m, id: backendMarket.id } : m)
-          }))
-        }
-        // 3. Immediately re-sync projects & markets so both client and pro see fresh data
-        const [freshProjects, freshMarkets] = await Promise.all([
+        // 1. Accepter l'offre côté backend (déclenche auto-projet + auto-marché)
+        await api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() })
+        // 2. Rafraîchir projets, marchés et offres depuis le backend
+        const [freshProjects, freshMarkets, freshOffers] = await Promise.all([
           api.projects.getAll().catch(() => null),
           api.markets.getAll().catch(() => null),
+          api.offers.getAll().catch(() => null),
         ])
-        if (freshProjects || freshMarkets) {
+        if (freshProjects || freshMarkets || freshOffers) {
           setStore(prev => {
             const next = {
               ...prev,
               ...(freshProjects ? { projects: freshProjects } : {}),
               ...(freshMarkets ? { markets: freshMarkets } : {}),
+              ...(freshOffers ? { offers: freshOffers } : {}),
             }
             saveToStorage(next)
             return next
           })
         }
+        // Récupérer le projectId réel depuis le backend
+        const backendMarket = (freshMarkets || []).find(m => m.offerId === offerId)
+        backendProjectId = backendMarket?.projectId || market?.projectId || null
+        // FIN-04: auto-créer un budget dans le module Finance
+        const budgetMontant = String(market?.amount || market?.montant || market?.budget || '')
+        if (budgetMontant && parseFloat(budgetMontant) > 0 && backendProjectId && !backendProjectId.startsWith('proj_')) {
+          sync(api.finance?.createBudget?.({
+            label: 'Budget ' + (market?.titre || market?.lot || 'projet'),
+            montant: budgetMontant,
+            projectId: backendProjectId,
+          }).catch(e => console.warn('[acceptOffer] Finance budget sync failed:', e.message)))
+        }
       } catch (e) {
-        console.warn('[acceptOffer] Market sync failed:', e.message)
-        showToast('Erreur création marché: ' + e.message, 'red')
+        console.warn('[acceptOffer] Sync failed:', e.message)
+        showToast('Erreur synchronisation: ' + e.message, 'red')
       }
-      // FIN-04: auto-créer un budget dans le module Finance pour que le marché y figure
-      const budgetMontant = String(market?.amount || market?.montant || market?.budget || '')
-      if (budgetMontant && parseFloat(budgetMontant) > 0) {
-        sync(api.finance?.createBudget?.({
-          label: 'Budget ' + (market?.titre || market?.lot || 'projet'),
-          montant: budgetMontant,
-          projectId: backendProjectId || market?.projectId || null,
-        }).catch(e => console.warn('[acceptOffer] Finance budget sync failed:', e.message)))
-      }
-      // Sync remaining entities (fire-and-forget)
-      sync(api.offers.update(offerId, { statut: 'accepted', acceptedBy: store.user?.id || null, acceptedAt: new Date().toISOString() }))
       if (closedAoId) sync(api.aos.update(closedAoId, { status: 'attributed' }))
       sync(api.events.create({ titre: 'Marché signé — ' + (market?.lot || market?.titre || 'Nouveau marché'), date: new Date().toISOString().slice(0, 10), type: 'milestone', projectId: backendProjectId || market?.projectId, color: '#34C759' }))
       // Sync auto-conversation to backend — toujours en groupe pour les conversations projet
@@ -2148,14 +2090,11 @@ export function MeereoProvider({ children }) {
       if (supplierId) {
         try {
           const convTitle = autoConvData?.title || (market?.titre || 'Projet') + ' — ' + (market?.entreprise || '')
-          // Vérifier si d'autres membres du projet doivent être inclus
           const extraMembers = (storeRef.current.projectMembers || [])
             .filter(pm => pm.projectId === (backendProjectId || market?.projectId) && pm.userId !== storeRef.current.user?.id && pm.userId !== supplierId)
             .map(pm => pm.userId)
             .filter(Boolean)
           const convProjectId = backendProjectId || market?.projectId || null
-          // Toujours créer un groupe projet nommé d'après l'AO, avec le pro comme participant.
-          // Le serveur gère l'idempotence par projectId (MSG-08).
           let convRes
           console.log('[acceptOffer] Création groupe projet:', [supplierId, ...extraMembers])
           convRes = await api.conversations.create({ participantIds: [supplierId, ...extraMembers], title: convTitle, projectId: convProjectId, type: 'projet' })
@@ -2163,7 +2102,6 @@ export function MeereoProvider({ children }) {
           console.log('[acceptOffer] Backend conv created:', backendConv?.id, '| participants:', backendConv?.participants?.length)
           if (backendConv?.id) {
             updateStore(prev => {
-              // Supprimer le local autoConv et tout doublon de la conversation backend
               const withoutLocal = (prev.conversations || []).filter(c => c.id !== autoConvData?.id && c.id !== backendConv.id)
               const shaped = {
                 id: backendConv.id,
@@ -2180,7 +2118,6 @@ export function MeereoProvider({ children }) {
               return { ...prev, conversations: [shaped, ...withoutLocal] }
             })
           }
-          // Re-fetch conversations immediately so the list shows the new conversation
           api.conversations.getAll().then(res => {
             const list = Array.isArray(res) ? res : (res?.conversations || [])
             if (list.length > 0) {
@@ -2195,11 +2132,7 @@ export function MeereoProvider({ children }) {
           console.warn('[acceptOffer] Conversation sync failed:', e.message)
         }
       }
-      // Sync project member (supplier added to project team)
-      const offer = storeRef.current.offers?.find(o => o.id === offerId)
-      if (offer?.supplierId && (backendProjectId || market?.projectId)) {
-        sync(api.projectMembers.create({ projectId: backendProjectId || market.projectId, userId: offer.supplierId, role: offer.supplierRole || 'ENTREPRISE', userName: offer.entreprise || '' }))
-      }
+      // Le backend gère déjà l'ajout du prestataire comme membre du projet
     })()
     log('OFFER_ACCEPTED', { offerId, acceptedByRole: projectRole })
     emitEvent('offer_accepted', { title: ao?.title || ao?.titre || '', offerId }, { notifMsg: 'Offre acceptée — marché en cours de création', notifType: 'green' })
