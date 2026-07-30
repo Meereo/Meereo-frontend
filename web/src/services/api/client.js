@@ -457,6 +457,45 @@ const kai = {
       body: JSON.stringify({ message, confirmationId }),
     }).then(r => r.json()),
 
+  engineChatStream: (message, userId, userType, { onToken, onDone, onError } = {}) => {
+    const token = getStoredToken()
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+      'X-User-Id': userId,
+      'X-User-Type': userType,
+    }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    fetch('/api/kai-engine/chat', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ message }),
+    }).then(async (res) => {
+      if (!res.ok) { onError?.(new Error(`HTTP ${res.status}`)); return }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const data = JSON.parse(line.slice(6))
+            if (data.token) onToken?.(data.token)
+            if (data.done) onDone?.(data)
+            if (data.error) onError?.(new Error(data.error))
+          } catch {}
+        }
+      }
+    }).catch(err => onError?.(err))
+  },
+
   engineHealth: () =>
     fetch('/api/kai-engine/health').then(r => r.json()).catch(() => ({ status: 'offline' })),
 

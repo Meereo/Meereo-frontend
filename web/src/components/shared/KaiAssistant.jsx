@@ -338,7 +338,8 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
   const [kaiView, setKaiView] = useState('idle') // idle | conv | history | onboarding
   const [kaiInput, setKaiInput] = useState('')
   const [kaiMessages, setKaiMessages] = useState([])
-  const [kaiState, setKaiState] = useState('idle') // idle | appearing | thinking | speaking | suggesting
+  const [kaiState, setKaiState] = useState('idle') // idle | appearing | thinking | speaking | suggesting | streaming
+  const [streamingText, setStreamingText] = useState('')
   const [kaiPos, setKaiPos] = useState({ x: null, y: null })
   const [phIdx, setPhIdx] = useState(0)
   const [activeConvId, setActiveConvId] = useState(null)
@@ -652,41 +653,37 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
     const actorType = context === 'fournisseur' ? 'supplier' : context === 'client' ? 'client' : 'architect'
     const userId = store.user?.id || 'anonymous'
 
-    try {
-      // Call KAi backend (Ollama LLM) with 15s timeout
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 15000)
-      const result = await fetch('/api/kai-engine/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId, 'X-User-Type': actorType },
-        body: JSON.stringify({ message: q, confirmationId: pendingConfirmRef.current || undefined }),
-        signal: controller.signal,
-      }).then(r => r.json())
-      clearTimeout(timeout)
-      pendingConfirmRef.current = null
+    setStreamingText('')
+    api.kai.engineChatStream(q, userId, actorType, {
+      onToken: (token) => {
+        setKaiState('streaming')
+        setStreamingText(prev => prev + token)
+      },
+      onDone: (result) => {
+        pendingConfirmRef.current = null
+        const response = result.reply || result.text || 'Je suis temporairement indisponible.'
+        const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
 
-      setKaiState('responding')
-      const response = result.reply || result.text || 'Je suis temporairement indisponible.'
-      const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
+        if (result.needs_confirmation && result.confirmation_id) {
+          pendingConfirmRef.current = result.confirmation_id
+          finalMsgs.push({ side: 'kai', text: '⚠ Action engageante détectée. Répondez "oui" pour confirmer ou "non" pour annuler.' })
+        }
 
-      // Handle confirmation mode (mode décisionnel)
-      if (result.needs_confirmation && result.confirmation_id) {
-        pendingConfirmRef.current = result.confirmation_id
-        finalMsgs.push({ side: 'kai', text: '⚠ Action engageante détectée. Répondez "oui" pour confirmer ou "non" pour annuler.' })
-      }
-
-      setKaiMessages(finalMsgs)
-      setKaiState('idle')
-      saveConversation(finalMsgs, convId)
-    } catch {
-      // Fallback to local keyword engine if backend unavailable
-      setKaiState('responding')
-      const response = getKaiResponse(q, context, store, memory)
-      const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
-      setKaiMessages(finalMsgs)
-      setKaiState('idle')
-      saveConversation(finalMsgs, convId)
-    }
+        setStreamingText('')
+        setKaiMessages(finalMsgs)
+        setKaiState('idle')
+        saveConversation(finalMsgs, convId)
+      },
+      onError: () => {
+        setStreamingText('')
+        setKaiState('responding')
+        const response = getKaiResponse(q, context, store, memory)
+        const finalMsgs = [...newMsgs, { side: 'kai', text: response }]
+        setKaiMessages(finalMsgs)
+        setKaiState('idle')
+        saveConversation(finalMsgs, convId)
+      },
+    })
 
     // Incrémenter le quota côté serveur
     api.kai.incrementQuota(context).then(updated => {
@@ -959,6 +956,11 @@ export default function KaiAssistant({ context = 'pro', userName = '', onNavigat
                 {kaiState === 'thinking' && (
                   <div className="kai-cmsg kai-cmsg-kai">
                     <div className="kai-cbub kai-cbub-kai"><KaiThinkingCard inline /></div>
+                  </div>
+                )}
+                {kaiState === 'streaming' && streamingText && (
+                  <div className="kai-cmsg kai-cmsg-kai">
+                    <div className="kai-cbub kai-cbub-kai">{streamingText}<span className="kai-cursor">|</span></div>
                   </div>
                 )}
                 <div ref={msgEndRef} />

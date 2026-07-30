@@ -971,6 +971,8 @@ a, button { transition: all .15s cubic-bezier(.22,1,.36,1); }
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.kai-cursor { animation: kaiBlink 1s step-end infinite; font-weight: 300; color: #999; }
+@keyframes kaiBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
 /* Mini orbe conversation */
 .kai-msg-orb {
